@@ -9,13 +9,14 @@ services:
       dockerfile: Dockerfile
     container_name: new-api-official
     restart: always
-    command: ["--log-dir", "/app/logs"]
+    # Keep the existing Nginx upstream http://switcher-api:8080 unchanged.
+    command: ["--log-dir", "/app/logs", "--port", "8080"]
     env_file:
       - path: ${NEW_API_ENV_FILE:?Set NEW_API_ENV_FILE to an absolute path outside the repository}
         required: true
         format: raw
     ports:
-      - "127.0.0.1:5000:3000"
+      - "127.0.0.1:5000:8080"
     volumes:
       - type: bind
         source: /home/ubuntu/code/new-api/data
@@ -29,30 +30,30 @@ services:
           create_host_path: false
     networks:
       existing:
-        aliases: [new-api-official]
+        aliases: [new-api-official, switcher-api]
     stop_grace_period: 150s
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:3000/api/status | grep -q '\"success\":[[:space:]]*true'"]
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/api/status | grep -q '\"success\":[[:space:]]*true'"]
       interval: 15s
       timeout: 5s
       retries: 6
       start_period: 120s
 
-  gateway:
-    image: nginx:1.31.2-alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa
-    container_name: new-api-gateway
+  frontend:
+    image: tripscoder/new-api-frontend:deploy-0f38a14a5e8e
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+    container_name: new-api-official-frontend
     restart: always
+    env_file:
+      - path: ${FRONTEND_ENV_FILE:?Set FRONTEND_ENV_FILE to the preserved frontend environment outside Git}
+        required: true
+        format: raw
     ports:
       - "80:80"
       # Existing deployment publishes 443 but has SSL disabled. No TLS listener is added here.
       - "443:443"
-    volumes:
-      - type: bind
-        source: ./nginx.conf
-        target: /etc/nginx/conf.d/default.conf
-        read_only: true
-        bind:
-          create_host_path: false
     depends_on:
       new-api:
         condition: service_healthy

@@ -54,6 +54,26 @@ class EnvironmentPreparationTests(unittest.TestCase):
             with self.subTest(change=list(change)), self.assertRaises(ValueError):
                 prepare_env.validate_values(self.values | change)
 
+    def test_frontend_preserves_original_nginx_environment(self):
+        values = {"NEW_API_UPSTREAM": "http://switcher-api:8080",
+                  "NGINX_SERVER_NAME": "_", "NGINX_SSL_ENABLED": "false",
+                  "NGINX_PROXY_READ_TIMEOUT": "600s", "NGINX_CLIENT_MAX_BODY_SIZE": "100m",
+                  "VITE_REACT_APP_SERVER_URL": "http://switcher-api:8080"}
+        container = {"Name": "/new-api-frontend", "State": {"Running": True},
+                     "NetworkSettings": {"Networks": {"new-api-network": {}}}, "Mounts": [],
+                     "Config": {"Env": [f"{k}={v}" for k, v in values.items()] + ["PATH=/image/bin"]}}
+        result = SimpleNamespace(returncode=0, stdout=json.dumps([container]))
+        with patch.object(prepare_env.subprocess, "run", return_value=result):
+            self.assertEqual(prepare_env.read_runtime("frontend"), values)
+        with self.assertRaises(ValueError):
+            prepare_env.validate_values(values | {"NEW_API_UPSTREAM": "http://different:3000"}, "frontend")
+        with tempfile.TemporaryDirectory() as directory:
+            # Also enforce the repository boundary for frontend environment exports.
+            root = Path(directory)
+            (root / ".git").mkdir()
+            with self.assertRaises(ValueError):
+                prepare_env.write_private_env(root / "frontend.env", values, "frontend")
+
     def test_output_in_any_git_tree_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)

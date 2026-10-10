@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy effective new-api settings to a private file; never start or change containers."""
+"""Preserve effective app/frontend settings outside Git; never modify the server source .env files."""
 
 import argparse
 import json
@@ -10,37 +10,46 @@ import subprocess
 from urllib.parse import urlsplit
 
 
-def read_runtime():
+def read_runtime(component="app"):
+    names = ["new-api-frontend"] if component == "frontend" else ["new-api-dev", "postgres", "redis"]
     result = subprocess.run(
-        ["docker", "inspect", "new-api-dev", "postgres", "redis"],
+        ["docker", "inspect", *names],
         capture_output=True, text=True, check=False,
     )
     if result.returncode:
-        raise ValueError("Cannot inspect the three existing containers; no files written.")
+        raise ValueError("Cannot inspect the existing containers; no files written.")
     try:
         containers = {item["Name"].lstrip("/"): item for item in json.loads(result.stdout)}
-        for name in ("new-api-dev", "postgres", "redis"):
+        for name in names:
             item = containers[name]
             if not item["State"]["Running"] or "new-api-network" not in item["NetworkSettings"]["Networks"]:
                 raise ValueError("Existing containers must be running on new-api-network.")
-        current = containers["new-api-dev"]
+        current = containers[names[0]]
         mounts = {m["Destination"]: m["Source"] for m in current["Mounts"]}
-        for target, source in (("/data", "/home/ubuntu/code/new-api/data"), ("/app/logs", "/home/ubuntu/code/new-api/logs")):
-            if mounts.get(target) != source:
-                raise ValueError("Current bind mounts differ from compose.app.yml; review before proceeding.")
+        if component == "frontend":
+            if mounts:
+                raise ValueError("Frontend mounts changed; include them in the reviewed Compose before proceeding.")
+        else:
+            for target, source in (("/data", "/home/ubuntu/code/new-api/data"), ("/app/logs", "/home/ubuntu/code/new-api/logs")):
+                if mounts.get(target) != source:
+                    raise ValueError("Current bind mounts differ from compose.app.yml; review before proceeding.")
         values = dict(entry.split("=", 1) for entry in current["Config"]["Env"])
     except (KeyError, TypeError, json.JSONDecodeError):
         raise ValueError("Unexpected Docker metadata; no files written.") from None
     # PATH belongs to the image. Keep all application variables, including any existing secrets.
     values.pop("PATH", None)
-    validate_values(values)
+    validate_values(values, component)
     return values
 
 
-def validate_values(values):
+def validate_values(values, component="app"):
     for key, value in values.items():
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key) or any(c in value for c in "\r\n\x00"):
             raise ValueError("An environment entry cannot be represented safely as a raw env file.")
+    if component == "frontend":
+        if values.get("NEW_API_UPSTREAM") != "http://switcher-api:8080":
+            raise ValueError("Existing Nginx upstream differs from the reviewed handoff address.")
+        return
     if not values.get("SQL_DSN") or not values.get("REDIS_CONN_STRING"):
         raise ValueError("SQL_DSN and REDIS_CONN_STRING must already exist; defaults are forbidden.")
     try:
@@ -56,8 +65,8 @@ def validate_values(values):
         raise ValueError("Database/Redis targets differ from the reviewed deployment; values are not printed.")
 
 
-def write_private_env(output, values):
-    validate_values(values)
+def write_private_env(output, values, component="app"):
+    validate_values(values, component)
     output = output.expanduser().absolute()
     if output.is_symlink():
         raise ValueError("Refusing a symlink destination.")
@@ -83,17 +92,18 @@ def write_private_env(output, values):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--component", choices=("app", "frontend"), default="app")
     parser.add_argument("--write", type=Path, metavar="ABSOLUTE_PATH", help="Explicitly write a new private file outside Git; otherwise read-only")
     args = parser.parse_args()
     try:
-        values = read_runtime()
-        print("Preserved application variable names: " + ", ".join(sorted(values)))
+        values = read_runtime(args.component)
+        print("Preserved " + args.component + " variable names: " + ", ".join(sorted(values)))
         print("Targets and bind mounts match the reviewed deployment; values are hidden.")
         print("No inactive .env entries are activated; no session/crypto secret is generated.")
         if args.write:
             if not args.write.is_absolute():
                 raise ValueError("--write requires an absolute path.")
-            destination = write_private_env(args.write, values)
+            destination = write_private_env(args.write, values, args.component)
             print(f"Saved {destination} (0600); exact value round-trip verified.")
         else:
             print("Read-only check complete. No file or container was changed.")
