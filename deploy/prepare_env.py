@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preserve effective app/frontend settings outside Git; never modify the server source .env files."""
+"""Preserve app/Nginx settings outside Git; direct the gateway to native new-api."""
 
 import argparse
 import json
@@ -9,9 +9,18 @@ import re
 import subprocess
 from urllib.parse import urlsplit
 
+GATEWAY_KEYS = (
+    "NGINX_SERVER_NAME", "NGINX_CLIENT_MAX_BODY_SIZE",
+    "NGINX_PROXY_READ_TIMEOUT", "NGINX_PROXY_SEND_TIMEOUT",
+    "NGINX_SSL_ENABLED", "NGINX_HTTP_REDIRECT_TO_HTTPS",
+    "NGINX_SSL_CERTIFICATE", "NGINX_SSL_CERTIFICATE_KEY",
+    "NGINX_SSL_PROTOCOLS", "NGINX_SSL_CIPHERS", "NGINX_SSL_SESSION_TIMEOUT",
+    "NGINX_HSTS_ENABLED", "NGINX_HSTS_MAX_AGE",
+)
+
 
 def read_runtime(component="app"):
-    names = ["new-api-frontend"] if component == "frontend" else ["new-api-dev", "postgres", "redis"]
+    names = ["new-api-frontend"] if component == "gateway" else ["new-api-dev", "postgres", "redis"]
     result = subprocess.run(
         ["docker", "inspect", *names],
         capture_output=True, text=True, check=False,
@@ -26,14 +35,17 @@ def read_runtime(component="app"):
                 raise ValueError("Existing containers must be running on new-api-network.")
         current = containers[names[0]]
         mounts = {m["Destination"]: m["Source"] for m in current["Mounts"]}
-        if component == "frontend":
+        if component == "gateway":
             if mounts:
-                raise ValueError("Frontend mounts changed; include them in the reviewed Compose before proceeding.")
+                raise ValueError("Nginx mounts changed; include them in the reviewed Compose before proceeding.")
         else:
             for target, source in (("/data", "/home/ubuntu/code/new-api/data"), ("/app/logs", "/home/ubuntu/code/new-api/logs")):
                 if mounts.get(target) != source:
                     raise ValueError("Current bind mounts differ from compose.app.yml; review before proceeding.")
         values = dict(entry.split("=", 1) for entry in current["Config"]["Env"])
+        if component == "gateway":
+            values = {key: values[key] for key in GATEWAY_KEYS}
+            values["NEW_API_UPSTREAM"] = "http://new-api:3000"
     except (KeyError, TypeError, json.JSONDecodeError):
         raise ValueError("Unexpected Docker metadata; no files written.") from None
     # PATH belongs to the image. Keep all application variables, including any existing secrets.
@@ -46,9 +58,11 @@ def validate_values(values, component="app"):
     for key, value in values.items():
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key) or any(c in value for c in "\r\n\x00"):
             raise ValueError("An environment entry cannot be represented safely as a raw env file.")
-    if component == "frontend":
-        if values.get("NEW_API_UPSTREAM") != "http://switcher-api:8080":
-            raise ValueError("Existing Nginx upstream differs from the reviewed handoff address.")
+    if component == "gateway":
+        if set(values) != set(GATEWAY_KEYS) | {"NEW_API_UPSTREAM"} or any(not values[k] for k in GATEWAY_KEYS):
+            raise ValueError("All existing Nginx settings must be preserved; unrelated environment entries are forbidden.")
+        if values["NEW_API_UPSTREAM"] != "http://new-api:3000":
+            raise ValueError("Nginx must target the native new-api service.")
         return
     if not values.get("SQL_DSN") or not values.get("REDIS_CONN_STRING"):
         raise ValueError("SQL_DSN and REDIS_CONN_STRING must already exist; defaults are forbidden.")
@@ -92,7 +106,7 @@ def write_private_env(output, values, component="app"):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--component", choices=("app", "frontend"), default="app")
+    parser.add_argument("--component", choices=("app", "gateway"), default="app")
     parser.add_argument("--write", type=Path, metavar="ABSOLUTE_PATH", help="Explicitly write a new private file outside Git; otherwise read-only")
     args = parser.parse_args()
     try:
@@ -100,6 +114,8 @@ def main():
         print("Preserved " + args.component + " variable names: " + ", ".join(sorted(values)))
         print("Targets and bind mounts match the reviewed deployment; values are hidden.")
         print("No inactive .env entries are activated; no session/crypto secret is generated.")
+        if args.component == "gateway":
+            print("Only NEW_API_UPSTREAM changes to http://new-api:3000; all Nginx settings retain their source values.")
         if args.write:
             if not args.write.is_absolute():
                 raise ValueError("--write requires an absolute path.")

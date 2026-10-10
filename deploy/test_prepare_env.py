@@ -54,25 +54,32 @@ class EnvironmentPreparationTests(unittest.TestCase):
             with self.subTest(change=list(change)), self.assertRaises(ValueError):
                 prepare_env.validate_values(self.values | change)
 
-    def test_frontend_preserves_original_nginx_environment(self):
-        values = {"NEW_API_UPSTREAM": "http://switcher-api:8080",
-                  "NGINX_SERVER_NAME": "_", "NGINX_SSL_ENABLED": "false",
-                  "NGINX_PROXY_READ_TIMEOUT": "600s", "NGINX_CLIENT_MAX_BODY_SIZE": "100m",
-                  "VITE_REACT_APP_SERVER_URL": "http://switcher-api:8080"}
+    def test_gateway_preserves_nginx_settings_and_drops_old_frontend_environment(self):
+        nginx_values = dict(zip(prepare_env.GATEWAY_KEYS, (
+            "_", "100m", "600s", "600s", "false", "false",
+            "/etc/nginx/ssl/fullchain.pem", "/etc/nginx/ssl/privkey.pem",
+            "TLSv1.2 TLSv1.3", "HIGH:!aNULL:!MD5", "1d", "false", "15552000",
+        )))
+        values = nginx_values | {"NEW_API_UPSTREAM": "http://retired-app:8080",
+                                 "VITE_REACT_APP_SERVER_URL": "http://retired-app:8080",
+                                 "NGINX_VERSION": "1.31.2"}
+        expected = nginx_values | {"NEW_API_UPSTREAM": "http://new-api:3000"}
         container = {"Name": "/new-api-frontend", "State": {"Running": True},
                      "NetworkSettings": {"Networks": {"new-api-network": {}}}, "Mounts": [],
                      "Config": {"Env": [f"{k}={v}" for k, v in values.items()] + ["PATH=/image/bin"]}}
         result = SimpleNamespace(returncode=0, stdout=json.dumps([container]))
         with patch.object(prepare_env.subprocess, "run", return_value=result):
-            self.assertEqual(prepare_env.read_runtime("frontend"), values)
+            self.assertEqual(prepare_env.read_runtime("gateway"), expected)
         with self.assertRaises(ValueError):
-            prepare_env.validate_values(values | {"NEW_API_UPSTREAM": "http://different:3000"}, "frontend")
+            prepare_env.validate_values(expected | {"NEW_API_UPSTREAM": "http://retired-app:8080"}, "gateway")
+        with self.assertRaises(ValueError):
+            prepare_env.validate_values(expected | {"VITE_REACT_APP_SERVER_URL": "old"}, "gateway")
         with tempfile.TemporaryDirectory() as directory:
-            # Also enforce the repository boundary for frontend environment exports.
+            # Also enforce the repository boundary for gateway environment exports.
             root = Path(directory)
             (root / ".git").mkdir()
             with self.assertRaises(ValueError):
-                prepare_env.write_private_env(root / "frontend.env", values, "frontend")
+                prepare_env.write_private_env(root / "gateway.env", expected, "gateway")
 
     def test_output_in_any_git_tree_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:

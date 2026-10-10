@@ -1,0 +1,28 @@
+# The native new-api frontend and every API route are served by the same upstream.
+client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
+
+resolver 127.0.0.11 valid=10s ipv6=off;
+set $new_api_upstream "${NEW_API_UPSTREAM}";
+
+proxy_http_version 1.1;
+proxy_buffering off;
+
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection $connection_upgrade;
+
+proxy_read_timeout ${NGINX_PROXY_READ_TIMEOUT};
+proxy_send_timeout ${NGINX_PROXY_SEND_TIMEOUT};
+
+location /assets/ {
+    proxy_pass $new_api_upstream;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+
+location / {
+    proxy_pass $new_api_upstream;
+}

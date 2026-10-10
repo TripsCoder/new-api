@@ -1,8 +1,0 @@
-# Build the builder stage of the upstream Dockerfile first; see README.md.
-FROM tripscoder/new-api-web:deploy-0f38a14a5e8e AS web
-
-# This tag is created from the existing production image ID, never pulled.
-# Preserve its Nginx binary, templates, config, entrypoint and defaults exactly.
-FROM new-api-nginx-base:production-647e477c2905
-RUN rm -rf /usr/share/nginx/html/*
-COPY --from=web /build/web/dist/ /usr/share/nginx/html/

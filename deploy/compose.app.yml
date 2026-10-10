@@ -9,14 +9,13 @@ services:
       dockerfile: Dockerfile
     container_name: new-api-official
     restart: always
-    # Keep the existing Nginx upstream http://switcher-api:8080 unchanged.
-    command: ["--log-dir", "/app/logs", "--port", "8080"]
+    command: ["--log-dir", "/app/logs"]
     env_file:
       - path: ${NEW_API_ENV_FILE:?Set NEW_API_ENV_FILE to an absolute path outside the repository}
         required: true
         format: raw
     ports:
-      - "127.0.0.1:5000:8080"
+      - "127.0.0.1:5000:3000"
     volumes:
       - type: bind
         source: /home/ubuntu/code/new-api/data
@@ -28,32 +27,40 @@ services:
         target: /app/logs
         bind:
           create_host_path: false
-    networks:
-      existing:
-        aliases: [new-api-official, switcher-api]
+    networks: [existing]
     stop_grace_period: 150s
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/api/status | grep -q '\"success\":[[:space:]]*true'"]
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:3000/api/status | grep -q '\"success\":[[:space:]]*true'"]
       interval: 15s
       timeout: 5s
       retries: 6
       start_period: 120s
 
-  frontend:
-    image: tripscoder/new-api-frontend:deploy-0f38a14a5e8e
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile.frontend
-    container_name: new-api-official-frontend
+  gateway:
+    image: nginx:1.31.2-trixie-perl@sha256:2f141aa365a8cac585f5117026aa37a1ba0356fee588998da8afbed53289f4e6
+    container_name: new-api-gateway
     restart: always
     env_file:
-      - path: ${FRONTEND_ENV_FILE:?Set FRONTEND_ENV_FILE to the preserved frontend environment outside Git}
+      - path: ${GATEWAY_ENV_FILE:?Set GATEWAY_ENV_FILE to the preserved Nginx settings outside Git}
         required: true
         format: raw
     ports:
       - "80:80"
       # Existing deployment publishes 443 but has SSL disabled. No TLS listener is added here.
       - "443:443"
+    volumes:
+      - type: bind
+        source: ./nginx/templates
+        target: /etc/nginx/templates
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./nginx/15-frontend-ssl.sh
+        target: /docker-entrypoint.d/15-frontend-ssl.sh
+        read_only: true
+        bind:
+          create_host_path: false
     depends_on:
       new-api:
         condition: service_healthy
