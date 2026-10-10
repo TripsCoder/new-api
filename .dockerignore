@@ -1,5 +1,13 @@
 .github
 .git
+.env
+.env.*
+**/.env
+**/.env.*
+*.env
+**/*.env
+**/*.env.*
+deploy
 *.md
 .vscode
 .gitignore
