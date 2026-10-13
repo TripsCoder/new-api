@@ -1,0 +1,1082 @@
+{
+  "unixNow": 1791676800,
+  "cases": [
+    {
+      "name": "native normalization",
+      "hook": "native",
+      "path": [
+        "decodeSubmit"
+      ],
+      "args": [
+        {
+          "body": {
+            "kind": "json",
+            "value": {
+              "model": "seed-audio-1.0",
+              "text_prompt": "十秒轻快音乐",
+              "audio_config": {
+                "format": "mp3",
+                "sample_rate": 48000,
+                "pitch_rate": 0,
+                "speech_rate": 0,
+                "loudness_rate": 0,
+                "enable_subtitle": false
+              },
+              "watermark": {
+                "aigc_watermark": false,
+                "aigc_metadata": {
+                  "enable": false
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "seed-audio-1.0",
+        "action": "audio_generation",
+        "requestBody": {
+          "model": "seed-audio-1.0",
+          "text_prompt": "十秒轻快音乐",
+          "audio_config": {
+            "format": "mp3",
+            "sample_rate": 48000,
+            "pitch_rate": 0,
+            "speech_rate": 0,
+            "loudness_rate": 0,
+            "enable_subtitle": false
+          },
+          "watermark": {
+            "aigc_watermark": false,
+            "aigc_metadata": {
+              "enable": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "mapped alias",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "alias",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "alias",
+            "text_prompt": "十秒轻快音乐",
+            "audio_config": {
+              "format": "mp3",
+              "sample_rate": 48000,
+              "pitch_rate": 0,
+              "speech_rate": 0,
+              "loudness_rate": 0,
+              "enable_subtitle": false
+            },
+            "watermark": {
+              "aigc_watermark": false,
+              "aigc_metadata": {
+                "enable": false
+              }
+            }
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://openspeech.bytedance.com/api/v3/tts/create",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Api-Key": "fixture-key",
+          "X-Api-Request-Id": "task_audio"
+        },
+        "body": {
+          "model": "seed-audio-1.0",
+          "text_prompt": "十秒轻快音乐",
+          "audio_config": {
+            "format": "mp3",
+            "sample_rate": 48000,
+            "pitch_rate": 0,
+            "speech_rate": 0,
+            "loudness_rate": 0,
+            "enable_subtitle": false
+          },
+          "watermark": {
+            "aigc_watermark": false,
+            "aigc_metadata": {
+              "enable": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "responses parameters",
+      "hook": "protocols",
+      "path": [
+        "openai_responses",
+        "decodeRequest"
+      ],
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "body": {
+            "kind": "json",
+            "value": {
+              "input": "十秒轻快音乐",
+              "metadata": {
+                "audio_config": {
+                  "format": "mp3",
+                  "sample_rate": 48000,
+                  "pitch_rate": 0,
+                  "speech_rate": 0,
+                  "loudness_rate": 0,
+                  "enable_subtitle": false
+                },
+                "watermark": {
+                  "aigc_watermark": false,
+                  "aigc_metadata": {
+                    "enable": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "seed-audio-1.0",
+        "action": "audio_generation",
+        "requestBody": {
+          "model": "seed-audio-1.0",
+          "text_prompt": "十秒轻快音乐",
+          "audio_config": {
+            "format": "mp3",
+            "sample_rate": 48000,
+            "pitch_rate": 0,
+            "speech_rate": 0,
+            "loudness_rate": 0,
+            "enable_subtitle": false
+          },
+          "watermark": {
+            "aigc_watermark": false,
+            "aigc_metadata": {
+              "enable": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "120 second reservation",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        }
+      ],
+      "expected": {
+        "seconds": 120
+      }
+    },
+    {
+      "name": "no legacy ratios",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          },
+          "usagePurpose": "billing_ratios"
+        }
+      ],
+      "expected": null
+    },
+    {
+      "name": "empty prompt",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": ""
+          }
+        }
+      ],
+      "expectedError": "text_prompt"
+    },
+    {
+      "name": "prompt too long",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字"
+          }
+        }
+      ],
+      "expectedError": "3000"
+    },
+    {
+      "name": "unsupported format",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "audio_config": {
+              "format": "flac"
+            }
+          }
+        }
+      ],
+      "expectedError": "unsupported audio format"
+    },
+    {
+      "name": "mp3 invalid rate",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "audio_config": {
+              "format": "mp3",
+              "sample_rate": 40000
+            }
+          }
+        }
+      ],
+      "expectedError": "sample_rate"
+    },
+    {
+      "name": "opus invalid rate",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "audio_config": {
+              "format": "ogg_opus",
+              "sample_rate": 16000
+            }
+          }
+        }
+      ],
+      "expectedError": "sample_rate"
+    },
+    {
+      "name": "fractional pitch",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "audio_config": {
+              "pitch_rate": 0.5
+            }
+          }
+        }
+      ],
+      "expectedError": "integer range"
+    },
+    {
+      "name": "out of range speed",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "audio_config": {
+              "speech_rate": 101
+            }
+          }
+        }
+      ],
+      "expectedError": "integer range"
+    },
+    {
+      "name": "false string",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "audio_config": {
+              "enable_subtitle": "false"
+            }
+          }
+        }
+      ],
+      "expectedError": "boolean"
+    },
+    {
+      "name": "mixed refs",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "references": [
+              {
+                "speaker": "speaker"
+              },
+              {
+                "image_url": "https://example.com/image.png"
+              }
+            ]
+          }
+        }
+      ],
+      "expectedError": "cannot be mixed"
+    },
+    {
+      "name": "multiple sources",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "references": [
+              {
+                "speaker": "speaker",
+                "audio_url": "https://example.com/a.mp3"
+              }
+            ]
+          }
+        }
+      ],
+      "expectedError": "exactly one"
+    },
+    {
+      "name": "too many audio refs",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "references": [
+              {
+                "speaker": "speaker"
+              },
+              {
+                "speaker": "speaker"
+              },
+              {
+                "speaker": "speaker"
+              },
+              {
+                "speaker": "speaker"
+              }
+            ]
+          }
+        }
+      ],
+      "expectedError": "at most 3"
+    },
+    {
+      "name": "two images",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "references": [
+              {
+                "image_data": "YQ=="
+              },
+              {
+                "image_data": "Yg=="
+              }
+            ]
+          }
+        }
+      ],
+      "expectedError": "at most one image"
+    },
+    {
+      "name": "bad base64",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "references": [
+              {
+                "audio_data": "not base64"
+              }
+            ]
+          }
+        }
+      ],
+      "expectedError": "Base64"
+    },
+    {
+      "name": "credential URL",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "references": [
+              {
+                "audio_url": "https://key@example.com/a.mp3"
+              }
+            ]
+          }
+        }
+      ],
+      "expectedError": "without credentials"
+    },
+    {
+      "name": "unsupported numeric duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐",
+            "seconds": 1
+          }
+        }
+      ],
+      "expectedError": "unsupported field"
+    },
+    {
+      "name": "TLS for API credential",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "http://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        }
+      ],
+      "expectedError": "HTTPS"
+    },
+    {
+      "name": "missing API key",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        }
+      ],
+      "expectedError": "API Key"
+    },
+    {
+      "name": "wrong model",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "other",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        }
+      ],
+      "expectedError": "unsupported upstream model"
+    },
+    {
+      "name": "reference passthrough 23",
+      "hook": "native",
+      "path": [
+        "decodeSubmit"
+      ],
+      "args": [
+        {
+          "body": {
+            "kind": "json",
+            "value": {
+              "model": "seed-audio-1.0",
+              "text_prompt": "十秒轻快音乐",
+              "references": [
+                {
+                  "speaker": "speaker1"
+                },
+                {
+                  "audio_url": "https://example.com/a.mp3"
+                },
+                {
+                  "audio_data": "YQ=="
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "seed-audio-1.0",
+        "action": "audio_generation",
+        "requestBody": {
+          "model": "seed-audio-1.0",
+          "text_prompt": "十秒轻快音乐",
+          "references": [
+            {
+              "speaker": "speaker1"
+            },
+            {
+              "audio_url": "https://example.com/a.mp3"
+            },
+            {
+              "audio_data": "YQ=="
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "reference passthrough 24",
+      "hook": "native",
+      "path": [
+        "decodeSubmit"
+      ],
+      "args": [
+        {
+          "body": {
+            "kind": "json",
+            "value": {
+              "model": "seed-audio-1.0",
+              "text_prompt": "十秒轻快音乐",
+              "references": [
+                {
+                  "image_url": "https://example.com/a.png"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "seed-audio-1.0",
+        "action": "audio_generation",
+        "requestBody": {
+          "model": "seed-audio-1.0",
+          "text_prompt": "十秒轻快音乐",
+          "references": [
+            {
+              "image_url": "https://example.com/a.png"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "reference passthrough 25",
+      "hook": "native",
+      "path": [
+        "decodeSubmit"
+      ],
+      "args": [
+        {
+          "body": {
+            "kind": "json",
+            "value": {
+              "model": "seed-audio-1.0",
+              "text_prompt": "十秒轻快音乐",
+              "references": [
+                {
+                  "image_data": "YQ=="
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "seed-audio-1.0",
+        "action": "audio_generation",
+        "requestBody": {
+          "model": "seed-audio-1.0",
+          "text_prompt": "十秒轻快音乐",
+          "references": [
+            {
+              "image_data": "YQ=="
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "immediate success",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "audio": "YQ==",
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": 10,
+            "subtitle": {
+              "text": "字幕"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "task_audio",
+        "taskData": {
+          "url": "https://cdn.example/a.wav",
+          "duration": 5,
+          "original_duration": 10,
+          "format": "wav",
+          "expires_at": 1791684000,
+          "subtitle": {
+            "text": "字幕"
+          }
+        },
+        "immediate": {
+          "status": "SUCCESS",
+          "progress": "100%",
+          "url": "https://cdn.example/a.wav"
+        }
+      }
+    },
+    {
+      "name": "actual original seconds",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "url": "https://cdn.example/a.wav",
+          "duration": 5,
+          "original_duration": 10,
+          "format": "wav",
+          "expires_at": 1791684000,
+          "subtitle": {
+            "text": "字幕"
+          }
+        }
+      ],
+      "expected": {
+        "seconds": 10
+      }
+    },
+    {
+      "name": "failed usage",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {
+          "status": "FAILURE"
+        },
+        {}
+      ],
+      "expected": {}
+    },
+    {
+      "name": "provider error",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "code": 45000000,
+            "message": "fixture-key"
+          }
+        }
+      ],
+      "expectedError": "Doubao audio generation failed"
+    },
+    {
+      "name": "bad billable duration 0",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "audio": "YQ==",
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": 0,
+            "subtitle": {
+              "text": "字幕"
+            }
+          }
+        }
+      ],
+      "expectedError": "original_duration"
+    },
+    {
+      "name": "bad billable duration -1",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "audio": "YQ==",
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": -1,
+            "subtitle": {
+              "text": "字幕"
+            }
+          }
+        }
+      ],
+      "expectedError": "original_duration"
+    },
+    {
+      "name": "bad billable duration 121",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "audio": "YQ==",
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": 121,
+            "subtitle": {
+              "text": "字幕"
+            }
+          }
+        }
+      ],
+      "expectedError": "original_duration"
+    },
+    {
+      "name": "bad billable duration 10",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "audio": "YQ==",
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": "10",
+            "subtitle": {
+              "text": "字幕"
+            }
+          }
+        }
+      ],
+      "expectedError": "original_duration"
+    },
+    {
+      "name": "bad billable duration null",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seed-audio-1.0",
+          "upstreamModel": "seed-audio-1.0",
+          "baseUrl": "https://openspeech.bytedance.com",
+          "apiKey": "fixture-key",
+          "publicTaskId": "task_audio",
+          "requestBody": {
+            "model": "seed-audio-1.0",
+            "text_prompt": "十秒轻快音乐"
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "audio": "YQ==",
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": null,
+            "subtitle": {
+              "text": "字幕"
+            }
+          }
+        }
+      ],
+      "expectedError": "original_duration"
+    },
+    {
+      "name": "audio artifact",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "data": {
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": 10,
+            "format": "wav",
+            "expires_at": 1791684000,
+            "subtitle": {
+              "text": "字幕"
+            }
+          }
+        }
+      ],
+      "expected": [
+        {
+          "key": "audio",
+          "type": "audio",
+          "mimeType": "audio/wav"
+        }
+      ]
+    },
+    {
+      "name": "no credential on download",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "audio",
+          "data": {
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": 10,
+            "format": "wav",
+            "expires_at": 1791684000,
+            "subtitle": {
+              "text": "字幕"
+            }
+          },
+          "clientRequest": {
+            "method": "GET"
+          },
+          "apiKey": "fixture-key"
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/a.wav",
+        "method": "GET",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "expired URL",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "audio",
+          "data": {
+            "url": "https://cdn.example/a.wav",
+            "duration": 5,
+            "original_duration": 10,
+            "format": "wav",
+            "expires_at": 1791676800,
+            "subtitle": {
+              "text": "字幕"
+            }
+          },
+          "clientRequest": {
+            "method": "GET"
+          }
+        }
+      ],
+      "expectedError": "has expired"
+    },
+    {
+      "name": "no fabricated polling",
+      "hook": "buildQueryRequest",
+      "args": [
+        {}
+      ],
+      "expectedError": "no upstream polling API"
+    },
+    {
+      "name": "unknown task status",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {}
+      ],
+      "expected": {
+        "status": "UNKNOWN"
+      }
+    }
+  ]
+}

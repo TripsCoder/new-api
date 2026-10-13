@@ -15,6 +15,7 @@ import (
 	appI18n "github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
+	relaycommonDTO "github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
@@ -447,4 +448,58 @@ func TestDistributePinViolatingIdentityFilterErrors(t *testing.T) {
 	assert.True(t, c.IsAborted())
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 	assert.Contains(t, recorder.Body.String(), string(dto.FilterTaskPluginIdentity))
+}
+
+func TestVideoRetrieveUsesOwnedTaskIdentityWithChannelPin(t *testing.T) {
+	require.NoError(t, appI18n.Init())
+	setupOriginTaskDB(t)
+	previousRegistry := jsplugin.DefaultRegistry
+	previousCache := common.MemoryCacheEnabled
+	jsplugin.DefaultRegistry = jsplugin.NewRegistry()
+	common.MemoryCacheEnabled = false
+	t.Cleanup(func() { jsplugin.DefaultRegistry = previousRegistry; common.MemoryCacheEnabled = previousCache })
+	_, err := jsplugin.DefaultRegistry.Register(distributorTaskPluginSource("video-retrieve", constant.ChannelTypeKling), jsplugin.Options{})
+	require.NoError(t, err)
+	channel := &model.Channel{Name: "video-query", Type: constant.ChannelTypeTaskPlugin, Status: common.ChannelStatusEnabled, Key: "test-key"}
+	channel.SetSetting(relaycommonDTO.ChannelSettings{TaskPluginKey: "video-retrieve"})
+	require.NoError(t, model.DB.Create(channel).Error)
+	for _, status := range []model.TaskStatus{model.TaskStatusSuccess, model.TaskStatusFailure, model.TaskStatusInProgress} {
+		task := insertOriginOwnedTask(t, string(status), 7, channel.Id, "video-retrieve")
+		task.Properties.OriginModelName = "task-model"
+		task.Status = status
+		require.NoError(t, model.DB.Save(task).Error)
+	}
+	for _, tc := range []struct {
+		name, taskID      string
+		user, pin         int
+		limited, rejected bool
+	}{
+		{"success pinned without model limits", "SUCCESS", 7, channel.Id, false, false},
+		{"failure pinned", "FAILURE", 7, channel.Id, false, false},
+		{"running pinned", "IN_PROGRESS", 7, channel.Id, false, false},
+		{"success unpinned", "SUCCESS", 7, 0, false, false},
+		{"allowed model limit", "SUCCESS", 7, 0, true, false},
+		{"foreign task", "SUCCESS", 8, channel.Id, false, true},
+		{"missing task", "missing", 7, channel.Id, false, true},
+		{"conflicting pin", "SUCCESS", 7, channel.Id + 1, false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(r)
+			c.Request = httptest.NewRequest(http.MethodGet, "/v1/videos/"+tc.taskID, nil)
+			c.Params = gin.Params{{Key: "task_id", Value: tc.taskID}}
+			c.Set("id", tc.user)
+			common.SetContextKey(c, constant.ContextKeyTokenModelLimitEnabled, tc.limited)
+			common.SetContextKey(c, constant.ContextKeyTokenModelLimit, map[string]bool{"task-model": true})
+			if tc.pin > 0 {
+				service.GetChannelConstraints(c).AddPin(dto.ChannelPin{ChannelId: tc.pin, Source: dto.PinSourceToken, Rank: dto.PinRankToken})
+			}
+			Distribute()(c)
+			assert.Equal(t, tc.rejected, c.IsAborted(), r.Body.String())
+			if !tc.rejected {
+				assert.Equal(t, "task-model", c.GetString("original_model"))
+				assert.Equal(t, "video-retrieve", c.GetString("expected_task_plugin_key"))
+			}
+		})
+	}
 }

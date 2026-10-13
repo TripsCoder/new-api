@@ -323,6 +323,10 @@ func PrepareTaskPluginRoute() gin.HandlerFunc {
 // plugin code. Invalid or unidentifiable ordinary requests deliberately fall
 // through so the existing endpoint remains responsible for its validation.
 func PinTaskPluginEndpoint() gin.HandlerFunc {
+	return pinTaskPluginEndpoint(model.CacheGetChannel)
+}
+
+func pinTaskPluginEndpoint(channelByID func(int) (*model.Channel, error)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		generation := pluginruntime.DefaultRegistry.Generation()
 		if generation == nil {
@@ -374,6 +378,31 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 			c.Next()
 			return
 		}
+		candidates := generation.LookupEndpointCandidates(c.Request.Method, c.Request.URL.Path, lookupModel)
+		if len(candidates) == 0 {
+			candidates = []pluginruntime.ProtocolBinding{binding}
+		}
+		// An authorized token pin keeps the channel's native transport unless a
+		// plugin bound to this channel actually owns the endpoint/model. Normal
+		// distribution still checks the pin, channel status, group and path.
+		if pin, pinned, _ := service.GetChannelConstraints(c).ResolvedPin(); pinned && pin.Source == dto.PinSourceToken {
+			channel, lookupErr := channelByID(pin.ChannelId)
+			if lookupErr == nil && channel != nil && channel.Type != constant.ChannelTypeTaskPlugin {
+				channelPlugin, _ := generation.GetByChannelType(channel.Type)
+				claimed := false
+				for _, candidate := range candidates {
+					if candidate.Plugin != nil && ((channelPlugin != nil && candidate.Plugin == channelPlugin) || (channel.Type == constant.ChannelTypeNewAPI && channel.GetSetting().BindsTaskPlugin(candidate.Plugin.Meta.Key))) {
+						claimed = true
+						break
+					}
+				}
+				if !claimed {
+					c.Set(contextKeyTaskPluginEndpointModel, *modelRequest)
+					c.Next()
+					return
+				}
+			}
+		}
 		if rewriteTo != "" {
 			if rewriteErr := rewriteTaskPluginJSONModel(c, rewriteTo); rewriteErr != nil {
 				abortWithOpenAiMessage(c, http.StatusBadRequest, "Invalid task protocol request")
@@ -382,10 +411,6 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 		}
 		modelRequest.Model = pinModel
 		c.Set(contextKeyTaskPluginEndpointModel, *modelRequest)
-		candidates := generation.LookupEndpointCandidates(c.Request.Method, c.Request.URL.Path, lookupModel)
-		if len(candidates) == 0 {
-			candidates = []pluginruntime.ProtocolBinding{binding}
-		}
 		if definition, known := pluginruntime.HostProtocol(binding.Protocol); known && len(definition.DefinedModes()) > 0 {
 			stream, background := jsonBodyBoolFlags(c)
 			required := make([]string, 0, 2)
