@@ -5,7 +5,29 @@
 直接用仓库原 Dockerfile 构建一个 new-api 镜像，同时提供 Go 后端和内嵌的原生 Web 前端。
 不另行构建前端，不依赖 Switcher 的程序、网络别名、前端产物或镜像。
 
-**本次只准备本地 deploy 分支和命令，未推送、未部署。以下服务器写入、构建、备份和切换命令须在用户审查通过后执行。**
+**部署模板最初仅准备于 deploy 分支；以下服务器写入、备份和切换命令仍须在用户审查通过后执行。创建发布镜像不等于部署，不自动改动服务器。**
+
+## release 分支与私有镜像（2026-10-13）
+
+源码仓库 `TripsCoder/new-api` 保持公开；镜像保持私有，不更改 `juhefuwu` 的私有仓库或其发布流程。
+开发工作先提交到开发分支，再合并到 `release`。`.github/workflows/release-image.yml` 仅在
+`release` 更新时自动执行；其他开发分支、`main`、`deploy` 不触发该发布流程。
+
+流程先执行保留功能的后端定向回归、渠道页面测试及类型检查，再用原 `Dockerfile` 构建
+Linux/amd64 镜像，并在无网络、无数据库的容器中回放豆包音频及校验 8 个插件源码。
+通过后使用仓库内置 `GITHUB_TOKEN` 发布 GHCR，无需 Docker Hub 密钥。
+
+- 可追溯标签：`ghcr.io/tripscoder/new-api:sha-<完整提交 SHA>`。
+- 当前发布别名：`ghcr.io/tripscoder/new-api:release`；旧提交重跑不能覆盖新提交的别名。
+- GHCR 新包默认私有；发布前发现已有包公开或无法核验时失败停止，发布后再次核验私有属性和仓库关联。
+- 发布结果包含镜像 digest；实际部署优先固定 digest。不会自动拉取、重启或切换服务器容器。
+- 服务器拉取私有镜像需单独登录 `ghcr.io`，使用具有 `read:packages` 且能访问该镜像的凭据。
+  不将凭据写入 Compose、Git 或日志；部署前只改审核过的镜像引用，保留原 env、网络、数据与日志挂载。
+- 原上游 Docker Hub 工作流不用于本 fork 的 release 发布。
+
+本流程是保留功能的定向发布门禁，不替代完整后端回归；之前本地 `controller` 全包测试超时的限制
+仍记录在 `plugin-sources/README.md`，未通过修改业务源码或弱化现有 CI 掩盖。
+GHCR 私有访问与默认可见性依据 [GitHub 官方文档](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)。
 
 ## 两套 Compose
 

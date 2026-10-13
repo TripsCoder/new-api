@@ -15,6 +15,9 @@ Makefile
 docs
 .eslintcache
 .gocache
+.local-tests
+.tmp
+.gomodcache
 /web/node_modules
 /web/dist
 !THIRD-PARTY-LICENSES.md
