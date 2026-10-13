@@ -1,8 +1,8 @@
 import { pathToFileURL } from 'node:url';
 
-// An existing public package must never receive a private release's contents.
-// A missing package may only pass before the first push (GHCR creates it private).
-export async function checkPrivateImage({ repository, token, allowMissing = false, fetchImpl = fetch }) {
+// new-api is intentionally public; this guard never changes package visibility.
+// A new package must be made public by its owner before the release alias advances.
+export async function checkPublicImage({ repository, token, allowMissing = false, fetchImpl = fetch }) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository) || !token) {
     throw new Error('A repository and package-readable GitHub token are required');
   }
@@ -14,16 +14,16 @@ export async function checkPrivateImage({ repository, token, allowMissing = fals
   if (response.status === 404 && allowMissing) return 'missing';
   if (!response.ok) throw new Error(`Package visibility cannot be verified (HTTP ${response.status}); publication stopped`);
   const pkg = await response.json();
-  if (pkg.visibility !== 'private') throw new Error('Package is not private; publication stopped');
+  if (pkg.visibility !== 'public') throw new Error('Package is not public; publication stopped');
   if (pkg.repository?.full_name?.toLowerCase() !== repository.toLowerCase()) {
     throw new Error('Package is not linked to the expected repository; publication stopped');
   }
-  return 'private';
+  return 'public';
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    const state = await checkPrivateImage({
+    const state = await checkPublicImage({
       repository: process.env.GITHUB_REPOSITORY,
       token: process.env.GH_TOKEN,
       allowMissing: process.argv.includes('--allow-missing'),
