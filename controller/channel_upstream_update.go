@@ -365,11 +365,15 @@ func getFetchModelsResponseBody(method string, requestURL string, channel *model
 
 func fetchChannelUpstreamModelIDs(channel *model.Channel) ([]string, error) {
 	if channel.Type == constant.ChannelTypeTaskPlugin {
-		plugin, ok := jsplugin.DefaultRegistry.Get(channel.GetSetting().TaskPluginKey)
-		if !ok {
-			return nil, fmt.Errorf("task plugin %q is not registered", channel.GetSetting().TaskPluginKey)
+		name := "任务插件"
+		if key := channel.GetSetting().TaskPluginKey; key != "" {
+			plugin, ok := jsplugin.DefaultRegistry.Get(key)
+			if !ok {
+				return nil, fmt.Errorf("task plugin %q is not registered", key)
+			}
+			name = plugin.Meta.Name
 		}
-		return normalizeModelNames(plugin.Meta.Models), nil
+		return nil, fmt.Errorf("%s: 尚未提供已验证的实时模型列表接口，请依据供应商文档手动配置模型；插件静态声明不代表上游返回结果", name)
 	}
 	baseURL := constant.GetChannelBaseURL(channel.Type)
 	if channel.GetBaseURL() != "" {

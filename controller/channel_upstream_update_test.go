@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
@@ -610,4 +611,27 @@ func TestDetectAllChannelUpstreamModelUpdatesRejectsExistingActiveTask(t *testin
 	require.Equal(t, http.StatusConflict, recorder.Code)
 	require.Contains(t, recorder.Body.String(), existing.TaskID)
 	require.Contains(t, recorder.Body.String(), "A model update task is already running or queued")
+}
+
+func TestTaskPluginDiscoveryDoesNotReportStaticCatalogAsUpstream(t *testing.T) {
+	channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin}
+	channel.SetSetting(dto.ChannelSettings{TaskPluginKey: "doubao-audio"})
+	models, err := fetchChannelUpstreamModelIDs(channel)
+	require.ErrorContains(t, err, "手动配置模型")
+	require.Nil(t, models)
+
+	// An unsaved create-form preview also gives the limitation, without a key
+	// lookup, provider request, or a misleading successful empty/static list.
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPost, "/api/channel/fetch_models", strings.NewReader(`{"type":61,"base_url":"https://openspeech.bytedance.com"}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	FetchModels(ctx)
+	var response struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	assert.False(t, response.Success)
+	assert.Contains(t, response.Message, "手动配置模型")
 }
