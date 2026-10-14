@@ -1232,8 +1232,7 @@ export function ChannelMutateDrawer({
     enabled:
       open &&
       canDiscoverModels &&
-      (MODEL_FETCHABLE_TYPES.has(currentType) ||
-        currentType === CHANNEL_TYPE_TASK_PLUGIN) &&
+      MODEL_FETCHABLE_TYPES.has(currentType) &&
       (!isEditing || Boolean(channelData?.data)),
     request: previewModels ? previewRequest : savedRequest,
   })
@@ -1246,7 +1245,7 @@ export function ChannelMutateDrawer({
   const fetchDiscoveredModels = discovery.fetch
   const handleFetchModels = useCallback(async () => {
     const type = form.getValues('type')
-    if (!MODEL_FETCHABLE_TYPES.has(type) && type !== CHANNEL_TYPE_TASK_PLUGIN) {
+    if (!MODEL_FETCHABLE_TYPES.has(type)) {
       toast.error(t('This channel type does not support fetching models'))
       return
     }
@@ -3291,8 +3290,7 @@ export function ChannelMutateDrawer({
               )}
             />
 
-            {(MODEL_FETCHABLE_TYPES.has(currentType) ||
-              currentType === CHANNEL_TYPE_TASK_PLUGIN) && (
+            {MODEL_FETCHABLE_TYPES.has(currentType) && (
               <div aria-live='polite' className='mt-4 space-y-3'>
                 {discovery.status === 'loading' && (
                   <LoadingState
@@ -3448,8 +3446,7 @@ export function ChannelMutateDrawer({
                   <FileText className='mr-2 h-4 w-4' aria-hidden='true' />
                   {t('Fill Related Models')}
                 </Button>
-                {(MODEL_FETCHABLE_TYPES.has(currentType) ||
-                  currentType === CHANNEL_TYPE_TASK_PLUGIN) && (
+                {MODEL_FETCHABLE_TYPES.has(currentType) && (
                   <>
                     <Button
                       type='button'

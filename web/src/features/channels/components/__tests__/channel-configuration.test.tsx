@@ -1922,7 +1922,7 @@ test('model configuration keeps unchecked candidates searchable and supports cat
   expect(trigger).toBeDisabled()
 })
 
-test('plugin channels expose manual discovery and model configuration requires configured models', async () => {
+test('model configuration is available for a plugin channel without upstream discovery and is disabled when its model list is empty', async () => {
   const user = userEvent.setup()
   render(<ConfigurationHarness />)
   await user.click(await screen.findByRole('option', { name: /Video A/ }))
@@ -1930,7 +1930,7 @@ test('plugin channels expose manual discovery and model configuration requires c
   expect(trigger).toBeEnabled()
   expect(
     screen.queryByRole('button', { name: 'Fetch from Upstream' })
-  ).toBeInTheDocument()
+  ).not.toBeInTheDocument()
   await user.click(trigger)
   const dialog = within(
     screen.getByRole('dialog', { name: 'Configure Models' })
@@ -2861,30 +2861,4 @@ test('a New API channel binds upstream task plugins and publishes their models',
   expect(setting).toMatchObject({ task_extend_plugin_keys: ['video-b'] })
   expect(setting).not.toHaveProperty('task_plugin_key')
   expect(payload.models?.split(',').sort()).toEqual(['gpt-5', 'video-b-1'])
-})
-test('task plugin model discovery reports its limitation and keeps manual selection', async () => {
-  vi.spyOn(api, 'post').mockResolvedValue({
-    data: {
-      success: false,
-      message: 'No verified model-list endpoint; configure models manually',
-    },
-  })
-  const user = userEvent.setup()
-  render(<ConfigurationHarness />)
-  await user.click(await screen.findByRole('option', { name: /Video A/ }))
-  fireEvent.change(screen.getByLabelText('API Key *'), {
-    target: { value: 'fixture-key' },
-  })
-  await user.click(screen.getByRole('button', { name: 'Fetch from Upstream' }))
-  expect(
-    await screen.findByText(
-      'No verified model-list endpoint; configure models manually'
-    )
-  ).toBeVisible()
-  expect(
-    screen.getByRole('combobox', { name: 'Select models or add custom ones' })
-  ).toBeEnabled()
-  expect(
-    screen.queryByText('Fetched models successfully')
-  ).not.toBeInTheDocument()
 })

@@ -123,7 +123,7 @@ func TestTaskSubmitJSONBoundsAndNoDuplicateRetry(t *testing.T) {
 			_, taskErr := adaptor.ParseResponse(c, &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, info)
 			require.NotNil(t, taskErr)
 			assert.ErrorContains(t, taskErr.Error, tc.want)
-			assert.True(t, taskErr.NoRetry)
+			assert.Equal(t, tc.capability, taskErr.NoRetry, "ordinary JSON plugins retain the official retry behavior")
 		})
 	}
 }

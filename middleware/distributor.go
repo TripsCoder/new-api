@@ -44,12 +44,12 @@ func Distribute() func(c *gin.Context) {
 			Kind:        taskdto.FilterRequestPath,
 			RequestPath: c.Request.URL.Path,
 		})
+		service.AppendTaskPluginIdentityFilter(c, c.GetString("expected_task_plugin_key"))
 		modelRequest, shouldSelectChannel, err := getModelRequest(c)
 		if err != nil {
 			abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgDistributorInvalidRequest, map[string]any{"Error": err.Error()}))
 			return
 		}
-		service.AppendTaskPluginIdentityFilter(c, c.GetString("expected_task_plugin_key"))
 		_, pinned, _ := constraints.ResolvedPin()
 		if !pinned {
 			// Select a channel for the user
@@ -413,10 +413,7 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 		} else if c.Request.Method == http.MethodGet {
 			relayMode = relayconstant.RelayModeVideoFetchByID
 			shouldSelectChannel = false
-			modelRequest.Model, err = getTaskOriginModelName(c)
-			if err != nil {
-				return nil, false, err
-			}
+			modelRequest.Model = getTaskOriginModelName(c)
 		}
 		c.Set("relay_mode", relayMode)
 	} else if strings.Contains(c.Request.URL.Path, "/v1/video/generations") {
@@ -431,10 +428,7 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 		} else if c.Request.Method == http.MethodGet {
 			relayMode = relayconstant.RelayModeVideoFetchByID
 			shouldSelectChannel = false
-			modelRequest.Model, err = getTaskOriginModelName(c)
-			if err != nil {
-				return nil, false, err
-			}
+			modelRequest.Model = getTaskOriginModelName(c)
 		}
 		if _, ok := c.Get("relay_mode"); !ok {
 			c.Set("relay_mode", relayMode)
@@ -534,33 +528,21 @@ func TokenModelLimitAllows(limit map[string]bool, model string) bool {
 // 当 token 启用「可用模型限制」时，下游 modelLimitEnable 校验会因
 // modelRequest.Model 为空而误报 "This token has no access to model"。
 // 从已存储的任务记录中回填 OriginModelName 即可让校验走在正确的模型上。
-func getTaskOriginModelName(c *gin.Context) (string, error) {
+func getTaskOriginModelName(c *gin.Context) string {
+	if !common.GetContextKeyBool(c, constant.ContextKeyTokenModelLimitEnabled) {
+		return ""
+	}
+
 	taskId := c.Param("task_id")
 	if taskId == "" {
-		taskId = c.GetString("task_id")
+		return ""
 	}
+
 	userId := c.GetInt("id")
-	if taskId == "" || userId <= 0 {
-		return "", errors.New("task_not_exist")
+	if task, exist, err := model.GetByTaskId(userId, taskId); err == nil && exist && task != nil {
+		return task.Properties.OriginModelName
 	}
-	task, exists, err := model.GetByTaskId(userId, taskId)
-	if err != nil {
-		return "", errors.New("get_task_failed")
-	}
-	if !exists || task == nil || !task.ResultRetrievable() {
-		return "", errors.New("task_not_exist")
-	}
-	// Retrieval must stay on the saved task's channel, even when model limits
-	// are disabled. A conflicting credential pin cannot select another provider.
-	if pin, pinned, _ := service.GetChannelConstraints(c).ResolvedPin(); pinned && pin.ChannelId != task.ChannelId {
-		return "", errors.New("task_channel_mismatch")
-	}
-	generation := jsplugin.DefaultRegistry.Generation()
-	if plugin, ok := generation.Get(string(task.Platform)); ok {
-		c.Set(jsplugin.ContextKeyPinnedPlugin, jsplugin.PinnedPlugin{Generation: generation, Plugin: plugin})
-		c.Set("expected_task_plugin_key", plugin.Meta.Key)
-	}
-	return task.Properties.OriginModelName, nil
+	return ""
 }
 
 func SetupContextForSelectedChannel(c *gin.Context, channel *model.Channel, modelName string) *types.NewAPIError {
