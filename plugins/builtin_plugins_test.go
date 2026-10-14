@@ -1,7 +1,11 @@
 package plugins
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -11,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var expectedKeys = []string{"alibaba", "doubao", "google", "hailuo", "jimeng", "kling", "sora", "sunoapi", "vertex-ai", "vidu", "xai"}
+var expectedKeys = []string{"alibaba", "doubao", "doubao-audio", "google", "hailuo", "jimeng", "kling", "sora", "sunoapi", "vertex-ai", "vidu", "xai"}
 
 func TestBuiltInVendorPluginsDeclareNativeRoutesAndLegacyChannelTypes(t *testing.T) {
 	generation := jsplugin.DefaultRegistry.Generation()
@@ -35,6 +39,8 @@ func TestBuiltInVendorPluginsDeclareNativeRoutesAndLegacyChannelTypes(t *testing
 		{"GET", "/suno/fetch/:task_id", "sunoapi", jsplugin.RouteTypeQuery, "", "renderTask"},
 		{"POST", "/doubao/api/v3/contents/generations/tasks", "doubao", jsplugin.RouteTypeSubmit, "", "taskCreated"},
 		{"GET", "/doubao/api/v3/contents/generations/tasks/:task_id", "doubao", jsplugin.RouteTypeQuery, "", "taskStatus"},
+		{"POST", "/doubao/audio/generations", "doubao-audio", jsplugin.RouteTypeSubmit, "", "renderTask"},
+		{"GET", "/doubao/audio/generations/:task_id", "doubao-audio", jsplugin.RouteTypeQuery, "", "renderTask"},
 		{"POST", "/doubao/api/v3/images/generations", "doubao", jsplugin.RouteTypeSubmit, "", "imageCreated"},
 		{"POST", "/xai/v1/videos/generations", "xai", jsplugin.RouteTypeSubmit, "", "videoCreated"},
 		{"POST", "/xai/v1/videos/edits", "xai", jsplugin.RouteTypeSubmit, "", "videoCreated"},
@@ -114,13 +120,20 @@ func TestBuiltInTaskPluginResponsesAndUsageContracts(t *testing.T) {
 				}
 			}
 			require.True(t, foundResponses, "openai_responses claim must be present")
-			assert.Equal(t, []string{"stream", "sync", "background"}, responsesClaim.Supports)
+			modes := []string{"stream", "sync", "background"}
+			hooks := []string{"decodeRequest", "renderEvents", "renderFinal"}
+			if key == "doubao-audio" {
+				modes = []string{"sync", "background"}
+				hooks = []string{"decodeRequest", "renderFinal"}
+				assert.Equal(t, []string{jsplugin.CapabilityLargeSubmitJSON}, plugin.Meta.RequiredCapabilities)
+			}
+			assert.Equal(t, modes, responsesClaim.Supports)
 			for _, model := range plugin.Meta.Models {
 				binding, claimed := registry.Generation().LookupEndpoint("POST", "/v1/responses", model)
 				require.True(t, claimed, model)
 				assert.Same(t, plugin, binding.Plugin)
 			}
-			for _, hook := range []string{"decodeRequest", "renderEvents", "renderFinal"} {
+			for _, hook := range hooks {
 				callable, callableErr := plugin.Engine.HasCallablePath(t.Context(), "protocols", "openai_responses", hook)
 				require.NoError(t, callableErr)
 				assert.True(t, callable, hook)
@@ -133,6 +146,44 @@ func TestBuiltInTaskPluginResponsesAndUsageContracts(t *testing.T) {
 				assert.NotEmpty(t, schema.Description, usageKey)
 			}
 		})
+	}
+}
+
+func TestPreservedInstalledPluginsMatchManifestAndCoexist(t *testing.T) {
+	data, err := os.ReadFile("../plugin-sources/manifest.json")
+	require.NoError(t, err)
+	var manifest struct {
+		Plugins []struct {
+			Key                  string `json:"key"`
+			Version              string `json:"version"`
+			Path                 string `json:"path"`
+			SHA256               string `json:"sha256"`
+			DatabaseSourceSHA256 string `json:"databaseSourceSha256"`
+		} `json:"plugins"`
+	}
+	require.NoError(t, common.Unmarshal(data, &manifest))
+	require.Len(t, manifest.Plugins, 8)
+	registry := jsplugin.NewRegistry()
+	for _, key := range expectedKeys {
+		source, err := Source(key)
+		require.NoError(t, err)
+		_, err = registry.RegisterFactory(source, jsplugin.Options{Key: key})
+		require.NoError(t, err)
+	}
+	for _, entry := range manifest.Plugins {
+		source, err := os.ReadFile(filepath.Join("../plugin-sources", entry.Path))
+		require.NoError(t, err, entry.Key)
+		require.Equal(t, entry.DatabaseSourceSHA256, entry.SHA256, entry.Key)
+		require.Equal(t, entry.SHA256, fmt.Sprintf("%x", sha256.Sum256(source)), entry.Key)
+		plugin, err := registry.Register(string(source), jsplugin.Options{})
+		require.NoError(t, err, entry.Key)
+		require.Equal(t, entry.Key, plugin.Meta.Key)
+		require.Equal(t, entry.Version, plugin.Meta.Version)
+	}
+	for _, entry := range manifest.Plugins {
+		plugin, found := registry.Generation().Get(entry.Key)
+		require.True(t, found, entry.Key)
+		assert.Equal(t, entry.Version, plugin.Meta.Version)
 	}
 }
 

@@ -1,0 +1,74 @@
+name: new-api-app
+
+# Application only. Existing postgres/redis and new-api-network are managed separately.
+services:
+  new-api:
+    image: tripscoder/new-api:deploy-0f38a14a5e8e
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: new-api-official
+    restart: always
+    command: ["--log-dir", "/app/logs"]
+    env_file:
+      - path: ${NEW_API_ENV_FILE:?Set NEW_API_ENV_FILE to an absolute path outside the repository}
+        required: true
+        format: raw
+    ports:
+      - "127.0.0.1:5000:3000"
+    volumes:
+      - type: bind
+        source: /home/ubuntu/code/new-api/data
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /home/ubuntu/code/new-api/logs
+        target: /app/logs
+        bind:
+          create_host_path: false
+    networks: [existing]
+    stop_grace_period: 150s
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:3000/api/status | grep -q '\"success\":[[:space:]]*true'"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 120s
+
+  gateway:
+    image: nginx:1.31.2-trixie-perl@sha256:2f141aa365a8cac585f5117026aa37a1ba0356fee588998da8afbed53289f4e6
+    container_name: new-api-gateway
+    restart: always
+    env_file:
+      - path: ${GATEWAY_ENV_FILE:?Set GATEWAY_ENV_FILE to the preserved Nginx settings outside Git}
+        required: true
+        format: raw
+    ports:
+      - "80:80"
+      # Existing deployment publishes 443 but has SSL disabled. No TLS listener is added here.
+      - "443:443"
+    volumes:
+      - type: bind
+        source: ./nginx/templates
+        target: /etc/nginx/templates
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./nginx/15-frontend-ssl.sh
+        target: /docker-entrypoint.d/15-frontend-ssl.sh
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      new-api:
+        condition: service_healthy
+    networks: [existing]
+    stop_signal: SIGQUIT
+    stop_grace_period: 660s
+
+networks:
+  existing:
+    external: true
+    name: new-api-network

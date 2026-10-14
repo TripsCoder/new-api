@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-13",
+  "repository": "https://github.com/TripsCoder/new-api",
+  "developmentBase": "8de42ad304b3013587553b837aff85c0bc7d2961",
+  "runtimeSourceBase": "c6741c36a9a1a729554ad94ee99f21602a214a23",
+  "runtimeImage": "new-api:yc-original-channel-20261012",
+  "runtimeImageId": "sha256:6298d223833c3dbf4a8ab265b49af5d2cfdf8049e076e45efe4cb24b4185a3bb",
+  "runtimeBinarySha256": "76c50fb3144db15c4b1e3344b515321a502b16ec4f16be7bf024feb43c4f4471",
+  "installation": "Manual upload through task plugin management. No automatic activation, channel creation, pricing, or data import.",
+  "plugins": [
+    {
+      "key": "artbox_media",
+      "version": "1.0.1",
+      "apiVersion": 1,
+      "path": "installed/artbox_media/plugin.js",
+      "sha256": "fe34f03094347afc6205989d7490f05da8118e5de936386e9752324a9ab51766",
+      "databaseSourceSha256": "fe34f03094347afc6205989d7490f05da8118e5de936386e9752324a9ab51766"
+    },
+    {
+      "key": "cangyuan_media",
+      "version": "1.0.1",
+      "apiVersion": 1,
+      "path": "installed/cangyuan_media/plugin.js",
+      "sha256": "3658d146e45da1c64f71377993fb09886dd6292a31a94cf4da29d14446062a41",
+      "databaseSourceSha256": "3658d146e45da1c64f71377993fb09886dd6292a31a94cf4da29d14446062a41"
+    },
+    {
+      "key": "lxmone_media",
+      "version": "1.0.1",
+      "apiVersion": 1,
+      "path": "installed/lxmone_media/plugin.js",
+      "sha256": "f8a10da6076d32104fae6f9c9f2a3621d20483b232dc0ba2974f322db811d4d9",
+      "databaseSourceSha256": "f8a10da6076d32104fae6f9c9f2a3621d20483b232dc0ba2974f322db811d4d9"
+    },
+    {
+      "key": "minimax-meta",
+      "version": "1.1.0",
+      "apiVersion": 1,
+      "path": "installed/minimax-meta/plugin.js",
+      "sha256": "4bfac32814942a8a8785330efed035fa68a3ad566cfcd7907bcbf223a85d0468",
+      "databaseSourceSha256": "4bfac32814942a8a8785330efed035fa68a3ad566cfcd7907bcbf223a85d0468"
+    },
+    {
+      "key": "paisio_media",
+      "version": "1.0.2",
+      "apiVersion": 1,
+      "path": "installed/paisio_media/plugin.js",
+      "sha256": "89b994f197d9d21152b823a02ac2c06f63abeadcb93e4e3dd5b99d350565cdac",
+      "databaseSourceSha256": "89b994f197d9d21152b823a02ac2c06f63abeadcb93e4e3dd5b99d350565cdac"
+    },
+    {
+      "key": "xcmapi_media",
+      "version": "1.0.1",
+      "apiVersion": 1,
+      "path": "installed/xcmapi_media/plugin.js",
+      "sha256": "cec4f31ee8d8e191d73d9a75948499d43d41a9cb46e45b0a0df0d8560797fcd2",
+      "databaseSourceSha256": "cec4f31ee8d8e191d73d9a75948499d43d41a9cb46e45b0a0df0d8560797fcd2"
+    },
+    {
+      "key": "yuxibox_media",
+      "version": "1.0.1",
+      "apiVersion": 1,
+      "path": "installed/yuxibox_media/plugin.js",
+      "sha256": "288d0d0688a267189b9b52b07501d3709645c7cd920de4fbd6d27117d4520dac",
+      "databaseSourceSha256": "288d0d0688a267189b9b52b07501d3709645c7cd920de4fbd6d27117d4520dac"
+    },
+    {
+      "key": "zhangyuge_media",
+      "version": "1.0.1",
+      "apiVersion": 1,
+      "path": "installed/zhangyuge_media/plugin.js",
+      "sha256": "69c561dff288a93897d972ce4eee383acfad064c32bcef5c58e0b2db399371a6",
+      "databaseSourceSha256": "69c561dff288a93897d972ce4eee383acfad064c32bcef5c58e0b2db399371a6"
+    }
+  ]
+}

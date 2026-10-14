@@ -102,6 +102,7 @@ const maxTaskArtifacts = 64
 
 // maxTaskPluginPersistedJSONBytes is the shared ceiling for taskData and plugin state.
 const maxTaskPluginPersistedJSONBytes = 1 << 20
+const maxTaskPluginLargeSubmitJSONBytes = 64 << 20
 
 type TaskAdaptor struct {
 	plugin         *pluginruntime.LoadedPlugin
@@ -509,8 +510,9 @@ func (a *TaskAdaptor) ParseResponse(c *gin.Context, resp *http.Response, info *r
 	streaming := a.submit != nil && a.submit.ResponseType == "sse"
 	mediaType, _, _ := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 	acceptedStream := streaming || mediaType == "text/event-stream"
+	largeSubmitJSON := slices.Contains(a.plugin.Meta.RequiredCapabilities, pluginruntime.CapabilityLargeSubmitJSON)
 	defer func() {
-		if acceptedStream && taskErr != nil {
+		if (acceptedStream || (largeSubmitJSON && resp.StatusCode >= 200 && resp.StatusCode < 300)) && taskErr != nil {
 			taskErr.NoRetry = true
 		}
 	}()
@@ -524,8 +526,12 @@ func (a *TaskAdaptor) ParseResponse(c *gin.Context, resp *http.Response, info *r
 		responseBody, err = a.readSubmitEvents(c.Request.Context(), resp, a.submitContext(c, info))
 	} else {
 		var body []byte
-		body, err = io.ReadAll(io.LimitReader(resp.Body, maxTaskPluginPersistedJSONBytes+1))
-		if err == nil && len(body) > maxTaskPluginPersistedJSONBytes {
+		limit := maxTaskPluginPersistedJSONBytes
+		if largeSubmitJSON {
+			limit = maxTaskPluginLargeSubmitJSONBytes
+		}
+		body, err = io.ReadAll(io.LimitReader(resp.Body, int64(limit)+1))
+		if err == nil && len(body) > limit {
 			err = fmt.Errorf("task submit response exceeds size limit")
 		}
 		responseBody = string(body)

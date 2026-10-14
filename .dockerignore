@@ -1,5 +1,13 @@
 .github
 .git
+.env
+.env.*
+**/.env
+**/.env.*
+*.env
+**/*.env
+**/*.env.*
+deploy
 *.md
 .vscode
 .gitignore
@@ -7,6 +15,9 @@ Makefile
 docs
 .eslintcache
 .gocache
+.local-tests
+.tmp
+.gomodcache
 /web/node_modules
 /web/dist
 !THIRD-PARTY-LICENSES.md
