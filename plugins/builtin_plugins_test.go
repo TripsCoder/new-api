@@ -215,7 +215,12 @@ func TestReviewedMediaCandidatesCompileAndCoexist(t *testing.T) {
 		plugin, err := registry.Register(string(source), jsplugin.Options{})
 		require.NoError(t, err, entry.Key)
 		require.Equal(t, entry.Key, plugin.Meta.Key)
-		require.Equal(t, "1.1.0", plugin.Meta.Version)
+		expectedVersion := "1.1.0"
+		if entry.Key == "lxmone_media" || entry.Key == "zhangyuge_media" {
+			expectedVersion = "1.1.1"
+		}
+		require.Equal(t, expectedVersion, entry.Version, entry.Key)
+		require.Equal(t, entry.Version, plugin.Meta.Version, entry.Key)
 		require.Len(t, plugin.Meta.Models, entry.Models)
 		require.Equal(t, entry.ModelDiscovery, plugin.Meta.ModelDiscovery != nil)
 		require.Contains(t, string(source), "// Documentation: https://")
@@ -225,7 +230,7 @@ func TestReviewedMediaCandidatesCompileAndCoexist(t *testing.T) {
 		}
 	}
 	require.Equal(t, 193, models)
-	require.Equal(t, 4, discoveries)
+	require.Equal(t, 6, discoveries)
 }
 
 func TestBuiltInResponsesDecodersEchoChannelMappedAlias(t *testing.T) {
