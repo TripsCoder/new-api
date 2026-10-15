@@ -1,0 +1,10 @@
+{
+  "verifiedAt": "2026-10-15T03:49:29.284Z",
+  "supersedes": "Only the lxmone_media/zhangyuge_media model-list limitations in the historical sources.lock.json review; generation and public API document sources are unchanged",
+  "scope": "Two authenticated read-only GETs to configured supplier origins; no generation, billing, automatic model import or enablement",
+  "sourceKind": "Authenticated upstream JSON model-list documents, not public API manuals. sourceSha256 is the original response-byte digest, only provenance; never compare it against or filter future dynamic lists",
+  "sources": [
+    {"plugin":"lxmone_media","sourceChannelId":12,"url":"https://lxmone.xyz/v1/models","method":"GET","format":"openai","status":200,"models":55,"sha256":"6d79f0ef64c305440c1df746143c4664ac6fa19579d7b5a046b7a9c78d4a0cc5","apiDocs":"https://lxmone.xyz/docs/"},
+    {"plugin":"zhangyuge_media","sourceChannelId":9,"url":"https://zexapi.com/v1/models","method":"GET","format":"openai","status":200,"models":35,"sha256":"a9d0307f562b927bde5cba38c3a604992cdfd8cfcc28ddaeae139eaf827105db","apiDocs":"https://6l0ket291i.apifox.cn/"}
+  ]
+}

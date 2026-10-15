@@ -3,20 +3,292 @@ package controller
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
+
+func TestTaskPluginDiscoveryVerifiedContract(t *testing.T) {
+	meta := jsplugin.Meta{APIVersion: 1, Key: "discovery-test", Name: "Discovery", Version: "1.0.0", Author: jsplugin.AuthorMeta{Name: "Test"}, Models: []string{"known"}, FetchMode: "per_task", ModelDiscovery: &jsplugin.ModelDiscovery{Path: "/v1/models", Format: "openai", SourceURL: "https://docs.example/models", SourceSHA256: strings.Repeat("a", 64)}}
+	require.NoError(t, jsplugin.ValidateV1Meta(meta))
+	for _, tc := range []struct {
+		name, body string
+		status     int
+		want       []string
+		fail       string
+	}{
+		{"real list", `{"data":[{"id":"known"},{"id":"new"},{"id":"known"}]}`, 200, []string{"known", "new"}, ""},
+		{"empty list", `{"data":[]}`, 200, []string{}, ""},
+		{"missing list", `{"error":"secret-fixture"}`, 200, nil, "invalid model list"},
+		{"malformed", `{"data":`, 200, nil, "invalid model list"},
+		{"unauthorized", `secret-fixture`, 401, nil, "HTTP 401"},
+		{"forbidden", `secret-fixture`, 403, nil, "HTTP 403"},
+		{"unavailable", `secret-fixture`, 503, nil, "HTTP 503"},
+		{"oversized", strings.Repeat("x", (1<<20)+1), 200, nil, "too large"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/v1/models", r.URL.Path)
+				assert.Equal(t, "Bearer secret-fixture", r.Header.Get("Authorization"))
+				assert.Empty(t, r.Header.Get(constant.ChannelSelectionHeader))
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer server.Close()
+			base := server.URL + "/v1/"
+			channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin, Key: "secret-fixture", BaseURL: &base}
+			ids, err := fetchTaskPluginUpstreamModels(channel, meta)
+			if tc.fail != "" {
+				require.ErrorContains(t, err, tc.fail)
+				assert.NotContains(t, err.Error(), "secret-fixture")
+				assert.Nil(t, ids)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.want, ids)
+			}
+			assert.Equal(t, 1, calls)
+		})
+	}
+	meta.ModelDiscovery = nil
+	_, err := fetchTaskPluginUpstreamModels(&model.Channel{}, meta)
+	require.ErrorContains(t, err, "no verified upstream model-list endpoint")
+}
+
+func TestTaskPluginDiscoveryRejectsRedirectAndUnsafeDeclarations(t *testing.T) {
+	meta := jsplugin.Meta{APIVersion: 1, Key: "discovery-test", Name: "Discovery", Version: "1.0.0", Author: jsplugin.AuthorMeta{Name: "Test"}, Models: []string{"known"}, FetchMode: "per_task", ModelDiscovery: &jsplugin.ModelDiscovery{Path: "/v1/models", Format: "openai", SourceURL: "https://docs.example/models", SourceSHA256: strings.Repeat("a", 64)}}
+	for _, path := range []string{"//attacker.example/models", "https://attacker.example/models", "/../models", "/v1/models?key=x", "/v1/%2e%2e/models", "/v1\\models", "/v1//models"} {
+		candidate := meta
+		discovery := *meta.ModelDiscovery
+		discovery.Path = path
+		candidate.ModelDiscovery = &discovery
+		require.Error(t, jsplugin.ValidateV1Meta(candidate), path)
+	}
+	targetCalls := 0
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { targetCalls++ }))
+	defer target.Close()
+	source := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, target.URL, 307) }))
+	defer source.Close()
+	channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin, Key: "secret-fixture", BaseURL: &source.URL}
+	_, err := fetchTaskPluginUpstreamModels(channel, meta)
+	require.ErrorContains(t, err, "HTTP 307")
+	assert.Zero(t, targetCalls)
+}
+
+func setupTaskPluginDiscoveryTestDB(t *testing.T) *gorm.DB {
+	t.Helper()
+	previousDB, previousLogDB := model.DB, model.LOG_DB
+	previousRegistry := jsplugin.DefaultRegistry
+	previousCache, previousRedis := common.MemoryCacheEnabled, common.RedisEnabled
+	previousMainType, previousLogType := common.MainDatabaseType(), common.LogDatabaseType()
+	t.Cleanup(func() {
+		model.DB, model.LOG_DB = previousDB, previousLogDB
+		jsplugin.DefaultRegistry = previousRegistry
+		common.MemoryCacheEnabled, common.RedisEnabled = previousCache, previousRedis
+		common.SetDatabaseTypes(previousMainType, previousLogType)
+	})
+	db := setupModelListControllerTestDB(t)
+	common.MemoryCacheEnabled = false
+	jsplugin.DefaultRegistry = jsplugin.NewRegistry()
+	require.NoError(t, db.AutoMigrate(&model.Log{}, &model.AuditLog{}))
+	return db
+}
+
+func taskPluginDiscoveryTestSource(t *testing.T, key string, models []string, path, digest string) string {
+	t.Helper()
+	meta := map[string]any{
+		"apiVersion": 1, "key": key, "name": "Discovery fixture", "version": "1.0.0",
+		"author": jsplugin.AuthorMeta{Name: "Test"}, "models": models, "fetchMode": "per_task",
+		"modelDiscovery": jsplugin.ModelDiscovery{Path: path, Format: "openai", SourceURL: "https://docs.example" + path, SourceSHA256: digest},
+	}
+	encoded, err := common.Marshal(meta)
+	require.NoError(t, err)
+	return "export const meta = " + string(encoded) + `;
+export function buildSubmitRequest() { return {}; }
+export function parseSubmitResponse() { return {}; }
+export function buildQueryRequest() { return {}; }
+export function parseTaskResult() { return {}; }
+`
+}
+
+func TestTaskPluginDiscoveryRejectsBlankKeyWithoutRequest(t *testing.T) {
+	meta := jsplugin.Meta{APIVersion: 1, Key: "discovery-test", Name: "Discovery", Version: "1.0.0", Author: jsplugin.AuthorMeta{Name: "Test"}, Models: []string{"known"}, FetchMode: "per_task", ModelDiscovery: &jsplugin.ModelDiscovery{Path: "/v1/models", Format: "openai", SourceURL: "https://docs.example/models", SourceSHA256: strings.Repeat("a", 64)}}
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		_, _ = w.Write([]byte(`{"data":[{"id":"known"}]}`))
+	}))
+	defer server.Close()
+	for _, key := range []string{"", " \t\r\n "} {
+		channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin, Key: key, BaseURL: &server.URL}
+		ids, err := fetchTaskPluginUpstreamModels(channel, meta)
+		require.EqualError(t, err, "No enabled channel key is available for model discovery")
+		assert.Nil(t, ids)
+	}
+	assert.Zero(t, calls)
+}
+
+func TestTaskPluginDiscoveryHTTPUsesOneSnapshot(t *testing.T) {
+	for _, saved := range []bool{false, true} {
+		t.Run(fmt.Sprintf("saved=%t", saved), func(t *testing.T) {
+			db := setupTaskPluginDiscoveryTestDB(t)
+			const pluginKey = "discovery-snapshot"
+			oldHash, newHash := strings.Repeat("a", 64), strings.Repeat("b", 64)
+			oldSource := taskPluginDiscoveryTestSource(t, pluginKey, []string{"known"}, "/v1/models", oldHash)
+			newSource := taskPluginDiscoveryTestSource(t, pluginKey, []string{"new"}, "/v2/models", newHash)
+			_, err := jsplugin.DefaultRegistry.Register(oldSource, jsplugin.Options{})
+			require.NoError(t, err)
+			reloaded := make(chan error, 1)
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/v1/models", r.URL.Path)
+				_, err := jsplugin.DefaultRegistry.Register(newSource, jsplugin.Options{})
+				reloaded <- err
+				_, _ = w.Write([]byte(`{"data":[{"id":"known"},{"id":"new"}]}`))
+			}))
+			defer server.Close()
+			recorder := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(recorder)
+			if saved {
+				channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin, Key: "fixture", BaseURL: &server.URL, Models: "known"}
+				channel.SetSetting(dto.ChannelSettings{TaskPluginKey: pluginKey})
+				require.NoError(t, db.Create(channel).Error)
+				ctx.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+				ctx.Request = httptest.NewRequest(http.MethodGet, "/api/channel/fetch_models/"+fmt.Sprint(channel.Id), nil)
+				FetchUpstreamModels(ctx)
+			} else {
+				body, err := common.Marshal(map[string]any{"type": constant.ChannelTypeTaskPlugin, "key": "fixture", "base_url": server.URL, "task_plugin_key": pluginKey})
+				require.NoError(t, err)
+				ctx.Request = httptest.NewRequest(http.MethodPost, "/api/channel/fetch_models", bytes.NewReader(body))
+				ctx.Request.Header.Set("Content-Type", "application/json")
+				FetchModels(ctx)
+			}
+			select {
+			case err := <-reloaded:
+				require.NoError(t, err)
+			default:
+				t.Fatalf("discovery did not reach the upstream fixture: %s", recorder.Body.String())
+			}
+			var response struct {
+				Success   bool     `json:"success"`
+				Data      []string `json:"data"`
+				Discovery struct {
+					SourceURL    string `json:"source_url"`
+					SourceSHA256 string `json:"source_sha256"`
+					Models       []struct {
+						ID         string `json:"id"`
+						Adapted    bool   `json:"adapted"`
+						Configured bool   `json:"configured"`
+					} `json:"models"`
+				} `json:"discovery"`
+			}
+			require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+			require.True(t, response.Success, recorder.Body.String())
+			assert.Equal(t, []string{"known", "new"}, response.Data)
+			assert.Equal(t, "https://docs.example/v1/models", response.Discovery.SourceURL)
+			assert.Equal(t, oldHash, response.Discovery.SourceSHA256)
+			require.Len(t, response.Discovery.Models, 2)
+			assert.True(t, response.Discovery.Models[0].Adapted)
+			assert.Equal(t, saved, response.Discovery.Models[0].Configured)
+			assert.False(t, response.Discovery.Models[1].Adapted)
+			active, ok := jsplugin.DefaultRegistry.Get(pluginKey)
+			require.True(t, ok)
+			assert.Equal(t, newHash, active.Meta.ModelDiscovery.SourceSHA256)
+		})
+	}
+}
+
+func TestTaskPluginUpstreamApplyKeepsUnadaptedModelsPending(t *testing.T) {
+	for _, applyAll := range []bool{false, true} {
+		t.Run(fmt.Sprintf("apply_all=%t", applyAll), func(t *testing.T) {
+			db := setupTaskPluginDiscoveryTestDB(t)
+			const pluginKey = "discovery-apply"
+			source := taskPluginDiscoveryTestSource(t, pluginKey, []string{"known", "mapped", "chain-target", "redirected"}, "/v1/models", strings.Repeat("a", 64))
+			_, err := jsplugin.DefaultRegistry.Register(source, jsplugin.Options{})
+			require.NoError(t, err)
+			foreignSource := taskPluginDiscoveryTestSource(t, "discovery-other", []string{"foreign"}, "/v1/models", strings.Repeat("b", 64))
+			_, err = jsplugin.DefaultRegistry.Register(foreignSource, jsplugin.Options{})
+			require.NoError(t, err)
+			mapping := `{"alias":"mapped","chain":"hop","hop":"chain-target","redirected":"unsupported","cycle":"cycle2","cycle2":"cycle"}`
+			pending := []string{"known", "alias", "chain", "new", "foreign", "Known", "redirected", "cycle", "legacy"}
+			wantAdded := []string{"known", "alias", "chain", "legacy"}
+			wantRemaining := []string{"new", "foreign", "Known", "redirected", "cycle"}
+			channels := []*model.Channel{
+				{Type: constant.ChannelTypeTaskPlugin, Name: "bound plugin", Models: "legacy", ModelMapping: &mapping},
+				{Type: constant.ChannelTypeTaskPlugin, Name: "missing plugin", Models: "legacy"},
+				{Type: constant.ChannelTypeOpenAI, Name: "ordinary channel", Models: "legacy"},
+			}
+			for i, channel := range channels {
+				channel.Status, channel.Group = common.ChannelStatusEnabled, "default"
+				key := pluginKey
+				if i == 1 {
+					key = "missing-plugin"
+				}
+				channel.SetSetting(dto.ChannelSettings{TaskPluginKey: key})
+				channel.SetOtherSettings(dto.ChannelOtherSettings{UpstreamModelUpdateCheckEnabled: true, UpstreamModelUpdateLastDetectedModels: pending})
+				require.NoError(t, db.Create(channel).Error)
+			}
+			if applyAll {
+				recorder := httptest.NewRecorder()
+				ctx, _ := gin.CreateTestContext(recorder)
+				ctx.Request = httptest.NewRequest(http.MethodPost, "/api/channel/upstream-models/apply-all", nil)
+				ApplyAllChannelUpstreamModelUpdates(ctx)
+				var response struct {
+					Success bool `json:"success"`
+					Data    struct {
+						Failed  []int                                       `json:"failed_channel_ids"`
+						Results []applyAllChannelUpstreamModelUpdatesResult `json:"results"`
+					} `json:"data"`
+				}
+				require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+				require.True(t, response.Success, recorder.Body.String())
+				assert.Empty(t, response.Data.Failed)
+				require.Len(t, response.Data.Results, 3)
+				assert.Equal(t, wantAdded, response.Data.Results[0].AddedModels)
+				assert.Equal(t, wantRemaining, response.Data.Results[0].RemainingModels)
+			} else {
+				for i, channel := range channels {
+					added, _, remaining, _, _, err := applyChannelUpstreamModelUpdates(channel, pending, nil, nil)
+					require.NoError(t, err)
+					if i == 0 {
+						assert.Equal(t, wantAdded, added)
+						assert.Equal(t, wantRemaining, remaining)
+					}
+				}
+			}
+			for i, channel := range channels {
+				saved, err := model.GetChannelById(channel.Id, true)
+				require.NoError(t, err)
+				switch i {
+				case 0:
+					assert.Equal(t, []string{"legacy", "known", "alias", "chain"}, saved.GetModels())
+					assert.Equal(t, wantRemaining, saved.GetOtherSettings().UpstreamModelUpdateLastDetectedModels)
+				case 1:
+					assert.Equal(t, "legacy", saved.Models)
+					assert.Equal(t, pending[:len(pending)-1], saved.GetOtherSettings().UpstreamModelUpdateLastDetectedModels)
+				case 2:
+					assert.ElementsMatch(t, pending, saved.GetModels())
+					assert.Empty(t, saved.GetOtherSettings().UpstreamModelUpdateLastDetectedModels)
+				}
+			}
+		})
+	}
+}
 
 func newAdvancedCustomModelListChannel(baseURL string, key string, upstreamPath string, auth *dto.AdvancedCustomRouteAuth) *model.Channel {
 	config := &dto.AdvancedCustomConfig{
@@ -396,6 +668,7 @@ func TestFetchModelsUsesSharedChannelFetchBehavior(t *testing.T) {
 }
 
 func TestFetchNewAPIModelsUsesOpenAIContract(t *testing.T) {
+	db := setupTaskPluginDiscoveryTestDB(t)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/v1/models", r.URL.Path)
 		assert.Equal(t, "Bearer new-api-key", r.Header.Get("Authorization"))
@@ -416,6 +689,13 @@ func TestFetchNewAPIModelsUsesOpenAIContract(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, []string{"gpt-5", "gpt-5-mini"}, models)
+	require.NoError(t, db.Create(channel).Error)
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/channel/fetch_models/"+fmt.Sprint(channel.Id), nil)
+	FetchUpstreamModels(ctx)
+	assert.JSONEq(t, `{"success":true,"message":"","data":["gpt-5","gpt-5-mini"]}`, recorder.Body.String())
 }
 
 func TestNormalizeModelNames(t *testing.T) {

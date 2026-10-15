@@ -22,6 +22,7 @@ import (
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	builtinplugins "github.com/QuantumNous/new-api/plugins"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
@@ -1994,6 +1995,327 @@ func TestPrepareTaskPluginEndpointFiltersEachSharedCandidate(t *testing.T) {
 			} else {
 				assert.Equal(t, http.StatusNoContent, recorder.Code, recorder.Body.String())
 				assert.Equal(t, tc.wantKeys, gotKeys)
+			}
+		})
+	}
+}
+
+func TestRequestedChannelHeaderValidation(t *testing.T) {
+	require.NoError(t, appI18n.Init())
+	for _, tc := range []struct {
+		name    string
+		headers http.Header
+		parts   []string
+		wantID  int
+		invalid bool
+	}{
+		{name: "absent preserves ordinary routing"},
+		{name: "one channel", headers: http.Header{constant.ChannelSelectionHeader: {"12"}}, wantID: 12},
+		{name: "lowercase header", headers: http.Header{strings.ToLower(constant.ChannelSelectionHeader): {"12"}}, wantID: 12},
+		{name: "empty", headers: http.Header{constant.ChannelSelectionHeader: {""}}, invalid: true},
+		{name: "empty values", headers: http.Header{constant.ChannelSelectionHeader: nil}, invalid: true},
+		{name: "duplicate", headers: http.Header{constant.ChannelSelectionHeader: {"12", "12"}}, invalid: true},
+		{name: "mixed casing duplicate", headers: http.Header{constant.ChannelSelectionHeader: {"12"}, strings.ToLower(constant.ChannelSelectionHeader): {"13"}}, invalid: true},
+		{name: "comma separated", headers: http.Header{constant.ChannelSelectionHeader: {"12,13"}}, invalid: true},
+		{name: "negative", headers: http.Header{constant.ChannelSelectionHeader: {"-12"}}, invalid: true},
+		{name: "zero", headers: http.Header{constant.ChannelSelectionHeader: {"0"}}, invalid: true},
+		{name: "leading zero", headers: http.Header{constant.ChannelSelectionHeader: {"012"}}, invalid: true},
+		{name: "plus sign", headers: http.Header{constant.ChannelSelectionHeader: {"+12"}}, invalid: true},
+		{name: "whitespace", headers: http.Header{constant.ChannelSelectionHeader: {" 12 "}}, invalid: true},
+		{name: "non decimal", headers: http.Header{constant.ChannelSelectionHeader: {"1e2"}}, invalid: true},
+		{name: "overflow", headers: http.Header{constant.ChannelSelectionHeader: {"18446744073709551616"}}, invalid: true},
+		{name: "legacy pin same channel", headers: http.Header{constant.ChannelSelectionHeader: {"12"}}, parts: []string{"unused", "12"}, invalid: true},
+		{name: "legacy pin different channel", headers: http.Header{constant.ChannelSelectionHeader: {"12"}}, parts: []string{"unused", "13"}, invalid: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", nil)
+			for name, values := range tc.headers {
+				c.Request.Header[name] = values
+			}
+			token := &model.Token{Id: 1, UserId: 1, Group: "default"}
+			err := SetupContextForToken(c, token, tc.parts...)
+			if tc.invalid {
+				require.Error(t, err)
+				assert.True(t, c.IsAborted())
+				assert.Equal(t, http.StatusBadRequest, recorder.Code)
+			} else {
+				require.NoError(t, err)
+				assert.False(t, c.IsAborted())
+			}
+			assert.Equal(t, tc.wantID, service.GetChannelConstraints(c).RequestedChannelID)
+			for name := range c.Request.Header {
+				assert.False(t, strings.EqualFold(name, constant.ChannelSelectionHeader), "selection header must not reach upstream")
+			}
+		})
+	}
+}
+
+func TestRequestedChannelEndpointIsolation(t *testing.T) {
+	require.NoError(t, appI18n.Init())
+	setupTaskPluginRouteDB(t)
+	require.NoError(t, model.DB.AutoMigrate(&model.Channel{}, &model.Ability{}))
+	previousCache := common.MemoryCacheEnabled
+	previousRatio := ratio_setting.GroupRatio2JSONString()
+	previousLogDB, previousLogType := model.LOG_DB, common.LogDatabaseType()
+	previousMaster := common.IsMasterNode
+	common.MemoryCacheEnabled = false
+	common.IsMasterNode = false
+	t.Setenv("LOG_SQL_DSN", "")
+	t.Cleanup(func() {
+		common.MemoryCacheEnabled = previousCache
+		common.IsMasterNode = previousMaster
+		model.LOG_DB = previousLogDB
+		common.SetLogDatabaseType(previousLogType)
+		require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(previousRatio))
+	})
+	// Initialize the host's quoted SQL identifiers against the already-open
+	// in-memory DB, without startup migrations or any external connection.
+	require.NoError(t, model.InitLogDB())
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1}`))
+
+	var decoded []string
+	for _, spec := range []struct {
+		key, models, supports, hooks string
+	}{
+		{"requested-alpha", `["requested-shared","requested-a"]`, `["stream"]`, `renderEvents: function() { return {events: [], done: false}; }`},
+		{"requested-beta", `["requested-shared","requested-b"]`, `["stream","sync"]`, `renderEvents: function() { return {events: [], done: false}; }, renderFinal: function() { return {}; }`},
+	} {
+		source := taskResponsesPluginSource(spec.key, 0, spec.models, spec.supports, spec.hooks,
+			fmt.Sprintf(`console.log(%q); return {model: ctx.model, action: %q, requestBody: {upstreamModel: ctx.upstreamModel}};`, spec.key, spec.key))
+		source = strings.Replace(source, `fetchMode: "per_task",`, `fetchMode: "per_task", upstreams: ["new_api"],`, 1)
+		_, err := jsplugin.DefaultRegistry.Register(source, jsplugin.Options{Log: func(string) { decoded = append(decoded, spec.key) }})
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, jsplugin.DefaultRegistry.Unregister(spec.key)) })
+	}
+	for _, spec := range []struct {
+		id, channelType, status  int
+		group, settings, mapping string
+	}{
+		{1, constant.ChannelTypeTaskPlugin, common.ChannelStatusEnabled, "default", `{"task_plugin_key":"requested-alpha"}`, `{"requested-alias":"requested-a"}`},
+		{2, constant.ChannelTypeTaskPlugin, common.ChannelStatusEnabled, "default", `{"task_plugin_key":"requested-beta"}`, `{"requested-alias":"requested-b"}`},
+		{3, constant.ChannelTypeOpenAI, common.ChannelStatusEnabled, "default", `{}`, `{}`},
+		{4, constant.ChannelTypeNewAPI, common.ChannelStatusEnabled, "default", `{"task_extend_plugin_keys":["requested-alpha","requested-beta"]}`, `{}`},
+		{5, constant.ChannelTypeTaskPlugin, common.ChannelStatusEnabled, "private", `{"task_plugin_key":"requested-beta"}`, `{}`},
+		{6, constant.ChannelTypeTaskPlugin, common.ChannelStatusManuallyDisabled, "default", `{"task_plugin_key":"requested-beta"}`, `{}`},
+	} {
+		channel := &model.Channel{Id: spec.id, Type: spec.channelType, Status: spec.status, Group: spec.group,
+			Name: fmt.Sprintf("requested-%d", spec.id), Models: "requested-shared,requested-alias", Setting: &spec.settings, ModelMapping: &spec.mapping}
+		require.NoError(t, model.DB.Create(channel).Error)
+		for _, name := range []string{"requested-shared", "requested-alias"} {
+			require.NoError(t, model.DB.Create(&model.Ability{ChannelId: spec.id, Group: spec.group, Model: name, Enabled: true}).Error)
+		}
+	}
+
+	for _, tc := range []struct {
+		name, header, body, limit, wantPlugin, wantMapped, wantError string
+		wantStatus                                                   int
+		wantDecoded                                                  []string
+	}{
+		{name: "same ordinary token selects first provider", header: "1", wantStatus: http.StatusNoContent, wantPlugin: "requested-alpha", wantDecoded: []string{"requested-alpha"}},
+		{name: "same ordinary token selects second provider", header: "2", wantStatus: http.StatusNoContent, wantPlugin: "requested-beta", wantDecoded: []string{"requested-beta"}},
+		{name: "native channel bypasses unrelated same name plugins", header: "3", wantStatus: http.StatusNoContent},
+		{name: "ambiguous gateway bindings fail before decode", header: "4", wantStatus: http.StatusBadRequest, wantError: "ambiguous plugin bindings"},
+		{name: "group access denied", header: "5", wantStatus: http.StatusForbidden, wantError: "The requested channel is unavailable for this request"},
+		{name: "disabled channel denied", header: "6", wantStatus: http.StatusForbidden, wantError: "The requested channel is unavailable for this request"},
+		{name: "missing channel denied", header: "99", wantStatus: http.StatusForbidden, wantError: "The requested channel is unavailable for this request"},
+		{name: "token model access denied", header: "2", limit: "another-model", wantStatus: http.StatusForbidden, wantError: "The requested channel is unavailable for this request"},
+		{name: "selected provider mode cannot fall back", header: "1", body: `{"model":"requested-shared"}`, wantStatus: http.StatusBadRequest, wantError: "Synchronous non-streaming requests are not supported"},
+		{name: "first channel alias ignores other channel mapping", header: "1", body: `{"model":"requested-alias","stream":true}`, wantStatus: http.StatusNoContent, wantPlugin: "requested-alpha", wantMapped: "requested-a", wantDecoded: []string{"requested-alpha"}},
+		{name: "second channel alias ignores other channel mapping", header: "2", body: `{"model":"requested-alias","stream":true}`, wantStatus: http.StatusNoContent, wantPlugin: "requested-beta", wantMapped: "requested-b", wantDecoded: []string{"requested-beta"}},
+		{name: "no header preserves shared candidate decoding", wantStatus: http.StatusNoContent, wantPlugin: "requested-alpha", wantDecoded: []string{"requested-alpha", "requested-beta"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			decoded = nil
+			reached := false
+			router := gin.New()
+			router.POST("/v1/responses", func(c *gin.Context) {
+				// TokenAuth supplies these after native authentication; use no real
+				// credential or provider request in this middleware regression.
+				token := &model.Token{Id: 1, UserId: 1, Group: "default", ModelLimitsEnabled: tc.limit != "", ModelLimits: tc.limit}
+				if err := SetupContextForToken(c, token); err != nil {
+					return
+				}
+				common.SetContextKey(c, constant.ContextKeyUserGroup, "default")
+				common.SetContextKey(c, constant.ContextKeyUsingGroup, "default")
+				c.Next()
+			}, PinTaskPluginEndpoint(), PrepareTaskPluginEndpoint(), func(c *gin.Context) {
+				reached = true
+				assert.Empty(t, c.Request.Header.Get(constant.ChannelSelectionHeader))
+				value, claimed := c.Get(jsplugin.ContextKeyPinnedEndpoint)
+				if tc.wantPlugin == "" {
+					assert.False(t, claimed)
+				} else {
+					require.True(t, claimed)
+					pinned := value.(jsplugin.PinnedEndpoint)
+					assert.Equal(t, tc.wantPlugin, pinned.Plugin.Meta.Key)
+					assert.Equal(t, tc.wantPlugin, c.GetString("task_action"))
+					assert.Equal(t, tc.wantMapped, pinned.MappedModel)
+					if tc.header != "" {
+						assert.Len(t, pinned.Candidates, 1)
+						selected, _, selectErr := service.SelectChannelForRequest(c, pinned.Model, &service.RetryParam{Ctx: c, ModelName: pinned.Model, TokenGroup: "default"})
+						require.Nil(t, selectErr)
+						require.NotNil(t, selected)
+						assert.Equal(t, tc.header, fmt.Sprint(selected.Id))
+					}
+				}
+				c.Status(http.StatusNoContent)
+			})
+			body := tc.body
+			if body == "" {
+				body = `{"model":"requested-shared","stream":true}`
+			}
+			request := httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(body))
+			request.Header.Set("Content-Type", "application/json")
+			if tc.header != "" {
+				request.Header.Set(constant.ChannelSelectionHeader, tc.header)
+			}
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, request)
+			assert.Equal(t, tc.wantStatus, recorder.Code, recorder.Body.String())
+			assert.Equal(t, tc.wantStatus == http.StatusNoContent, reached)
+			assert.Equal(t, tc.wantDecoded, decoded)
+			if tc.wantError != "" {
+				assert.Contains(t, recorder.Body.String(), tc.wantError)
+			}
+		})
+	}
+}
+
+func TestRequestedChannelBulkQueryChecksAllTasksBeforeRendering(t *testing.T) {
+	require.NoError(t, appI18n.Init())
+	setupTaskPluginRouteDB(t)
+	require.NoError(t, model.DB.AutoMigrate(&model.Channel{}))
+	previousCache := common.MemoryCacheEnabled
+	common.MemoryCacheEnabled = false
+	t.Cleanup(func() { common.MemoryCacheEnabled = previousCache })
+	var rendered []string
+	plugin, err := jsplugin.CompilePlugin(`
+export const meta = {
+  apiVersion: 1, key: "requested-bulk-query", name: "Query", version: "1.0.0", author: {name: "Test"},
+  models: ["query-model"], fetchMode: "per_task",
+  routes: [{method: "POST", path: "/vendor/requested-query", type: "dynamic", decode: "decodeQuery", render: "renderQuery"}],
+};
+export const native = {
+  decodeQuery: function(ctx) { return {kind: "query", taskIds: ctx.body.value.ids}; },
+  renderQuery: function(ctx, tasks) { console.log("renderQuery"); return {ids: tasks.map(function(task) { return task.task_id; })}; },
+};
+export function buildSubmitRequest() { return {}; }
+export function parseSubmitResponse() { return {taskId: "one"}; }
+export function buildQueryRequest() { return {}; }
+export function parseTaskResult() { return {status: "SUCCESS"}; }
+`, jsplugin.Options{Log: func(message string) { rendered = append(rendered, message) }})
+	require.NoError(t, err)
+	settings := `{"task_plugin_key":"requested-bulk-query"}`
+	require.NoError(t, model.DB.Create(&model.Channel{
+		Id: 1, Type: constant.ChannelTypeTaskPlugin, Status: common.ChannelStatusEnabled, Setting: &settings,
+	}).Error)
+	for _, task := range []model.Task{
+		{TaskID: "bulk-first", ChannelId: 1},
+		{TaskID: "bulk-same", ChannelId: 1},
+		{TaskID: "bulk-other", ChannelId: 2},
+	} {
+		task.UserId, task.Platform, task.Status = 7, constant.TaskPlatform(plugin.Meta.Key), model.TaskStatusSuccess
+		insertTaskPluginRouteTask(t, &task)
+	}
+	for _, tc := range []struct {
+		name, second, firstData string
+		wantStatus              int
+		channelDisabled         bool
+	}{
+		{"same channel control", "bulk-same", `{}`, http.StatusOK, false},
+		{"second owned task has other channel", "bulk-other", `{}`, http.StatusBadRequest, false},
+		{"reject whole batch before projecting first task", "bulk-other", `{`, http.StatusBadRequest, false},
+		{"historical query permits disabled channel", "bulk-same", `{}`, http.StatusOK, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NoError(t, model.DB.Model(&model.Task{}).Where("task_id = ?", "bulk-first").Update("data", []byte(tc.firstData)).Error)
+			if tc.channelDisabled {
+				require.NoError(t, model.DB.Model(&model.Channel{}).Where("id = ?", 1).Update("status", common.ChannelStatusManuallyDisabled).Error)
+			}
+			rendered = nil
+			nextHandlerCalled := false
+			router := gin.New()
+			router.POST("/vendor/requested-query", func(c *gin.Context) {
+				if SetupContextForToken(c, &model.Token{Id: 1, UserId: 7, Group: "default"}) == nil {
+					c.Next()
+				}
+			}, pinTaskPluginRoute(plugin, 0), PrepareTaskPluginRoute(), func(c *gin.Context) {
+				nextHandlerCalled = true
+				c.Status(http.StatusTeapot)
+			})
+			request := httptest.NewRequest(http.MethodPost, "/vendor/requested-query", strings.NewReader(fmt.Sprintf(`{"ids":["bulk-first",%q]}`, tc.second)))
+			request.Header.Set("Content-Type", "application/json")
+			request.Header.Set(constant.ChannelSelectionHeader, "1")
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, request)
+			assert.Equal(t, tc.wantStatus, recorder.Code, recorder.Body.String())
+			assert.False(t, nextHandlerCalled)
+			assert.Empty(t, request.Header.Get(constant.ChannelSelectionHeader))
+			if tc.wantStatus == http.StatusOK {
+				assert.Len(t, rendered, 1, "control proves the renderer observation is active")
+				assert.JSONEq(t, `{"ids":["bulk-first","bulk-same"]}`, recorder.Body.String())
+			} else {
+				assert.Empty(t, rendered, "no task-result renderer may run for a partially authorized batch")
+				assert.Contains(t, recorder.Body.String(), appI18n.Translate("", appI18n.MsgRequestedTaskChannelMismatch))
+				assert.NotContains(t, recorder.Body.String(), "bulk-first")
+				assert.NotContains(t, recorder.Body.String(), "bulk-other")
+			}
+		})
+	}
+}
+
+func TestRequestedChannelRemixUsesOwnedOriginModel(t *testing.T) {
+	require.NoError(t, appI18n.Init())
+	setupTaskPluginRouteDB(t)
+	for _, task := range []*model.Task{
+		{TaskID: "remix-origin", UserId: 1, ChannelId: 1, Properties: model.Properties{OriginModelName: "requested-video", UpstreamModelName: "not-the-origin"}},
+		{TaskID: "remix-upstream", UserId: 1, ChannelId: 1, Properties: model.Properties{UpstreamModelName: "requested-video"}},
+		{TaskID: "remix-data", UserId: 1, ChannelId: 1, Data: json.RawMessage(`{"model":"requested-video"}`)},
+		{TaskID: "remix-foreign", UserId: 2, ChannelId: 1, Properties: model.Properties{OriginModelName: "requested-video"}},
+		{TaskID: "remix-empty", UserId: 1, ChannelId: 1},
+	} {
+		insertTaskPluginRouteTask(t, task)
+	}
+	for _, tc := range []struct {
+		name, param, taskID string
+		allowed             bool
+	}{
+		{"origin model through task_id", "task_id", "remix-origin", true},
+		{"origin model through video_id", "video_id", "remix-origin", true},
+		{"upstream model fallback", "video_id", "remix-upstream", true},
+		{"stored result model fallback", "video_id", "remix-data", true},
+		{"another user's task cannot authorize model", "video_id", "remix-foreign", false},
+		{"unknown task cannot authorize model", "video_id", "remix-missing", false},
+		{"missing origin model cannot use submitted model", "video_id", "remix-empty", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			reached := false
+			router := gin.New()
+			router.POST("/v1/videos/:"+tc.param+"/remix", func(c *gin.Context) {
+				token := &model.Token{Id: 1, UserId: 1, Group: "default", ModelLimitsEnabled: true, ModelLimits: "requested-video"}
+				if err := SetupContextForToken(c, token); err != nil {
+					return
+				}
+				common.SetContextKey(c, constant.ContextKeyUserGroup, "default")
+				common.SetContextKey(c, constant.ContextKeyUsingGroup, "default")
+				c.Next()
+			}, Distribute(), func(c *gin.Context) {
+				reached = true
+				assert.Equal(t, "requested-video", c.GetString("original_model"))
+				c.Status(http.StatusNoContent)
+			})
+			request := httptest.NewRequest(http.MethodPost, "/v1/videos/"+tc.taskID+"/remix", strings.NewReader(`{"model":"requested-video","prompt":"a variation"}`))
+			request.Header.Set("Content-Type", "application/json")
+			request.Header.Set(constant.ChannelSelectionHeader, "1")
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, request)
+			assert.Equal(t, tc.allowed, reached, recorder.Body.String())
+			if tc.allowed {
+				assert.Equal(t, http.StatusNoContent, recorder.Code)
+			} else {
+				assert.Equal(t, http.StatusForbidden, recorder.Code)
 			}
 		})
 	}

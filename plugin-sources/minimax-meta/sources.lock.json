@@ -1,0 +1,31 @@
+{
+  "reviewedOn": "2026-10-15",
+  "candidate": { "key": "minimax-meta", "version": "1.2.0", "models": ["MiniMax-H3"] },
+  "official": {
+    "guideUrl": "https://metaso.cn/minimax-h3/new-api-guide",
+    "downloadUrl": "https://metaso.cn/minimax-h3/new-api-guide/minimax-h3-metaso.plugin.js",
+    "snapshot": "../installed/minimax-meta/plugin.js",
+    "version": "1.1.0",
+    "sha256": "4bfac32814942a8a8785330efed035fa68a3ad566cfcd7907bcbf223a85d0468",
+    "verification": "Root task compared the public download, the supplied file and the installed source snapshot; all three hashes match"
+  },
+  "yingce": {
+    "repository": "https://github.com/ddcat-ai/open-ai-canvas",
+    "release": "v1.6.8.3",
+    "commit": "f368e63090534bcc1af354406c3d938a819fbfca",
+    "manifestPath": "plugin-packages/metaso-h3/manifest.json",
+    "manifestGitBlobSha256": "0da1c0b01dd552a44c348d69b94d9dad74549b65691b17619b20d28dd528f73c",
+    "interfacePath": "plugin-packages/metaso-h3/docs/interface.md",
+    "capabilityDefaultsPath": "backend/internal/app/model_capability_defaults.go",
+    "capabilityDefaultsWebPath": "web/src/lib/model-capabilities.ts"
+  },
+  "decisions": [
+    "2026-10-15: user confirmed Metaso added 30-second generation and authorized conversion using the pinned Yingce protocol source",
+    "The published 1.1.0 plugin and guide still restrict duration to 4-15; 4-30 comes from the pinned Yingce source and user confirmation, not a claim that the public plugin changed",
+    "Keep plugin key minimax-meta and model MiniMax-H3 only; do not introduce H3-Max",
+    "Keep existing output, polling, reservation and completion usage fields; no prices or new billing facts",
+    "profiles.json is the conservative host integration declaration: image references only; video/audio references and additional billing configuration are not automatically enabled",
+    "No verified upstream model-list endpoint; modelDiscovery is intentionally absent"
+  ],
+  "verificationScope": "Offline Node 14/14, existing new-api image plugin lint and real Go-engine fixture 6/6, plus juhefuwu-generated request bridge 4/4 passed; no supplier credentials, paid generation, runtime installation or business database writes"
+}

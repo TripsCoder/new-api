@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -8,6 +9,25 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
 )
+
+// ResolveTaskModelForChannel resolves only the explicitly authorized channel's
+// mapping. Cross-channel alias aggregation must not choose a different supplier.
+func ResolveTaskModelForChannel(g *jsplugin.RoutingGeneration, channel *Channel, name string) (string, error) {
+	modelMap := map[string]string{}
+	if mapping := channel.GetModelMapping(); mapping != "" {
+		if err := common.UnmarshalJsonStr(mapping, &modelMap); err != nil {
+			return "", err
+		}
+	}
+	target, cyclic := followChannelModelMapping(modelMap, name)
+	if cyclic {
+		return "", fmt.Errorf("channel model mapping contains a cycle")
+	}
+	if declared, ok := g.CanonicalModel(target); ok {
+		return declared, nil
+	}
+	return target, nil
+}
 
 // TaskAliasTarget is one mapping-derived alias after cross-channel aggregation.
 // Declared is empty when the same plugin resolves the alias to more than one

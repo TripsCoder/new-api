@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	relaychannel "github.com/QuantumNous/new-api/relay/channel"
@@ -733,4 +735,124 @@ func TestSelfTaskMediaURLGuard(t *testing.T) {
 	assert.False(t, isSelfTaskMediaURL(c, remoteURL))
 	assert.True(t, isTaskMediaFallbackLoop(remoteURL.String(), "task-1"))
 	assert.False(t, isTaskMediaFallbackLoop(remoteURL.String(), "task-2"))
+}
+
+func TestRequestedTaskReadRejectsMismatchedChannelAfterOwnership(t *testing.T) {
+	require.NoError(t, i18n.Init())
+	task := setupGenericTaskTest(t)
+	for _, handler := range []struct {
+		name string
+		run  gin.HandlerFunc
+	}{
+		{name: "task", run: GetTask},
+		{name: "artifacts", run: GetTaskArtifacts},
+		{name: "dashboard artifacts", run: GetDashboardTaskArtifacts},
+		{name: "artifact content", run: TaskArtifactContent},
+		{name: "video content", run: VideoProxy},
+	} {
+		for _, owner := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%s/owner=%t", handler.name, owner), func(t *testing.T) {
+				recorder := httptest.NewRecorder()
+				c, _ := gin.CreateTestContext(recorder)
+				c.Set("id", task.UserId)
+				if !owner {
+					c.Set("id", task.UserId+1)
+				}
+				c.Params = gin.Params{{Key: "key", Value: task.TaskID}, {Key: "task_id", Value: task.TaskID}, {Key: "artifact_key", Value: "video"}}
+				c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID, nil)
+				c.Request.Header.Set(constant.ChannelSelectionHeader, "2")
+				handler.run(c)
+				if owner {
+					assert.Equal(t, http.StatusBadRequest, recorder.Code)
+					assert.Contains(t, recorder.Body.String(), "requested channel does not match task")
+				} else {
+					assert.Equal(t, http.StatusNotFound, recorder.Code, "channel header cannot grant access to another owner's task")
+					assert.NotContains(t, recorder.Body.String(), "requested channel")
+				}
+			})
+		}
+	}
+}
+
+func TestRequestedTaskReadPreservesHistoricalAccess(t *testing.T) {
+	task := setupGenericTaskTest(t)
+	require.NoError(t, model.DB.Model(&model.Channel{}).Where("id = ?", task.ChannelId).Update("status", common.ChannelStatusManuallyDisabled).Error)
+	response := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(response)
+	c.Set("id", task.UserId)
+	c.Params = gin.Params{{Key: "key", Value: task.TaskID}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID, nil)
+	c.Request.Header.Set(constant.ChannelSelectionHeader, "1")
+	common.SetContextKey(c, constant.ContextKeyTokenModelLimitEnabled, true)
+	common.SetContextKey(c, constant.ContextKeyTokenModelLimit, map[string]bool{})
+	common.SetContextKey(c, constant.ContextKeyUsingGroup, "retired-group")
+	GetTask(c)
+	assert.Equal(t, http.StatusOK, response.Code)
+	assert.Contains(t, response.Body.String(), task.TaskID)
+}
+
+func TestRequestedTaskSignedArtifactStrictHeaderWithoutNewAuthorization(t *testing.T) {
+	task := setupGenericTaskTest(t)
+	task.Action = constant.TaskActionTextToVideo
+	task.PrivateData.ResultURL = "data:video/mp4;base64,ZGF0YQ=="
+	require.NoError(t, model.DB.Save(task).Error)
+	for _, tc := range []struct {
+		name       string
+		values     []string
+		wantStatus int
+	}{
+		{name: "matching", values: []string{"1"}, wantStatus: http.StatusOK},
+		{name: "mismatched", values: []string{"2"}, wantStatus: http.StatusNotFound},
+		{name: "duplicate", values: []string{"1", "1"}, wantStatus: http.StatusNotFound},
+		{name: "noncanonical", values: []string{"01"}, wantStatus: http.StatusNotFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			// Existing middleware established the signed task/artifact grant;
+			// no native token or user ID is added by channel selection.
+			c.Set(middleware.TaskArtifactAccessContextKey, true)
+			c.Params = gin.Params{{Key: "key", Value: task.TaskID}, {Key: "artifact_key", Value: "video"}}
+			c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID+"/artifacts/video/content", nil)
+			c.Request.Header[constant.ChannelSelectionHeader] = tc.values
+			TaskArtifactContent(c)
+			assert.Equal(t, tc.wantStatus, recorder.Code)
+			assert.Empty(t, c.Request.Header.Get(constant.ChannelSelectionHeader))
+			assert.Zero(t, c.GetInt("id"))
+			assert.Zero(t, c.GetInt("token_id"))
+			if tc.wantStatus == http.StatusOK {
+				assert.Equal(t, "data", recorder.Body.String())
+			} else {
+				assert.NotContains(t, recorder.Body.String(), "requested channel", "signed artifact errors retain the existing non-enumerating response")
+			}
+		})
+	}
+}
+
+func TestRequestedTaskResponseRetrieveRejectsMismatchBeforeProjection(t *testing.T) {
+	require.NoError(t, i18n.Init())
+	task := &model.Task{TaskID: "task_requested", UserId: 71, ChannelId: 1, Status: model.TaskStatusSuccess}
+	for _, owner := range []bool{true, false} {
+		t.Run(fmt.Sprintf("owner=%t", owner), func(t *testing.T) {
+			c, recorder := newPluginProtocolRetrieveContext("resp_requested")
+			if !owner {
+				common.SetContextKey(c, constant.ContextKeyUserId, 72)
+			}
+			c.Request.Header.Set(constant.ChannelSelectionHeader, "2")
+			deps := pluginProtocolTestDeps()
+			deps.getByTaskId = func(userID int, taskID string) (*model.Task, bool, error) {
+				if userID != task.UserId || taskID != task.TaskID {
+					return nil, false, nil
+				}
+				return task, true, nil
+			}
+			retrieveTaskPluginResponse(c, deps)
+			if owner {
+				assert.Equal(t, http.StatusBadRequest, recorder.Code)
+				assert.Contains(t, recorder.Body.String(), "requested channel does not match task")
+			} else {
+				assert.Equal(t, http.StatusNotFound, recorder.Code)
+			}
+		})
+	}
 }

@@ -217,6 +217,21 @@ export interface FetchModelsResponse {
   success: boolean
   message?: string
   data?: string[]
+  discovery?: UpstreamModelDiscovery
+}
+
+export interface UpstreamModelDiscovery {
+  source: 'upstream'
+  checked_at: number
+  plugin_key: string
+  source_url: string
+  source_sha256: string
+  models: {
+    id: string
+    adapted: boolean
+    configured: boolean
+    pricing_status: 'not_checked'
+  }[]
 }
 
 export interface CopyChannelResponse {

@@ -229,6 +229,32 @@ func TestResponsesWSRequestRunnerRejectsRevokedCredentials(t *testing.T) {
 	}
 }
 
+func TestResponsesWSRequestRunnerPreservesRequestedChannel(t *testing.T) {
+	_, token := setupResponsesWSRequestTest(t)
+	var runner relay.ResponsesWSRequestRunner
+	engine := gin.New()
+	engine.GET("/v1/responses", middleware.TokenAuth(), func(c *gin.Context) {
+		assert.Empty(t, c.GetHeader(constant.ChannelSelectionHeader))
+		runner = newResponsesWSRequestRunner(c)
+	})
+	request := httptest.NewRequest(http.MethodGet, "/v1/responses", nil)
+	request.Header.Set("Authorization", "Bearer sk-"+token.Key)
+	request.Header.Set(constant.ChannelSelectionHeader, "9")
+	response := httptest.NewRecorder()
+	engine.ServeHTTP(response, request)
+	require.Equal(t, http.StatusOK, response.Code)
+	require.NotNil(t, runner)
+	for i := range 2 {
+		request := httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(`{"model":"ws-model"}`))
+		request.Header.Set(constant.ChannelSelectionHeader, "99")
+		require.Nil(t, runner(request, fmt.Sprint(i), func(c *gin.Context) *types.NewAPIError {
+			assert.Equal(t, 9, service.GetChannelConstraints(c).RequestedChannelID)
+			assert.Empty(t, c.GetHeader(constant.ChannelSelectionHeader))
+			return nil
+		}))
+	}
+}
+
 func TestResponsesWSRequestRunnerUsesExistingMemoryRateLimit(t *testing.T) {
 	require.NoError(t, i18n.Init())
 	_, token := setupResponsesWSRequestTest(t)

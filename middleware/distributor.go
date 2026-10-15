@@ -20,7 +20,6 @@ import (
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
-	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
@@ -51,7 +50,7 @@ func Distribute() func(c *gin.Context) {
 			return
 		}
 		_, pinned, _ := constraints.ResolvedPin()
-		if !pinned {
+		if !pinned || constraints.RequestedChannelID > 0 {
 			// Select a channel for the user
 			// check token model mapping
 			modelLimitEnable := common.GetContextKeyBool(c, constant.ContextKeyTokenModelLimitEnabled)
@@ -390,6 +389,11 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 		relayMode := relayconstant.RelayModeVideoSubmit
 		c.Set("relay_mode", relayMode)
 		shouldSelectChannel = false
+		if service.GetChannelConstraints(c).RequestedChannelID > 0 {
+			// The request has no model field. Authorize its owned origin model,
+			// then ResolveOriginTask verifies the requested channel before billing.
+			modelRequest.Model = getTaskOriginModelName(c)
+		}
 	} else if strings.Contains(c.Request.URL.Path, "/v1/videos") {
 		//curl https://api.openai.com/v1/videos \
 		//  -H "Authorization: Bearer $OPENAI_API_KEY" \
@@ -511,13 +515,7 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 // (modifiers and legacy aliases stripped) are all accepted. The Responses
 // WebSocket relay shares this rule so both transports admit the same names.
 func TokenModelLimitAllows(limit map[string]bool, model string) bool {
-	if limit[model] {
-		return true
-	}
-	if formatted := ratio_setting.FormatMatchingModelName(model); limit[formatted] {
-		return true
-	}
-	return limit[ratio_setting.RoutingMatchModelName(model)]
+	return service.TokenModelLimitAllows(limit, model)
 }
 
 // 修复 #4834: GET /v1/video/generations/:task_id && /v1/video/:task_id 此前不解析 model，
@@ -525,17 +523,27 @@ func TokenModelLimitAllows(limit map[string]bool, model string) bool {
 // modelRequest.Model 为空而误报 "This token has no access to model"。
 // 从已存储的任务记录中回填 OriginModelName 即可让校验走在正确的模型上。
 func getTaskOriginModelName(c *gin.Context) string {
-	if !common.GetContextKeyBool(c, constant.ContextKeyTokenModelLimitEnabled) {
+	requested := service.GetChannelConstraints(c).RequestedChannelID > 0
+	if !requested && !common.GetContextKeyBool(c, constant.ContextKeyTokenModelLimitEnabled) {
 		return ""
 	}
 
 	taskId := c.Param("task_id")
+	if taskId == "" && requested {
+		taskId = c.Param("video_id")
+	}
 	if taskId == "" {
 		return ""
 	}
 
 	userId := c.GetInt("id")
 	if task, exist, err := model.GetByTaskId(userId, taskId); err == nil && exist && task != nil {
+		if requested && task.Properties.OriginModelName == "" {
+			if task.Properties.UpstreamModelName != "" {
+				return task.Properties.UpstreamModelName
+			}
+			return gjson.GetBytes(task.Data, "model").String()
+		}
 		return task.Properties.OriginModelName
 	}
 	return ""

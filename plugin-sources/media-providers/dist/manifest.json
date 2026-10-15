@@ -1,0 +1,69 @@
+{
+  "hostBaseCommit": "184bfcb52ba7246051238f78144d7415c1ec600d",
+  "reviewedOn": "2026-10-15",
+  "status": "candidate-not-installed",
+  "inputs": {
+    "build.mjs": "2ea9158d1fb4e07ea63e99132195da08ba652b55139e8c04e6dda0c65e1c6054",
+    "profiles.json": "680a0faef7911c0d86a9ae9413f5609fa72bf3660a26c7c93b52e3887d45e111",
+    "runtime.js": "a872d0d9f4f27da7d46680eca93c77664b01254287fa5e4ade5f48ed80f56b19",
+    "sources.lock.json": "7b5d29aad25458b3e5948155c37ac1e747c379d00fef0f7cc5cc938d4c5ada87"
+  },
+  "plugins": [
+    {
+      "key": "cangyuan_media",
+      "version": "1.1.0",
+      "file": "cangyuan_media.plugin.js",
+      "models": 20,
+      "sha256": "b82939a1e72b9c2d3abc4aa734c0903ab58fcc411b407d34efc2d7eb3323930f",
+      "modelDiscovery": true
+    },
+    {
+      "key": "lxmone_media",
+      "version": "1.1.1",
+      "file": "lxmone_media.plugin.js",
+      "models": 49,
+      "sha256": "1dce7730f7daf848aaa07656cb9e092730026aa1e0a0af72ee16fc4cf6e1aebb",
+      "modelDiscovery": true
+    },
+    {
+      "key": "xcmapi_media",
+      "version": "1.1.0",
+      "file": "xcmapi_media.plugin.js",
+      "models": 14,
+      "sha256": "e28c88c739a5379debedbbb855df488af17df23e78459aa9e34ea69a2a34c423",
+      "modelDiscovery": true
+    },
+    {
+      "key": "zhangyuge_media",
+      "version": "1.1.1",
+      "file": "zhangyuge_media.plugin.js",
+      "models": 43,
+      "sha256": "5f61dd5cd606d394a8dd00ff2685b2697a216820f3586b1eb092c54f04bbf14c",
+      "modelDiscovery": true
+    },
+    {
+      "key": "paisio_media",
+      "version": "1.1.0",
+      "file": "paisio_media.plugin.js",
+      "models": 50,
+      "sha256": "5ecd405722e7a40026f7c929c68fcd95f1e5a58e0858588a113a4d89d4a0f8a6",
+      "modelDiscovery": true
+    },
+    {
+      "key": "yuxibox_media",
+      "version": "1.1.0",
+      "file": "yuxibox_media.plugin.js",
+      "models": 9,
+      "sha256": "2778d9c91aeaba965ad48e112d817596057939edcddeb20cfc9faf03c050690e",
+      "modelDiscovery": true
+    },
+    {
+      "key": "artbox_media",
+      "version": "1.1.0",
+      "file": "artbox_media.plugin.js",
+      "models": 8,
+      "sha256": "f152414cca2dc0c6645164e40aad54607518caad7766999b7d3f13bfd1bcf9e5",
+      "modelDiscovery": false
+    }
+  ]
+}

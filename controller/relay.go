@@ -261,6 +261,22 @@ var upgrader = websocket.Upgrader{
 }
 
 func getChannel(c *gin.Context, info *relaycommon.RelayInfo, retryParam *service.RetryParam) (*model.Channel, *types.NewAPIError) {
+	if service.GetChannelConstraints(c).RequestedChannelID > 0 {
+		channel, group, selectErr := service.SelectChannelForRequest(c, info.OriginModelName, retryParam)
+		if selectErr != nil {
+			message := selectErr.Message
+			if selectErr.MessageID != "" {
+				message = i18n.T(c, selectErr.MessageID, selectErr.Params)
+			}
+			return nil, types.NewErrorWithStatusCode(errors.New(message), selectErr.Code, selectErr.StatusCode, types.ErrOptionWithSkipRetry())
+		}
+		if setupErr := middleware.SetupContextForSelectedChannel(c, channel, info.OriginModelName); setupErr != nil {
+			return nil, setupErr
+		}
+		info.PriceData.GroupRatioInfo = helper.HandleGroupRatio(c, info)
+		service.RequestPolicy(c).BeginAttempt(channel, group)
+		return channel, nil
+	}
 	if info.ChannelMeta == nil {
 		autoBan := c.GetBool("auto_ban")
 		autoBanInt := 1
@@ -511,7 +527,7 @@ func executeTaskSubmissionWith(
 		}
 		var channel *model.Channel
 
-		if lockedCh, ok := relayInfo.LockedChannel.(*model.Channel); ok && lockedCh != nil {
+		if lockedCh, ok := relayInfo.LockedChannel.(*model.Channel); ok && lockedCh != nil && service.GetChannelConstraints(c).RequestedChannelID == 0 {
 			channel = lockedCh
 			policy.BeginAttempt(channel, relayInfo.UsingGroup)
 			if retryParam.GetRetry() > 0 {

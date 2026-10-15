@@ -77,6 +77,10 @@ func VideoProxy(c *gin.Context) {
 		videoProxyError(c, http.StatusNotFound, "invalid_request_error", "Task not found")
 		return
 	}
+	if err := service.CheckRequestedTaskChannel(c, task.ChannelId); err != nil {
+		videoProxyError(c, http.StatusBadRequest, "invalid_request_error", service.RequestedTaskChannelErrorMessage(c, err))
+		return
+	}
 	if task.Status != model.TaskStatusSuccess {
 		videoProxyError(c, http.StatusBadRequest, "invalid_request_error",
 			fmt.Sprintf("Task is not completed yet, current status: %s", task.Status))

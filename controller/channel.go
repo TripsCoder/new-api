@@ -331,17 +331,17 @@ func FetchUpstreamModels(c *gin.Context) {
 		return
 	}
 
-	ids, err := fetchChannelUpstreamModelIDs(channel)
+	ids, discovery, err := fetchChannelUpstreamModelsWithDetails(channel)
 	if err != nil {
 		common.ApiErrorT(c, "Failed to fetch models: {{error}}", map[string]any{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "",
-		"data":    ids,
-	})
+	response := gin.H{"success": true, "message": "", "data": ids}
+	if discovery != nil {
+		response["discovery"] = discovery
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func FixChannelsAbilities(c *gin.Context) {
@@ -1353,6 +1353,7 @@ type fetchModelsRequest struct {
 	AdvancedCustom *string `json:"advanced_custom"`
 	HeaderOverride *string `json:"header_override"`
 	Proxy          *string `json:"proxy"`
+	TaskPluginKey  *string `json:"task_plugin_key"`
 }
 
 func buildAdvancedCustomModelPreviewChannel(req fetchModelsRequest) (*model.Channel, error) {
@@ -1435,7 +1436,36 @@ func FetchModels(c *gin.Context) {
 	}
 
 	var channel *model.Channel
-	if req.Type == constant.ChannelTypeAdvancedCustom || req.ChannelID > 0 {
+	if req.Type == constant.ChannelTypeTaskPlugin {
+		if req.ChannelID > 0 {
+			var err error
+			channel, err = model.GetChannelById(req.ChannelID, true)
+			if err != nil || channel.Type != constant.ChannelTypeTaskPlugin {
+				common.ApiErrorT(c, "Invalid task plugin channel")
+				return
+			}
+		} else {
+			channel = &model.Channel{Type: req.Type, Key: strings.TrimSpace(strings.Split(req.Key, "\n")[0])}
+		}
+		if req.BaseURL != nil {
+			base := strings.TrimSpace(*req.BaseURL)
+			channel.BaseURL = &base
+		}
+		settings := channel.GetSetting()
+		if req.TaskPluginKey != nil {
+			settings.TaskPluginKey = strings.TrimSpace(*req.TaskPluginKey)
+		}
+		if req.Proxy != nil {
+			settings.Proxy = strings.TrimSpace(*req.Proxy)
+		}
+		channel.SetSetting(settings)
+		if req.HeaderOverride != nil {
+			channel.HeaderOverride = req.HeaderOverride
+		}
+		if req.Key != "" {
+			channel.Key = strings.TrimSpace(strings.Split(req.Key, "\n")[0])
+		}
+	} else if req.Type == constant.ChannelTypeAdvancedCustom || req.ChannelID > 0 {
 		var err error
 		channel, err = buildAdvancedCustomModelPreviewChannel(req)
 		if err != nil {
@@ -1462,16 +1492,16 @@ func FetchModels(c *gin.Context) {
 		}
 	}
 
-	models, err := fetchChannelUpstreamModelIDs(channel)
+	models, discovery, err := fetchChannelUpstreamModelsWithDetails(channel)
 	if err != nil {
 		common.ApiErrorT(c, "Failed to fetch models: {{error}}", map[string]any{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "",
-		"data":    models,
-	})
+	response := gin.H{"success": true, "message": "", "data": models}
+	if discovery != nil {
+		response["discovery"] = discovery
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func BatchSetChannelTag(c *gin.Context) {

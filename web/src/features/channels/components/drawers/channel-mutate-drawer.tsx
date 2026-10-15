@@ -198,6 +198,10 @@ import {
 } from '../../lib/channel-plugin-extensions'
 import { getChannelTypeConfig } from '../../lib/channel-type-config'
 import {
+  discoverySelectableModels,
+  modelDiscoveryErrorMessage,
+} from '../../lib/model-discovery'
+import {
   collectInvalidStatusCodeEntries,
   collectNewDisallowedStatusCodeRedirects,
 } from '../../lib/status-code-risk-guard'
@@ -1198,8 +1202,16 @@ export function ChannelMutateDrawer({
   // preview path, which reuses the saved credential on the server.
   const previewModels =
     !isEditing ||
-    (currentType === CHANNEL_TYPE_ADVANCED_CUSTOM && canEditSensitive)
+    ([CHANNEL_TYPE_ADVANCED_CUSTOM, CHANNEL_TYPE_TASK_PLUGIN].includes(
+      currentType
+    ) &&
+      canEditSensitive)
   const canDiscoverModels = previewModels ? canEditSensitive : canOperateChannel
+  // Task plugins expose manual discovery only; keep the existing automatic
+  // update controls and serialization gate limited to their original types.
+  const supportsManualDiscovery =
+    MODEL_FETCHABLE_TYPES.has(currentType) ||
+    currentType === CHANNEL_TYPE_TASK_PLUGIN
   const previewKey = isEditing ? undefined : currentKey
   const previewRequest = useMemo<ChannelModelDiscoveryRequest>(
     () => ({
@@ -1212,6 +1224,10 @@ export function ChannelMutateDrawer({
         advanced_custom: currentAdvancedCustom,
         header_override: currentHeaderOverride,
         proxy: currentProxy,
+        task_plugin_key:
+          currentType === CHANNEL_TYPE_TASK_PLUGIN
+            ? currentTaskPluginKey
+            : undefined,
       },
     }),
     [
@@ -1223,6 +1239,7 @@ export function ChannelMutateDrawer({
       currentAdvancedCustom,
       currentHeaderOverride,
       currentProxy,
+      currentTaskPluginKey,
     ]
   )
   const savedRequest = useMemo<ChannelModelDiscoveryRequest>(
@@ -1233,12 +1250,19 @@ export function ChannelMutateDrawer({
     enabled:
       open &&
       canDiscoverModels &&
-      MODEL_FETCHABLE_TYPES.has(currentType) &&
+      supportsManualDiscovery &&
       (!isEditing || Boolean(channelData?.data)),
     request: previewModels ? previewRequest : savedRequest,
+    requiresEvidence: currentType === CHANNEL_TYPE_TASK_PLUGIN,
   })
   const upstreamModelList =
-    discovery.status === 'success' ? discovery.models : NO_UPSTREAM_MODELS
+    discovery.status === 'success'
+      ? discoverySelectableModels(
+          discovery.models,
+          initialModelsRef.current,
+          discovery.discovery
+        )
+      : NO_UPSTREAM_MODELS
   const batchMappingSource: ModelMappingBatchSource =
     upstreamModelList.length > 0 ? 'upstream' : 'channel'
   const canBatchMap =
@@ -1246,7 +1270,7 @@ export function ChannelMutateDrawer({
   const fetchDiscoveredModels = discovery.fetch
   const handleFetchModels = useCallback(async () => {
     const type = form.getValues('type')
-    if (!MODEL_FETCHABLE_TYPES.has(type)) {
+    if (!MODEL_FETCHABLE_TYPES.has(type) && type !== CHANNEL_TYPE_TASK_PLUGIN) {
       toast.error(t('This channel type does not support fetching models'))
       return
     }
@@ -3291,8 +3315,15 @@ export function ChannelMutateDrawer({
               )}
             />
 
-            {MODEL_FETCHABLE_TYPES.has(currentType) && (
+            {supportsManualDiscovery && (
               <div aria-live='polite' className='mt-4 space-y-3'>
+                {currentType === CHANNEL_TYPE_TASK_PLUGIN && (
+                  <p className='text-muted-foreground text-xs'>
+                    {t(
+                      'Plugin presets are a static adapted catalog, not live upstream discovery. Manual configuration remains available.'
+                    )}
+                  </p>
+                )}
                 {discovery.status === 'loading' && (
                   <LoadingState
                     className='min-h-0 py-4'
@@ -3303,10 +3334,7 @@ export function ChannelMutateDrawer({
                   <ErrorState
                     className='min-h-0 p-3'
                     title={t('Failed to fetch models')}
-                    description={getServerErrorMessage(
-                      discovery.error,
-                      t('Failed to fetch models')
-                    )}
+                    description={modelDiscoveryErrorMessage(discovery.error, t)}
                     onRetry={() => {
                       void handleFetchModels()
                     }}
@@ -3366,6 +3394,7 @@ export function ChannelMutateDrawer({
                         redirectSourceModels={redirectModelKeyList}
                         onRedirectModel={handleFetchedRedirect}
                         aliases={upstreamAliases}
+                        discovery={discovery.discovery}
                       />
                       <div className='flex flex-wrap items-center justify-between gap-2'>
                         <p className='text-muted-foreground text-xs'>
@@ -3447,7 +3476,7 @@ export function ChannelMutateDrawer({
                   <FileText className='mr-2 h-4 w-4' aria-hidden='true' />
                   {t('Fill Related Models')}
                 </Button>
-                {MODEL_FETCHABLE_TYPES.has(currentType) && (
+                {supportsManualDiscovery && (
                   <>
                     <Button
                       type='button'

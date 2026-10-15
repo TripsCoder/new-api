@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
@@ -13,6 +14,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	"github.com/QuantumNous/new-api/relaykit/types"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
 )
 
@@ -275,13 +277,17 @@ type ChannelSelectError struct {
 }
 
 // SelectChannelForRequest resolves the channel for one attempt with the rules
-// shared by the HTTP distributor and the Responses WebSocket relay: a pinned
-// channel wins, then session affinity (first attempt only), then a random
+// shared by the HTTP distributor and the Responses WebSocket relay: an explicit
+// client channel is authorized first; otherwise a pinned channel wins, then
+// session affinity (first attempt only), then a random
 // eligible channel; every candidate must satisfy the request's channel
 // filters. The group the channel was chosen from is returned for auto-group
 // callers. The caller still applies SetupContextForSelectedChannel.
 func SelectChannelForRequest(c *gin.Context, modelName string, retry *RetryParam) (*model.Channel, string, *ChannelSelectError) {
 	constraints := GetChannelConstraints(c)
+	if constraints.RequestedChannelID > 0 {
+		return selectRequestedChannel(c, modelName, retry, constraints)
+	}
 	if pin, found, overridden := constraints.ResolvedPin(); found {
 		for _, lost := range overridden {
 			logger.LogWarn(c, common.LogText(
@@ -374,6 +380,86 @@ func SelectChannelForRequest(c *gin.Context, modelName string, retry *RetryParam
 		}
 	}
 	return channel, selectGroup, nil
+}
+
+// TokenModelLimitAllows is shared by HTTP, WebSocket, and explicit channel
+// selection. Keep exact, wildcard-normalized, and routing-normalized names on
+// the same authorization path rather than reinterpreting token model limits.
+func TokenModelLimitAllows(limit map[string]bool, model string) bool {
+	if limit[model] {
+		return true
+	}
+	if formatted := ratio_setting.FormatMatchingModelName(model); limit[formatted] {
+		return true
+	}
+	return limit[ratio_setting.RoutingMatchModelName(model)]
+}
+
+// selectRequestedChannel never falls back to another channel or billing group.
+// Reentry after decoding or origin-task resolution rechecks current permission
+// while retaining the first authorized group. A client channel ID is not an
+// administrator pin and therefore must not inherit its authorization bypass.
+func selectRequestedChannel(c *gin.Context, modelName string, retry *RetryParam, constraints *dto.ChannelConstraints) (*model.Channel, string, *ChannelSelectError) {
+	for _, pin := range constraints.Pins {
+		if pin.ChannelId != constraints.RequestedChannelID {
+			return nil, "", &ChannelSelectError{
+				StatusCode: http.StatusBadRequest, Code: types.ErrorCodeInvalidRequest, Message: "requested_channel_conflict", MessageID: i18n.MsgRequestedChannelConflict,
+			}
+		}
+	}
+	// Deliberately return the same non-enumerating error for absent, disabled,
+	// forbidden, or incompatible channels. No channel metadata is exposed.
+	unavailable := &ChannelSelectError{
+		StatusCode: http.StatusForbidden, Code: types.ErrorCodeAccessDenied, Message: "requested_channel_unavailable", MessageID: i18n.MsgRequestedChannelUnavailable,
+	}
+	if common.GetContextKeyBool(c, constant.ContextKeyTokenModelLimitEnabled) {
+		limit, ok := common.GetContextKeyType[map[string]bool](c, constant.ContextKeyTokenModelLimit)
+		if !ok || !TokenModelLimitAllows(limit, modelName) {
+			return nil, "", unavailable
+		}
+	}
+	channel, err := model.CacheGetChannel(constraints.RequestedChannelID)
+	if err != nil || channel == nil || channel.Status != common.ChannelStatusEnabled {
+		return nil, "", unavailable
+	}
+	if ok, _ := model.ChannelSatisfiesFilters(channel, modelName, constraints.Filters); !ok {
+		return nil, "", unavailable
+	}
+	usingGroup := common.GetContextKeyString(c, constant.ContextKeyUsingGroup)
+	if retry != nil {
+		usingGroup = retry.TokenGroup
+	}
+	userGroup := common.GetContextKeyString(c, constant.ContextKeyUserGroup)
+	selectedGroup := constraints.RequestedChannelGroup
+	if usingGroup == "auto" {
+		allowedGroups := GetRequestAutoGroups(c, userGroup)
+		if selectedGroup != "" {
+			if !slices.Contains(allowedGroups, selectedGroup) || !model.IsChannelEnabledForGroupModel(selectedGroup, modelName, channel.Id) {
+				return nil, "", unavailable
+			}
+		} else {
+			for _, group := range allowedGroups {
+				if model.IsChannelEnabledForGroupModel(group, modelName, channel.Id) {
+					selectedGroup = group
+					break
+				}
+			}
+			if selectedGroup == "" {
+				return nil, "", unavailable
+			}
+		}
+		common.SetContextKey(c, constant.ContextKeyAutoGroup, selectedGroup)
+	} else {
+		if selectedGroup != "" && selectedGroup != usingGroup {
+			return nil, "", unavailable
+		}
+		if !IsUserSelectableGroup(userGroup, usingGroup) || !model.IsChannelEnabledForGroupModel(usingGroup, modelName, channel.Id) {
+			return nil, "", unavailable
+		}
+		selectedGroup = usingGroup
+	}
+	constraints.RequestedChannelGroup = selectedGroup
+	return channel, selectedGroup, nil
 }
 
 // Origin-task pins report a fixed code so task polling can tell a retired

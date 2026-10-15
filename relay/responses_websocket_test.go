@@ -20,7 +20,9 @@ import (
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -219,6 +221,122 @@ func TestRestoreConnectionContextRejectsChangedAdvancedCustomRoute(t *testing.T)
 	require.NotNil(t, apiErr)
 	assert.Equal(t, http.StatusForbidden, apiErr.StatusCode)
 	assert.ErrorContains(t, apiErr, "upstream route changed")
+}
+
+func TestRestoreConnectionContextRevalidatesRequestedChannel(t *testing.T) {
+	require.NoError(t, i18n.Init())
+	originalUsableGroups := setting.UserUsableGroups2JSONString()
+	originalGroupRatios := ratio_setting.GroupRatio2JSONString()
+	originalMaxTokenAutoGroups := setting.GetMaxTokenAutoGroups()
+	t.Cleanup(func() {
+		require.NoError(t, setting.UpdateUserUsableGroupsByJSONString(originalUsableGroups))
+		require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(originalGroupRatios))
+		require.NoError(t, setting.UpdateMaxTokenAutoGroups(fmt.Sprint(originalMaxTokenAutoGroups)))
+	})
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1,"vip":2}`))
+	require.NoError(t, setting.UpdateMaxTokenAutoGroups("2"))
+
+	for _, tc := range []struct {
+		name   string
+		change func(*testing.T, *gin.Context, *model.Channel)
+		status int
+	}{
+		{name: "same channel and group restore"},
+		{name: "requested ID differs from locked channel", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			service.GetChannelConstraints(c).RequestedChannelID = channel.Id + 1
+		}},
+		{name: "requested ID conflicts with token pin", status: http.StatusBadRequest, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			service.GetChannelConstraints(c).AddPin(appdto.ChannelPin{ChannelId: channel.Id + 1, Source: appdto.PinSourceToken, Rank: appdto.PinRankToken, RetryMode: appdto.PinRetrySingleAttempt})
+		}},
+		{name: "channel disabled after connection", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			require.NoError(t, model.DB.Model(channel).Update("status", common.ChannelStatusManuallyDisabled).Error)
+		}},
+		{name: "model removed from channel", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			require.NoError(t, model.DB.Model(channel).Update("models", "other-model").Error)
+		}},
+		{name: "channel removed from locked group", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			require.NoError(t, model.DB.Model(channel).Update("group", "default").Error)
+			require.NoError(t, model.DB.Where(&model.Ability{ChannelId: channel.Id, Group: "vip", Model: "ws-model"}).Delete(&model.Ability{}).Error)
+		}},
+		{name: "token model permission revoked", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			common.SetContextKey(c, constant.ContextKeyTokenModelLimit, map[string]bool{"other-model": true})
+		}},
+		{name: "fixed group changes despite channel eligibility", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			common.SetContextKey(c, constant.ContextKeyUsingGroup, "default")
+		}},
+		{name: "user loses locked group permission", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			require.NoError(t, setting.UpdateUserUsableGroupsByJSONString(`{"default":"Default"}`))
+		}},
+		{name: "auto group order retains original billing group", change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			common.SetContextKey(c, constant.ContextKeyUsingGroup, "auto")
+			common.SetContextKey(c, constant.ContextKeyTokenAutoGroups, []string{"default", "vip"})
+		}},
+		{name: "auto cannot fall back when locked group removed", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			common.SetContextKey(c, constant.ContextKeyUsingGroup, "auto")
+			common.SetContextKey(c, constant.ContextKeyTokenAutoGroups, []string{"default"})
+		}},
+		{name: "empty auto group snapshot rejects", status: http.StatusForbidden, change: func(t *testing.T, c *gin.Context, channel *model.Channel) {
+			common.SetContextKey(c, constant.ContextKeyUsingGroup, "auto")
+			common.SetContextKey(c, constant.ContextKeyTokenAutoGroups, []string{})
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NoError(t, setting.UpdateUserUsableGroupsByJSONString(`{"default":"Default","vip":"VIP"}`))
+			database := setupRelayChannelDB(t)
+			require.NoError(t, database.AutoMigrate(&model.Ability{}))
+			baseURL := "http://upstream.example"
+			channel := &model.Channel{Name: "requested-ws", Key: "sk-test", Status: common.ChannelStatusEnabled, Type: constant.ChannelTypeOpenAI, BaseURL: &baseURL, Group: "default,vip", Models: "ws-model"}
+			channel.SetSetting(dto.ChannelSettings{ResponsesWebSocketEnabled: true})
+			require.NoError(t, database.Create(channel).Error)
+			for _, group := range []string{"default", "vip"} {
+				require.NoError(t, database.Create(&model.Ability{ChannelId: channel.Id, Group: group, Model: "ws-model", Enabled: true}).Error)
+			}
+			common.MemoryCacheEnabled = true
+			t.Cleanup(func() {
+				require.NoError(t, database.Where("channel_id = ?", channel.Id).Delete(&model.Ability{}).Error)
+				require.NoError(t, database.Delete(channel).Error)
+				model.InitChannelCache()
+			})
+			model.InitChannelCache()
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodGet, "/v1/responses", nil)
+			common.SetContextKey(c, constant.ContextKeyUserGroup, "default")
+			common.SetContextKey(c, constant.ContextKeyUsingGroup, "vip")
+			common.SetContextKey(c, constant.ContextKeyTokenModelLimitEnabled, true)
+			common.SetContextKey(c, constant.ContextKeyTokenModelLimit, map[string]bool{"ws-model": true})
+			constraints := service.GetChannelConstraints(c)
+			// Header parsing happens before the relay; each create receives fresh constraints.
+			constraints.RequestedChannelID = channel.Id
+			constraints.AddFilter(appdto.ChannelFilter{Kind: appdto.FilterRequestPath, RequestPath: c.Request.URL.Path})
+			session := &responsesWSSession{lockedChannelID: channel.Id, lockedModel: "ws-model", lockedGroup: "vip", lockedKey: channel.Key,
+				lockedContext: map[constant.ContextKey]any{
+					constant.ContextKeyChannelId:             channel.Id,
+					constant.ContextKeyChannelBaseUrl:        channel.GetBaseURL(),
+					constant.ContextKeyChannelHeaderOverride: channel.GetHeaderOverride(),
+				}}
+			if tc.change != nil {
+				tc.change(t, c, channel)
+				model.InitChannelCache()
+			}
+			apiErr := session.restoreConnectionContext(c, "ws-model")
+			if tc.status != 0 {
+				require.NotNil(t, apiErr)
+				assert.Equal(t, tc.status, apiErr.StatusCode)
+				assert.False(t, service.ShouldRetryRelayError(c, apiErr, 2))
+				assert.Zero(t, common.GetContextKeyInt(c, constant.ContextKeyChannelId), "rejection must not restore the previous channel context")
+				assert.Zero(t, service.RequestPolicy(c).Attempts, "rejection must not start another upstream attempt")
+				return
+			}
+			require.Nil(t, apiErr)
+			assert.Equal(t, channel.Id, common.GetContextKeyInt(c, constant.ContextKeyChannelId))
+			assert.Equal(t, "vip", constraints.RequestedChannelGroup)
+			assert.Equal(t, "vip", service.RequestPolicy(c).SelectedGroup)
+			assert.Equal(t, 1, service.RequestPolicy(c).Attempts)
+			if common.GetContextKeyString(c, constant.ContextKeyUsingGroup) == "auto" {
+				assert.Equal(t, "vip", common.GetContextKeyString(c, constant.ContextKeyAutoGroup))
+			}
+		})
+	}
 }
 
 func TestResponsesWSChannelRoutingRequiresExplicitOptIn(t *testing.T) {

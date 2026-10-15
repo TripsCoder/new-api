@@ -8,6 +8,8 @@ import (
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/relay"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
@@ -104,6 +106,138 @@ func newPinRetryContext() *gin.Context {
 	c, _ := gin.CreateTestContext(recorder)
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/chat/completions", nil)
 	return c
+}
+
+func setupRequestedChannelRetryTest(t *testing.T) (*gin.Context, *relaycommon.RelayInfo) {
+	t.Helper()
+	require.NoError(t, i18n.Init())
+	t.Setenv("TEST_TASK_DB_DIALECT", "sqlite")
+	database, _ := openTaskDialectDatabase(t, &model.Channel{}, &model.Ability{})
+	previousDB, previousLogDB := model.DB, model.LOG_DB
+	previousMain, previousLog := common.MainDatabaseType(), common.LogDatabaseType()
+	previousMaster, previousRedis, previousCache := common.IsMasterNode, common.RedisEnabled, common.MemoryCacheEnabled
+	model.DB = database
+	common.SetMainDatabaseType(common.DatabaseTypeSQLite)
+	common.IsMasterNode, common.RedisEnabled, common.MemoryCacheEnabled = false, false, false
+	t.Setenv("LOG_SQL_DSN", "")
+	previousGroups := setting.UserUsableGroups2JSONString()
+	previousRatios := ratio_setting.GroupRatio2JSONString()
+	// Reuse the isolated connection and initialize the host's quoted SQL names;
+	// this performs no migrations or connection to a configured external DB.
+	require.NoError(t, model.InitLogDB())
+	require.NoError(t, setting.UpdateUserUsableGroupsByJSONString(`{"default":"Default"}`))
+	require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(`{"default":1}`))
+	t.Cleanup(func() {
+		require.NoError(t, setting.UpdateUserUsableGroupsByJSONString(previousGroups))
+		require.NoError(t, ratio_setting.UpdateGroupRatioByJSONString(previousRatios))
+		model.DB, model.LOG_DB = previousDB, previousLogDB
+		common.SetDatabaseTypes(previousMain, previousLog)
+		common.IsMasterNode, common.RedisEnabled, common.MemoryCacheEnabled = previousMaster, previousRedis, previousCache
+	})
+	channels := []model.Channel{
+		{Id: 1, Name: "requested", Type: constant.ChannelTypeOpenAI, Status: common.ChannelStatusEnabled, Models: "requested-model", Group: "default"},
+		{Id: 2, Name: "other", Type: constant.ChannelTypeOpenAI, Status: common.ChannelStatusEnabled, Models: "requested-model", Group: "default"},
+	}
+	for i := range channels {
+		require.NoError(t, model.DB.Create(&channels[i]).Error)
+		require.NoError(t, channels[i].AddAbilities(model.DB))
+	}
+	c := newPinRetryContext()
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/videos", strings.NewReader(`{"model":"requested-model"}`))
+	c.Request.Header.Set("Content-Type", "application/json")
+	c.Request.Header.Set(constant.ChannelSelectionHeader, "1")
+	require.NoError(t, middleware.SetupContextForToken(c, &model.Token{
+		Id: 1, UserId: 1, Group: "default", ModelLimitsEnabled: true, ModelLimits: "requested-model",
+	}))
+	common.SetContextKey(c, constant.ContextKeyUsingGroup, "default")
+	common.SetContextKey(c, constant.ContextKeyUserGroup, "default")
+	// Stale preselection and locked task metadata must never override the Header.
+	common.SetContextKey(c, constant.ContextKeyChannelId, 2)
+	common.SetContextKey(c, constant.ContextKeyChannelType, constant.ChannelTypeOpenAI)
+	return c, &relaycommon.RelayInfo{
+		UserId: 1, UserGroup: "default", TokenGroup: "default", UsingGroup: "default", OriginModelName: "requested-model",
+		TaskRelayInfo: &relaycommon.TaskRelayInfo{LockedChannel: &channels[1]},
+	}
+}
+
+func TestRequestedChannelGetChannelRevalidatesEveryPhase(t *testing.T) {
+	for _, initialized := range []bool{false, true} {
+		t.Run(fmt.Sprintf("channel_meta=%t", initialized), func(t *testing.T) {
+			c, info := setupRequestedChannelRetryTest(t)
+			if initialized {
+				info.ChannelMeta = &relaycommon.ChannelMeta{ChannelId: 2, ChannelType: constant.ChannelTypeOpenAI}
+			}
+			retry := &service.RetryParam{Ctx: c, TokenGroup: "default", ModelName: "requested-model"}
+			for attempt := 0; attempt < 2; attempt++ {
+				channel, channelErr := getChannel(c, info, retry)
+				require.Nil(t, channelErr)
+				require.NotNil(t, channel)
+				assert.Equal(t, 1, channel.Id)
+				assert.Equal(t, 1, common.GetContextKeyInt(c, constant.ContextKeyChannelId))
+				assert.Equal(t, "default", service.GetChannelConstraints(c).RequestedChannelGroup)
+				retry.IncreaseRetry()
+			}
+			assert.Equal(t, 2, service.RequestPolicy(c).Attempts)
+			// Keep channel 2 usable: a fallback would succeed and expose the bypass.
+			require.NoError(t, model.DB.Model(&model.Ability{}).Where("channel_id = ?", 1).Update("enabled", false).Error)
+			require.True(t, model.IsChannelEnabledForGroupModel("default", "requested-model", 2))
+			channel, channelErr := getChannel(c, info, retry)
+			assert.Nil(t, channel)
+			require.NotNil(t, channelErr)
+			assert.Equal(t, http.StatusForbidden, channelErr.StatusCode)
+			assert.Equal(t, types.ErrorCodeAccessDenied, channelErr.GetErrorCode())
+			assert.Equal(t, i18n.T(c, i18n.MsgRequestedChannelUnavailable), channelErr.Error())
+			assert.False(t, service.ShouldRetryRelayError(c, channelErr, 3))
+			assert.Equal(t, 2, service.RequestPolicy(c).Attempts, "rejected selection must not start an attempt")
+			assert.Equal(t, 1, common.GetContextKeyInt(c, constant.ContextKeyChannelId), "must not switch to the still-eligible channel")
+		})
+	}
+}
+
+func TestRequestedChannelTaskSubmissionCannotUseLockedShortcut(t *testing.T) {
+	previousRetryTimes := common.RetryTimes
+	common.RetryTimes = 3
+	t.Cleanup(func() { common.RetryTimes = previousRetryTimes })
+	for _, revoked := range []bool{false, true} {
+		t.Run(fmt.Sprintf("permission_revoked=%t", revoked), func(t *testing.T) {
+			c, info := setupRequestedChannelRetryTest(t)
+			info.ChannelMeta = &relaycommon.ChannelMeta{ChannelId: 2, ChannelType: constant.ChannelTypeOpenAI}
+			if revoked {
+				require.NoError(t, model.DB.Model(&model.Ability{}).Where("channel_id = ?", 1).Update("enabled", false).Error)
+			}
+			var attemptedChannels []int
+			outcome, taskErr := executeTaskSubmissionWith(c, info, func(ctx *gin.Context, _ *relaycommon.RelayInfo) (*relay.TaskSubmitResult, *dto.TaskError) {
+				attemptedChannels = append(attemptedChannels, common.GetContextKeyInt(ctx, constant.ContextKeyChannelId))
+				return nil, &dto.TaskError{StatusCode: http.StatusServiceUnavailable, LocalError: true, Message: "test retryable failure"}
+			})
+			assert.Nil(t, outcome)
+			require.NotNil(t, taskErr)
+			if revoked {
+				assert.Equal(t, http.StatusForbidden, taskErr.StatusCode)
+				assert.Empty(t, attemptedChannels, "revocation must stop before the locked submit callback")
+				assert.Zero(t, service.RequestPolicy(c).Attempts)
+			} else {
+				assert.Equal(t, http.StatusServiceUnavailable, taskErr.StatusCode)
+				assert.Equal(t, []int{1}, attemptedChannels, "Header selection permits exactly one attempt on the requested channel")
+				assert.Equal(t, []string{"1"}, c.GetStringSlice("use_channel"))
+				assert.Equal(t, 1, service.RequestPolicy(c).Attempts)
+			}
+		})
+	}
+}
+
+func TestRequestedChannelSuppressesRelayAndTaskRetries(t *testing.T) {
+	for _, status := range []int{http.StatusTemporaryRedirect, http.StatusTooManyRequests, http.StatusInternalServerError, http.StatusServiceUnavailable} {
+		t.Run(fmt.Sprint(status), func(t *testing.T) {
+			c := newPinRetryContext()
+			c.Request.Header.Set(constant.ChannelSelectionHeader, "1")
+			require.NoError(t, middleware.SetupContextForToken(c, &model.Token{Id: 1, UserId: 1, Group: "default"}))
+			want := service.PolicyDecision{Action: "stop", Reason: "pinned_channel", Source: "channel_constraint"}
+			relayErr := types.NewOpenAIError(errors.New("retryable failure"), types.ErrorCodeBadResponseStatusCode, status)
+			assert.Equal(t, want, service.DecideRelayRetry(c, relayErr, 3))
+			assert.Equal(t, want, decideTaskRetry(c, &dto.TaskError{StatusCode: status}, 3))
+		})
+	}
 }
 
 func TestRequestPolicyConfigReturnsSettingsWithoutMigration(t *testing.T) {

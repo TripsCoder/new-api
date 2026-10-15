@@ -42,6 +42,8 @@ import {
   categorizeModelsWithRedirect,
   normalizeModelName,
 } from '../lib'
+import { discoverySelectableModels } from '../lib/model-discovery'
+import type { UpstreamModelDiscovery } from '../types'
 
 function sortedModelCategories(models: string[]): [string, string[]][] {
   return Object.entries(categorizeModels(models)).sort(([a], [b]) => {
@@ -59,6 +61,8 @@ type ModelCategoryProps = {
   onChange: (models: string[]) => void
   onRedirectModel?: (model: string) => void
   aliases?: Record<string, string>
+  discovery?: UpstreamModelDiscovery
+  existingModels: string[]
 }
 
 function ModelCategory(props: ModelCategoryProps) {
@@ -69,7 +73,14 @@ function ModelCategory(props: ModelCategoryProps) {
   const selectedCount = props.models.filter((model) =>
     selected.has(model)
   ).length
-  const allSelected = selectedCount === props.models.length
+  const selectable = discoverySelectableModels(
+    props.models,
+    props.existingModels,
+    props.discovery
+  )
+  const allSelected =
+    selectable.length > 0 && selectable.every((model) => selected.has(model))
+  const selectableSet = new Set(selectable)
 
   return (
     <Collapsible defaultOpen className='@container rounded-lg border'>
@@ -79,10 +90,11 @@ function ModelCategory(props: ModelCategoryProps) {
             category: categoryName,
           })}
           checked={allSelected}
+          disabled={selectable.length === 0}
           indeterminate={selectedCount > 0 && !allSelected}
           onCheckedChange={(checked) => {
             if (checked) {
-              props.onChange([...new Set([...props.selected, ...props.models])])
+              props.onChange([...new Set([...props.selected, ...selectable])])
             } else {
               props.onChange(
                 props.selected.filter((model) => !props.models.includes(model))
@@ -116,6 +128,7 @@ function ModelCategory(props: ModelCategoryProps) {
                 id={`${id}-${model}`}
                 className='mt-0.5 shrink-0'
                 checked={selected.has(model)}
+                disabled={!selectableSet.has(model)}
                 onCheckedChange={(checked) =>
                   props.onChange(
                     checked
@@ -130,6 +143,21 @@ function ModelCategory(props: ModelCategoryProps) {
               >
                 {model}
               </Label>
+              {props.discovery && (
+                <div className='flex flex-wrap gap-1'>
+                  <Badge variant='outline'>
+                    {props.discovery.models.find((item) => item.id === model)
+                      ?.adapted
+                      ? t('Plugin adapted')
+                      : t('Plugin not adapted')}
+                  </Badge>
+                  <Badge variant='secondary'>{t('Pricing not verified')}</Badge>
+                  {props.discovery.models.find((item) => item.id === model)
+                    ?.configured && (
+                    <Badge variant='outline'>{t('Configured')}</Badge>
+                  )}
+                </div>
+              )}
               {props.aliases?.[model] && (
                 <Badge
                   variant='outline'
@@ -156,7 +184,7 @@ function ModelCategory(props: ModelCategoryProps) {
                   </TooltipContent>
                 </Tooltip>
               )}
-              {props.onRedirectModel && (
+              {props.onRedirectModel && selectableSet.has(model) && (
                 <Button
                   type='button'
                   variant='ghost'
@@ -192,6 +220,7 @@ type UpstreamModelSelectionProps = {
   onRedirectModel?: (model: string) => void
   /** Upstream model name to the request name it is published under. */
   aliases?: Record<string, string>
+  discovery?: UpstreamModelDiscovery
 }
 
 export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
@@ -275,6 +304,13 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
 
   return (
     <div className='space-y-3'>
+      {props.discovery && (
+        <p className='text-muted-foreground text-sm'>
+          {t(
+            'Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.'
+          )}
+        </p>
+      )}
       <Input
         aria-label={t('Search models...')}
         placeholder={t('Search models...')}
@@ -295,7 +331,14 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
               disabled={!categorized.filtered.length}
               onClick={() =>
                 props.onChange([
-                  ...new Set([...props.selected, ...categorized.filtered]),
+                  ...new Set([
+                    ...props.selected,
+                    ...discoverySelectableModels(
+                      categorized.filtered,
+                      props.existingModels,
+                      props.discovery
+                    ),
+                  ]),
                 ])
               }
             >
@@ -351,6 +394,8 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
                 onChange={props.onChange}
                 onRedirectModel={props.onRedirectModel}
                 aliases={props.aliases}
+                discovery={props.discovery}
+                existingModels={props.existingModels}
               />
             ))}
           </TabsContent>
@@ -369,6 +414,8 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
                   onChange={props.onChange}
                   onRedirectModel={props.onRedirectModel}
                   aliases={props.aliases}
+                  discovery={props.discovery}
+                  existingModels={props.existingModels}
                 />
               )
             )}
@@ -391,6 +438,8 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
                 onChange={props.onChange}
                 onRedirectModel={props.onRedirectModel}
                 aliases={props.aliases}
+                discovery={props.discovery}
+                existingModels={props.existingModels}
               />
             </TabsContent>
           )}
@@ -407,6 +456,8 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
               onChange={props.onChange}
               onRedirectModel={props.onRedirectModel}
               aliases={props.aliases}
+              discovery={props.discovery}
+              existingModels={props.existingModels}
             />
           ))}
           {!categorized.filtered.length && (

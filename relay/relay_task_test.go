@@ -15,6 +15,7 @@ import (
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	relayconstant "github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
 	"github.com/QuantumNous/new-api/setting/config"
@@ -91,6 +92,223 @@ func TestApplyChannelPinPreservesOriginTasksAndRetryMode(t *testing.T) {
 			assert.Equal(t, "text_to_video", info.OriginTasks[0].Action)
 			assert.Equal(t, string(model.TaskStatusSuccess), info.OriginTasks[0].Status)
 			assert.Equal(t, []byte(originTask.Data), info.OriginTasks[0].Data)
+		})
+	}
+}
+
+func TestRequestedTaskMidjourneyOriginRejectsDifferentChannelBeforeReroute(t *testing.T) {
+	database := setupRelayChannelDB(t)
+	require.NoError(t, database.AutoMigrate(&model.Midjourney{}))
+	require.NoError(t, i18n.Init())
+	require.NoError(t, database.Create(&model.Midjourney{
+		MjId: "owned-origin", UserId: 7, ChannelId: 31, Status: "SUCCESS",
+	}).Error)
+
+	for _, endpoint := range []string{"image-seed", "submit-change"} {
+		for _, tc := range []struct {
+			name        string
+			userID      int
+			requestedID int
+		}{
+			{name: "different channel", userID: 7, requestedID: 17},
+			{name: "foreign task stays hidden", userID: 8, requestedID: 17},
+			{name: "same channel continues existing lookup", userID: 7, requestedID: 31},
+			{name: "no header keeps existing lookup", userID: 7},
+		} {
+			t.Run(endpoint+"/"+tc.name, func(t *testing.T) {
+				c, _ := gin.CreateTestContext(httptest.NewRecorder())
+				c.Request = httptest.NewRequest(http.MethodPost, "/mj/submit/change", strings.NewReader(`{"taskId":"owned-origin","action":"UPSCALE","index":1}`))
+				c.Request.Header.Set("Content-Type", "application/json")
+				c.Request.Header.Set("Accept-Language", "en")
+				c.Request.Header.Set("Authorization", "Bearer original-token")
+				c.Set("id", tc.userID)
+				c.Set("channel_id", 17)
+				c.Set("base_url", "https://selected.example")
+				service.GetChannelConstraints(c).RequestedChannelID = tc.requestedID
+				var response *dto.MidjourneyResponse
+				if endpoint == "image-seed" {
+					c.Params = gin.Params{{Key: "id", Value: "owned-origin"}}
+					response = RelayMidjourneyTaskImageSeed(c)
+				} else {
+					response = RelayMidjourneySubmit(c, &relaycommon.RelayInfo{
+						UserId: tc.userID, RelayMode: relayconstant.RelayModeMidjourneyChange,
+					})
+				}
+				require.NotNil(t, response)
+				assert.Equal(t, constant.MjRequestError, response.Code)
+				switch {
+				case tc.userID != 7:
+					if endpoint == "image-seed" {
+						assert.Equal(t, "task_no_found", response.Description)
+					} else {
+						assert.Equal(t, "task_not_found", response.Description)
+					}
+				case tc.requestedID == 17:
+					assert.Equal(t, service.RequestedTaskChannelErrorMessage(c, service.ErrRequestedTaskChannelMismatch), response.Description)
+				default:
+					// No channel rows exist, so same-channel/legacy requests stop before any network or billing work.
+					assert.Equal(t, "get_channel_info_failed", response.Description)
+				}
+				assert.Equal(t, 17, c.GetInt("channel_id"))
+				assert.Equal(t, "https://selected.example", c.GetString("base_url"))
+				assert.Equal(t, "Bearer original-token", c.Request.Header.Get("Authorization"))
+			})
+		}
+	}
+}
+
+func TestRequestedTaskMidjourneyReadsCheckAllOwnedChannelsBeforeProjection(t *testing.T) {
+	database := setupRelayChannelDB(t)
+	require.NoError(t, database.AutoMigrate(&model.Midjourney{}))
+	require.NoError(t, i18n.Init())
+	require.NoError(t, database.Create(&[]model.Midjourney{
+		{MjId: "channel-a", UserId: 7, ChannelId: 17, Status: "SUCCESS"},
+		{MjId: "channel-b", UserId: 7, ChannelId: 31, Status: "SUCCESS"},
+		{MjId: "foreign", UserId: 8, ChannelId: 17, Status: "SUCCESS"},
+	}).Error)
+
+	for _, tc := range []struct {
+		name        string
+		batch       bool
+		taskID      string
+		body        string
+		requestedID int
+		wantError   string
+		wantCount   int
+	}{
+		{name: "single mismatch", taskID: "channel-b", requestedID: 17, wantError: "mismatch"},
+		{name: "single foreign remains hidden", taskID: "foreign", requestedID: 17, wantError: "task_no_found"},
+		{name: "batch rejects before first result", batch: true, body: `{"ids":["channel-a","channel-b"]}`, requestedID: 17, wantError: "mismatch"},
+		{name: "historical same channel remains readable", taskID: "channel-a", requestedID: 17},
+		{name: "batch filters foreign tasks", batch: true, body: `{"ids":["channel-a","foreign"]}`, requestedID: 17, wantCount: 1},
+		{name: "no header preserves mixed batch", batch: true, body: `{"ids":["channel-a","channel-b"]}`, wantCount: 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Request = httptest.NewRequest(http.MethodPost, "/mj/task/list-by-condition", strings.NewReader(tc.body))
+			c.Request.Header.Set("Content-Type", "application/json")
+			c.Request.Header.Set("Accept-Language", "en")
+			c.Set("id", 7)
+			c.Params = gin.Params{{Key: "id", Value: tc.taskID}}
+			service.GetChannelConstraints(c).RequestedChannelID = tc.requestedID
+			mode := relayconstant.RelayModeMidjourneyTaskFetch
+			if tc.batch {
+				mode = relayconstant.RelayModeMidjourneyTaskFetchByCondition
+			}
+			response := RelayMidjourneyTask(c, mode)
+			if tc.wantError != "" {
+				require.NotNil(t, response)
+				assert.Equal(t, constant.MjRequestError, response.Code)
+				if tc.wantError == "mismatch" {
+					assert.Equal(t, service.RequestedTaskChannelErrorMessage(c, service.ErrRequestedTaskChannelMismatch), response.Description)
+				} else {
+					assert.Equal(t, tc.wantError, response.Description)
+				}
+				assert.Empty(t, recorder.Body.String())
+				return
+			}
+			require.Nil(t, response)
+			if tc.batch {
+				var results []dto.MidjourneyDto
+				require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &results))
+				assert.Len(t, results, tc.wantCount)
+				for _, result := range results {
+					assert.NotEqual(t, "foreign", result.MjId)
+				}
+			} else {
+				var result dto.MidjourneyDto
+				require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &result))
+				assert.Equal(t, tc.taskID, result.MjId)
+			}
+		})
+	}
+}
+
+func TestRequestedTaskResolveOriginRejectsBeforeChannelLock(t *testing.T) {
+	database := setupRelayChannelDB(t)
+	require.NoError(t, database.AutoMigrate(&model.Task{}))
+	require.NoError(t, i18n.Init())
+	require.NoError(t, database.Create(&model.Task{
+		TaskID: "owned-origin", UserId: 7, ChannelId: 31, Status: model.TaskStatusSuccess,
+		Properties: model.Properties{OriginModelName: "origin-model"},
+	}).Error)
+	channelQueries := 0
+	require.NoError(t, database.Callback().Query().Before("gorm:query").Register("requested_origin_channel_query", func(tx *gorm.DB) {
+		if tx.Statement.Table == "channels" {
+			channelQueries++
+		}
+	}))
+
+	for _, tc := range []struct {
+		name        string
+		requestedID int
+		wantCode    string
+		wantStatus  int
+	}{
+		{name: "different channel", requestedID: 17, wantCode: "channel_selection_conflict", wantStatus: http.StatusBadRequest},
+		{name: "same channel cannot bypass token model limit", requestedID: 31, wantCode: "channel_selection_forbidden", wantStatus: http.StatusForbidden},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodPost, "/v1/videos/owned-origin/remix", nil)
+			c.Params = gin.Params{{Key: "video_id", Value: "owned-origin"}}
+			common.SetContextKey(c, constant.ContextKeyChannelId, 17)
+			common.SetContextKey(c, constant.ContextKeyUsingGroup, "default")
+			common.SetContextKey(c, constant.ContextKeyTokenModelLimitEnabled, true)
+			common.SetContextKey(c, constant.ContextKeyTokenModelLimit, map[string]bool{"other-model": true})
+			service.GetChannelConstraints(c).RequestedChannelID = tc.requestedID
+			info := &relaycommon.RelayInfo{
+				UserId: 7, ChannelMeta: &relaycommon.ChannelMeta{ChannelId: 17},
+				TaskRelayInfo: &relaycommon.TaskRelayInfo{},
+			}
+			taskErr := ResolveOriginTask(c, info)
+			require.NotNil(t, taskErr)
+			assert.Equal(t, tc.wantCode, taskErr.Code)
+			assert.Equal(t, tc.wantStatus, taskErr.StatusCode)
+			assert.Nil(t, info.LockedChannel)
+			assert.Equal(t, 17, info.ChannelId)
+			assert.Equal(t, "origin-model", info.OriginModelName)
+			assert.Zero(t, channelQueries, "denied continuation must not load a provider channel or key")
+		})
+	}
+}
+
+func TestRequestedTaskVideoFetchRejectsBeforeRealtimeProviderLookup(t *testing.T) {
+	database := setupRelayChannelDB(t)
+	require.NoError(t, database.AutoMigrate(&model.Task{}))
+	require.NoError(t, i18n.Init())
+	require.NoError(t, database.Create(&model.Task{
+		TaskID: "owned-video", UserId: 7, ChannelId: 31, Platform: constant.TaskPlatform(strconv.Itoa(constant.ChannelTypeGemini)),
+		Status: model.TaskStatusInProgress,
+	}).Error)
+	channelQueries := 0
+	require.NoError(t, database.Callback().Query().Before("gorm:query").Register("requested_video_channel_query", func(tx *gorm.DB) {
+		if tx.Statement.Table == "channels" {
+			channelQueries++
+		}
+	}))
+
+	for _, tc := range []struct {
+		name     string
+		userID   int
+		wantCode string
+	}{
+		{name: "owned channel mismatch", userID: 7, wantCode: "channel_selection_conflict"},
+		{name: "foreign task remains hidden", userID: 8, wantCode: "task_not_exist"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodGet, "/v1/videos/owned-video", nil)
+			c.Params = gin.Params{{Key: "task_id", Value: "owned-video"}}
+			c.Set("id", tc.userID)
+			service.GetChannelConstraints(c).RequestedChannelID = 17
+			body, taskErr := videoFetchByIDRespBodyBuilder(c)
+			require.NotNil(t, taskErr)
+			assert.Equal(t, tc.wantCode, taskErr.Code)
+			assert.Equal(t, http.StatusBadRequest, taskErr.StatusCode)
+			assert.Empty(t, body)
+			assert.Zero(t, channelQueries, "denied fetch must not enter realtime provider lookup")
 		})
 	}
 }

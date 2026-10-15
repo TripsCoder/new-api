@@ -57,6 +57,9 @@ func PrepareTaskPluginRoute() gin.HandlerFunc {
 			abortTaskPluginRouteErrorDetail(c, http.StatusInternalServerError, "")
 			return
 		}
+		if pinned.Route.Type == pluginruntime.RouteTypeSubmit && !requestedChannelOwnsPlugin(c, pinned.Generation, pinned.Plugin) {
+			return
+		}
 		c.Set(pluginruntime.ContextKeyPinnedPlugin, pluginruntime.PinnedPlugin{
 			Generation: pinned.Generation,
 			Plugin:     pinned.Plugin,
@@ -186,6 +189,9 @@ func PrepareTaskPluginRoute() gin.HandlerFunc {
 
 		switch kind {
 		case string(pluginruntime.RouteTypeSubmit):
+			if pinned.Route.Type == pluginruntime.RouteTypeDynamic && !requestedChannelOwnsPlugin(c, pinned.Generation, pinned.Plugin) {
+				return
+			}
 			modelName, valid := resolved["model"].(string)
 			if !valid || strings.TrimSpace(modelName) == "" {
 				logger.LogWarn(
@@ -347,11 +353,25 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 			c.Next()
 			return
 		}
+		requestedChannel, allowed := selectRequestedChannelForModel(c, claimedModel)
+		if !allowed {
+			return
+		}
 		lookupModel := claimedModel
 		pinModel := claimedModel
 		mappedModel := ""
 		rewriteTo := ""
-		if declared, ok := generation.CanonicalModel(claimedModel); ok {
+		if requestedChannel != nil {
+			var mappingErr error
+			lookupModel, mappingErr = model.ResolveTaskModelForChannel(generation, requestedChannel, claimedModel)
+			if mappingErr != nil {
+				abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgRequestedChannelModelMappingInvalid))
+				return
+			}
+			if lookupModel != claimedModel {
+				mappedModel = lookupModel
+			}
+		} else if declared, ok := generation.CanonicalModel(claimedModel); ok {
 			lookupModel = declared
 			pinModel = declared
 			if claimedModel != declared {
@@ -372,6 +392,10 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 		}
 		binding, found := generation.LookupEndpoint(c.Request.Method, c.Request.URL.Path, lookupModel)
 		if !found || binding.Plugin == nil {
+			if requestedChannel != nil && requestedChannel.Type == constant.ChannelTypeTaskPlugin {
+				abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgRequestedChannelProtocolUnsupported))
+				return
+			}
 			c.Set(contextKeyTaskPluginEndpointModel, *modelRequest)
 			c.Next()
 			return
@@ -387,6 +411,31 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 		candidates := generation.LookupEndpointCandidates(c.Request.Method, c.Request.URL.Path, lookupModel)
 		if len(candidates) == 0 {
 			candidates = []pluginruntime.ProtocolBinding{binding}
+		}
+		if requestedChannel != nil {
+			owned := make([]pluginruntime.ProtocolBinding, 0, 1)
+			for _, candidate := range candidates {
+				if channelOwnsPlugin(requestedChannel, generation, candidate.Plugin) {
+					owned = append(owned, candidate)
+				}
+			}
+			if len(owned) == 0 {
+				if requestedChannel.Type == constant.ChannelTypeTaskPlugin {
+					abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgRequestedChannelProtocolUnsupported))
+					return
+				}
+				// A native channel must not be decoded by another supplier's
+				// plugin merely because they expose the same model name.
+				c.Set(contextKeyTaskPluginEndpointModel, *modelRequest)
+				c.Next()
+				return
+			}
+			if len(owned) != 1 {
+				abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgRequestedChannelPluginAmbiguous))
+				return
+			}
+			candidates = owned
+			binding = owned[0]
 		}
 		if definition, known := pluginruntime.HostProtocol(binding.Protocol); known && len(definition.DefinedModes()) > 0 {
 			stream, background := jsonBodyBoolFlags(c)
@@ -1181,7 +1230,6 @@ func renderTaskPluginQuery(
 	for _, task := range tasks {
 		tasksByID[task.TaskID] = task
 	}
-	views := make([]dto.TaskView, 0, len(taskIDs))
 	for _, taskID := range taskIDs {
 		task := tasksByID[taskID]
 		if task == nil || !task.ResultRetrievable() {
@@ -1196,6 +1244,15 @@ func renderTaskPluginQuery(
 			abortTaskPluginRouteError(c, http.StatusNotFound)
 			return
 		}
+		if err := service.CheckRequestedTaskChannel(c, task.ChannelId); err != nil {
+			abortTaskPluginRouteErrorDetail(c, http.StatusBadRequest, service.RequestedTaskChannelErrorMessage(c, err))
+			return
+		}
+	}
+	// Check the complete authorized result set before projecting any task.
+	views := make([]dto.TaskView, 0, len(taskIDs))
+	for _, taskID := range taskIDs {
+		task := tasksByID[taskID]
 		view, viewErr := service.BuildTaskPluginView(task)
 		if viewErr != nil {
 			abortTaskPluginRouteError(c, http.StatusInternalServerError)
@@ -1413,6 +1470,9 @@ func PrepareTaskPluginSubmit() gin.HandlerFunc {
 		plugin, ok := generation.Get(pluginKey)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": gin.H{"message": "task plugin not found", "type": "invalid_request_error"}})
+			return
+		}
+		if !requestedChannelOwnsPlugin(c, generation, plugin) {
 			return
 		}
 		c.Set(pluginruntime.ContextKeyPinnedPlugin, pluginruntime.PinnedPlugin{

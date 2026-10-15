@@ -52,6 +52,12 @@ type ChannelFilter struct {
 type ChannelConstraints struct {
 	Pins    []ChannelPin
 	Filters []ChannelFilter
+	// RequestedChannelID is an explicit client selection, not an administrator
+	// pin. It must pass the token's ordinary model and group authorization.
+	RequestedChannelID int
+	// RequestedChannelGroup freezes the first authorized billing group so later
+	// decoder/distributor checks cannot silently change the route or its price.
+	RequestedChannelGroup string
 }
 
 func (cc *ChannelConstraints) AddPin(p ChannelPin) {
@@ -112,6 +118,11 @@ func (cc *ChannelConstraints) ResolvedPin() (ChannelPin, bool, []ChannelPin) {
 }
 
 func (cc *ChannelConstraints) SuppressesRetry() bool {
+	// Explicit client selections get one attempt. Retrying an async submission
+	// can create duplicate tasks even when the retry stays on the same channel.
+	if cc != nil && cc.RequestedChannelID > 0 {
+		return true
+	}
 	pin, found, _ := cc.ResolvedPin()
 	return found && pin.RetryMode == PinRetrySingleAttempt
 }

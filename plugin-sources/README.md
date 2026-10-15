@@ -1,6 +1,24 @@
 # 本地运行功能保留（2026-10-13）
 
-## 当前决定：官方程序加语音接入
+## 当前开发决定（2026-10-15，未安装/部署）
+
+用户确认在 `dev@184bfcb52` 上继续原生 API Key + `X-New-Api-Channel-Id` 方案，保留旧语音；以下 2026-10-13 回退说明是历史记录，不代表本轮源码状态。
+
+- `media-providers/{profiles.json,runtime.js,build.mjs,sources.lock.json}` 是恢复后维护的七家源码，`dist/` 是 1.1.0 **候选**，193 个型号条目；不自动替换 `installed/` 或数据库。
+- 本轮文档的 URL、SHA256、旧来源与未确认范围在 `sources.lock.json`。XCM、paisio、沧源、Yuxibox 声明已确认的 `/v1/models` Bearer/OpenAI 列表；其余未声明，获取时明确不支持。所有真实 Key 获取及付费请求均未执行。
+- 受控 `meta.modelDiscovery` 是本地最小扩展，需要当前修改后的宿主；旧宿主会拒绝未知字段。不是官方既有能力。`/api/status.data.channel_selection` 宣告 Header 版本，客户端核验后才可使用，不在失败时移除 Header 重试。
+- `node plugin-sources/media-providers/build.mjs` 生成候选；同命令加 `--check` 核验可复现输出；`node --test plugin-sources/media-providers/runtime.test.mjs` 离线验证参数。安装快照及其原 manifest 的校验仍独立保留。
+- 价格未知、来源未确认、新发现但尚未适配的型号不因此自动启用。文档差距及完整实施/验证记录续写 juhefuwu `docs/migration/new-api-channel-sync-20261011.md` 第 19 节。
+
+## 2026-10-15 秘塔 MiniMax-H3 独立候选
+
+- `minimax-meta/plugin.js` 是独立维护的 1.2.0 候选，以 `installed/minimax-meta/plugin.js` 官方 1.1.0 精确快照为基线；安装快照、七家源码和运行库均不由该目录改写。
+- 官方下载/文档 URL、原 SHA256、影策 `f368e63090534bcc1af354406c3d938a819fbfca` 来源及用户确认记录在 `minimax-meta/sources.lock.json`。公开旧插件仍限制 4–15 秒；本候选依据用户 2026-10-15 确认及影策源码支持 H3 的 4–30 秒，不宣称官方旧插件已更新。
+- 只保留 `minimax-meta` / `MiniMax-H3`；统一 `seconds`（兼容 `duration`）、`aspect_ratio`、分辨率和参考数组在插件内部转换。根 Base URL 和已有 `/api/` 前缀均可使用；不修改已存渠道或 Key。
+- 保留旧 `content` / `metadata.metaso_content`、multipart、Responses、查询、产物及原用量字段。参考素材在合并后按影策数量限制校验；只去除新旧字段别名间的重复映射，显式列表中的重复项、旧字段顺序和计费用量不变；首尾帧与多模态参考互斥。`profiles.json` 仍保守声明 `maxVideos=0`、`maxAudios=0`，不自动打开前台参考入口或额外计费配置。不增加模型发现、H3-Max 或价格。
+- 离线验证：`node --test plugin-sources/minimax-meta/plugin.test.mjs` 14/14 通过；原有完整 new-api 镜像的 `plugin lint` 通过，`plugin test /candidate/plugin.js --fixture /candidate/fixture.json` 6/6 通过（隔离只读、无网络运行）。候选源码 SHA256 为 `2eead5a52f8853441e441dd2251f2acafda473c45f06c324edab8d5a0026ab1e`。只有模拟请求/响应，没有付费调用、安装、启用或部署；宿主桥接与回退记录续写 juhefuwu 原任务第 21 节。完成用量沿用原 `task.duration`，未宣称实测产物时长。
+
+## 2026-10-13 历史决定：官方程序加语音接入
 
 用户于 2026-10-13 要求除语音接入外恢复官方实现，并更新本地镜像。
 当前应用源码以官方提交 `0f38a14a5e8e322ea741478b0e49878be3130e1d` 为基线：

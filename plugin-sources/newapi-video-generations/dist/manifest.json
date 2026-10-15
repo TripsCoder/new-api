@@ -1,0 +1,21 @@
+{
+  "hostBaseCommit": "184bfcb52ba7246051238f78144d7415c1ec600d",
+  "reviewedOn": "2026-10-15",
+  "status": "candidate-not-installed",
+  "inputs": {
+    "build.mjs": "2ea9158d1fb4e07ea63e99132195da08ba652b55139e8c04e6dda0c65e1c6054",
+    "profiles.json": "f2a18ed1c8d2ae26920ec7734ab77a3dad01f42a033650eef61676fd3accbc8c",
+    "runtime.js": "a872d0d9f4f27da7d46680eca93c77664b01254287fa5e4ade5f48ed80f56b19",
+    "sources.lock.json": "aec809219f45a0a0c49f428312152913e3beeba63b0ef5a3e0b470d76b8e897f"
+  },
+  "plugins": [
+    {
+      "key": "newapi_video_generations",
+      "version": "1.0.0",
+      "file": "newapi_video_generations.plugin.js",
+      "models": 3,
+      "sha256": "85f1c4ccc46ff746a355c1589e23fb6c8195c3a06f6f1d2478ac4dbb27f75b25",
+      "modelDiscovery": true
+    }
+  ]
+}

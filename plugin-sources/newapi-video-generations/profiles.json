@@ -1,0 +1,101 @@
+{
+  "newapi_video_generations": {
+    "key": "newapi_video_generations",
+    "name": "NewAPI Video Generations JSON",
+    "version": "1.0.0",
+    "baseUrl": "https://api.yingce.tv",
+    "website": "https://api.yingce.tv/pricing",
+    "modelDiscovery": {
+      "path": "/v1/models",
+      "format": "openai",
+      "sourceUrl": "https://api.yingce.tv/api/pricing",
+      "sourceSha256": "2d05205db76a8ae252db4d05107a26e80fc6226af112538a3d864608fe19b7ea"
+    },
+    "models": {
+      "sd2.0-c1": {
+        "kind": "video",
+        "submit": "/v1/video/generations",
+        "query": "/v1/video/generations/",
+        "secondsField": "seconds",
+        "stringSeconds": true,
+        "minSeconds": 5,
+        "maxSeconds": 15,
+        "defaultSeconds": 5,
+        "ratioField": "aspect_ratio",
+        "ratios": [
+          "16:9",
+          "9:16"
+        ],
+        "resolutionField": "resolution",
+        "resolutions": [
+          "720p"
+        ],
+        "defaultResolution": "720p",
+        "imageField": "image_urls",
+        "videoField": "video_urls",
+        "audioField": "audio_urls",
+        "maxImages": 9,
+        "maxVideos": 3,
+        "maxAudios": 3,
+        "httpsOnly": true,
+        "billing": "request_count"
+      },
+      "sd2.0-c2": {
+        "kind": "video",
+        "submit": "/v1/video/generations",
+        "query": "/v1/video/generations/",
+        "secondsField": "seconds",
+        "stringSeconds": true,
+        "minSeconds": 5,
+        "maxSeconds": 15,
+        "defaultSeconds": 5,
+        "ratioField": "aspect_ratio",
+        "ratios": [
+          "16:9",
+          "9:16"
+        ],
+        "resolutionField": "resolution",
+        "resolutions": [
+          "720p"
+        ],
+        "defaultResolution": "720p",
+        "imageField": "image_urls",
+        "videoField": "video_urls",
+        "audioField": "audio_urls",
+        "maxImages": 9,
+        "maxVideos": 0,
+        "maxAudios": 3,
+        "httpsOnly": true,
+        "billing": "seconds"
+      },
+      "sd2.5-c1": {
+        "kind": "video",
+        "submit": "/v1/video/generations",
+        "query": "/v1/video/generations/",
+        "secondsField": "seconds",
+        "stringSeconds": true,
+        "minSeconds": 5,
+        "maxSeconds": 30,
+        "defaultSeconds": 5,
+        "ratioField": "aspect_ratio",
+        "ratios": [
+          "16:9",
+          "9:16"
+        ],
+        "resolutionField": "resolution",
+        "resolutions": [
+          "720p"
+        ],
+        "defaultResolution": "720p",
+        "imageField": "image_urls",
+        "videoField": "video_urls",
+        "audioField": "audio_urls",
+        "maxImages": 30,
+        "maxVideos": 10,
+        "maxAudios": 10,
+        "httpsOnly": true,
+        "billing": "request_count"
+      }
+    }
+  }
+}

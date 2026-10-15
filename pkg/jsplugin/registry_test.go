@@ -65,6 +65,46 @@ func TestValidateV1MetaEnforcesTaskPluginKeyLength(t *testing.T) {
 	require.ErrorContains(t, ValidateV1Meta(meta), "must not exceed 30 characters")
 }
 
+func TestModelDiscoveryMetadataContract(t *testing.T) {
+	valid := `modelDiscovery: {path:"/v1/models",format:"openai",sourceUrl:"https://docs.example/models",sourceSha256:"` + strings.Repeat("a", 64) + `"},`
+	for _, tc := range []struct {
+		name, fields string
+		invalid      bool
+	}{
+		{"absent", "", false},
+		{"valid", valid, false},
+		{"null", `modelDiscovery:null,`, true},
+		{"string", `modelDiscovery:"/v1/models",`, true},
+		{"missing", `modelDiscovery:{path:"/v1/models"},`, true},
+		{"arbitrary network field", strings.Replace(valid, `path:`, `url:"https://evil.example/",path:`, 1), true},
+		{"method override", strings.Replace(valid, `path:`, `method:"POST",path:`, 1), true},
+		{"wrong type", strings.Replace(valid, `"/v1/models"`, `123`, 1), true},
+		{"absolute URL", strings.Replace(valid, `"/v1/models"`, `"https://evil.example/models"`, 1), true},
+		{"query", strings.Replace(valid, `/v1/models`, `/v1/models?token=secret`, 1), true},
+		{"http documentation", strings.Replace(valid, `https://docs`, `http://docs`, 1), true},
+		{"credentials", strings.Replace(valid, `https://docs`, `https://user:pass@docs`, 1), true},
+		{"hash missing", strings.Replace(valid, strings.Repeat("a", 64), "", 1), true},
+		{"non-openai", strings.Replace(valid, `"openai"`, `"custom"`, 1), true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			plugin, err := CompilePlugin(routingTestPluginSource("discovery", 0, `["model"]`, tc.fields, ""), Options{})
+			if tc.invalid {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tc.fields == "" {
+				require.Nil(t, plugin.Meta.ModelDiscovery)
+				return
+			}
+			require.Equal(t, "/v1/models", plugin.Meta.ModelDiscovery.Path)
+			cloned := cloneMeta(plugin.Meta)
+			cloned.ModelDiscovery.Path = "/other"
+			require.Equal(t, "/v1/models", plugin.Meta.ModelDiscovery.Path)
+		})
+	}
+}
+
 func TestRegistryDecodesAndValidatesIcon(t *testing.T) {
 	absent, err := CompilePlugin(routingTestPluginSource("icon-absent", 0, `["model"]`, "", ""), Options{})
 	require.NoError(t, err)

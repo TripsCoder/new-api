@@ -187,6 +187,47 @@ func TestPreservedInstalledPluginsMatchManifestAndCoexist(t *testing.T) {
 	}
 }
 
+func TestReviewedMediaCandidatesCompileAndCoexist(t *testing.T) {
+	root := "../plugin-sources/media-providers/dist"
+	raw, err := os.ReadFile(filepath.Join(root, "manifest.json"))
+	require.NoError(t, err)
+	var manifest struct {
+		Plugins []struct {
+			Key, Version, File, SHA256 string
+			Models                     int
+			ModelDiscovery             bool
+		}
+	}
+	require.NoError(t, common.Unmarshal(raw, &manifest))
+	require.Len(t, manifest.Plugins, 7)
+	registry := jsplugin.NewRegistry()
+	for _, key := range expectedKeys {
+		source, err := Source(key)
+		require.NoError(t, err)
+		_, err = registry.RegisterFactory(source, jsplugin.Options{Key: key})
+		require.NoError(t, err)
+	}
+	models, discoveries := 0, 0
+	for _, entry := range manifest.Plugins {
+		source, err := os.ReadFile(filepath.Join(root, entry.File))
+		require.NoError(t, err)
+		require.Equal(t, entry.SHA256, fmt.Sprintf("%x", sha256.Sum256(source)))
+		plugin, err := registry.Register(string(source), jsplugin.Options{})
+		require.NoError(t, err, entry.Key)
+		require.Equal(t, entry.Key, plugin.Meta.Key)
+		require.Equal(t, "1.1.0", plugin.Meta.Version)
+		require.Len(t, plugin.Meta.Models, entry.Models)
+		require.Equal(t, entry.ModelDiscovery, plugin.Meta.ModelDiscovery != nil)
+		require.Contains(t, string(source), "// Documentation: https://")
+		models += entry.Models
+		if entry.ModelDiscovery {
+			discoveries++
+		}
+	}
+	require.Equal(t, 193, models)
+	require.Equal(t, 4, discoveries)
+}
+
 func TestBuiltInResponsesDecodersEchoChannelMappedAlias(t *testing.T) {
 	bodyOverrides := map[string]map[string]any{}
 	for _, key := range expectedKeys {

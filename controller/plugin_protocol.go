@@ -965,6 +965,10 @@ func retrieveTaskPluginResponse(c *gin.Context, deps pluginProtocolBridgeDeps) {
 		writeTaskPluginResponseNotFound(c, responseID, "missing")
 		return
 	}
+	if err := service.CheckRequestedTaskChannel(c, task.ChannelId); err != nil {
+		respondPluginProtocolError(c, http.StatusBadRequest, "invalid_request_error", service.RequestedTaskChannelErrorMessage(c, err))
+		return
+	}
 	if !task.ResultRetrievable() {
 		writeTaskPluginResponseNotFound(c, responseID, "result_discarded")
 		return

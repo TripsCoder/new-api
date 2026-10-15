@@ -1,0 +1,638 @@
+{
+  "capturedOn": "2026-10-11",
+  "host": {
+    "repository": "https://github.com/QuantumNous/new-api",
+    "commit": "0f38a14a5e8e322ea741478b0e49878be3130e1d",
+    "zipCommentVerified": true,
+    "go": "1.26",
+    "engine": "github.com/Calcium-Ion/moejs v0.1.0-alpha.6",
+    "files": [
+      {
+        "path": "go.mod",
+        "sha256": "3aef8fdc34603da0b08634443d11b21915f857ee92a8e5cbe19551cd5b87b8cd"
+      },
+      {
+        "path": "go.sum",
+        "sha256": "e30e9875e608b4487eb2a2674b80e3607000d4b40a18c5ed1bf274df6be6b890"
+      },
+      {
+        "path": "docs/plugin-api/v1.md",
+        "sha256": "c1708b138168ead63c9a5a575b3e641120a2017d8ddaf89c4b12ab3cc6bf7a6a"
+      },
+      {
+        "path": "docs/plugin-api/v1.d.ts",
+        "sha256": "f13d10840b7d340077966690747a9f2d0996127226b108dd2c849eb03d84fde7"
+      },
+      {
+        "path": "docs/plugin-api/v1.schema.json",
+        "sha256": "ec12a96c18e0962867943787cdf2a5d770c84558fa9a2897ab421c591da5a180"
+      },
+      {
+        "path": "pkg/billingexpr/expr.md",
+        "sha256": "ec43b209f4b0c85cb5fbacded17e79a7c702edf8cb9bcc2850c71f276b2ca2f1"
+      },
+      {
+        "path": "pkg/jsplugin/cli.go",
+        "sha256": "6c1cd7c4ce5bad7579aafef47caefca17f55da13c11a61870b2f162e71dde9e0"
+      },
+      {
+        "path": "pkg/jsplugin/engine.go",
+        "sha256": "23d76320042c8b29ce51979d085fddaa866718933cf5d7b996fa2185dfe381d5"
+      },
+      {
+        "path": "pkg/jsplugin/fetch.go",
+        "sha256": "af572cfa75d76bf6cdea197e310c9e36b5124a20e35a0038da30dbf5634ee677"
+      },
+      {
+        "path": "pkg/jsplugin/fixture.go",
+        "sha256": "913470a6c74b7de1e5c495ca5f5043c8790aed0ccb6d5b53f18df55c86d1d802"
+      },
+      {
+        "path": "pkg/jsplugin/icon.go",
+        "sha256": "465a2a0e498dcd1569f9f1eeb6925e13015f0dc40386c2687dc7fd633ac657a6"
+      },
+      {
+        "path": "pkg/jsplugin/json_state.go",
+        "sha256": "2d9d702a63bee5836281dcea73c2bf28f0a9e5bf7059a2700a02c47e59d89c89"
+      },
+      {
+        "path": "pkg/jsplugin/model_fold.go",
+        "sha256": "dc059a6c79891969c98a1c8cab97e9f73373d7673cef7d0ff07f03a4809a7a64"
+      },
+      {
+        "path": "pkg/jsplugin/registry.go",
+        "sha256": "39c67cef4d6eae9699324b11631488446d172d805f33596c65f86fdbad570aa9"
+      },
+      {
+        "path": "pkg/jsplugin/request.go",
+        "sha256": "c417232fe0fcea254c6450a60169d3353ccece554c0342a80a7c685922865606"
+      },
+      {
+        "path": "pkg/jsplugin/routing.go",
+        "sha256": "0cca432bd0985f5e0dedead58a5a31271d5394278af8043bb6edb064f9f9a608"
+      },
+      {
+        "path": "pkg/jsplugin/utils.go",
+        "sha256": "d4b3cfc7b4bcfe200f56d99c81407d88bc45b51b8fa05b813681de38ec62ab34"
+      },
+      {
+        "path": "pkg/billingexpr/compile.go",
+        "sha256": "a2b7bf9eb5435ed250627fda0fb9cef00b8835acf96e8df8a15eb1783c8d0432"
+      },
+      {
+        "path": "pkg/billingexpr/fixed.go",
+        "sha256": "809b64433338a99bc7f36b57da52e5edf6b24893a252d4df8a1ed0f66d467d29"
+      },
+      {
+        "path": "pkg/billingexpr/round.go",
+        "sha256": "c500c6ae0f7275305283ce03215d259d1daca733b89362f31b98c96a4cdf0bb6"
+      },
+      {
+        "path": "pkg/billingexpr/run.go",
+        "sha256": "ae18b4f6c619f473e87c39c776ba2a597c7b6fa0a35e2d196e6fc2297adec738"
+      },
+      {
+        "path": "pkg/billingexpr/settle.go",
+        "sha256": "22ac04a7f0a5cdab8d47eda3bcbe9a85710f83494ddce87482bad5f914182dd3"
+      },
+      {
+        "path": "pkg/billingexpr/types.go",
+        "sha256": "e030cf8a6dbc8660dd396a9b759987822e524c2156ba066d6e9defe30b69f2ce"
+      }
+    ]
+  },
+  "workspace": {
+    "path": "D:\\code\\goswtich\\new-api",
+    "branch": "feature/free/local",
+    "head": "156e3a75e80f8f1078ccbf7836cf5acc85689973",
+    "initialStatus": "clean",
+    "coreChanged": false
+  },
+  "sources": [
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs/models/kling-3.0",
+      "retrievedOn": "2026-10-11",
+      "sha256": "2eb310d8b1378461b3a3002e376d2fd11111bf834fcddd41f6c9f895de8a5cb2",
+      "bytes": 1059,
+      "role": "user supplied entry"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/manifest.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "5ab9638880d79721733f875d9c33272f6477eac4cbf8c485d078104375908e36",
+      "bytes": 87679,
+      "role": "model document discovery"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/capabilities/image.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "e58541056c2abc3064b8e008b581aab424116d1c287eea31cf3c0bce9d8b087a",
+      "bytes": 4350,
+      "role": "image endpoints and asynchronous operations"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/capabilities/video.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "11914755d6e6e6d3d341bc39ff7c39ac8a436753d3ed7aa08237bf03b062ff2f",
+      "bytes": 2548,
+      "role": "video lifecycle"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/capabilities/task-lifecycle.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "3f558095399cd85a99bbf922de4b518281aea92e3714c2e14e9b5f462985d88f",
+      "bytes": 1259,
+      "role": "result URLs and states"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/api/pricing",
+      "retrievedOn": "2026-10-11",
+      "sha256": "b914f4606e145ae64cd3c4b4a76bdd872ccbdaaa0c1110b667c7e72c8f799601",
+      "bytes": 129617,
+      "role": "billing basis; model-specific documents win conflicting UI limits"
+    },
+    {
+      "url": "https://lxmone.xyz/docs/",
+      "retrievedOn": "2026-10-11",
+      "sha256": "1ee4714c95dfdba463d8962e22992c3d0c2973bf2263bf6117e5e111e5a3a65e",
+      "bytes": 28391,
+      "role": "async image/video contracts and pricing units"
+    },
+    {
+      "url": "https://lxmone.xyz/api/v1/docs/model-catalog",
+      "retrievedOn": "2026-10-11",
+      "sha256": "3afd0e236f02e742b32065fa59e1b453d148abf3b7a10a9347994cc20931c7ba",
+      "bytes": 47042,
+      "role": "live model IDs, availability and billing units"
+    },
+    {
+      "url": "https://lxmone.xyz/docs/assets/catalog.js?v=20261011-task-tabs",
+      "retrievedOn": "2026-10-11",
+      "sha256": "a5dfa9602e291dfc50d9114d947bb8f32c50d713c49b7844ec418f71af2395b6",
+      "bytes": 28716,
+      "role": "rendered model-specific request examples"
+    },
+    {
+      "url": "https://xcmapi.org/docs/QuickStart.html#video",
+      "retrievedOn": "2026-10-11",
+      "sha256": "244edebfaf390d0c2869816bf2722396fced5c575e198054001e0ed71bbc4f54",
+      "bytes": 155695,
+      "role": "mixed video JSON contract and H3-specific schema"
+    },
+    {
+      "url": "https://xcmapi.org/api/public/prices",
+      "retrievedOn": "2026-10-11",
+      "sha256": "fe5edf8b21cb7cb503d5a1ffe11740e87f6bc1d740d7d82e8d48c5e847891650",
+      "bytes": 416466,
+      "role": "public image model availability and mixed group billing basis"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/llms.txt",
+      "retrievedOn": "2026-10-11",
+      "sha256": "4f05f71ac06fde6eae6b2d32e5de2dd51df25a802042203641a41f6779d83f91",
+      "bytes": 1815,
+      "role": "user supplied Apifox model index"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/llms.txt",
+      "retrievedOn": "2026-10-11",
+      "sha256": "02cac944182c95ea1f498f1aeee74da57b64df73d5a9af04f2d4cf3ce5faa7a3",
+      "bytes": 9414,
+      "role": "user supplied Apifox model index"
+    },
+    {
+      "url": "https://yuxibox.cn/docs",
+      "retrievedOn": "2026-10-11",
+      "sha256": "66611d936296ca662454bbdb313d4eb9f16f0fdfda3aebbbdaa9ff3a23c1011e",
+      "bytes": 1023,
+      "role": "user supplied entry"
+    },
+    {
+      "url": "https://yuxibox.cn/static/js/index.1dc30c59ba.js",
+      "retrievedOn": "2026-10-11",
+      "sha256": "d14f649bd83db29274b05531cc63a70cb665e94c835f684cf2de0a25fffc9dc2",
+      "bytes": 4839222,
+      "role": "public docs application source and model limits"
+    },
+    {
+      "url": "https://yuxibox.cn/static/js/async/96776.0640352776.js",
+      "retrievedOn": "2026-10-11",
+      "sha256": "6cd801f6ecbf014bdbafdc15d41a89b12a0de53f6406a7a17c0fdf993f4cee0e",
+      "bytes": 36497,
+      "role": "docs application module 96776, image and video examples"
+    },
+    {
+      "url": "https://yuxibox.cn/api/pricing",
+      "retrievedOn": "2026-10-11",
+      "sha256": "828929b8015706b3cf15cc971368ad25c9604adad5fdd33c16272024f0ab9ec4",
+      "bytes": 7070,
+      "role": "active model IDs and expressions, amounts not copied"
+    },
+    {
+      "url": "https://artbox.top/docs",
+      "retrievedOn": "2026-10-11",
+      "sha256": "d9281d77da383f6c9a0318590631dd0d559e21834f26b77dc54eac131d803477",
+      "bytes": 21494,
+      "role": "singular video endpoint, model limits, actual-second cost rule"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/kling-3.0.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "9f3610e6d9a5d8b1487815009f2b1d56cbe9991038b185a89a1d24acea3f6f3f",
+      "bytes": 3083,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "86fdf53551b965cb8f0a131d1ca5feb77ef1f3413efd967b45d15bf5fe57ab7a",
+      "bytes": 3631,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "2cdca9799c88c42207fd876db3a10e53b1b17b5b71c97cb57fafc83e59dfcbf3",
+      "bytes": 3603,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-flare.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "42855733fc5aa785cd2cf2a3c1637635b576e209c14b7dcd48e96dc760cec7aa",
+      "bytes": 3887,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-sunburst.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "642eb5399a338835f96b8288b0c9c64a664e276f1449167477c800229059f1fd",
+      "bytes": 3905,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2-1k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "fcef8bc5f6f1c7c9c37986af2fbe56ec71159deb2ab1239fa9a05cff393edcc3",
+      "bytes": 3789,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2-2k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "4199d4a59d4be81de405f7020b368977648e7185b37caa42131fea73bebac1f1",
+      "bytes": 3789,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2-4k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "417e4a99fcf5ff29a4974228560319614551cfcf78420ce7f18c21da67412510",
+      "bytes": 3780,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-flare-1k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "644cc1d2ca9ebd32966f10a2a72e35b034c386037c45b66e61357c88f963a5ba",
+      "bytes": 3993,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-flare-2k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "8ab3cb1f5a613d614c5c4ed4e0779021ca5359f8f9531ce41a32d3119ff78b4a",
+      "bytes": 3993,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-flare-4k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "9721d9a2fe2afbbb2f2ea04fa985bcf7e5bc60cc43bef2bef7327fd66887da68",
+      "bytes": 3984,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-sunburst-1k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "30ae8d9861620aa84047d8ba95f53f5dc00bd08128743375d0b44c44c4524999",
+      "bytes": 4011,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-sunburst-2k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "cc5c2e7c2cb361f610abca0599338e16d2a987cffb547df7d3a58bfa1241e337",
+      "bytes": 4011,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-sunburst-4k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "37264ba329e90801cdcaa4a94094278c5df465b20705432295d9b607fe1b91fb",
+      "bytes": 4002,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/nano-banana-pro-1k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "14507700ee05bb777f11f50e77b9c2d1219540b522a5d4e40c237fae0912c684",
+      "bytes": 3307,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/nano-banana-pro-2k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "b38a4c9dd428e66e937463cbfb769ca72fec5511fb8b995c9fc5d4d31c3a9206",
+      "bytes": 3307,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/nano-banana-pro-4k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "e49118fed8f2a8a0d9348b52ea03b5e28eb466e6df7bfefc302d42ff2086c80d",
+      "bytes": 3307,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/nano-banana2-1k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "ddeca68a3bafebc18ed16d92f2a8144e26ddff635cc9de733ff2c8ecdb8766fd",
+      "bytes": 3303,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/nano-banana2-2k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "a1260764a26e585473882771a827bcfb177e1e70a2251a6de4a939758a217626",
+      "bytes": 3303,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://ai.cangyuansuanli.cn/docs-static/models/nano-banana2-4k.json",
+      "retrievedOn": "2026-10-11",
+      "sha256": "5c3b32d0adf57d9529d33af35c84c37f6584df5fcc090d513f059c6b6a9da21d",
+      "bytes": 3303,
+      "role": "model-specific parameters"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/424561006e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "84d968f7c9390aaa8edea7c70f2aedd02b792aae32a41b611564b3f7c4ab4806",
+      "bytes": 12592,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/447634846e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "9ee97202cc2ccd17d998079a642f9a4d50fc50a86e32bb5538cb84e8866f7e0c",
+      "bytes": 17468,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/466136668e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "d3b1a68056414453a344ee6125d27584fd6c0bd0fe268c7bbd8a47f26cf68808",
+      "bytes": 18884,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/447357296e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "7e7c1e5588f133a025f290609789e38db4d93d1f397416a694f9c98b055e1023",
+      "bytes": 22579,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/455245131e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "70c2956d821d03d945224580c832107bdf3692391d9936a191736c5e19ce1b71",
+      "bytes": 6502,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/424659184e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "8c70a21384701d55bc85c758d4a067888efb63eb27d4d57ff5dcc3d3d1a8ee22",
+      "bytes": 6502,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/462450037e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "cdfefe39704736dd9840120720ecdd4f5d8cccf0e4c634bc3d08fbc6b84ae93e",
+      "bytes": 18608,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/424653897e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "d2cdd5d889228665d052ca32ce94ac6a49d0304e64053da6e984d25ba9922e74",
+      "bytes": 20583,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/521606507e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "a5f57d0942c96c0114e315f08d322a552fc28251d0f8efe8e69881a6509c9d77",
+      "bytes": 15659,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/521606855e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "6a3909d76cc8522585122cb90942a23a4e0f95858a8726a0e40afbfeef752802",
+      "bytes": 17139,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/521606932e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "945dbac208cd96718486ba635c3324430b74afcc2ea8183bc13147d59efb4a52",
+      "bytes": 14980,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784235e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "403b6554c9d38e7271bcc484725d2e8088387abef9eba6c0fc4b61872022a59d",
+      "bytes": 12971,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784236e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "0788f148a0ad142494ebc10840f7d8457da2ba4844c846bae7fc7f12e35d9bb4",
+      "bytes": 4100,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784237e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "4e14c401ac223f15bde50d6181501d3318c540a22b0846330d792f9aea39cad5",
+      "bytes": 5965,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784238e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "a7e2f172692369b6ab374b6de768a807b69318c678adc91e57f1916fbc9ace82",
+      "bytes": 8817,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/498909445e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "9cf30f2d3d5419c7b1dc874832b047d78d66df76787898af2a97802b41580e21",
+      "bytes": 4835,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784239e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "5bacaafd8cc2b3a2066bc7d9c41f0939a5522eb3b2bcb103cc6309e67440e726",
+      "bytes": 17267,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/483689739e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "a345c3096bd10622e2ae62b9b8135906481b6656a3c8e2bbdedb306c9c45939b",
+      "bytes": 12992,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784240e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "7c5af6dd07a271e4121350c8e9d9046f14c84719028f4049c55e103ee86b6d6c",
+      "bytes": 1340,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784241e0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "93d2da843143c9b1c0a1945b2879551321b040acd4926ae20f7f46e187dc102b",
+      "bytes": 3185,
+      "role": "published OpenAPI model/operation contract"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/282767365d0.md",
+      "retrievedOn": "2026-10-11",
+      "sha256": "3938cb05ae29dcd5e8f6f9365eae24ac6df262ce3d75366878aa90ff0bf558ea",
+      "bytes": 4002,
+      "role": "published OpenAPI model/operation contract"
+    }
+  ],
+  "liveProviderRequests": false,
+  "review20261015": {
+    "reviewedOn": "2026-10-15",
+    "hostBaseCommit": "184bfcb52ba7246051238f78144d7415c1ec600d",
+    "scope": "Candidate source review; no live keys, installation, price approval or deployment",
+    "publicSources": [
+      {
+        "url": "https://6l0ket291i.apifox.cn/447634846e0.md",
+        "sha256": "9ee97202cc2ccd17d998079a642f9a4d50fc50a86e32bb5538cb84e8866f7e0c"
+      },
+      {
+        "url": "https://y5dprsil1i.apifox.cn/475784235e0.md",
+        "sha256": "4926cbb7680f50ef0462f54339bf2b9f06e2f833613d5be818156838b2517d23"
+      },
+      {
+        "url": "https://y5dprsil1i.apifox.cn/475784236e0.md",
+        "sha256": "ecb5ca641d45002033355be98f315b6c79d6c55c3bde73234b4379bff8c85566"
+      },
+      {
+        "url": "https://y5dprsil1i.apifox.cn/475784240e0.md",
+        "sha256": "7c5af6dd07a271e4121350c8e9d9046f14c84719028f4049c55e103ee86b6d6c"
+      },
+      {
+        "url": "https://ai.cangyuansuanli.cn/docs-static/manifest.json",
+        "sha256": "79d7d4b30772f6714c5e2443cc212e128345302c95e8fd3e76203fcf12f05dd8"
+      },
+      {
+        "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.json",
+        "sha256": "1960540e67d4cdeb27678b60f922960c79bdc653a6765101cd827d42c3bd7b83"
+      },
+      {
+        "url": "https://ai.cangyuansuanli.cn/docs-static/models/gpt-image-2.5-flare-1k.json",
+        "sha256": "2acbff6c86f335a93f5fc29cd261bfd06f66fb9156724b9871648d53d4adfe2d"
+      },
+      {
+        "url": "https://ai.cangyuansuanli.cn/docs-static/capabilities/models.md",
+        "sha256": "744ac4865f8e456540952e6eacdc095e09bf81b533101cbafd792cffbec6c5b7"
+      },
+      {
+        "url": "https://artbox.top/docs",
+        "sha256": "d9281d77da383f6c9a0318590631dd0d559e21834f26b77dc54eac131d803477"
+      },
+      {
+        "url": "https://xcmapi.org/docs/QuickStart.html",
+        "sha256": "2be5b475fb32ce6068c5884437d69bcf8f400c89164af5c914dd83346060ba1e"
+      },
+      {
+        "url": "https://xcmapi.org/docs/ai-reference.md",
+        "sha256": "633df950bc83bdd01fbdb2df80b6735318c57068045e312c0e5cf9f8b70f5072"
+      },
+      {
+        "url": "https://xcmapi.org/docs/openapi.json",
+        "sha256": "67a4c21f9cab5c6c93d20f1ab3be433eb85e4095ca78b17510e0521e460b79dd"
+      },
+      {
+        "url": "https://xcmapi.org/docs/video-contract.json",
+        "sha256": "6032578057a0492b75679ac59b12d77c5ed970a5f6a254608595e4ea49182475"
+      },
+      {
+        "url": "https://lxmone.xyz/docs/",
+        "sha256": "958287e8769f9343f81368da883177d6e8b5a92a1b319c1ca7157cf224d4b892"
+      },
+      {
+        "url": "https://lxmone.xyz/docs/model-catalog.md",
+        "sha256": "470d9b528f34a7e0682520ad2787a5a515cddacfb64782151629ed74841659e4"
+      },
+      {
+        "url": "https://lxmone.xyz/api/v1/docs/model-catalog",
+        "sha256": "481ae45df1513204fe20394bb277a496b268ccd6045d28a1b0557ebaa28cd071",
+        "scope": "public documentation snapshot, not authenticated model discovery"
+      },
+      {
+        "url": "https://yuxibox.cn/docs",
+        "sha256": "a53c39d5a2d239b0e56fd6dfcf2f20d4f1333151e46000f17a018d90c01387e8",
+        "scope": "current SPA entry only"
+      },
+      {
+        "url": "https://yuxibox.cn/static/js/index.3d4c5b4547.js",
+        "sha256": "9e4729ae9031bd73f21f2a6d861c59bf9685b2cd1710221cdd55640e64795b66",
+        "scope": "current application entry, does not reference old documentation chunk"
+      },
+      {
+        "url": "https://yuxibox.cn/static/js/async/96776.0640352776.js",
+        "sha256": "6cd801f6ecbf014bdbafdc15d41a89b12a0de53f6406a7a17c0fdf993f4cee0e",
+        "scope": "historical locked documentation, still public; current route not reverified"
+      },
+      {
+        "url": "https://yuxibox.cn/static/js/async/53864.653efb4030.js",
+        "sha256": "db59a19824a9abc16fd02a6e614dfa0fd4123e3b564d1fb883c429a72237f8ec",
+        "scope": "Current /docs route module"
+      },
+      {
+        "url": "https://yuxibox.cn/static/js/async/62664.6b5799e6d8.js",
+        "sha256": "b75b4dfb35b85f24120ee22c10bf9d4b18f6c3deb89c15ba372f60477663bbaa",
+        "scope": "Current documentation bearer authentication"
+      },
+      {
+        "url": "https://yuxibox.cn/static/js/async/28152.e32cf4d45a.js",
+        "sha256": "3c510579a2d63af1638a60fe8bd3391f6f708ec34bf44076c106ad8dc7c92c03",
+        "scope": "Current documentation GET /v1/models data[].id"
+      }
+    ],
+    "limitations": {
+      "yuxibox_media": "Current model-list contract reverified through current SPA route; generation profiles retain reviewed historical limits; no live Key validation",
+      "lxmone_media": "Model-list response shape unconfirmed; discovery not declared; public prices not account prices",
+      "zhangyuge_media": "No verified model-list endpoint",
+      "artbox_media": "No verified model-list endpoint; actual completion duration and signed artifact URL contract unresolved",
+      "paisio_media": "Common video schema changes not applied across model-specific limits",
+      "xcmapi_media": "New Gway model aliases not inferred from old model names",
+      "cangyuan_media": "Flare 1k optional background/output_format and pixel constraints are model-scoped; recommended ratio examples are not an exhaustive upstream allowlist"
+    }
+  }
+}

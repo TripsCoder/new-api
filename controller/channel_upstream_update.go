@@ -369,7 +369,7 @@ func fetchChannelUpstreamModelIDs(channel *model.Channel) ([]string, error) {
 		if !ok {
 			return nil, fmt.Errorf("task plugin %q is not registered", channel.GetSetting().TaskPluginKey)
 		}
-		return normalizeModelNames(plugin.Meta.Models), nil
+		return fetchTaskPluginUpstreamModels(channel, plugin.Meta)
 	}
 	baseURL := constant.GetChannelBaseURL(channel.Type)
 	if channel.GetBaseURL() != "" {
@@ -466,6 +466,94 @@ func fetchChannelUpstreamModelIDs(channel *model.Channel) ([]string, error) {
 	return normalizeModelNames(ids), nil
 }
 
+// Keep the request contract and its provenance on the same registry snapshot.
+// A plugin may be replaced while the upstream request is in flight.
+func fetchChannelUpstreamModelsWithDetails(channel *model.Channel) ([]string, any, error) {
+	if channel.Type != constant.ChannelTypeTaskPlugin {
+		ids, err := fetchChannelUpstreamModelIDs(channel)
+		return ids, nil, err
+	}
+	plugin, ok := jsplugin.DefaultRegistry.Get(channel.GetSetting().TaskPluginKey)
+	if !ok {
+		return nil, nil, fmt.Errorf("task plugin %q is not registered", channel.GetSetting().TaskPluginKey)
+	}
+	meta := plugin.Meta
+	ids, err := fetchTaskPluginUpstreamModels(channel, meta)
+	if err != nil {
+		return nil, nil, err
+	}
+	return ids, taskPluginDiscoveryDetails(channel, meta, ids), nil
+}
+
+// Discovery never executes generation hooks or falls back to meta.models.
+// The channel supplies the origin/key; the plugin only supplies a reviewed path.
+func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) ([]string, error) {
+	if meta.ModelDiscovery == nil {
+		return nil, errors.New("This plugin has no verified upstream model-list endpoint; configure models manually")
+	}
+	if err := jsplugin.ValidateV1Meta(meta); err != nil {
+		return nil, errors.New("The plugin model discovery declaration is invalid")
+	}
+	base := strings.TrimSuffix(strings.TrimRight(channel.GetBaseURL(), "/"), "/v1")
+	u, err := url.Parse(base)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return nil, errors.New("The channel model discovery address is invalid")
+	}
+	key, _, apiErr := channel.GetNextEnabledKey()
+	if apiErr != nil || strings.TrimSpace(key) == "" {
+		return nil, errors.New("No enabled channel key is available for model discovery")
+	}
+	key = strings.TrimSpace(key)
+	headers, err := buildFetchModelsHeaders(channel, key)
+	if err != nil {
+		return nil, errors.New("The channel model discovery headers are invalid")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+meta.ModelDiscovery.Path, nil)
+	if err != nil {
+		return nil, errors.New("The channel model discovery address is invalid")
+	}
+	req.Header = headers
+	req.Header.Del(constant.ChannelSelectionHeader)
+	settings := channel.GetSetting()
+	shared, err := service.GetHttpClientWithProxySettings(settings.Proxy, settings)
+	if err != nil {
+		return nil, errors.New("The channel model discovery transport is unavailable")
+	}
+	client := *shared
+	client.Timeout = 15 * time.Second
+	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	response, err := client.Do(req)
+	if err != nil {
+		return nil, errors.New("Upstream model discovery request failed; no static catalog was substituted")
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Upstream model discovery returned HTTP %d", response.StatusCode)
+	}
+	body, err := io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
+	if err != nil || len(body) > 1<<20 {
+		return nil, errors.New("Upstream model discovery response is unreadable or too large")
+	}
+	// Do not expose upstream bodies or decoder errors which could contain secrets.
+	var result struct {
+		Data *[]OpenAIModel `json:"data"`
+	}
+	if common.Unmarshal(body, &result) != nil || result.Data == nil {
+		return nil, errors.New("Upstream model discovery returned an invalid model list")
+	}
+	ids := make([]string, 0, len(*result.Data))
+	for _, item := range *result.Data {
+		if item.ID == "" || item.ID != strings.TrimSpace(item.ID) || len(item.ID) > 512 || strings.ContainsAny(item.ID, "\r\n\t") {
+			return nil, errors.New("Upstream model discovery returned an invalid model list")
+		}
+		ids = append(ids, item.ID)
+	}
+	// [] is a genuine empty upstream list, distinct from missing data/error.
+	return normalizeModelNames(ids), nil
+}
+
 func fetchAdvancedCustomUpstreamModelIDs(channel *model.Channel, baseURL string) ([]string, error) {
 	key, _, apiErr := channel.GetNextEnabledKey()
 	if apiErr != nil {
@@ -536,7 +624,9 @@ func checkAndPersistChannelUpstreamModelUpdates(
 		return false, 0, fetchErr
 	}
 
-	if allowAutoApply && settings.UpstreamModelUpdateAutoSyncEnabled && len(pendingAddModels) > 0 {
+	// A real task-plugin catalog may contain models the plugin cannot execute or
+	// bill. Keep discoveries pending for explicit selection and pricing review.
+	if channel.Type != constant.ChannelTypeTaskPlugin && allowAutoApply && settings.UpstreamModelUpdateAutoSyncEnabled && len(pendingAddModels) > 0 {
 		originModels := normalizeModelNames(channel.GetModels())
 		mergedModels := mergeModelNames(originModels, pendingAddModels)
 		if len(mergedModels) > len(originModels) {
@@ -559,6 +649,21 @@ func checkAndPersistChannelUpstreamModelUpdates(
 		}
 	}
 	return modelsChanged, autoAdded, nil
+}
+
+func taskPluginDiscoveryDetails(channel *model.Channel, meta jsplugin.Meta, ids []string) any {
+	models := make([]gin.H, 0, len(ids))
+	for _, id := range ids {
+		models = append(models, gin.H{"id": id, "adapted": taskPluginAdaptsChannelModel(channel, meta, id), "configured": slices.Contains(channel.GetModels(), id), "pricing_status": "not_checked"})
+	}
+	return gin.H{"source": "upstream", "checked_at": common.GetTimestamp(), "plugin_key": meta.Key, "source_url": meta.ModelDiscovery.SourceURL, "source_sha256": meta.ModelDiscovery.SourceSHA256, "models": models}
+}
+
+func taskPluginAdaptsChannelModel(channel *model.Channel, meta jsplugin.Meta, name string) bool {
+	// Reuse channel-local mapping and cycle handling, without global canonical
+	// names or another plugin's declarations making an unadapted model eligible.
+	target, err := model.ResolveTaskModelForChannel(nil, channel, name)
+	return err == nil && slices.Contains(meta.Models, target)
 }
 
 func refreshChannelRuntimeCache() {
@@ -992,9 +1097,21 @@ func applyChannelUpstreamModelUpdates(
 	addModels := intersectModelNames(addModelsInput, pendingAddModels)
 	ignoreModels := intersectModelNames(ignoreModelsInput, pendingAddModels)
 	removeModels := intersectModelNames(removeModelsInput, pendingRemoveModels)
-	removeModels = subtractModelNames(removeModels, addModels)
 
 	originModels := normalizeModelNames(channel.GetModels())
+	if channel.Type == constant.ChannelTypeTaskPlugin && len(addModels) > 0 {
+		plugin, ok := jsplugin.DefaultRegistry.Get(channel.GetSetting().TaskPluginKey)
+		adaptedModels := make([]string, 0, len(addModels))
+		for _, name := range addModels {
+			// Existing selections survive a plugin catalog change. Only new
+			// additions require adaptation, including the apply-all endpoint.
+			if slices.Contains(originModels, name) || (ok && taskPluginAdaptsChannelModel(channel, plugin.Meta, name)) {
+				adaptedModels = append(adaptedModels, name)
+			}
+		}
+		addModels = adaptedModels
+	}
+	removeModels = subtractModelNames(removeModels, addModels)
 	nextModels := applySelectedModelChanges(originModels, addModels, removeModels)
 	modelsChanged = !slices.Equal(originModels, nextModels)
 	if modelsChanged {

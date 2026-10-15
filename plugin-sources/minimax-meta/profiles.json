@@ -1,0 +1,26 @@
+{
+  "minimax-meta": {
+    "key": "minimax-meta",
+    "name": "MiniMax-Meta",
+    "version": "1.2.0",
+    "baseUrl": "https://metaso.cn",
+    "website": "https://metaso.cn/minimax-h3/new-api-guide",
+    "models": {
+      "MiniMax-H3": {
+        "kind": "video",
+        "secondsField": "seconds",
+        "minSeconds": 4,
+        "maxSeconds": 30,
+        "defaultSeconds": 4,
+        "ratioField": "aspect_ratio",
+        "ratios": ["adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"],
+        "resolutions": ["768P", "2K"],
+        "defaultResolution": "768P",
+        "maxImages": 9,
+        "maxVideos": 0,
+        "maxAudios": 0,
+        "maxImageBytes": 31457280
+      }
+    }
+  }
+}

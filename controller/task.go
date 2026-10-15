@@ -42,8 +42,12 @@ func GetTask(c *gin.Context) {
 		videoProxyError(c, http.StatusInternalServerError, "server_error", "Failed to query task")
 		return
 	}
-	if !exists {
+	if !exists || task == nil {
 		videoProxyError(c, http.StatusNotFound, "invalid_request_error", "Task not found")
+		return
+	}
+	if err := service.CheckRequestedTaskChannel(c, task.ChannelId); err != nil {
+		videoProxyError(c, http.StatusBadRequest, "invalid_request_error", service.RequestedTaskChannelErrorMessage(c, err))
 		return
 	}
 	createdAt := task.CreatedAt
@@ -93,6 +97,10 @@ func GetDashboardTaskArtifacts(c *gin.Context) {
 
 func writeTaskArtifacts(c *gin.Context, task *model.Task, dashboard bool) {
 	c.Header("Cache-Control", "private, no-store")
+	if err := service.CheckRequestedTaskChannel(c, task.ChannelId); err != nil {
+		writeTaskArtifactError(c, http.StatusBadRequest, "invalid_request_error", service.RequestedTaskChannelErrorMessage(c, err))
+		return
+	}
 	artifacts, err := projectTaskArtifacts(task)
 	if err != nil {
 		writeTaskArtifactProjectionError(c, err)
@@ -322,6 +330,10 @@ func TaskArtifactContent(c *gin.Context) {
 	}
 	if !exists || task == nil {
 		writeTaskArtifactError(c, http.StatusNotFound, "artifact_not_found", "Task or artifact not found")
+		return
+	}
+	if err := service.CheckRequestedTaskChannel(c, task.ChannelId); err != nil {
+		writeTaskArtifactError(c, http.StatusBadRequest, "invalid_request_error", service.RequestedTaskChannelErrorMessage(c, err))
 		return
 	}
 	artifactKey := strings.TrimSpace(c.Param("artifact_key"))

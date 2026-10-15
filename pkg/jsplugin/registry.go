@@ -98,6 +98,7 @@ type Meta struct {
 	BaseURL              string                      `json:"baseUrl,omitempty"`
 	ChannelTypes         []int                       `json:"channelTypes,omitempty"`
 	Models               []string                    `json:"models"`
+	ModelDiscovery       *ModelDiscovery             `json:"modelDiscovery,omitempty"`
 	FetchMode            string                      `json:"fetchMode"`
 	AllowedHosts         []string                    `json:"allowedHosts"`
 	Upstreams            []string                    `json:"upstreams,omitempty"`
@@ -107,6 +108,15 @@ type Meta struct {
 	UsageExamples        []UsageExample              `json:"usageExamples,omitempty"`
 	UsageProfiles        []UsageProfile              `json:"usageProfiles,omitempty"`
 	Auth                 AuthMeta                    `json:"auth"`
+}
+
+// ModelDiscovery is a read-only, same-origin model-list contract, not a task hook.
+// The documentation digest pins the evidence reviewed by the plugin author.
+type ModelDiscovery struct {
+	Path         string `json:"path"`
+	Format       string `json:"format"`
+	SourceURL    string `json:"sourceUrl"`
+	SourceSHA256 string `json:"sourceSha256"`
 }
 
 // Upstream kinds a plugin driver can address. Every driver speaks to its
@@ -883,6 +893,10 @@ func (r *Registry) Snapshot() RegistrySnapshot {
 }
 
 func cloneMeta(meta Meta) Meta {
+	if meta.ModelDiscovery != nil {
+		discovery := *meta.ModelDiscovery
+		meta.ModelDiscovery = &discovery
+	}
 	meta.SubmitResponseTypes = slices.Clone(meta.SubmitResponseTypes)
 	meta.RequiredCapabilities = slices.Clone(meta.RequiredCapabilities)
 	meta.ChannelTypes = append([]int(nil), meta.ChannelTypes...)
@@ -1030,7 +1044,7 @@ func decodeMeta(value any) (Meta, error) {
 	}
 	for field := range object {
 		switch field {
-		case "requiredCapabilities", "submitResponseTypes", "sortPriority", "website", "apiVersion", "key", "name", "icon", "description", "version", "author", "baseUrl", "channelTypes", "channelType", "compatibleChannelTypes", "models", "fetchMode", "allowedHosts", "upstreams", "routes", "protocols", "usageSchema", "usageExamples", "usageProfiles", "auth", "endpoints", "submitPaths", "actions":
+		case "requiredCapabilities", "submitResponseTypes", "sortPriority", "website", "apiVersion", "key", "name", "icon", "description", "version", "author", "baseUrl", "channelTypes", "channelType", "compatibleChannelTypes", "models", "modelDiscovery", "fetchMode", "allowedHosts", "upstreams", "routes", "protocols", "usageSchema", "usageExamples", "usageProfiles", "auth", "endpoints", "submitPaths", "actions":
 		default:
 			return Meta{}, &UnknownMetaFieldError{Field: field}
 		}
@@ -1122,6 +1136,32 @@ func decodeMeta(value any) (Meta, error) {
 	if err != nil {
 		return Meta{}, err
 	}
+	if value, exists := object["modelDiscovery"]; exists {
+		fields, ok := value.(map[string]any)
+		if !ok {
+			return Meta{}, fmt.Errorf("plugin modelDiscovery must be an object")
+		}
+		discovery := &ModelDiscovery{}
+		for name, value := range fields {
+			text, ok := value.(string)
+			if !ok {
+				return Meta{}, fmt.Errorf("plugin modelDiscovery fields must be strings")
+			}
+			switch name {
+			case "path":
+				discovery.Path = text
+			case "format":
+				discovery.Format = text
+			case "sourceUrl":
+				discovery.SourceURL = text
+			case "sourceSha256":
+				discovery.SourceSHA256 = text
+			default:
+				return Meta{}, fmt.Errorf("plugin modelDiscovery has unknown field %q", name)
+			}
+		}
+		meta.ModelDiscovery = discovery
+	}
 	meta.AllowedHosts, err = strictStringSlice(object, "allowedHosts")
 	if err != nil {
 		return Meta{}, err
@@ -1208,6 +1248,18 @@ func ValidateV1Meta(meta Meta) error {
 }
 
 func normalizeV1Meta(meta *Meta) error {
+	if discovery := meta.ModelDiscovery; discovery != nil {
+		if discovery.Format != "openai" || !regexp.MustCompile(`^/[A-Za-z0-9_/-]{1,255}$`).MatchString(discovery.Path) || strings.Contains(discovery.Path, "//") {
+			return fmt.Errorf("plugin modelDiscovery requires openai format and a same-origin absolute path without query or fragment")
+		}
+		u, err := url.Parse(discovery.SourceURL)
+		if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || strings.ContainsAny(discovery.SourceURL, "\\\r\n\t ") || !regexp.MustCompile(`^[a-f0-9]{64}$`).MatchString(discovery.SourceSHA256) {
+			return fmt.Errorf("plugin modelDiscovery requires an HTTPS documentation URL and lowercase SHA256")
+		}
+		if meta.Auth.Type != "" && meta.Auth.Type != "api_key" {
+			return fmt.Errorf("plugin modelDiscovery openai format requires API key authentication")
+		}
+	}
 	seenCapabilities := make(map[string]bool, len(meta.RequiredCapabilities))
 	for _, name := range meta.RequiredCapabilities {
 		if !HasCapability(name) || seenCapabilities[name] {

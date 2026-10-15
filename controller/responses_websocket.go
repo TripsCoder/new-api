@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/QuantumNous/new-api/relay"
 	"github.com/QuantumNous/new-api/relay/helper"
 	"github.com/QuantumNous/new-api/relaykit/types"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -77,6 +79,11 @@ func newResponsesWSRequestRunner(c *gin.Context) relay.ResponsesWSRequestRunner 
 	// Capture credentials before channel selection or header overrides. Resolve
 	// the peer once with the public router's trusted-proxy configuration.
 	headers := c.Request.Header.Clone()
+	if channelID := service.GetChannelConstraints(c).RequestedChannelID; channelID > 0 {
+		// Each frame re-authenticates. Recreate only the parsed internal value,
+		// which TokenAuth consumes again before any upstream forwarding.
+		headers.Set(constant.ChannelSelectionHeader, strconv.Itoa(channelID))
+	}
 	for _, name := range []string{"Connection", "Upgrade", "Sec-WebSocket-Key", "Sec-WebSocket-Version", "Sec-WebSocket-Extensions", "Sec-WebSocket-Protocol", "Content-Length", "Content-Encoding"} {
 		headers.Del(name)
 	}

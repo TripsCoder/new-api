@@ -25,6 +25,7 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { api } from '@/lib/api'
 
 import { fetchModels } from '../../api'
+import type { UpstreamModelDiscovery } from '../../types'
 import { ChannelsProvider } from '../channels-provider'
 import { FetchModelsDialog } from '../dialogs/fetch-models-dialog'
 import { UpstreamModelSelection } from '../upstream-model-selection'
@@ -32,6 +33,91 @@ import { UpstreamModelSelection } from '../upstream-model-selection'
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+})
+
+test('plugin discovery blocks new unadapted selections including category select-all and preserves configured choices', async () => {
+  const user = userEvent.setup()
+  const onChange = vi.fn()
+  const discovery: UpstreamModelDiscovery = {
+    source: 'upstream',
+    checked_at: 1,
+    plugin_key: 'media',
+    source_url: 'https://example.com/docs',
+    source_sha256: 'a'.repeat(64),
+    models: [
+      {
+        id: 'gpt-adapted',
+        adapted: true,
+        configured: false,
+        pricing_status: 'not_checked',
+      },
+      {
+        id: 'gpt-unknown',
+        adapted: false,
+        configured: false,
+        pricing_status: 'not_checked',
+      },
+      {
+        id: 'gpt-existing',
+        adapted: false,
+        configured: true,
+        pricing_status: 'not_checked',
+      },
+    ],
+  }
+  render(
+    <UpstreamModelSelection
+      models={discovery.models.map((model) => model.id)}
+      selected={['gpt-existing']}
+      existingModels={['gpt-existing']}
+      onChange={onChange}
+      discovery={discovery}
+      showChanges={false}
+    />
+  )
+  expect(screen.getByRole('checkbox', { name: 'gpt-unknown' })).toHaveAttribute(
+    'aria-disabled',
+    'true'
+  )
+  await user.click(screen.getByRole('checkbox', { name: 'gpt-unknown' }))
+  expect(onChange).not.toHaveBeenCalled()
+  expect(screen.getByRole('checkbox', { name: 'gpt-existing' })).toBeChecked()
+  expect(
+    screen.getByRole('checkbox', { name: 'gpt-existing' })
+  ).not.toHaveAttribute('aria-disabled', 'true')
+  expect(screen.getAllByText('Pricing not verified')).toHaveLength(3)
+  await user.click(
+    screen.getByRole('checkbox', { name: /Select all models in/ })
+  )
+  expect(onChange).toHaveBeenLastCalledWith(['gpt-existing', 'gpt-adapted'])
+})
+
+test('failed discovery shows its reason without offering to save an empty catalog', async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  const onModelsSelected = vi.fn()
+  render(
+    <QueryClientProvider client={client}>
+      <ChannelsProvider>
+        <FetchModelsDialog
+          open
+          onOpenChange={vi.fn()}
+          existingModelsOverride={['existing']}
+          onModelsSelected={onModelsSelected}
+          customFetcher={async () => {
+            throw new Error('No verified endpoint')
+          }}
+        />
+      </ChannelsProvider>
+    </QueryClientProvider>
+  )
+  expect(await screen.findByText('No verified endpoint')).toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', { name: 'Save Models' })
+  ).not.toBeInTheDocument()
+  expect(onModelsSelected).not.toHaveBeenCalled()
+  client.clear()
 })
 
 test.each([

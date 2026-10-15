@@ -1,0 +1,45 @@
+{
+  "cases": [
+    {
+      "name": "uniform 30-second submit converts to Metaso content",
+      "hook": "buildSubmitRequest",
+      "args": [{"baseUrl":"https://metaso.cn","apiKey":"fixture-only","requestBody":{"model":"MiniMax-H3","prompt":"A quiet landscape","seconds":30,"aspect_ratio":"16:9","resolution":"2k","images":["https://fixtures.invalid/input.png"]}}],
+      "expected": {
+        "url":"https://metaso.cn/api/minimax/v2/video_generation","method":"POST",
+        "headers":{"Authorization":"Bearer fixture-only","Content-Type":"application/json","Accept":"application/json"},
+        "body":{"model":"MiniMax-H3","content":[{"type":"text","text":"A quiet landscape"},{"type":"image_url","role":"reference_image","image_url":{"url":"https://fixtures.invalid/input.png"}}],"resolution":"2K","duration":30,"ratio":"16:9"},
+        "action":"image_to_video"
+      }
+    },
+    {
+      "name":"30-second reservation remains consistent",
+      "hook":"extractUsage",
+      "args":[{"requestBody":{"prompt":"A quiet landscape","seconds":"30","resolution":"768p"}}],
+      "expected":{"seconds":30,"resolution":"768P","image_count_after_free":0,"input_video_seconds":0}
+    },
+    {
+      "name":"reject 31 seconds before submit",
+      "hook":"buildSubmitRequest",
+      "args":[{"requestBody":{"prompt":"A quiet landscape","seconds":31}}],
+      "expectedError":"seconds must be an integer between 4 and 30"
+    },
+    {
+      "name":"reject fractional duration before reservation",
+      "hook":"extractUsage",
+      "args":[{"requestBody":{"prompt":"A quiet landscape","seconds":4.5}}],
+      "expectedError":"seconds must be an integer between 4 and 30"
+    },
+    {
+      "name":"query URL preserves api base",
+      "hook":"buildQueryRequest",
+      "args":[{"baseUrl":"https://metaso.cn/api/","apiKey":"fixture-only","taskId":"task/id"}],
+      "expected":{"url":"https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fid","method":"GET","headers":{"Authorization":"Bearer fixture-only","Accept":"application/json"}}
+    },
+    {
+      "name":"completion reads 30-second task field",
+      "hook":"extractUsageOnComplete",
+      "args":[{},{},{"task":{"duration":30,"resolution":"768P"}}],
+      "expected":{"seconds":30,"resolution":"768P"}
+    }
+  ]
+}

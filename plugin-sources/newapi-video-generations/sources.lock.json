@@ -1,0 +1,24 @@
+{
+  "review20261015": {
+    "hostBaseCommit": "184bfcb52ba7246051238f78144d7415c1ec600d",
+    "publicSources": [
+      {
+        "url": "https://api.yingce.tv/api/pricing",
+        "sha256": "2d05205db76a8ae252db4d05107a26e80fc6226af112538a3d864608fe19b7ea"
+      }
+    ]
+  },
+  "protocol": {
+    "path": "packages/yingce-protocol/catalog/newapi-video-generations-v1.json",
+    "sha256": "be0f9e7220d6f7883ff84db0cb3cc9f76764b8cb34f5f449b0379e5488338f5b",
+    "providerId": "newapi-channel-2"
+  },
+  "limitations": [
+    "Upstream POST and polling compatibility have not been verified; keep new bindings disabled until confirmed.",
+    "Public metadata advertises /v1/videos; this candidate follows the user-supplied Yingce Channel 2 manifest /v1/video/generations.",
+    "Media byte and reference duration limits are local safety defaults, not supplier guarantees.",
+    "Only 720p and landscape/portrait are enabled; audio generation toggle and explicit frame roles remain disabled.",
+    "c1 public videos count maps to shared request_count, one generated video per request; c2 uses requested seconds, actual-duration completion usage remains unconfirmed.",
+    "Supplier stability percentages are descriptive, not an SLA."
+  ]
+}

@@ -21,11 +21,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createServerError } from '@/lib/server-error-message'
 
 import { fetchModels, fetchUpstreamModels } from '../api'
+import { normalizeModelDiscoveryResponse } from '../lib/model-discovery'
+import type { UpstreamModelDiscovery } from '../types'
 
 type DiscoveryState = {
   status: 'idle' | 'loading' | 'success' | 'error' | 'stale'
   models: string[]
   error?: unknown
+  discovery?: UpstreamModelDiscovery
 }
 
 export type ChannelModelDiscoveryRequest =
@@ -35,6 +38,7 @@ export type ChannelModelDiscoveryRequest =
 type ChannelModelDiscoveryProps = {
   enabled: boolean
   request: ChannelModelDiscoveryRequest
+  requiresEvidence?: boolean
 }
 
 export function useChannelModelDiscovery(props: ChannelModelDiscoveryProps) {
@@ -69,7 +73,15 @@ export function useChannelModelDiscovery(props: ChannelModelDiscoveryProps) {
       if (!response.success) {
         throw createServerError(response, 'Failed to fetch models')
       }
-      setState({ status: 'success', models: response.data ?? [] })
+      const verified = normalizeModelDiscoveryResponse(
+        response,
+        props.requiresEvidence === true
+      )
+      setState({
+        status: 'success',
+        models: verified.data ?? [],
+        discovery: verified.discovery,
+      })
     } catch (error) {
       if (requestSequence !== sequence.current) return
       setState((previous) => ({
@@ -78,7 +90,7 @@ export function useChannelModelDiscovery(props: ChannelModelDiscoveryProps) {
         error,
       }))
     }
-  }, [props.enabled, props.request])
+  }, [props.enabled, props.request, props.requiresEvidence])
 
   return { ...state, fetch }
 }

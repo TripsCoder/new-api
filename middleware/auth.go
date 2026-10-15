@@ -690,6 +690,14 @@ func SetupContextForToken(c *gin.Context, token *model.Token, parts ...string) e
 	}
 	common.SetContextKey(c, constant.ContextKeyTokenGroup, token.Group)
 	common.SetContextKey(c, constant.ContextKeyTokenCrossGroupRetry, token.CrossGroupRetry)
+	// Consume all spellings before any plugin or upstream header passthrough.
+	// This is a requested channel, not the privileged administrator token pin.
+	channelHeaderPresent, channelHeaderErr := service.ConsumeRequestedChannelHeader(c)
+	if channelHeaderErr != nil || (channelHeaderPresent && len(parts) > 1) {
+		service.GetChannelConstraints(c).RequestedChannelID = 0
+		abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgRequestedChannelHeaderInvalid), types.ErrorCodeInvalidRequest)
+		return errors.New("invalid or ambiguous requested channel")
+	}
 	if token.AutoGroups != "" {
 		autoGroups, err := token.GetAutoGroups()
 		if err != nil {

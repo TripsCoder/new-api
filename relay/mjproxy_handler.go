@@ -316,6 +316,9 @@ func RelayMidjourneyTaskImageSeed(c *gin.Context) *dto.MidjourneyResponse {
 	if originTask == nil {
 		return service.MidjourneyErrorWrapper(constant.MjRequestError, "task_no_found")
 	}
+	if err := service.CheckRequestedTaskChannel(c, originTask.ChannelId); err != nil {
+		return service.MidjourneyErrorWrapper(constant.MjRequestError, service.RequestedTaskChannelErrorMessage(c, err))
+	}
 	channel, err := model.GetChannelById(originTask.ChannelId, true)
 	if err != nil {
 		return service.MidjourneyErrorWrapper(constant.MjRequestError, "get_channel_info_failed")
@@ -356,6 +359,9 @@ func RelayMidjourneyTask(c *gin.Context, relayMode int) *dto.MidjourneyResponse 
 				Description: "task_no_found",
 			}
 		}
+		if err := service.CheckRequestedTaskChannel(c, originTask.ChannelId); err != nil {
+			return service.MidjourneyErrorWrapper(constant.MjRequestError, service.RequestedTaskChannelErrorMessage(c, err))
+		}
 		midjourneyTask := coverMidjourneyTaskDto(c, originTask)
 		respBody, err = common.Marshal(midjourneyTask)
 		if err != nil {
@@ -378,6 +384,11 @@ func RelayMidjourneyTask(c *gin.Context, relayMode int) *dto.MidjourneyResponse 
 		var tasks []dto.MidjourneyDto
 		if len(condition.IDs) != 0 {
 			originTasks := model.GetByMJIds(userId, condition.IDs)
+			for _, originTask := range originTasks {
+				if err := service.CheckRequestedTaskChannel(c, originTask.ChannelId); err != nil {
+					return service.MidjourneyErrorWrapper(constant.MjRequestError, service.RequestedTaskChannelErrorMessage(c, err))
+				}
+			}
 			for _, originTask := range originTasks {
 				midjourneyTask := coverMidjourneyTaskDto(c, originTask)
 				tasks = append(tasks, midjourneyTask)
@@ -485,6 +496,9 @@ func RelayMidjourneySubmit(c *gin.Context, relayInfo *relaycommon.RelayInfo) *dt
 		if originTask == nil {
 			return service.MidjourneyErrorWrapper(constant.MjRequestError, "task_not_found")
 		} else { //原任务的Status=SUCCESS，则可以做放大UPSCALE、变换VARIATION等动作，此时必须使用原来的请求地址才能正确处理
+			if err := service.CheckRequestedTaskChannel(c, originTask.ChannelId); err != nil {
+				return service.MidjourneyErrorWrapper(constant.MjRequestError, service.RequestedTaskChannelErrorMessage(c, err))
+			}
 			if setting.MjActionCheckSuccessEnabled {
 				if originTask.Status != "SUCCESS" && relayInfo.RelayMode != relayconstant.RelayModeMidjourneyModal {
 					return service.MidjourneyErrorWrapper(constant.MjRequestError, "task_status_not_success")

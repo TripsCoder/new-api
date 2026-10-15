@@ -95,6 +95,23 @@ func TestProcessHeaderOverride_NonTestKeepsClientHeaderPlaceholder(t *testing.T)
 	require.Equal(t, "trace-123", headers["x-upstream-trace"])
 }
 
+func TestProcessHeaderOverrideNeverForwardsChannelSelection(t *testing.T) {
+	for _, rule := range []string{"*", "regex:.*"} {
+		t.Run(rule, func(t *testing.T) {
+			ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+			ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/images/generations", nil)
+			ctx.Request.Header.Set("X-New-Api-Channel-Id", "9")
+			ctx.Request.Header.Set("X-Trace", "keep")
+			info := &relaycommon.RelayInfo{ChannelMeta: &relaycommon.ChannelMeta{HeadersOverride: map[string]any{
+				rule: "", "X-New-Api-Channel-Id": "another-channel", "X-Leak": "{client_header:X-New-Api-Channel-Id}",
+			}}}
+			headers, err := processHeaderOverride(info, ctx)
+			require.NoError(t, err)
+			require.Equal(t, map[string]string{"x-trace": "keep"}, headers)
+		})
+	}
+}
+
 func TestProcessHeaderOverride_RuntimeOverrideIsFinalHeaderMap(t *testing.T) {
 	t.Parallel()
 

@@ -12,6 +12,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
@@ -88,6 +89,17 @@ func ResolveOriginTask(c *gin.Context, info *relaycommon.RelayInfo) *dto.TaskErr
 	}
 
 	// 锁定到原始任务的渠道（重试时复用同一渠道，轮换 key）
+	if requested := service.GetChannelConstraints(c).RequestedChannelID; requested > 0 {
+		if requested != originTask.ChannelId {
+			return service.TaskErrorWrapperLocal(errors.New(i18n.T(c, i18n.MsgRequestedOriginTaskChannelConflict)), "channel_selection_conflict", http.StatusBadRequest)
+		}
+		_, _, selectErr := service.SelectChannelForRequest(c, info.OriginModelName, &service.RetryParam{
+			Ctx: c, ModelName: info.OriginModelName, TokenGroup: common.GetContextKeyString(c, constant.ContextKeyUsingGroup),
+		})
+		if selectErr != nil {
+			return service.TaskErrorWrapperLocal(errors.New(i18n.T(c, i18n.MsgRequestedTaskChannelForbidden)), "channel_selection_forbidden", selectErr.StatusCode)
+		}
+	}
 	ch, err := model.GetChannelById(originTask.ChannelId, true)
 	if err != nil {
 		return service.TaskErrorWrapperLocal(err, "channel_not_found", http.StatusBadRequest)
@@ -479,6 +491,10 @@ func videoFetchByIDRespBodyBuilder(c *gin.Context) (respBody []byte, taskResp *d
 	}
 	if !exist || !originTask.ResultRetrievable() {
 		taskResp = service.TaskErrorWrapperLocal(errors.New("task_not_exist"), "task_not_exist", http.StatusBadRequest)
+		return
+	}
+	if err := service.CheckRequestedTaskChannel(c, originTask.ChannelId); err != nil {
+		taskResp = service.TaskErrorWrapperLocal(errors.New(service.RequestedTaskChannelErrorMessage(c, err)), "channel_selection_conflict", http.StatusBadRequest)
 		return
 	}
 

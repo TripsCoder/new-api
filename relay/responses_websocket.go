@@ -575,7 +575,20 @@ func (s *responsesWSSession) restoreConnectionContext(c *gin.Context, model stri
 		!reflect.DeepEqual(route.Auth, s.lockedRoute.Auth) {
 		return types.NewErrorWithStatusCode(errors.New("upstream route changed; reconnect required"), types.ErrorCodeAccessDenied, http.StatusForbidden, types.ErrOptionWithSkipRetry())
 	}
-	if pin, found, _ := service.GetChannelConstraints(c).ResolvedPin(); found {
+	constraints := service.GetChannelConstraints(c)
+	if constraints.RequestedChannelID > 0 {
+		if constraints.RequestedChannelID != s.lockedChannelID {
+			return types.NewErrorWithStatusCode(errors.New(i18n.T(c, i18n.MsgRequestedChannelReconnectRequired)), types.ErrorCodeAccessDenied, http.StatusForbidden, types.ErrOptionWithSkipRetry())
+		}
+		constraints.RequestedChannelGroup = s.lockedGroup
+		constraints.AddFilter(appdto.ChannelFilter{Kind: appdto.FilterResponsesWebSocket})
+		_, _, selectErr := service.SelectChannelForRequest(c, model, &service.RetryParam{
+			Ctx: c, ModelName: model, TokenGroup: common.GetContextKeyString(c, appconstant.ContextKeyUsingGroup),
+		})
+		if selectErr != nil {
+			return types.NewErrorWithStatusCode(errors.New(i18n.T(c, i18n.MsgRequestedChannelConnectionForbidden)), types.ErrorCodeAccessDenied, selectErr.StatusCode, types.ErrOptionWithSkipRetry())
+		}
+	} else if pin, found, _ := constraints.ResolvedPin(); found {
 		if pin.ChannelId != s.lockedChannelID {
 			return types.NewErrorWithStatusCode(errors.New("channel pin changed; reconnect required"), types.ErrorCodeAccessDenied, http.StatusForbidden, types.ErrOptionWithSkipRetry())
 		}

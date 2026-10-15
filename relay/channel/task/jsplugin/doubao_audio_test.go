@@ -7,11 +7,15 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
 	"github.com/QuantumNous/new-api/plugins"
+	"github.com/QuantumNous/new-api/relay/channel"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
@@ -46,9 +50,11 @@ func TestDoubaoAudioImmediateUsageAndLargeResponse(t *testing.T) {
 	require.NoError(t, err)
 	plugin, err := pluginruntime.CompilePlugin(source, pluginruntime.Options{})
 	require.NoError(t, err)
-	info := &relaycommon.RelayInfo{OriginModelName: "audio-alias", ChannelMeta: &relaycommon.ChannelMeta{UpstreamModelName: "seed-audio-1.0", ChannelBaseUrl: "https://openspeech.bytedance.com", ApiKey: "fixture-key"}, TaskRelayInfo: &relaycommon.TaskRelayInfo{PublicTaskID: "task_audio"}}
+	info := &relaycommon.RelayInfo{OriginModelName: "audio-alias", ChannelMeta: &relaycommon.ChannelMeta{ChannelType: constant.ChannelTypeTaskPlugin, UpstreamModelName: "seed-audio-1.0", ChannelBaseUrl: "https://openspeech.bytedance.com", ApiKey: "fixture-key"}, TaskRelayInfo: &relaycommon.TaskRelayInfo{PublicTaskID: "task_audio"}}
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request = httptest.NewRequest(http.MethodPost, "/doubao/audio/generations", nil)
+	c.Request.Header.Set("Authorization", "Bearer client-fixture-token")
+	c.Request.Header.Set("X-New-Api-Channel-Id", "14")
 	c.Set("task_request", map[string]any{"model": "audio-alias", "text_prompt": "生成十秒音效", "audio_config": map[string]any{"format": "mp3", "pitch_rate": 0, "enable_subtitle": false}})
 	adaptor := New(plugin)
 	adaptor.Init(info)
@@ -60,6 +66,11 @@ func TestDoubaoAudioImmediateUsageAndLargeResponse(t *testing.T) {
 	assert.Equal(t, "fixture-key", adaptor.submit.Headers["X-Api-Key"])
 	assert.NotContains(t, adaptor.submit.Headers, "Authorization")
 	assert.Equal(t, "audio-alias", info.OriginModelName)
+	upstreamRequest := httptest.NewRequest(http.MethodPost, adaptor.submit.URL, nil)
+	require.NoError(t, adaptor.BuildRequestHeader(c, upstreamRequest, info))
+	assert.Equal(t, "fixture-key", upstreamRequest.Header.Get("X-Api-Key"))
+	assert.Empty(t, upstreamRequest.Header.Get("Authorization"), "the client token is not a supplier credential")
+	assert.Empty(t, upstreamRequest.Header.Get("X-New-Api-Channel-Id"), "the gateway selector is not a supplier parameter")
 	for _, tc := range []struct {
 		name    string
 		seconds any
@@ -88,6 +99,75 @@ func TestDoubaoAudioImmediateUsageAndLargeResponse(t *testing.T) {
 			require.NoError(t, common.Unmarshal(parsed.TaskData, &data))
 			assert.Equal(t, data["original_duration"], parsed.Immediate.UsageFacts["seconds"])
 			assert.NotEqual(t, data["duration"], parsed.Immediate.UsageFacts["seconds"])
+			task := &model.Task{TaskID: "task_audio", Status: model.TaskStatusSuccess, Data: parsed.TaskData}
+			artifacts, err := adaptor.ListArtifacts(task)
+			require.NoError(t, err)
+			require.Len(t, artifacts, 1)
+			assert.Equal(t, "audio", artifacts[0].Key)
+			assert.Equal(t, "audio", artifacts[0].Type)
+			assert.Equal(t, "audio/mpeg", artifacts[0].MimeType)
+			for _, method := range []string{http.MethodGet, http.MethodHead} {
+				content, err := adaptor.BuildContentRequest(t.Context(), task, "audio", channel.TaskArtifactClientRequest{Method: method})
+				require.NoError(t, err)
+				require.NotNil(t, content)
+				assert.Equal(t, "https://cdn.example/audio.mp3", content.URL)
+				assert.Equal(t, method, content.Method)
+				assert.True(t, content.Credentialless)
+				assert.Empty(t, content.Headers)
+				assert.Empty(t, content.Body)
+			}
+			data["expires_at"] = 0
+			task.Data, err = common.Marshal(data)
+			require.NoError(t, err)
+			_, err = adaptor.BuildContentRequest(t.Context(), task, "audio", channel.TaskArtifactClientRequest{Method: http.MethodGet})
+			require.ErrorContains(t, err, "expired")
+		})
+	}
+}
+
+func TestDoubaoAudioAcceptedResponseFailureDoesNotRetry(t *testing.T) {
+	source, err := plugins.Source("doubao-audio")
+	require.NoError(t, err)
+	for _, withCapability := range []bool{true, false} {
+		name := "large response capability"
+		pluginSource := source
+		if !withCapability {
+			name = "ordinary JSON behavior"
+			pluginSource = strings.Replace(source, `requiredCapabilities: ["large-submit-json@1"],`, "", 1)
+		}
+		t.Run(name, func(t *testing.T) {
+			plugin, err := pluginruntime.CompilePlugin(pluginSource, pluginruntime.Options{})
+			require.NoError(t, err)
+			adaptor := New(plugin)
+			info := &relaycommon.RelayInfo{OriginModelName: "seed-audio-1.0", ChannelMeta: &relaycommon.ChannelMeta{ChannelType: constant.ChannelTypeTaskPlugin}, TaskRelayInfo: &relaycommon.TaskRelayInfo{PublicTaskID: "task_audio"}}
+			adaptor.Init(info)
+			for _, tc := range []struct {
+				name        string
+				status      int
+				body        string
+				readFailure bool
+			}{
+				{"malformed JSON", http.StatusOK, `{"audio":`, false},
+				{"response read failure", http.StatusOK, "", true},
+				{"unexpected accepted response", http.StatusAccepted, `{}`, false},
+				{"provider error after HTTP success", http.StatusOK, `{"code":45000000}`, false},
+				{"invalid result URL", http.StatusOK, `{"original_duration":10,"duration":10,"url":"http://cdn.example/audio.mp3"}`, false},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					c, _ := gin.CreateTestContext(httptest.NewRecorder())
+					c.Request = httptest.NewRequest(http.MethodPost, "/doubao/audio/generations", nil)
+					var body io.Reader = strings.NewReader(tc.body)
+					if tc.readFailure {
+						body = iotest.ErrReader(io.ErrUnexpectedEOF)
+					}
+					response := &http.Response{StatusCode: tc.status, Header: make(http.Header), Body: io.NopCloser(body)}
+					parsed, taskErr := adaptor.ParseResponse(c, response, info)
+					assert.Nil(t, parsed)
+					require.NotNil(t, taskErr)
+					assert.Equal(t, http.StatusBadGateway, taskErr.StatusCode)
+					assert.Equal(t, withCapability, taskErr.NoRetry, "accepted work must not be duplicated; ordinary JSON plugins retain their prior policy")
+				})
+			}
 		})
 	}
 }

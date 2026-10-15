@@ -12,6 +12,7 @@ import (
 	"time"
 
 	common2 "github.com/QuantumNous/new-api/common"
+	appconstant "github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/relay/constant"
@@ -140,6 +141,9 @@ func isHeaderPassthroughRuleKey(key string) bool {
 
 func shouldSkipPassthroughHeader(name string) bool {
 	name = strings.TrimSpace(name)
+	if strings.EqualFold(name, appconstant.ChannelSelectionHeader) {
+		return true
+	}
 	if name == "" {
 		return true
 	}
@@ -160,6 +164,9 @@ func applyHeaderOverridePlaceholders(template string, c *gin.Context, apiKey str
 		}
 
 		name := strings.TrimSpace(afterPrefix[:end])
+		if strings.EqualFold(name, appconstant.ChannelSelectionHeader) {
+			return "", false, nil
+		}
 		if name == "" {
 			return "", false, fmt.Errorf("client_header placeholder name is empty: %q", template)
 		}
@@ -264,6 +271,9 @@ func processHeaderOverride(info *common.RelayInfo, c *gin.Context) (map[string]s
 	}
 
 	for k, v := range headerOverrideSource {
+		if strings.EqualFold(strings.TrimSpace(k), appconstant.ChannelSelectionHeader) {
+			continue
+		}
 		if isHeaderPassthroughRuleKey(k) {
 			continue
 		}

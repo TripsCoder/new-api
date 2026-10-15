@@ -1922,15 +1922,20 @@ test('model configuration keeps unchecked candidates searchable and supports cat
   expect(trigger).toBeDisabled()
 })
 
-test('model configuration is available for a plugin channel without upstream discovery and is disabled when its model list is empty', async () => {
+test('plugin channels keep manual configuration alongside the explicit upstream discovery entry', async () => {
   const user = userEvent.setup()
   render(<ConfigurationHarness />)
   await user.click(await screen.findByRole('option', { name: /Video A/ }))
   const trigger = screen.getByRole('button', { name: 'Configure Models' })
   expect(trigger).toBeEnabled()
   expect(
-    screen.queryByRole('button', { name: 'Fetch from Upstream' })
-  ).not.toBeInTheDocument()
+    screen.getByRole('button', { name: 'Fetch from Upstream' })
+  ).toBeEnabled()
+  expect(
+    screen.getByText(
+      'Plugin presets are a static adapted catalog, not live upstream discovery. Manual configuration remains available.'
+    )
+  ).toBeVisible()
   await user.click(trigger)
   const dialog = within(
     screen.getByRole('dialog', { name: 'Configure Models' })
@@ -1940,6 +1945,62 @@ test('model configuration is available for a plugin channel without upstream dis
   await user.click(screen.getByRole('button', { name: 'Clear All' }))
 
   expect(trigger).toBeDisabled()
+})
+
+test('plugin channel discovery previews its binding with the saved key and does not automatically add new models', async () => {
+  editingChannel = {
+    ...editingChannel,
+    type: 61,
+    setting: '{"task_plugin_key":"video-a"}',
+  }
+  const post = vi.spyOn(api, 'post').mockResolvedValue({
+    data: {
+      success: true,
+      data: ['video-a-new', 'video-unknown'],
+      discovery: {
+        source: 'upstream',
+        checked_at: 1,
+        plugin_key: 'video-a',
+        source_url: 'https://example.com/docs',
+        source_sha256: 'a'.repeat(64),
+        models: [
+          {
+            id: 'video-a-new',
+            adapted: true,
+            configured: false,
+            pricing_status: 'not_checked',
+          },
+          {
+            id: 'video-unknown',
+            adapted: false,
+            configured: false,
+            pricing_status: 'not_checked',
+          },
+        ],
+      },
+    },
+  })
+  const user = userEvent.setup()
+  render(<ConfigurationHarness currentRow={editingChannel} />)
+  await screen.findByDisplayValue('Existing channel')
+  await user.click(screen.getByRole('button', { name: 'Fetch from Upstream' }))
+  expect(
+    await screen.findByRole('checkbox', { name: 'video-a-new' })
+  ).not.toBeChecked()
+  expect(
+    screen.getByRole('checkbox', { name: 'video-unknown' })
+  ).toHaveAttribute('aria-disabled', 'true')
+  expect(screen.getByText('custom-model')).toBeVisible()
+  expect(post).toHaveBeenCalledWith(
+    '/api/channel/fetch_models',
+    expect.objectContaining({
+      type: 61,
+      channel_id: 42,
+      task_plugin_key: 'video-a',
+      key: undefined,
+    }),
+    expect.anything()
+  )
 })
 
 test('advanced custom edits preview draft connection settings with the saved key', async () => {
