@@ -1,0 +1,214 @@
+# 图片生成（统一接口）
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/images/generations:
+    post:
+      summary: 图片生成（统一接口）
+      deprecated: false
+      description: >-
+        统一图片生成接口。GPT-Image-2 系列、GPT-Image-2.5 系列和 Gemini 系列均通过此端点调用。
+
+
+        ## 文生图 vs 图生图
+
+
+        - **文生图**：只传 model + prompt
+
+        - **图生图**：额外传 image 字段，prompt 描述编辑指令
+
+
+        ## image 字段格式
+
+
+        - URL：`"https://example.com/photo.png"`
+
+        - data-URI：`"data:image/png;base64,iVBORw0KGgo..."`
+
+        - 裸Base64：`"iVBORw0KGgo..."`
+
+
+        ## 尺寸控制（推荐 imageSize + aspectRatio）
+
+
+        - `imageSize`：分辨率档位 `1K` / `2K` / `4K`
+
+        - `aspectRatio`：`1:1` / `16:9` / `9:16` / `4:3` / `3:4` / `3:2` / `2:3`
+        / `21:9` / `9:21`
+
+
+        也可直接传 `size`（像素格式如 `1024x1024`），但 imageSize+aspectRatio 更方便。
+
+
+        ## 异步模式（推荐用于高质量模型）
+
+
+        启用方式（三选一）：
+
+        - Body: `"async": true`
+
+        - URL 参数: `?async=true`
+
+        - 请求头: `X-Async: true`
+
+
+        异步流程：提交 → 返回 task_id → 轮询 `GET /v1/images/generations/{task_id}`
+
+
+        ## 计费
+
+
+        按张数（n）计费，生成前预扣费，失败自动全额退款。
+
+
+        ---
+
+
+        ## GPT Image 2.5 新模型
+
+
+        | 模型 | 定位 | 价格 |
+
+        |------|------|------|
+
+        | `gpt-image2.5-flare` | 快速日常生成，速度优先 | ¥0.13/次 |
+
+        | `gpt-image2.5-sunburst` | 精细编辑，质量优先 | ¥0.13/次 |
+
+
+        ### quality 参数（GPT Image 2.5 专属）
+
+
+        两个模型均支持 6 档质量，**价格统一，不区分质量和分辨率**：
+
+
+        | quality | 说明 |
+
+        |---------|------|
+
+        | `low` | 草图级，速度最快，适合预览和批量生成 |
+
+        | `medium` | 标准质量，适合日常使用 |
+
+        | `high` | 高质量，适合正式出图 |
+
+        | `xhigh` | 超高质量，适合商业用途 |
+
+        | `max` | 极致质量，适合印刷级输出 |
+
+        | `auto` | 自动选择（默认值） |
+
+
+        ### Flare vs Sunburst 如何选择
+
+
+        - **Flare**：速度快 50%，适合日常出图、批量生成、对速度有要求的场景
+
+        - **Sunburst**：编辑精度高，人脸一致性好，适合需要多次迭代修改的精细创作
+      operationId: createImage
+      tags:
+        - 图片生成
+        - 图片生成
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+            examples:
+              textToImage:
+                value:
+                  model: gpt-image2-high
+                  prompt: 赛博朋克城市夜景，霓虹灯光，细雨
+                  imageSize: 2K
+                  aspectRatio: '16:9'
+                  'n': 1
+                summary: 文生图（推荐参数）
+              imageToImage:
+                value:
+                  model: gpt-image2-medium
+                  prompt: 把这张照片变成油画风格
+                  image: https://your-domain.com/photo.jpg
+                  imageSize: 2K
+                  aspectRatio: '1:1'
+                  'n': 1
+                summary: 图生图（传参考图URL）
+              asyncMode:
+                value:
+                  model: gpt-image2-high
+                  prompt: 极致细节的风景画
+                  imageSize: 4K
+                  aspectRatio: '16:9'
+                  'n': 1
+                  async: true
+                summary: 异步模式（避免超时）
+              flare_basic:
+                value:
+                  model: gpt-image2.5-flare
+                  prompt: 一只橘猫坐在窗台上看日落
+                  quality: high
+                  size: 1024x1024
+                summary: GPT Image 2.5 Flare 基础生成
+              sunburst_4k:
+                value:
+                  model: gpt-image2.5-sunburst
+                  prompt: 产品包装设计，极简风格
+                  quality: max
+                  size: 4096x4096
+                summary: GPT Image 2.5 Sunburst 4K 高质量
+      responses:
+        '200':
+          description: 生成成功（同步模式）或任务已提交（异步模式）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+                x-apifox-orders: []
+              examples:
+                sync:
+                  summary: 同步模式 - 直接返回结果
+                  value:
+                    data:
+                      - url: https://cdn.paisio.online/images/result.png
+                        revised_prompt: ...
+                async:
+                  summary: 异步模式 - 返回 task_id
+                  value:
+                    task_id: img_1786788696612_ybztef
+                    status: pending
+                    model: gpt-image2-high
+          headers: {}
+          x-apifox-name: ''
+      security: []
+      x-apifox-folder: 图片生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-475784237-run
+components:
+  schemas: {}
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

@@ -1,0 +1,401 @@
+# 提交视频生成任务
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/videos:
+    post:
+      summary: 提交视频生成任务
+      deprecated: false
+      description: |-
+        ## 使用流程
+
+        1. **提交任务** → 返回 `task_id`
+        2. **轮询状态** `GET /v1/videos/{task_id}` → 每 3-5 秒
+        3. **获取视频** status=completed 时 `video_url` 可直接下载（无需鉴权）
+
+        ---
+
+        ## 兼容路由
+
+        以下路径功能完全相同，参数和响应格式一致：
+        - `POST /v1/videos`（推荐）
+        - `POST /v1/video/generations`（兼容格式）
+
+        ---
+
+        ## 统一参数
+
+        所有视频模型使用完全相同的请求参数格式，后台自动处理各模型的格式差异。
+
+        ---
+
+        ## @引用语法
+
+        在 prompt 中使用 @引用 来精确指代传入的素材：
+
+        | 写法 | 对应字段 | 说明 |
+        |------|----------|------|
+        | `@Image1` 或 `@Img1` | image_url | 主参考图 |
+        | `@Image2` 或 `@Img2` | extra_images[0] | 第1张额外图 |
+        | `@Image3` 或 `@Img3` | extra_images[1] | 第2张额外图 |
+        | `@Video1` 或 `@Vid1` | extra_videos[0] | 第1个参考视频 |
+        | `@Audio1` 或 `@Aud1` | extra_audios[0] | 第1个参考音频 |
+
+        引用不区分大小写。
+
+        **示例：** `"@Image1 在街道上与@Image2 愉快的对话"` — 让主图中的人物和第一张额外图中的人物互动。
+
+        ---
+
+        ## 素材格式说明
+
+        所有素材字段支持两种格式（可混用）：
+        - **字符串格式**：`"https://example.com/file.png"`
+        - **对象格式**：`{"url": "https://example.com/file.png"}`
+
+        素材 URL 要求：
+        - 必须为公网可访问的 http/https 链接
+        - 图片：jpg / png / webp，建议 ≤ 10MB
+        - 视频：mp4，建议 ≤ 100MB
+        - 音频：mp3 / wav，建议 ≤ 20MB
+
+        ---
+
+        ## 计费规则
+
+        - 按秒计费模型：预扣 duration × 单价，失败自动全额退款
+        - 按次计费模型：提交时一次性扣费，失败自动全额退款
+      operationId: submitVideoTask
+      tags:
+        - 视频生成
+        - 视频生成
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoSubmitRequest'
+            examples:
+              01_textToVideo:
+                value:
+                  model: sd2-720p
+                  prompt: 一只橘猫在月球上漫步，背景是星空
+                summary: 纯文生视频（最简请求）
+              02_withParams:
+                value:
+                  model: sd2-fast-720p
+                  prompt: 航拍城市夜景，霓虹灯光闪烁，车流如织
+                  duration: 10
+                  aspect_ratio: '16:9'
+                summary: 指定时长和比例
+              03_imageToVideo:
+                value:
+                  model: sd2-720p
+                  prompt: 让画面中的人物缓缓转头微笑
+                  image_url: https://your-domain.com/uploads/portrait.png
+                  duration: 6
+                  aspect_ratio: '9:16'
+                summary: 图生视频（首帧参考图）
+              04_multiCharacter:
+                value:
+                  model: sd2-720p
+                  prompt: '@Image1 在街道上与@Image2 愉快的对话，阳光明媚'
+                  image_url: https://your-domain.com/uploads/person_a.png
+                  extra_images:
+                    - https://your-domain.com/uploads/person_b.png
+                  duration: 8
+                  aspect_ratio: '16:9'
+                summary: 多人物交互（@引用）
+              05_videoRef:
+                value:
+                  model: sd2-720p
+                  prompt: '@Image1 模仿@Video1 中的舞蹈动作'
+                  image_url: https://your-domain.com/uploads/dancer.png
+                  extra_videos:
+                    - https://your-domain.com/uploads/dance_ref.mp4
+                  duration: 10
+                  aspect_ratio: '9:16'
+                summary: 动作迁移（视频参考+@引用）
+              06_audioDriven:
+                value:
+                  model: sd2-720p
+                  prompt: '@Image1 跟着@Audio1 的节奏律动'
+                  image_url: https://your-domain.com/uploads/character.png
+                  extra_audios:
+                    - https://your-domain.com/uploads/beat.mp3
+                  duration: 15
+                  aspect_ratio: '1:1'
+                summary: 音频驱动
+              07_mixedMedia:
+                value:
+                  model: sd2-720p
+                  prompt: '@Image1 跟着@Audio1 的节奏模仿@Video1 的动作'
+                  image_url: https://your-domain.com/uploads/character.png
+                  extra_images:
+                    - https://your-domain.com/uploads/background.png
+                  extra_videos:
+                    - url: https://your-domain.com/uploads/ref_dance.mp4
+                  extra_audios:
+                    - url: https://your-domain.com/uploads/music.mp3
+                  duration: 15
+                  aspect_ratio: '16:9'
+                summary: 混合素材（图+视频+音频全部使用）
+              08_startEndFrame:
+                value:
+                  model: sd2-720p
+                  prompt: 从白天平滑过渡到夜晚的城市延时摄影
+                  start_image_url: https://your-domain.com/uploads/city_day.png
+                  end_image_url: https://your-domain.com/uploads/city_night.png
+                  duration: 10
+                  aspect_ratio: '16:9'
+                summary: 首尾帧控制
+      responses:
+        '200':
+          description: 任务提交成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoSubmitResponse'
+              example:
+                task_id: task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte
+                status: pending
+                model: sd2-720p
+          headers: {}
+          x-apifox-name: ''
+        '400':
+          description: 认证失败
+          content:
+            application/json:
+              schema: &ref_0
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_TOKEN
+                  message: 无效的认证令牌
+          headers: {}
+          x-apifox-name: Unauthorized
+        '401':
+          description: 请求参数校验失败
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error:
+                  code: INVALID_MODEL
+                  message: 不支持的模型
+          headers: {}
+          x-apifox-name: ValidationError
+        '402':
+          description: 余额不足
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error:
+                  code: INSUFFICIENT_BALANCE
+                  message: 余额不足
+          headers: {}
+          x-apifox-name: ''
+      security: []
+      x-apifox-folder: 视频生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-475784235-run
+components:
+  schemas:
+    VideoSubmitRequest:
+      type: object
+      required:
+        - model
+        - prompt
+      description: 视频生成请求体。所有视频模型使用相同的参数格式。
+      properties:
+        model:
+          type: string
+          description: 模型名称。通过 /v1/models 或控制台获取可用列表
+          examples:
+            - sd2-720p
+        prompt:
+          type: string
+          description: 视频描述提示词。支持 @Image1 @Video1 @Audio1 引用素材
+          examples:
+            - '@Image1 在街道上与@Image2 愉快的对话'
+        duration:
+          type: integer
+          description: 视频时长（秒）。默认 6，大多数模型范围 4-15
+          default: 6
+          minimum: 1
+          maximum: 30
+        aspect_ratio:
+          type: string
+          description: 画面比例。默认 16:9。也接受 ratio 作为别名
+          default: '16:9'
+          enum:
+            - '16:9'
+            - '9:16'
+            - '1:1'
+            - '4:3'
+            - '3:4'
+            - '21:9'
+            - '3:2'
+            - '2:3'
+        image_url:
+          description: 主参考图（对应 prompt 中的 @Image1）。支持字符串URL或 {url:"..."} 对象格式
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+              x-apifox-orders:
+                - url
+              x-apifox-ignore-properties: []
+        extra_images:
+          type: array
+          description: 额外参考图数组（@Image2、@Image3...）。每项支持字符串URL或 {url:"..."} 对象
+          items:
+            oneOf:
+              - type: string
+                format: uri
+              - type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                x-apifox-orders:
+                  - url
+                x-apifox-ignore-properties: []
+        extra_videos:
+          type: array
+          description: 参考视频数组（@Video1、@Video2...）。格式同上
+          items:
+            oneOf:
+              - type: string
+                format: uri
+              - type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                x-apifox-orders:
+                  - url
+                x-apifox-ignore-properties: []
+        extra_audios:
+          type: array
+          description: 参考音频数组（@Audio1、@Audio2...）。格式同上
+          items:
+            oneOf:
+              - type: string
+                format: uri
+              - type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                x-apifox-orders:
+                  - url
+                x-apifox-ignore-properties: []
+        start_image_url:
+          type: string
+          format: uri
+          description: 视频首帧图片URL（部分模型支持）
+          nullable: true
+        end_image_url:
+          type: string
+          format: uri
+          description: 视频末帧图片URL（部分模型支持首尾帧控制）
+          nullable: true
+      x-apifox-orders:
+        - model
+        - prompt
+        - duration
+        - aspect_ratio
+        - image_url
+        - extra_images
+        - extra_videos
+        - extra_audios
+        - start_image_url
+        - end_image_url
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    VideoSubmitResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: 任务ID，用于轮询状态
+          examples:
+            - task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte
+        status:
+          type: string
+          enum:
+            - pending
+          examples:
+            - pending
+        model:
+          type: string
+          examples:
+            - sd2-720p
+      x-apifox-orders:
+        - task_id
+        - status
+        - model
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: 错误码
+              enum:
+                - UNAUTHORIZED
+                - INVALID_REQUEST
+                - FILE_TOO_LARGE
+                - UNSUPPORTED_FORMAT
+                - UPLOAD_FAILED
+            message:
+              type: string
+              description: 错误描述
+          required:
+            - code
+            - message
+          x-apifox-orders:
+            - code
+            - message
+          x-apifox-ignore-properties: []
+      required:
+        - error
+      x-apifox-orders:
+        - error
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

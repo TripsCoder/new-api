@@ -63,6 +63,7 @@ export async function getInferenceStatus(
 }
 
 export type TaskPluginOption = {
+  requiresModelDiscovery?: boolean
   sortPriority?: number
   website?: string
   key: string

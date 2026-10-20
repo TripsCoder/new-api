@@ -1,0 +1,95 @@
+{
+  "format": "six-provider-initialization-drafts/v1",
+  "status": "review-plan-requires-real-discovery-and-interface-confirmation",
+  "catalogSHA256": "9d105b0256dd17747f28a6db4c1f72fc9ac9ab948fe29344bc944b7a444339c0",
+  "preserveKeys": true,
+  "mutatesDatabase": false,
+  "summary": [
+    {
+      "provider": "paisio_media",
+      "selectedRealModels": 0,
+      "documentedInterfaces": 4,
+      "accountPriceVerified": false
+    },
+    {
+      "provider": "yuxibox_media",
+      "selectedRealModels": 0,
+      "documentedInterfaces": 6,
+      "accountPriceVerified": false
+    },
+    {
+      "provider": "xcmapi_media",
+      "selectedRealModels": 0,
+      "documentedInterfaces": 2,
+      "accountPriceVerified": false
+    },
+    {
+      "provider": "artbox_media",
+      "selectedRealModels": 0,
+      "documentedInterfaces": 1,
+      "accountPriceVerified": false
+    },
+    {
+      "provider": "lxmone_media",
+      "selectedRealModels": 0,
+      "documentedInterfaces": 3,
+      "accountPriceVerified": false
+    },
+    {
+      "provider": "zhangyuge_media",
+      "selectedRealModels": 0,
+      "documentedInterfaces": 8,
+      "accountPriceVerified": false
+    }
+  ],
+  "configurations": {
+    "paisio_media": {
+      "format": "channel-model-configuration/v1",
+      "revision": 0,
+      "provider": "paisio_media",
+      "groups": {},
+      "bindings": {},
+      "sources": []
+    },
+    "yuxibox_media": {
+      "format": "channel-model-configuration/v1",
+      "revision": 0,
+      "provider": "yuxibox_media",
+      "groups": {},
+      "bindings": {},
+      "sources": []
+    },
+    "xcmapi_media": {
+      "format": "channel-model-configuration/v1",
+      "revision": 0,
+      "provider": "xcmapi_media",
+      "groups": {},
+      "bindings": {},
+      "sources": []
+    },
+    "artbox_media": {
+      "format": "channel-model-configuration/v1",
+      "revision": 0,
+      "provider": "artbox_media",
+      "groups": {},
+      "bindings": {},
+      "sources": []
+    },
+    "lxmone_media": {
+      "format": "channel-model-configuration/v1",
+      "revision": 0,
+      "provider": "lxmone_media",
+      "groups": {},
+      "bindings": {},
+      "sources": []
+    },
+    "zhangyuge_media": {
+      "format": "channel-model-configuration/v1",
+      "revision": 0,
+      "provider": "zhangyuge_media",
+      "groups": {},
+      "bindings": {},
+      "sources": []
+    }
+  }
+}

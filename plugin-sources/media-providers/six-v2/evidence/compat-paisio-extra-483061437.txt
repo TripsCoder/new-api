@@ -1,0 +1,106 @@
+# 查询视频任务状态（兼容格式）
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/contents/generations/tasks/{task_id}:
+    get:
+      summary: 查询视频任务状态（兼容格式）
+      deprecated: false
+      description: 与 GET /v1/videos/{task_id} 完全相同，兼容即梦/豆包格式。
+      operationId: getVideoStatusCompat
+      tags:
+        - 视频生成
+        - 视频生成
+      parameters:
+        - name: task_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 任务状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoStatusResponse'
+          headers: {}
+          x-apifox-name: ''
+      security: []
+      x-apifox-folder: 视频生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-483061437-run
+components:
+  schemas:
+    VideoStatusResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - processing
+            - completed
+            - failed
+          description: pending→processing→completed/failed
+        progress:
+          type: integer
+          description: 进度百分比 0-100
+          minimum: 0
+          maximum: 100
+        video_url:
+          type: string
+          format: uri
+          description: 视频下载URL（仅 completed 时存在），CDN地址无需鉴权，有效期约24小时
+        cost:
+          type: number
+          description: 实际扣费金额（¥），仅 completed 时返回
+          examples:
+            - 2.9
+        error:
+          type: object
+          description: 错误信息（仅 failed 时存在），失败已自动全额退款
+          properties:
+            message:
+              type: string
+          x-apifox-orders:
+            - message
+          x-apifox-ignore-properties: []
+      x-apifox-orders:
+        - task_id
+        - status
+        - progress
+        - video_url
+        - cost
+        - error
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

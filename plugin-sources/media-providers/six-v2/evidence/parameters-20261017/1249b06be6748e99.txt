@@ -1,0 +1,4594 @@
+{
+  "schemaVersion": 1,
+  "lastReviewed": "2026-09-09",
+  "entries": [
+    {
+      "id": "welcome",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs",
+      "title": "欢迎使用",
+      "summary": "平台定位、Base URL、Key；画布、Codex、扣子与生图视频音乐 MCP 入口",
+      "tags": [
+        "start"
+      ],
+      "source": "getting-started/welcome.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "skill",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/skill",
+      "title": "Skill 接入（推荐）",
+      "summary": "复制技能文件、配置 .env、先调用 /v1/models",
+      "tags": [
+        "recommended",
+        "skill"
+      ],
+      "source": "getting-started/skill.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "call-entry",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/api",
+      "title": "调用入口",
+      "summary": "按协议列出已实现的公共能力",
+      "tags": [
+        "api"
+      ],
+      "source": "capabilities/models.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "tasks",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/tasks",
+      "title": "任务与轮询",
+      "summary": "统一任务状态、查询与结果 URL",
+      "tags": [
+        "task"
+      ],
+      "capability": "task-lifecycle",
+      "source": "capabilities/task-lifecycle.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "discovery",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/models",
+      "title": "模型接口与发现",
+      "summary": "模型列表、定价、分组可见性与详情入口",
+      "tags": [
+        "models"
+      ],
+      "capability": "models",
+      "source": "capabilities/models.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "assets",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/assets",
+      "title": "账户与素材",
+      "summary": "Key、钱包、URL / Data URI / 直传与结果链接",
+      "tags": [
+        "assets"
+      ],
+      "capability": "assets",
+      "source": "capabilities/assets.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "account-api",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/account-api",
+      "title": "账户信息 API",
+      "summary": "当前用户、分组、模型、令牌与用量",
+      "tags": [
+        "account"
+      ],
+      "capability": "account",
+      "source": "capabilities/account.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "faq",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/faq",
+      "title": "令牌、分组与 FAQ",
+      "summary": "401、扣子、WorkBuddy 与生图视频音乐 MCP、模型不可见、余额与未实现能力",
+      "tags": [
+        "faq"
+      ],
+      "source": "getting-started/faq.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "video-pitfalls",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/video-pitfalls",
+      "title": "视频调用避坑",
+      "summary": "参考素材、Profile、异步等待与兼容路径",
+      "tags": [
+        "video",
+        "warning"
+      ],
+      "capability": "video",
+      "source": "getting-started/video-pitfalls.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "seedance",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/seedance",
+      "title": "Seedance 怎么选",
+      "summary": "sdN 是线路不是代际；按卡人脸、后台过人脸、原生过人脸、时长、素材对照公共名",
+      "tags": [
+        "video",
+        "seedance"
+      ],
+      "capability": "video",
+      "source": "getting-started/seedance.md",
+      "status": "current",
+      "lastReviewed": "2026-09-21",
+      "schemaVersion": 1
+    },
+    {
+      "id": "integrations",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/integrations",
+      "title": "第三方工具",
+      "summary": "按编程、对话客户端、智能体分类，链到各自指南",
+      "tags": [
+        "integrations"
+      ],
+      "source": "getting-started/integrations.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "comfyui",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/comfyui",
+      "title": "ComfyUI 插件",
+      "summary": "下载独立插件包，放进自己的 ComfyUI，用自己的令牌调用本站公开接口",
+      "tags": [
+        "integrations",
+        "comfyui"
+      ],
+      "source": "getting-started/comfyui.md",
+      "status": "current",
+      "lastReviewed": "2026-10-12",
+      "schemaVersion": 1
+    },
+    {
+      "id": "codex",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/codex",
+      "title": "Codex",
+      "summary": "Responses，Base URL 带 /v1；CC Switch 或手写 config.toml",
+      "tags": [
+        "integrations",
+        "codex"
+      ],
+      "source": "getting-started/codex.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "coze",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/coze",
+      "title": "扣子",
+      "summary": "对话走 Responses；生图和视频在扣子里建插件并轮询",
+      "tags": [
+        "integrations",
+        "coze"
+      ],
+      "source": "getting-started/coze.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "workbuddy",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/workbuddy",
+      "title": "WorkBuddy",
+      "summary": "对话走 Chat Completions；生图、视频和音乐用本站 MCP",
+      "tags": [
+        "integrations",
+        "workbuddy"
+      ],
+      "source": "getting-started/workbuddy.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "mcp",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/mcp",
+      "title": "生图、视频和音乐 MCP",
+      "summary": "客户自己的 sk- 列出可见模型，读取参数档案和同名客户文档，再提交、查询生图、视频与音乐，费用扣这把令牌",
+      "tags": [
+        "integrations",
+        "mcp"
+      ],
+      "source": "getting-started/mcp.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "relay",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/relay",
+      "title": "用 New API 中转本站",
+      "summary": "下载技能交给 AI 改开源 New API，才能按广场价格卖全部模型，并完成异步生图",
+      "tags": [
+        "relay",
+        "new-api"
+      ],
+      "source": "getting-started/relay.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "canvas",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/canvas",
+      "title": "无限画布",
+      "summary": "建 Key、打开画布、拉模型、进工作台；视频成片约 1 天过期，生图约 2 小时",
+      "tags": [
+        "canvas"
+      ],
+      "source": "getting-started/canvas.md",
+      "status": "current",
+      "lastReviewed": "2026-10-06",
+      "schemaVersion": 1
+    },
+    {
+      "id": "canghai-canvas",
+      "audience": [
+        "user"
+      ],
+      "visibility": "public",
+      "kind": "getting-started",
+      "route": "/docs/canghai-canvas",
+      "title": "沧海画布",
+      "summary": "用沧元 Key 一键连接沧海个人渠道；地址不带 /v1",
+      "tags": [
+        "canvas",
+        "canghai"
+      ],
+      "source": "getting-started/canghai-canvas.md",
+      "status": "current",
+      "lastReviewed": "2026-09-27",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-chat",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/chat",
+      "title": "Chat Completions",
+      "summary": "POST /v1/chat/completions",
+      "tags": [
+        "Chat"
+      ],
+      "capability": "chat",
+      "source": "capabilities/chat.md",
+      "status": "current",
+      "lastReviewed": "2026-10-10",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-completions",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/completions",
+      "title": "Completions",
+      "summary": "历史文本补全入口",
+      "tags": [
+        "Chat",
+        "compat"
+      ],
+      "capability": "completions",
+      "source": "capabilities/completions.md",
+      "status": "compat",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-responses",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/responses",
+      "title": "Responses",
+      "summary": "POST /v1/responses 与 compact",
+      "tags": [
+        "Chat"
+      ],
+      "capability": "responses",
+      "source": "capabilities/responses.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-messages",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/messages",
+      "title": "Claude Messages",
+      "summary": "POST /v1/messages",
+      "tags": [
+        "Chat"
+      ],
+      "capability": "messages",
+      "source": "capabilities/messages.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-gemini",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/gemini",
+      "title": "Gemini",
+      "summary": "/v1beta generateContent 与模型列表",
+      "tags": [
+        "Chat"
+      ],
+      "capability": "gemini",
+      "source": "capabilities/gemini.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-image",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/image",
+      "title": "Image",
+      "summary": "统一图像 generations / edits",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "source": "capabilities/image.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-video",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/video",
+      "title": "Video",
+      "summary": "统一视频任务入口",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "source": "capabilities/video.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-audio",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/audio",
+      "title": "Audio",
+      "summary": "语音转写与翻译",
+      "tags": [
+        "Audio"
+      ],
+      "capability": "audio",
+      "source": "capabilities/audio.md",
+      "status": "current",
+      "lastReviewed": "2026-10-10",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-speech",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/speech",
+      "title": "Speech",
+      "summary": "POST /v1/audio/speech",
+      "tags": [
+        "Speech"
+      ],
+      "capability": "speech",
+      "source": "capabilities/speech.md",
+      "status": "current",
+      "lastReviewed": "2026-10-10",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-music",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/music",
+      "title": "Music",
+      "summary": "POST /v1/music",
+      "tags": [
+        "Music"
+      ],
+      "capability": "music",
+      "source": "capabilities/music.md",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-embeddings",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/embeddings",
+      "title": "Embeddings",
+      "summary": "POST /v1/embeddings",
+      "tags": [
+        "Embeddings"
+      ],
+      "capability": "embeddings",
+      "source": "capabilities/embeddings.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-rerank",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/rerank",
+      "title": "Rerank",
+      "summary": "POST /v1/rerank",
+      "tags": [
+        "Rerank"
+      ],
+      "capability": "rerank",
+      "source": "capabilities/rerank.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-moderations",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/moderations",
+      "title": "Moderations",
+      "summary": "POST /v1/moderations",
+      "tags": [
+        "Moderations"
+      ],
+      "capability": "moderations",
+      "source": "capabilities/moderations.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-realtime",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/realtime",
+      "title": "Realtime",
+      "summary": "WebSocket /v1/realtime",
+      "tags": [
+        "Realtime",
+        "WebSocket"
+      ],
+      "capability": "realtime",
+      "source": "capabilities/realtime.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "cap-models",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "capability",
+      "route": "/docs/api/models",
+      "title": "模型列表",
+      "summary": "/v1/models 与定价发现",
+      "tags": [
+        "models"
+      ],
+      "capability": "models",
+      "source": "capabilities/models.md",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "bound-files",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "boundary",
+      "route": "/docs/api/files",
+      "title": "Files（未实现）",
+      "summary": "/v1/files 返回 501",
+      "tags": [
+        "未实现"
+      ],
+      "capability": "files",
+      "source": "capabilities/files-boundary.md",
+      "status": "unimplemented",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "bound-finetunes",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "boundary",
+      "route": "/docs/api/finetunes",
+      "title": "Fine-tunes（未实现）",
+      "summary": "/v1/fine-tunes 返回 501",
+      "tags": [
+        "未实现"
+      ],
+      "capability": "finetunes",
+      "source": "capabilities/finetunes-boundary.md",
+      "status": "unimplemented",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "compat-audio-chat",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "boundary",
+      "route": "/docs/api/compat-audio-chat",
+      "title": "语音对话兼容",
+      "summary": "非官方 POST /v1/audio/chat",
+      "tags": [
+        "兼容",
+        "Speech"
+      ],
+      "capability": "compat-audio-chat",
+      "source": "capabilities/compat-audio-chat.md",
+      "status": "compat",
+      "lastReviewed": "2026-10-10",
+      "schemaVersion": 1
+    },
+    {
+      "id": "compat-kling",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "boundary",
+      "route": "/docs/api/compat-kling",
+      "title": "Kling 兼容",
+      "summary": "非统一契约的 /kling/v1 路径",
+      "tags": [
+        "兼容",
+        "Video"
+      ],
+      "capability": "compat-kling",
+      "source": "capabilities/compat-kling.md",
+      "status": "compat",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "compat-jimeng",
+      "audience": [
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "boundary",
+      "route": "/docs/api/compat-jimeng",
+      "title": "Jimeng 兼容",
+      "summary": "非统一契约的 /jimeng 路径",
+      "tags": [
+        "兼容",
+        "Video"
+      ],
+      "capability": "compat-jimeng",
+      "source": "capabilities/compat-jimeng.md",
+      "status": "compat",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1
+    },
+    {
+      "id": "model-minimax-h3-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/minimax-h3-2k",
+      "title": "minimax-h3-2k",
+      "summary": "minimax-h3-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "MiniMax",
+      "publicModel": "minimax-h3-2k",
+      "source": "models/minimax-h3-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "minimax-h3",
+        "title": "MiniMax H3",
+        "titleEn": "MiniMax H3",
+        "vendor": "MiniMax",
+        "line": "H3",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-gpt-image-2",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2",
+      "title": "gpt-image-2",
+      "summary": "gpt-image-2 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2",
+      "source": "models/gpt-image-2.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2",
+        "title": "GPT Image 2 多档",
+        "titleEn": "GPT Image 2 tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2-1k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2-1k",
+      "title": "gpt-image-2-1k",
+      "summary": "gpt-image-2-1k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2-1k",
+      "source": "models/gpt-image-2-1k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2",
+        "title": "GPT Image 2 多档",
+        "titleEn": "GPT Image 2 tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2-2k",
+      "title": "gpt-image-2-2k",
+      "summary": "gpt-image-2-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2-2k",
+      "source": "models/gpt-image-2-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2",
+        "title": "GPT Image 2 多档",
+        "titleEn": "GPT Image 2 tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2-4k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2-4k",
+      "title": "gpt-image-2-4k",
+      "summary": "gpt-image-2-4k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2-4k",
+      "source": "models/gpt-image-2-4k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2",
+        "title": "GPT Image 2 多档",
+        "titleEn": "GPT Image 2 tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2-x",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2-x",
+      "title": "gpt-image-2-x",
+      "summary": "gpt-image-2-x 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2-x",
+      "source": "models/gpt-image-2-x.json",
+      "status": "current",
+      "lastReviewed": "2026-09-26",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2-x",
+        "title": "GPT Image 2-x",
+        "titleEn": "GPT Image 2-x",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5",
+      "title": "gpt-image-2.5",
+      "summary": "gpt-image-2.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5",
+      "source": "models/gpt-image-2.5.json",
+      "status": "current",
+      "lastReviewed": "2026-09-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5",
+        "title": "GPT Image 2.5 比例档",
+        "titleEn": "GPT Image 2.5 ratio",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-flare",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-flare",
+      "title": "gpt-image-2.5-flare",
+      "summary": "gpt-image-2.5-flare 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-flare",
+      "source": "models/gpt-image-2.5-flare.json",
+      "status": "current",
+      "lastReviewed": "2026-09-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-flare",
+        "title": "GPT Image 2.5 Flare 多档",
+        "titleEn": "GPT Image 2.5 Flare tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-flare-1k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-flare-1k",
+      "title": "gpt-image-2.5-flare-1k",
+      "summary": "gpt-image-2.5-flare-1k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-flare-1k",
+      "source": "models/gpt-image-2.5-flare-1k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-flare",
+        "title": "GPT Image 2.5 Flare 多档",
+        "titleEn": "GPT Image 2.5 Flare tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-flare-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-flare-2k",
+      "title": "gpt-image-2.5-flare-2k",
+      "summary": "gpt-image-2.5-flare-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-flare-2k",
+      "source": "models/gpt-image-2.5-flare-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-flare",
+        "title": "GPT Image 2.5 Flare 多档",
+        "titleEn": "GPT Image 2.5 Flare tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-flare-4k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-flare-4k",
+      "title": "gpt-image-2.5-flare-4k",
+      "summary": "gpt-image-2.5-flare-4k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-flare-4k",
+      "source": "models/gpt-image-2.5-flare-4k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-flare",
+        "title": "GPT Image 2.5 Flare 多档",
+        "titleEn": "GPT Image 2.5 Flare tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-sunburst",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-sunburst",
+      "title": "gpt-image-2.5-sunburst",
+      "summary": "gpt-image-2.5-sunburst 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-sunburst",
+      "source": "models/gpt-image-2.5-sunburst.json",
+      "status": "current",
+      "lastReviewed": "2026-09-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-sunburst",
+        "title": "GPT Image 2.5 Sunburst 多档",
+        "titleEn": "GPT Image 2.5 Sunburst tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-sunburst-1k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-sunburst-1k",
+      "title": "gpt-image-2.5-sunburst-1k",
+      "summary": "gpt-image-2.5-sunburst-1k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-sunburst-1k",
+      "source": "models/gpt-image-2.5-sunburst-1k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-sunburst",
+        "title": "GPT Image 2.5 Sunburst 多档",
+        "titleEn": "GPT Image 2.5 Sunburst tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-sunburst-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-sunburst-2k",
+      "title": "gpt-image-2.5-sunburst-2k",
+      "summary": "gpt-image-2.5-sunburst-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-sunburst-2k",
+      "source": "models/gpt-image-2.5-sunburst-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-sunburst",
+        "title": "GPT Image 2.5 Sunburst 多档",
+        "titleEn": "GPT Image 2.5 Sunburst tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-sunburst-4k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-sunburst-4k",
+      "title": "gpt-image-2.5-sunburst-4k",
+      "summary": "gpt-image-2.5-sunburst-4k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-sunburst-4k",
+      "source": "models/gpt-image-2.5-sunburst-4k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-sunburst",
+        "title": "GPT Image 2.5 Sunburst 多档",
+        "titleEn": "GPT Image 2.5 Sunburst tiers",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-x",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-x",
+      "title": "gpt-image-2.5-x",
+      "summary": "gpt-image-2.5-x 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-x",
+      "source": "models/gpt-image-2.5-x.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-2.5-x",
+        "title": "GPT Image 2.5-x",
+        "titleEn": "GPT Image 2.5-x",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2-az",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2-az",
+      "title": "gpt-image-2-az",
+      "summary": "gpt-image-2-az 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2-az",
+      "source": "models/gpt-image-2-az.json",
+      "status": "current",
+      "lastReviewed": "2026-10-11",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-azure",
+        "title": "GPT Image Azure",
+        "titleEn": "GPT Image Azure",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-flare-az",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-flare-az",
+      "title": "gpt-image-2.5-flare-az",
+      "summary": "gpt-image-2.5-flare-az 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-flare-az",
+      "source": "models/gpt-image-2.5-flare-az.json",
+      "status": "current",
+      "lastReviewed": "2026-10-11",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-azure",
+        "title": "GPT Image Azure",
+        "titleEn": "GPT Image Azure",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-sunburst-az",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-sunburst-az",
+      "title": "gpt-image-2.5-sunburst-az",
+      "summary": "gpt-image-2.5-sunburst-az 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-sunburst-az",
+      "source": "models/gpt-image-2.5-sunburst-az.json",
+      "status": "current",
+      "lastReviewed": "2026-10-11",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-azure",
+        "title": "GPT Image Azure",
+        "titleEn": "GPT Image Azure",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2-o",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2-o",
+      "title": "gpt-image-2-o",
+      "summary": "gpt-image-2-o 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2-o",
+      "source": "models/gpt-image-2-o.json",
+      "status": "current",
+      "lastReviewed": "2026-09-21",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-official",
+        "title": "GPT Image 官转",
+        "titleEn": "GPT Image official",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-flare-o",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-flare-o",
+      "title": "gpt-image-2.5-flare-o",
+      "summary": "gpt-image-2.5-flare-o 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-flare-o",
+      "source": "models/gpt-image-2.5-flare-o.json",
+      "status": "current",
+      "lastReviewed": "2026-09-21",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-official",
+        "title": "GPT Image 官转",
+        "titleEn": "GPT Image official",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gpt-image-2.5-sunburst-o",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gpt-image-2.5-sunburst-o",
+      "title": "gpt-image-2.5-sunburst-o",
+      "summary": "gpt-image-2.5-sunburst-o 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "OpenAI",
+      "publicModel": "gpt-image-2.5-sunburst-o",
+      "source": "models/gpt-image-2.5-sunburst-o.json",
+      "status": "current",
+      "lastReviewed": "2026-09-21",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gpt-image-official",
+        "title": "GPT Image 官转",
+        "titleEn": "GPT Image official",
+        "vendor": "OpenAI",
+        "line": "GPT Image",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-nano-banana-pro-1k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/nano-banana-pro-1k",
+      "title": "nano-banana-pro-1k",
+      "summary": "nano-banana-pro-1k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "nano-banana-pro-1k",
+      "source": "models/nano-banana-pro-1k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-pro",
+        "title": "Gemini 图像 · Nano Banana Pro",
+        "titleEn": "Gemini Image · Nano Banana Pro",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-nano-banana-pro-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/nano-banana-pro-2k",
+      "title": "nano-banana-pro-2k",
+      "summary": "nano-banana-pro-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "nano-banana-pro-2k",
+      "source": "models/nano-banana-pro-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-pro",
+        "title": "Gemini 图像 · Nano Banana Pro",
+        "titleEn": "Gemini Image · Nano Banana Pro",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-nano-banana-pro-4k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/nano-banana-pro-4k",
+      "title": "nano-banana-pro-4k",
+      "summary": "nano-banana-pro-4k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "nano-banana-pro-4k",
+      "source": "models/nano-banana-pro-4k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-pro",
+        "title": "Gemini 图像 · Nano Banana Pro",
+        "titleEn": "Gemini Image · Nano Banana Pro",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gemini-3-pro-image-preview",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-3-pro-image-preview",
+      "title": "gemini-3-pro-image-preview",
+      "summary": "gemini-3-pro-image-preview 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "gemini-3-pro-image-preview",
+      "source": "models/gemini-3-pro-image-preview.json",
+      "status": "current",
+      "lastReviewed": "2026-09-26",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-pro",
+        "title": "Gemini 图像 · Nano Banana Pro",
+        "titleEn": "Gemini Image · Nano Banana Pro",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-nano-banana2-1k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/nano-banana2-1k",
+      "title": "nano-banana2-1k",
+      "summary": "nano-banana2-1k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "nano-banana2-1k",
+      "source": "models/nano-banana2-1k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-2",
+        "title": "Gemini 图像 · Nano Banana 2",
+        "titleEn": "Gemini Image · Nano Banana 2",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-nano-banana2-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/nano-banana2-2k",
+      "title": "nano-banana2-2k",
+      "summary": "nano-banana2-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "nano-banana2-2k",
+      "source": "models/nano-banana2-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-2",
+        "title": "Gemini 图像 · Nano Banana 2",
+        "titleEn": "Gemini Image · Nano Banana 2",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-nano-banana2-4k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/nano-banana2-4k",
+      "title": "nano-banana2-4k",
+      "summary": "nano-banana2-4k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "nano-banana2-4k",
+      "source": "models/nano-banana2-4k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-2",
+        "title": "Gemini 图像 · Nano Banana 2",
+        "titleEn": "Gemini Image · Nano Banana 2",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gemini-3.1-flash-image-preview",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-3.1-flash-image-preview",
+      "title": "gemini-3.1-flash-image-preview",
+      "summary": "gemini-3.1-flash-image-preview 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "gemini-3.1-flash-image-preview",
+      "source": "models/gemini-3.1-flash-image-preview.json",
+      "status": "current",
+      "lastReviewed": "2026-09-26",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-2",
+        "title": "Gemini 图像 · Nano Banana 2",
+        "titleEn": "Gemini Image · Nano Banana 2",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-gemini-nano-banana-2.1",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-nano-banana-2.1",
+      "title": "gemini-nano-banana-2.1",
+      "summary": "gemini-nano-banana-2.1 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Gemini",
+      "publicModel": "gemini-nano-banana-2.1",
+      "source": "models/gemini-nano-banana-2.1.json",
+      "status": "current",
+      "lastReviewed": "2026-10-07",
+      "schemaVersion": 1,
+      "family": {
+        "id": "nano-banana-2.1",
+        "title": "Gemini 图像 · Nano Banana 2.1",
+        "titleEn": "Gemini Image · Nano Banana 2.1",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-midjourney",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/midjourney",
+      "title": "midjourney",
+      "summary": "midjourney 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Midjourney",
+      "publicModel": "midjourney",
+      "source": "models/midjourney.json",
+      "status": "current",
+      "lastReviewed": "2026-10-16",
+      "schemaVersion": 1,
+      "family": {
+        "id": "midjourney",
+        "title": "Midjourney",
+        "titleEn": "Midjourney",
+        "vendor": "Midjourney",
+        "line": "Midjourney",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-midjourney-1k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/midjourney-1k",
+      "title": "midjourney-1k",
+      "summary": "midjourney-1k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Midjourney",
+      "publicModel": "midjourney-1k",
+      "source": "models/midjourney-1k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-17",
+      "schemaVersion": 1,
+      "family": {
+        "id": "midjourney-gz",
+        "title": "Midjourney 1K / 2K",
+        "titleEn": "Midjourney 1K / 2K",
+        "vendor": "Midjourney",
+        "line": "Midjourney",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-midjourney-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/midjourney-2k",
+      "title": "midjourney-2k",
+      "summary": "midjourney-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Midjourney",
+      "publicModel": "midjourney-2k",
+      "source": "models/midjourney-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-17",
+      "schemaVersion": 1,
+      "family": {
+        "id": "midjourney-gz",
+        "title": "Midjourney 1K / 2K",
+        "titleEn": "Midjourney 1K / 2K",
+        "vendor": "Midjourney",
+        "line": "Midjourney",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-wan3.0-15s",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/wan3.0-15s",
+      "title": "wan3.0-15s",
+      "summary": "wan3.0-15s 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "通义万相",
+      "publicModel": "wan3.0-15s",
+      "source": "models/wan3.0-15s.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "wan-3.0",
+        "title": "通义万相 3.0",
+        "titleEn": "Wan 3.0",
+        "vendor": "阿里云百炼",
+        "line": "通义万相",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-wan3.0-video",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/wan3.0-video",
+      "title": "wan3.0-video",
+      "summary": "wan3.0-video 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "通义万相",
+      "publicModel": "wan3.0-video",
+      "source": "models/wan3.0-video.json",
+      "status": "current",
+      "lastReviewed": "2026-09-10",
+      "schemaVersion": 1,
+      "family": {
+        "id": "wan-3.0",
+        "title": "通义万相 3.0",
+        "titleEn": "Wan 3.0",
+        "vendor": "阿里云百炼",
+        "line": "通义万相",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-grok-video",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/grok-video",
+      "title": "grok-video",
+      "summary": "grok-video 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "xAI",
+      "publicModel": "grok-video",
+      "source": "models/grok-video.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-video",
+        "title": "Grok 视频",
+        "titleEn": "Grok Video",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-grok-video-1.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/grok-video-1.5",
+      "title": "grok-video-1.5",
+      "summary": "grok-video-1.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "xAI",
+      "publicModel": "grok-video-1.5",
+      "source": "models/grok-video-1.5.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-video",
+        "title": "Grok 视频",
+        "titleEn": "Grok Video",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-grok-imagine-video",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/grok-imagine-video",
+      "title": "grok-imagine-video",
+      "summary": "grok-imagine-video 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "xAI",
+      "publicModel": "grok-imagine-video",
+      "source": "models/grok-imagine-video.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-imagine-video",
+        "title": "Grok Imagine 视频",
+        "titleEn": "Grok Imagine Video",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-grok-imagine-video-1.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/grok-imagine-video-1.5",
+      "title": "grok-imagine-video-1.5",
+      "summary": "grok-imagine-video-1.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "xAI",
+      "publicModel": "grok-imagine-video-1.5",
+      "source": "models/grok-imagine-video-1.5.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-imagine-video",
+        "title": "Grok Imagine 视频",
+        "titleEn": "Grok Imagine Video",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-grok-imagine-image",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/grok-imagine-image",
+      "title": "grok-imagine-image",
+      "summary": "grok-imagine-image 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "xAI",
+      "publicModel": "grok-imagine-image",
+      "source": "models/grok-imagine-image.json",
+      "status": "current",
+      "lastReviewed": "2026-09-16",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-imagine-image",
+        "title": "Grok Imagine 图像",
+        "titleEn": "Grok Imagine Image",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-grok-imagine-image-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/grok-imagine-image-2.0",
+      "title": "grok-imagine-image-2.0",
+      "summary": "grok-imagine-image-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "xAI",
+      "publicModel": "grok-imagine-image-2.0",
+      "source": "models/grok-imagine-image-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-imagine-image",
+        "title": "Grok Imagine 图像",
+        "titleEn": "Grok Imagine Image",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-grok-imagine-image-lite",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/grok-imagine-image-lite",
+      "title": "grok-imagine-image-lite",
+      "summary": "grok-imagine-image-lite 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "xAI",
+      "publicModel": "grok-imagine-image-lite",
+      "source": "models/grok-imagine-image-lite.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-imagine-image",
+        "title": "Grok Imagine 图像",
+        "titleEn": "Grok Imagine Image",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-doubao-seedream-5-0-flash",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/doubao-seedream-5-0-flash",
+      "title": "doubao-seedream-5-0-flash",
+      "summary": "doubao-seedream-5-0-flash 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Seedream",
+      "publicModel": "doubao-seedream-5-0-flash",
+      "source": "models/doubao-seedream-5-0-flash.json",
+      "status": "current",
+      "lastReviewed": "2026-10-11",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedream",
+        "title": "Seedream",
+        "titleEn": "Seedream",
+        "vendor": "字节跳动",
+        "line": "Seedream",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-seedream-5.0-pro-x",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/seedream-5.0-pro-x",
+      "title": "seedream-5.0-pro-x",
+      "summary": "seedream-5.0-pro-x 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Seedream",
+      "publicModel": "seedream-5.0-pro-x",
+      "source": "models/seedream-5.0-pro-x.json",
+      "status": "current",
+      "lastReviewed": "2026-09-30",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedream-5.0-pro-x",
+        "title": "Seedream-X",
+        "titleEn": "Seedream-X",
+        "vendor": "字节跳动",
+        "line": "Seedream",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-doubao-seedream-5-0-pro",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/doubao-seedream-5-0-pro",
+      "title": "doubao-seedream-5-0-pro",
+      "summary": "doubao-seedream-5-0-pro 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Seedream",
+      "publicModel": "doubao-seedream-5-0-pro",
+      "source": "models/doubao-seedream-5-0-pro.json",
+      "status": "current",
+      "lastReviewed": "2026-09-11",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedream",
+        "title": "Seedream",
+        "titleEn": "Seedream",
+        "vendor": "字节跳动",
+        "line": "Seedream",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-veo-3.1",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/veo-3.1",
+      "title": "veo-3.1",
+      "summary": "veo-3.1 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Gemini",
+      "publicModel": "veo-3.1",
+      "source": "models/veo-3.1.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "veo-3.1",
+        "title": "Veo 3.1",
+        "titleEn": "Veo 3.1",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-veo-3.1-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/veo-3.1-fast",
+      "title": "veo-3.1-fast",
+      "summary": "veo-3.1-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Gemini",
+      "publicModel": "veo-3.1-fast",
+      "source": "models/veo-3.1-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "veo-3.1",
+        "title": "Veo 3.1",
+        "titleEn": "Veo 3.1",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-kling-3.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/kling-3.0",
+      "title": "kling-3.0",
+      "summary": "kling-3.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Kling",
+      "publicModel": "kling-3.0",
+      "source": "models/kling-3.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-07",
+      "schemaVersion": 1,
+      "family": {
+        "id": "kling-3.0",
+        "title": "Kling 3.0",
+        "titleEn": "Kling 3.0",
+        "vendor": "Kling",
+        "line": "Kling",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-kling-3.0-pro",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/kling-3.0-pro",
+      "title": "kling-3.0-pro",
+      "summary": "kling-3.0-pro 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Kling",
+      "publicModel": "kling-3.0-pro",
+      "source": "models/kling-3.0-pro.json",
+      "status": "current",
+      "lastReviewed": "2026-09-07",
+      "schemaVersion": 1,
+      "family": {
+        "id": "kling-3.0",
+        "title": "Kling 3.0",
+        "titleEn": "Kling 3.0",
+        "vendor": "Kling",
+        "line": "Kling",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-kling-3.0-omni",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/kling-3.0-omni",
+      "title": "kling-3.0-omni",
+      "summary": "kling-3.0-omni 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Kling",
+      "publicModel": "kling-3.0-omni",
+      "source": "models/kling-3.0-omni.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "kling-3.0-omni",
+        "title": "Kling 3.0 Omni",
+        "titleEn": "Kling 3.0 Omni",
+        "vendor": "Kling",
+        "line": "Kling Omni",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-gemini-3.8-flash",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-3.8-flash",
+      "title": "gemini-3.8-flash",
+      "summary": "高速档文本对话。按 token 计费，支持图片、视频、音频附件、联网引用和语音回答。",
+      "tags": [
+        "Chat"
+      ],
+      "capability": "chat",
+      "vendor": "Gemini",
+      "publicModel": "gemini-3.8-flash",
+      "source": "models/gemini-3.8-flash.json",
+      "status": "current",
+      "lastReviewed": "2026-10-10",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gemini-3.8-flash",
+        "title": "Gemini 高速文本",
+        "titleEn": "Gemini Fast Text",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Text"
+      }
+    },
+    {
+      "id": "model-gemini-3.8-flash-high",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-3.8-flash-high",
+      "title": "gemini-3.8-flash-high",
+      "summary": "高速文本的高质档。附件、流式、联网引用和语音回答与 gemini-3.8-flash 相同。",
+      "tags": [
+        "Chat"
+      ],
+      "capability": "chat",
+      "vendor": "Gemini",
+      "publicModel": "gemini-3.8-flash-high",
+      "source": "models/gemini-3.8-flash-high.json",
+      "status": "current",
+      "lastReviewed": "2026-10-10",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gemini-3.8-flash",
+        "title": "Gemini 高速文本",
+        "titleEn": "Gemini Fast Text",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Text"
+      }
+    },
+    {
+      "id": "model-gemini-4-argon",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-4-argon",
+      "title": "gemini-4-argon",
+      "summary": "旗舰档文本对话。上下文窗口 100 万 token，适合长文档和复杂推理。支持图片、视频、音频附件。",
+      "tags": [
+        "Chat"
+      ],
+      "capability": "chat",
+      "vendor": "Gemini",
+      "publicModel": "gemini-4-argon",
+      "source": "models/gemini-4-argon.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gemini-4-argon",
+        "title": "Gemini 4 Argon",
+        "titleEn": "Gemini 4 Argon",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Text"
+      }
+    },
+    {
+      "id": "model-gemini-omni-flash",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-omni-flash",
+      "title": "gemini-omni-flash",
+      "summary": "gemini-omni-flash 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Gemini",
+      "publicModel": "gemini-omni-flash",
+      "source": "models/gemini-omni-flash.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "omni",
+        "title": "Omni 视频生成",
+        "titleEn": "Omni Video",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-flux-pro-2",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/flux-pro-2",
+      "title": "flux-pro-2",
+      "summary": "flux-pro-2 的接口、请求参数与调用示例。",
+      "tags": [
+        "Image"
+      ],
+      "capability": "image",
+      "vendor": "Flux",
+      "publicModel": "flux-pro-2",
+      "source": "models/flux-pro-2.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "flux-pro-2",
+        "title": "Flux Pro 2",
+        "titleEn": "Flux Pro 2",
+        "vendor": "Flux",
+        "line": "Flux",
+        "capability": "Image"
+      }
+    },
+    {
+      "id": "model-lyria-3.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/lyria-3.5",
+      "title": "lyria-3.5",
+      "summary": "lyria-3.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Audio"
+      ],
+      "capability": "music",
+      "vendor": "Google",
+      "publicModel": "lyria-3.5",
+      "source": "models/lyria-3.5.json",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "lyria",
+        "title": "Lyria 音乐",
+        "titleEn": "Lyria Music",
+        "vendor": "Google",
+        "line": "Lyria",
+        "capability": "Music"
+      }
+    },
+    {
+      "id": "model-lyria-3-pro",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/lyria-3-pro",
+      "title": "lyria-3-pro",
+      "summary": "lyria-3-pro 的接口、请求参数与调用示例。",
+      "tags": [
+        "Audio"
+      ],
+      "capability": "music",
+      "vendor": "Google",
+      "publicModel": "lyria-3-pro",
+      "source": "models/lyria-3-pro.json",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "lyria",
+        "title": "Lyria 音乐",
+        "titleEn": "Lyria Music",
+        "vendor": "Google",
+        "line": "Lyria",
+        "capability": "Music"
+      }
+    },
+    {
+      "id": "model-suno",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/suno",
+      "title": "suno",
+      "summary": "suno 的接口、请求参数与调用示例。",
+      "tags": [
+        "Audio"
+      ],
+      "capability": "music",
+      "vendor": "Suno",
+      "publicModel": "suno",
+      "source": "models/suno.json",
+      "status": "current",
+      "lastReviewed": "2026-10-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "suno",
+        "title": "Suno 音乐",
+        "titleEn": "Suno Music",
+        "vendor": "Suno",
+        "line": "Suno",
+        "capability": "Music"
+      }
+    },
+    {
+      "id": "model-happyhouse-1.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/happyhouse-1.0",
+      "title": "happyhouse-1.0",
+      "summary": "happyhouse-1.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Happy House",
+      "publicModel": "happyhouse-1.0",
+      "source": "models/happyhouse-1.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "happyhouse",
+        "title": "Happy House",
+        "titleEn": "Happy House",
+        "vendor": "Happy House",
+        "line": "Happy House",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-happyhouse-1.1",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/happyhouse-1.1",
+      "title": "happyhouse-1.1",
+      "summary": "happyhouse-1.1 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Happy House",
+      "publicModel": "happyhouse-1.1",
+      "source": "models/happyhouse-1.1.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "happyhouse",
+        "title": "Happy House",
+        "titleEn": "Happy House",
+        "vendor": "Happy House",
+        "line": "Happy House",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-happyhorse-1.1",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/happyhorse-1.1",
+      "title": "happyhorse-1.1",
+      "summary": "happyhorse-1.1 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "HappyHorse",
+      "publicModel": "happyhorse-1.1",
+      "source": "models/happyhorse-1.1.json",
+      "status": "current",
+      "lastReviewed": "2026-09-07",
+      "schemaVersion": 1,
+      "family": {
+        "id": "happyhorse",
+        "title": "HappyHorse",
+        "titleEn": "HappyHorse",
+        "vendor": "HappyHorse",
+        "line": "HappyHorse",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-minimax-h3-768p",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/minimax-h3-768p",
+      "title": "minimax-h3-768p",
+      "summary": "minimax-h3-768p 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "MiniMax",
+      "publicModel": "minimax-h3-768p",
+      "source": "models/minimax-h3-768p.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "minimax-h3",
+        "title": "MiniMax H3",
+        "titleEn": "MiniMax H3",
+        "vendor": "MiniMax",
+        "line": "H3",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-omni-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/omni-fast",
+      "title": "omni-fast",
+      "summary": "omni-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Gemini",
+      "publicModel": "omni-fast",
+      "source": "models/omni-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "omni",
+        "title": "Omni 视频生成",
+        "titleEn": "Omni Video",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-omni-fast-no-water",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/omni-fast-no-water",
+      "title": "omni-fast-no-water",
+      "summary": "omni-fast-no-water 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Gemini",
+      "publicModel": "omni-fast-no-water",
+      "source": "models/omni-fast-no-water.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "omni",
+        "title": "Omni 视频生成",
+        "titleEn": "Omni Video",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-omni-v2v",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/omni-v2v",
+      "title": "omni-v2v",
+      "summary": "omni-v2v 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Gemini",
+      "publicModel": "omni-v2v",
+      "source": "models/omni-v2v.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "omni",
+        "title": "Omni 视频生成",
+        "titleEn": "Omni Video",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-omni-v2v-no-water",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/omni-v2v-no-water",
+      "title": "omni-v2v-no-water",
+      "summary": "omni-v2v-no-water 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Gemini",
+      "publicModel": "omni-v2v-no-water",
+      "source": "models/omni-v2v-no-water.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "omni",
+        "title": "Omni 视频生成",
+        "titleEn": "Omni Video",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd4-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd4-seedance-2.0",
+      "title": "sd4-seedance-2.0",
+      "summary": "sd4-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd4-seedance-2.0",
+      "source": "models/sd4-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd4-seedance-2.0-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd4-seedance-2.0-fast",
+      "title": "sd4-seedance-2.0-fast",
+      "summary": "sd4-seedance-2.0-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd4-seedance-2.0-fast",
+      "source": "models/sd4-seedance-2.0-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd4-seedance-2.0-mini",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd4-seedance-2.0-mini",
+      "title": "sd4-seedance-2.0-mini",
+      "summary": "sd4-seedance-2.0-mini 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd4-seedance-2.0-mini",
+      "source": "models/sd4-seedance-2.0-mini.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd4-seedance-2.5-480p",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd4-seedance-2.5-480p",
+      "title": "sd4-seedance-2.5-480p",
+      "summary": "sd4-seedance-2.5-480p 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd4-seedance-2.5-480p",
+      "source": "models/sd4-seedance-2.5-480p.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd4-seedance-2.5-720p",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd4-seedance-2.5-720p",
+      "title": "sd4-seedance-2.5-720p",
+      "summary": "sd4-seedance-2.5-720p 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd4-seedance-2.5-720p",
+      "source": "models/sd4-seedance-2.5-720p.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd5-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd5-seedance-2.0",
+      "title": "sd5-seedance-2.0",
+      "summary": "sd5-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd5-seedance-2.0",
+      "source": "models/sd5-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd5-seedance-2.0-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd5-seedance-2.0-fast",
+      "title": "sd5-seedance-2.0-fast",
+      "summary": "sd5-seedance-2.0-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd5-seedance-2.0-fast",
+      "source": "models/sd5-seedance-2.0-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd6-seedance-2.0-720p",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd6-seedance-2.0-720p",
+      "title": "sd6-seedance-2.0-720p",
+      "summary": "sd6-seedance-2.0-720p 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd6-seedance-2.0-720p",
+      "source": "models/sd6-seedance-2.0-720p.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd6-seedance-2.0-1080p",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd6-seedance-2.0-1080p",
+      "title": "sd6-seedance-2.0-1080p",
+      "summary": "sd6-seedance-2.0-1080p 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd6-seedance-2.0-1080p",
+      "source": "models/sd6-seedance-2.0-1080p.json",
+      "status": "current",
+      "lastReviewed": "2026-09-02",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd7-seedance-2.0-720p",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd7-seedance-2.0-720p",
+      "title": "sd7-seedance-2.0-720p",
+      "summary": "sd7-seedance-2.0-720p 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:portrait"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd7-seedance-2.0-720p",
+      "source": "models/sd7-seedance-2.0-720p.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd7-seedance-2.0-1080p",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd7-seedance-2.0-1080p",
+      "title": "sd7-seedance-2.0-1080p",
+      "summary": "sd7-seedance-2.0-1080p 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:hd"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd7-seedance-2.0-1080p",
+      "source": "models/sd7-seedance-2.0-1080p.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd8-seedance-2.0-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd8-seedance-2.0-fast",
+      "title": "sd8-seedance-2.0-fast",
+      "summary": "sd8-seedance-2.0-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd8-seedance-2.0-fast",
+      "source": "models/sd8-seedance-2.0-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-09-04",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd8-seedance-2.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd8-seedance-2.5",
+      "title": "sd8-seedance-2.5",
+      "summary": "sd8-seedance-2.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd8-seedance-2.5",
+      "source": "models/sd8-seedance-2.5.json",
+      "status": "current",
+      "lastReviewed": "2026-09-04",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd8-seedance-2.5-s",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd8-seedance-2.5-s",
+      "title": "sd8-seedance-2.5-s",
+      "summary": "sd8-seedance-2.5-s 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:long"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd8-seedance-2.5-s",
+      "source": "models/sd8-seedance-2.5-s.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-doubao-seedance-2-0-260128",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/doubao-seedance-2-0-260128",
+      "title": "doubao-seedance-2-0-260128",
+      "summary": "doubao-seedance-2-0-260128 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "doubao-seedance-2-0-260128",
+      "source": "models/doubao-seedance-2-0-260128.json",
+      "status": "current",
+      "lastReviewed": "2026-09-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-official",
+        "title": "Seedance 官转",
+        "titleEn": "Seedance Official",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-doubao-seedance-2-0-fast-260128",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/doubao-seedance-2-0-fast-260128",
+      "title": "doubao-seedance-2-0-fast-260128",
+      "summary": "doubao-seedance-2-0-fast-260128 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "doubao-seedance-2-0-fast-260128",
+      "source": "models/doubao-seedance-2-0-fast-260128.json",
+      "status": "current",
+      "lastReviewed": "2026-09-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-official",
+        "title": "Seedance 官转",
+        "titleEn": "Seedance Official",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-doubao-seedance-2-0-mini-260615",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/doubao-seedance-2-0-mini-260615",
+      "title": "doubao-seedance-2-0-mini-260615",
+      "summary": "doubao-seedance-2-0-mini-260615 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "doubao-seedance-2-0-mini-260615",
+      "source": "models/doubao-seedance-2-0-mini-260615.json",
+      "status": "current",
+      "lastReviewed": "2026-09-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-official",
+        "title": "Seedance 官转",
+        "titleEn": "Seedance Official",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-doubao-seedance-2-5-260628",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/doubao-seedance-2-5-260628",
+      "title": "doubao-seedance-2-5-260628",
+      "summary": "doubao-seedance-2-5-260628 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "doubao-seedance-2-5-260628",
+      "source": "models/doubao-seedance-2-5-260628.json",
+      "status": "current",
+      "lastReviewed": "2026-09-09",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-official",
+        "title": "Seedance 官转",
+        "titleEn": "Seedance Official",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd10-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd10-seedance-2.0",
+      "title": "sd10-seedance-2.0",
+      "summary": "sd10-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd10-seedance-2.0",
+      "source": "models/sd10-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd10-seedance-2.0-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd10-seedance-2.0-fast",
+      "title": "sd10-seedance-2.0-fast",
+      "summary": "sd10-seedance-2.0-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd10-seedance-2.0-fast",
+      "source": "models/sd10-seedance-2.0-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd10-seedance-2.0-mini",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd10-seedance-2.0-mini",
+      "title": "sd10-seedance-2.0-mini",
+      "summary": "sd10-seedance-2.0-mini 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd10-seedance-2.0-mini",
+      "source": "models/sd10-seedance-2.0-mini.json",
+      "status": "current",
+      "lastReviewed": "2026-09-03",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd10-seedance-2.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd10-seedance-2.5",
+      "title": "sd10-seedance-2.5",
+      "summary": "sd10-seedance-2.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:overnight"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd10-seedance-2.5",
+      "source": "models/sd10-seedance-2.5.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-niulai-pro",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/niulai-pro",
+      "title": "niulai-pro",
+      "summary": "niulai-pro 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "其他供应商",
+      "publicModel": "niulai-pro",
+      "source": "models/niulai-pro.json",
+      "status": "current",
+      "lastReviewed": "2026-09-24",
+      "schemaVersion": 1,
+      "family": {
+        "id": "niulai-pro",
+        "title": "牛来 Pro",
+        "titleEn": "Niulai Pro",
+        "vendor": "其他供应商",
+        "line": "牛来",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-mm2-minimax-h3",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/mm2-minimax-h3",
+      "title": "mm2-minimax-h3",
+      "summary": "mm2-minimax-h3 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "MiniMax",
+      "publicModel": "mm2-minimax-h3",
+      "source": "models/mm2-minimax-h3.json",
+      "status": "current",
+      "lastReviewed": "2026-09-07",
+      "schemaVersion": 1,
+      "family": {
+        "id": "minimax-h3",
+        "title": "MiniMax H3",
+        "titleEn": "MiniMax H3",
+        "vendor": "MiniMax",
+        "line": "H3",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-mm2-minimax-h3-max",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/mm2-minimax-h3-max",
+      "title": "mm2-minimax-h3-max",
+      "summary": "mm2-minimax-h3-max 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "MiniMax",
+      "publicModel": "mm2-minimax-h3-max",
+      "source": "models/mm2-minimax-h3-max.json",
+      "status": "current",
+      "lastReviewed": "2026-09-07",
+      "schemaVersion": 1,
+      "family": {
+        "id": "minimax-h3",
+        "title": "MiniMax H3",
+        "titleEn": "MiniMax H3",
+        "vendor": "MiniMax",
+        "line": "H3",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd11-seedance-2.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd11-seedance-2.5",
+      "title": "sd11-seedance-2.5",
+      "summary": "sd11-seedance-2.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:frames"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd11-seedance-2.5",
+      "source": "models/sd11-seedance-2.5.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd11-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd11-seedance-2.0",
+      "title": "sd11-seedance-2.0",
+      "summary": "sd11-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:frames"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd11-seedance-2.0",
+      "source": "models/sd11-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd11-seedance-2.0-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd11-seedance-2.0-fast",
+      "title": "sd11-seedance-2.0-fast",
+      "summary": "sd11-seedance-2.0-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:frames"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd11-seedance-2.0-fast",
+      "source": "models/sd11-seedance-2.0-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd11-seedance-2.0-mini",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd11-seedance-2.0-mini",
+      "title": "sd11-seedance-2.0-mini",
+      "summary": "sd11-seedance-2.0-mini 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:frames"
+      ],
+      "capability": "video",
+      "vendor": "Seedance",
+      "publicModel": "sd11-seedance-2.0-mini",
+      "source": "models/sd11-seedance-2.0-mini.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-wan4-wan3.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/wan4-wan3.0",
+      "title": "wan4-wan3.0",
+      "summary": "wan4-wan3.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "通义万相",
+      "publicModel": "wan4-wan3.0",
+      "source": "models/wan4-wan3.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "wan-3.0",
+        "title": "通义万相 3.0",
+        "titleEn": "Wan 3.0",
+        "vendor": "阿里云百炼",
+        "line": "通义万相",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-kl1-kling-3.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/kl1-kling-3.0",
+      "title": "kl1-kling-3.0",
+      "summary": "kl1-kling-3.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Kling",
+      "publicModel": "kl1-kling-3.0",
+      "source": "models/kl1-kling-3.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "kling-3.0",
+        "title": "Kling 3.0",
+        "titleEn": "Kling 3.0",
+        "vendor": "Kling",
+        "line": "Kling",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd12-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd12-seedance-2.0",
+      "title": "sd12-seedance-2.0",
+      "summary": "sd12-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd12-seedance-2.0",
+      "source": "models/sd12-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-15",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd12-seedance-2.0-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd12-seedance-2.0-fast",
+      "title": "sd12-seedance-2.0-fast",
+      "summary": "sd12-seedance-2.0-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd12-seedance-2.0-fast",
+      "source": "models/sd12-seedance-2.0-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-09-15",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd12-seedance-2.0-mini",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd12-seedance-2.0-mini",
+      "title": "sd12-seedance-2.0-mini",
+      "summary": "sd12-seedance-2.0-mini 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd12-seedance-2.0-mini",
+      "source": "models/sd12-seedance-2.0-mini.json",
+      "status": "current",
+      "lastReviewed": "2026-09-15",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-kl2-kling-3.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/kl2-kling-3.0",
+      "title": "kl2-kling-3.0",
+      "summary": "kl2-kling-3.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Kling",
+      "publicModel": "kl2-kling-3.0",
+      "source": "models/kl2-kling-3.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-15",
+      "schemaVersion": 1,
+      "family": {
+        "id": "kling-3.0",
+        "title": "Kling 3.0",
+        "titleEn": "Kling 3.0",
+        "vendor": "Kling",
+        "line": "Kling",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-wan5-wan3.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/wan5-wan3.0",
+      "title": "wan5-wan3.0",
+      "summary": "wan5-wan3.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "通义万相",
+      "publicModel": "wan5-wan3.0",
+      "source": "models/wan5-wan3.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-15",
+      "schemaVersion": 1,
+      "family": {
+        "id": "wan-3.0",
+        "title": "通义万相 3.0",
+        "titleEn": "Wan 3.0",
+        "vendor": "阿里云百炼",
+        "line": "通义万相",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-ve1-veo-3.1-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/ve1-veo-3.1-fast",
+      "title": "ve1-veo-3.1-fast",
+      "summary": "ve1-veo-3.1-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "Google",
+      "publicModel": "ve1-veo-3.1-fast",
+      "source": "models/ve1-veo-3.1-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-09-15",
+      "schemaVersion": 1,
+      "family": {
+        "id": "veo-3.1",
+        "title": "Veo 3.1",
+        "titleEn": "Veo 3.1",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd13-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd13-seedance-2.0",
+      "title": "sd13-seedance-2.0",
+      "summary": "sd13-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:hd"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd13-seedance-2.0",
+      "source": "models/sd13-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd13-seedance-2.0-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd13-seedance-2.0-fast",
+      "title": "sd13-seedance-2.0-fast",
+      "summary": "sd13-seedance-2.0-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:portrait"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd13-seedance-2.0-fast",
+      "source": "models/sd13-seedance-2.0-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd13-seedance-2.0-mini",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd13-seedance-2.0-mini",
+      "title": "sd13-seedance-2.0-mini",
+      "summary": "sd13-seedance-2.0-mini 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:portrait"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd13-seedance-2.0-mini",
+      "source": "models/sd13-seedance-2.0-mini.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd13-seedance-2.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd13-seedance-2.5",
+      "title": "sd13-seedance-2.5",
+      "summary": "sd13-seedance-2.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:long"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd13-seedance-2.5",
+      "source": "models/sd13-seedance-2.5.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd14-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd14-seedance-2.0",
+      "title": "sd14-seedance-2.0",
+      "summary": "sd14-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:frames"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd14-seedance-2.0",
+      "source": "models/sd14-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd15-seedance-2.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd15-seedance-2.5",
+      "title": "sd15-seedance-2.5",
+      "summary": "sd15-seedance-2.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd15-seedance-2.5",
+      "source": "models/sd15-seedance-2.5.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd15-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd15-seedance-2.0",
+      "title": "sd15-seedance-2.0",
+      "summary": "sd15-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd15-seedance-2.0",
+      "source": "models/sd15-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd15-seedance-2.0-2",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd15-seedance-2.0-2",
+      "title": "sd15-seedance-2.0-2",
+      "summary": "sd15-seedance-2.0-2 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd15-seedance-2.0-2",
+      "source": "models/sd15-seedance-2.0-2.json",
+      "status": "current",
+      "lastReviewed": "2026-10-11",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd16-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd16-seedance-2.0",
+      "title": "sd16-seedance-2.0",
+      "summary": "sd16-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:hd"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd16-seedance-2.0",
+      "source": "models/sd16-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd16-seedance-2.0-fast",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd16-seedance-2.0-fast",
+      "title": "sd16-seedance-2.0-fast",
+      "summary": "sd16-seedance-2.0-fast 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:frames"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd16-seedance-2.0-fast",
+      "source": "models/sd16-seedance-2.0-fast.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd16-seedance-2.0-mini",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd16-seedance-2.0-mini",
+      "title": "sd16-seedance-2.0-mini",
+      "summary": "sd16-seedance-2.0-mini 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:frames"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd16-seedance-2.0-mini",
+      "source": "models/sd16-seedance-2.0-mini.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-gv3-grok-video-1.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gv3-grok-video-1.5",
+      "title": "gv3-grok-video-1.5",
+      "summary": "gv3-grok-video-1.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "xAI",
+      "publicModel": "gv3-grok-video-1.5",
+      "source": "models/gv3-grok-video-1.5.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-video",
+        "title": "Grok 视频",
+        "titleEn": "Grok Video",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-mm3-minimax-h3-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/mm3-minimax-h3-2k",
+      "title": "mm3-minimax-h3-2k",
+      "summary": "mm3-minimax-h3-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "MiniMax",
+      "publicModel": "mm3-minimax-h3-2k",
+      "source": "models/mm3-minimax-h3-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-09-29",
+      "schemaVersion": 1,
+      "family": {
+        "id": "minimax-h3",
+        "title": "MiniMax H3",
+        "titleEn": "MiniMax H3",
+        "vendor": "MiniMax",
+        "line": "H3",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd17-seedance-2.0-3",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd17-seedance-2.0-3",
+      "title": "sd17-seedance-2.0-3",
+      "summary": "sd17-seedance-2.0-3 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:overnight"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd17-seedance-2.0-3",
+      "source": "models/sd17-seedance-2.0-3.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd17-seedance-2.5-3",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd17-seedance-2.5-3",
+      "title": "sd17-seedance-2.5-3",
+      "summary": "sd17-seedance-2.5-3 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:overnight"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd17-seedance-2.5-3",
+      "source": "models/sd17-seedance-2.5-3.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-gv4-grok-imagine-video-1.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gv4-grok-imagine-video-1.5",
+      "title": "gv4-grok-imagine-video-1.5",
+      "summary": "gv4-grok-imagine-video-1.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "xAI",
+      "publicModel": "gv4-grok-imagine-video-1.5",
+      "source": "models/gv4-grok-imagine-video-1.5.json",
+      "status": "current",
+      "lastReviewed": "2026-10-13",
+      "schemaVersion": 1,
+      "family": {
+        "id": "grok-imagine-video",
+        "title": "Grok Imagine 视频",
+        "titleEn": "Grok Imagine Video",
+        "vendor": "xAI",
+        "line": "Grok",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-mm4-minimax-h3-2k",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/mm4-minimax-h3-2k",
+      "title": "mm4-minimax-h3-2k",
+      "summary": "mm4-minimax-h3-2k 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video"
+      ],
+      "capability": "video",
+      "vendor": "MiniMax",
+      "publicModel": "mm4-minimax-h3-2k",
+      "source": "models/mm4-minimax-h3-2k.json",
+      "status": "current",
+      "lastReviewed": "2026-10-13",
+      "schemaVersion": 1,
+      "family": {
+        "id": "minimax-h3",
+        "title": "MiniMax H3",
+        "titleEn": "MiniMax H3",
+        "vendor": "MiniMax",
+        "line": "H3",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd17-seedance-2.0",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd17-seedance-2.0",
+      "title": "sd17-seedance-2.0",
+      "summary": "sd17-seedance-2.0 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:portrait"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd17-seedance-2.0",
+      "source": "models/sd17-seedance-2.0.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd17-seedance-2.0-2",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd17-seedance-2.0-2",
+      "title": "sd17-seedance-2.0-2",
+      "summary": "sd17-seedance-2.0-2 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:portrait"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd17-seedance-2.0-2",
+      "source": "models/sd17-seedance-2.0-2.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.0",
+        "title": "Seedance 2.0",
+        "titleEn": "Seedance 2.0",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd17-seedance-2.5",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd17-seedance-2.5",
+      "title": "sd17-seedance-2.5",
+      "summary": "sd17-seedance-2.5 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:long"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd17-seedance-2.5",
+      "source": "models/sd17-seedance-2.5.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-sd17-seedance-2.5-2",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/sd17-seedance-2.5-2",
+      "title": "sd17-seedance-2.5-2",
+      "summary": "sd17-seedance-2.5-2 的接口、请求参数与调用示例。",
+      "tags": [
+        "Video",
+        "selection:concurrency"
+      ],
+      "capability": "video",
+      "vendor": "字节跳动",
+      "publicModel": "sd17-seedance-2.5-2",
+      "source": "models/sd17-seedance-2.5-2.json",
+      "status": "current",
+      "lastReviewed": "2026-10-14",
+      "schemaVersion": 1,
+      "family": {
+        "id": "seedance-2.5",
+        "title": "Seedance 2.5",
+        "titleEn": "Seedance 2.5",
+        "vendor": "字节跳动",
+        "line": "Seedance",
+        "capability": "Video"
+      }
+    },
+    {
+      "id": "model-gemini-tts",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-tts",
+      "title": "gemini-tts",
+      "summary": "gemini-tts 的接口、请求参数与调用示例。",
+      "tags": [
+        "Speech"
+      ],
+      "capability": "speech",
+      "vendor": "Gemini",
+      "publicModel": "gemini-tts",
+      "source": "models/gemini-tts.json",
+      "status": "current",
+      "lastReviewed": "2026-10-10",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gemini-voice",
+        "title": "语音合成与听写",
+        "titleEn": "Speech and transcription",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Audio"
+      }
+    },
+    {
+      "id": "model-gemini-stt",
+      "audience": [
+        "user",
+        "developer"
+      ],
+      "visibility": "public",
+      "kind": "model",
+      "route": "/docs/models/gemini-stt",
+      "title": "gemini-stt",
+      "summary": "语音转文字，同步上传音频",
+      "tags": [
+        "Audio"
+      ],
+      "capability": "audio",
+      "vendor": "Gemini",
+      "publicModel": "gemini-stt",
+      "source": "models/gemini-stt.json",
+      "status": "current",
+      "lastReviewed": "2026-10-10",
+      "schemaVersion": 1,
+      "family": {
+        "id": "gemini-voice",
+        "title": "语音合成与听写",
+        "titleEn": "Speech and transcription",
+        "vendor": "Google",
+        "line": "Veo · Gemini",
+        "capability": "Audio"
+      }
+    }
+  ]
+}

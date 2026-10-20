@@ -357,6 +357,8 @@ func migrateDB() error {
 		&QuotaData{},
 		&Task{},
 		&TaskPlugin{},
+		&ChannelModelConfiguration{},
+		&SixConfigurationInitializationRun{},
 		&Model{},
 		&Vendor{},
 		&PrefillGroup{},

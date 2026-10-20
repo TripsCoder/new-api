@@ -87,6 +87,14 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [isTesting, setIsTesting] = useState(false)
   const [isTogglingStatus, setIsTogglingStatus] = useState(false)
 
+  let configurationProvider = ''
+  try {
+    configurationProvider =
+      JSON.parse(channel.setting ?? '{}')?.task_plugin_key ?? ''
+  } catch {
+    /* Invalid settings have no configurable provider. */
+  }
+  const canConfigure = canEditConfiguration(channel.type, configurationProvider)
   const isEnabled = isChannelEnabled(channel)
   const isMultiKey = isMultiKeyChannel(channel)
   const canEditSensitive = hasPermission(
@@ -263,6 +271,28 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           <span className='sr-only'>{t('Open menu')}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' className='w-48'>
+          {canConfigure && (
+            <DropdownMenuItem
+              onClick={() => {
+                setCurrentRow(channel)
+                if (canEditSensitive) setOpen('model-configuration')
+              }}
+            >
+              {t('Model and interface settings')}
+            </DropdownMenuItem>
+          )}
+          {canConfigure && (
+            <DropdownMenuItem
+              disabled={!canEditSensitive}
+              onClick={() => {
+                if (!canEditSensitive) return
+                setCurrentRow(channel)
+                setOpen('saved-model-prices')
+              }}
+            >
+              {t('Edit saved model prices')}
+            </DropdownMenuItem>
+          )}
           {layout === 'card' && (
             <DropdownMenuItem onClick={handleEdit}>
               {t('Edit')}
@@ -383,5 +413,19 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         }}
       />
     </div>
+  )
+}
+
+function canEditConfiguration(type: number, key: string): boolean {
+  return (
+    type === 61 &&
+    [
+      'paisio_media',
+      'yuxibox_media',
+      'xcmapi_media',
+      'artbox_media',
+      'lxmone_media',
+      'zhangyuge_media',
+    ].includes(key)
   )
 }

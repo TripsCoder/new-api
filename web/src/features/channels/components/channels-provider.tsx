@@ -35,6 +35,8 @@ import type { Channel } from '../types'
 // ============================================================================
 
 type DialogType =
+  | 'model-configuration'
+  | 'saved-model-prices'
   | 'create-channel'
   | 'update-channel'
   | 'test-channel'

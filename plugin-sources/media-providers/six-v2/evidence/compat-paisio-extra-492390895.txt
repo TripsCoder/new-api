@@ -1,0 +1,265 @@
+# 提交视频生成任务（兼容格式）
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/video/generations:
+    post:
+      summary: 提交视频生成任务（兼容格式）
+      deprecated: false
+      description: 即梦/豆包兼容格式的视频生成接口。功能与 /v1/videos 相同，仅请求格式不同。
+      operationId: submitVideoTaskCompat
+      tags:
+        - 视频生成
+        - 视频生成
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoSubmitRequest'
+      responses:
+        '200':
+          description: 任务提交成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoSubmitResponse'
+          headers: {}
+          x-apifox-name: ''
+        '401':
+          description: 认证失败
+          content:
+            application/json:
+              schema: &ref_0
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_TOKEN
+                  message: 无效的认证令牌
+          headers: {}
+          x-apifox-name: Unauthorized
+        '422':
+          description: 请求参数校验失败
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error:
+                  code: INVALID_MODEL
+                  message: 不支持的模型
+          headers: {}
+          x-apifox-name: ValidationError
+        '429':
+          description: 请求频率超限
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error:
+                  code: RATE_LIMIT
+                  message: 请求过于频繁，请稍后重试
+          headers: {}
+          x-apifox-name: RateLimited
+      security: []
+      x-apifox-folder: 视频生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-492390895-run
+components:
+  schemas:
+    VideoSubmitRequest:
+      type: object
+      required:
+        - model
+        - prompt
+      description: 视频生成请求体。所有视频模型使用相同的参数格式。
+      properties:
+        model:
+          type: string
+          description: 模型名称。通过 /v1/models 或控制台获取可用列表
+          examples:
+            - sd2-720p
+        prompt:
+          type: string
+          description: 视频描述提示词。支持 @Image1 @Video1 @Audio1 引用素材
+          examples:
+            - '@Image1 在街道上与@Image2 愉快的对话'
+        duration:
+          type: integer
+          description: 视频时长（秒）。默认 6，大多数模型范围 4-15
+          default: 6
+          minimum: 1
+          maximum: 30
+        aspect_ratio:
+          type: string
+          description: 画面比例。默认 16:9。也接受 ratio 作为别名
+          default: '16:9'
+          enum:
+            - '16:9'
+            - '9:16'
+            - '1:1'
+            - '4:3'
+            - '3:4'
+            - '21:9'
+            - '3:2'
+            - '2:3'
+        image_url:
+          description: 主参考图（对应 prompt 中的 @Image1）。支持字符串URL或 {url:"..."} 对象格式
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+              x-apifox-orders:
+                - url
+              x-apifox-ignore-properties: []
+        extra_images:
+          type: array
+          description: 额外参考图数组（@Image2、@Image3...）。每项支持字符串URL或 {url:"..."} 对象
+          items:
+            oneOf:
+              - type: string
+                format: uri
+              - type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                x-apifox-orders:
+                  - url
+                x-apifox-ignore-properties: []
+        extra_videos:
+          type: array
+          description: 参考视频数组（@Video1、@Video2...）。格式同上
+          items:
+            oneOf:
+              - type: string
+                format: uri
+              - type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                x-apifox-orders:
+                  - url
+                x-apifox-ignore-properties: []
+        extra_audios:
+          type: array
+          description: 参考音频数组（@Audio1、@Audio2...）。格式同上
+          items:
+            oneOf:
+              - type: string
+                format: uri
+              - type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                x-apifox-orders:
+                  - url
+                x-apifox-ignore-properties: []
+        start_image_url:
+          type: string
+          format: uri
+          description: 视频首帧图片URL（部分模型支持）
+          nullable: true
+        end_image_url:
+          type: string
+          format: uri
+          description: 视频末帧图片URL（部分模型支持首尾帧控制）
+          nullable: true
+      x-apifox-orders:
+        - model
+        - prompt
+        - duration
+        - aspect_ratio
+        - image_url
+        - extra_images
+        - extra_videos
+        - extra_audios
+        - start_image_url
+        - end_image_url
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    VideoSubmitResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: 任务ID，用于轮询状态
+          examples:
+            - task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte
+        status:
+          type: string
+          enum:
+            - pending
+          examples:
+            - pending
+        model:
+          type: string
+          examples:
+            - sd2-720p
+      x-apifox-orders:
+        - task_id
+        - status
+        - model
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: 错误码
+              enum:
+                - UNAUTHORIZED
+                - INVALID_REQUEST
+                - FILE_TOO_LARGE
+                - UNSUPPORTED_FORMAT
+                - UPLOAD_FAILED
+            message:
+              type: string
+              description: 错误描述
+          required:
+            - code
+            - message
+          x-apifox-orders:
+            - code
+            - message
+          x-apifox-ignore-properties: []
+      required:
+        - error
+      x-apifox-orders:
+        - error
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

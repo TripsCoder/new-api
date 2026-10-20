@@ -1,0 +1,289 @@
+# 图片编辑（图生图）
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/images/edits:
+    post:
+      summary: 图片编辑（图生图）
+      deprecated: false
+      description: |-
+        图片编辑端点，支持 JSON 和 multipart/form-data 两种格式。
+
+        **推荐直接使用 `/v1/images/generations` + image 字段代替。**
+
+        此接口仅支持 GPT-Image2 系列模型。Gemini 系列的图生图请使用 `/v1/images/generations`。
+
+        **JSON格式**：image 字段传 URL / data-URI / Base64 / 数组
+        **Multipart格式**：image 字段上传二进制文件
+      tags:
+        - 图片生成
+        - 图片生成
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageGenerationRequest'
+            examples:
+              json_edit:
+                value:
+                  model: gpt-image2-1-high
+                  prompt: 把背景替换为星空
+                  image: https://example.com/original.jpg
+                  imageSize: 2K
+                  aspectRatio: '1:1'
+                summary: JSON格式图片编辑
+      responses:
+        '200':
+          description: 编辑成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageGenerationResponse'
+          headers: {}
+          x-apifox-name: 成功
+      security:
+        - bearerAuth: []
+          x-apifox:
+            schemeGroups:
+              - id: CLDlKRequKePNpGQ3hAjI
+                schemeIds:
+                  - bearerAuth
+            required: true
+            use:
+              id: CLDlKRequKePNpGQ3hAjI
+            scopes:
+              CLDlKRequKePNpGQ3hAjI:
+                bearerAuth: []
+      x-apifox-folder: 图片生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-475784238-run
+components:
+  schemas:
+    ImageGenerationRequest:
+      type: object
+      required:
+        - model
+        - prompt
+      properties:
+        model:
+          type: string
+          description: 模型名称。不同模型对应不同的质量、速度和价格，详见接口说明中的模型分类表。
+          enum:
+            - gpt-image2-low
+            - gpt-image2-medium
+            - gpt-image2-high
+            - gpt-image2-1-low
+            - gpt-image2-1-medium
+            - gpt-image2-1-high
+            - gpt-image2-2-low
+            - gpt-image2-2-medium
+            - gpt-image2-2-high
+            - gpt-image-2-1k
+            - gpt-image-2-2k
+            - gpt-image-2-4k
+            - image-2-1K
+            - image-2-2K
+            - gemini-3.1-flash-image-preview
+            - gemini-3.1-flash-image-preview1
+            - gemini-3.1-flash-image-preview2
+            - gemini-3.1-flash-image-preview3
+            - gemini-3-pro-image-preview
+            - gemini-3-pro-image-preview1
+            - gemini-3-pro-image-preview2
+            - gemini-3-pro-image-preview3
+            - gemini-3-pro-image-preview4
+            - nano-banana-2-1k
+            - nano-banana-2-2k
+            - nano-banana-2-4k
+            - nano-banana-pro-1k
+            - nano-banana-pro-2k
+            - nano-banana-pro-4k
+        prompt:
+          type: string
+          description: 图片描述提示词。图生图时描述编辑指令。
+        'n':
+          type: integer
+          description: 生成张数。GPT-Image2 和 Gemini 系列支持 1-4 张。
+          minimum: 1
+          maximum: 4
+          default: 1
+        image:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: >-
+            参考图片（图生图时使用）。
+
+            - 单张：传字符串
+
+            - 多张：传字符串数组
+
+
+            支持的格式：
+
+            - URL：`https://example.com/photo.jpg`
+
+            - Data URI：`data:image/png;base64,iVBORw0KGgo...`
+
+            - 裸 Base64：`iVBORw0KGgo...`
+
+
+            **注意：** `gemini-3-pro-image-preview4` 仅支持 HTTP/HTTPS URL，不支持 Base64
+            和 Data URI。
+        image_url:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: >-
+            参考图片 URL（与 image / images 可同时使用，会合并）。仅支持 HTTP/HTTPS URL。功能与 image
+            字段相同，推荐在只传 URL 时使用此字段。
+        images:
+          type: array
+          items:
+            type: string
+          description: 参考图片数组（与 image / image_url 可同时使用，会合并）。支持 URL / Data URI / Base64。
+        imageSize:
+          type: string
+          enum:
+            - 1K
+            - 2K
+            - 4K
+          description: |-
+            分辨率档位。推荐使用此字段配合 aspectRatio，比直接传像素 size 更方便。
+            - 1K：最大边 1024px
+            - 2K：最大边 2048px
+            - 4K：最大边 3840px
+
+            别名：`image_size`
+        aspectRatio:
+          type: string
+          enum:
+            - '1:1'
+            - '16:9'
+            - '9:16'
+            - '4:3'
+            - '3:4'
+            - '3:2'
+            - '2:3'
+            - '21:9'
+            - '9:21'
+          description: |-
+            画面比例。配合 imageSize 使用，系统自动计算精确像素。
+
+            别名：`aspect_ratio`
+        size:
+          type: string
+          description: >-
+            精确像素尺寸（如 `2048x1152`）。仅 GPT-Image2 系列支持。要求：宽高为 16 的倍数，最大边 ≤ 3840，长宽比
+            ≤ 3:1，总像素 655,360 ~ 8,294,400。
+
+
+            当同时传了 imageSize + aspectRatio 时，此字段被忽略。
+          examples:
+            - 2048x2048
+        output_format:
+          type: string
+          enum:
+            - jpeg
+            - png
+            - webp
+          default: jpeg
+          description: 输出图片格式。仅 GPT-Image2 系列支持此参数。
+        async:
+          type: boolean
+          default: false
+          description: |-
+            启用异步模式。启用后立即返回 task_id，通过轮询接口获取结果。推荐在使用 4K 分辨率或高质量模型时启用。
+
+            也可通过 URL 参数 `?async=true` 或请求头 `X-Async: true` 启用。
+      x-apifox-orders:
+        - model
+        - prompt
+        - 'n'
+        - image
+        - image_url
+        - images
+        - imageSize
+        - aspectRatio
+        - size
+        - output_format
+        - async
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    ImageGenerationResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          description: 生成的图片列表（同步模式返回）
+          items:
+            $ref: '#/components/schemas/ImageDataItem'
+        task_id:
+          type: string
+          description: 异步模式时返回的任务ID（格式：img_xxx）
+        status:
+          type: string
+          description: 异步模式时的任务状态
+          enum:
+            - pending
+            - processing
+        model:
+          type: string
+          description: 异步模式时返回的模型名称
+      x-apifox-orders:
+        - data
+        - task_id
+        - status
+        - model
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    ImageDataItem:
+      type: object
+      description: 单张图片结果
+      properties:
+        url:
+          type: string
+          format: uri
+          description: 图片下载地址（CDN），有效期约 2 小时，请及时下载保存。Gemini 系列始终返回此字段。
+        b64_json:
+          type: string
+          description: 图片 Base64 编码数据。GPT-Image2 系列可能同时返回 url 和 b64_json。
+        revised_prompt:
+          type: string
+          description: 模型优化后的提示词（部分模型返回）
+      x-apifox-orders:
+        - url
+        - b64_json
+        - revised_prompt
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

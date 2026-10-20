@@ -29,6 +29,7 @@ import (
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	"github.com/QuantumNous/new-api/relay/channel"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	kitdto "github.com/QuantumNous/new-api/relaykit/dto"
@@ -105,6 +106,7 @@ const maxTaskPluginPersistedJSONBytes = 1 << 20
 const maxTaskPluginLargeSubmitJSONBytes = 64 << 20
 
 type TaskAdaptor struct {
+	submissionTime int64
 	plugin         *pluginruntime.LoadedPlugin
 	info           *relaycommon.RelayInfo
 	submit         *requestDescriptor
@@ -120,9 +122,25 @@ type TaskAdaptor struct {
 }
 
 func New(plugin *pluginruntime.LoadedPlugin) *TaskAdaptor { return &TaskAdaptor{plugin: plugin} }
-func (a *TaskAdaptor) Init(info *relaycommon.RelayInfo)   { a.info = info }
+func (a *TaskAdaptor) Init(info *relaycommon.RelayInfo) {
+	a.info = info
+	a.submissionTime = time.Now().Unix()
+}
 
 func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycommon.RelayInfo) *dto.TaskError {
+	if declared, ok := a.plugin.Meta.CanonicalModel(info.UpstreamModelName); ok {
+		info.UpstreamModelName = declared
+		if value, exists := c.Get(pluginruntime.ContextKeyProtocolRequest); exists {
+			if protocol, ok := value.(pluginruntime.ProtocolRequestContext); ok {
+				protocol.UpstreamModel = declared
+				c.Set(pluginruntime.ContextKeyProtocolRequest, protocol)
+			}
+		}
+	}
+	if err := restoreChannelConfigurationInput(c); err != nil {
+		return service.TaskErrorWrapperLocal(err, "plugin_request_invalid", http.StatusBadRequest)
+	}
+
 	if pinnedValue, exists := c.Get(pluginruntime.ContextKeyPinnedEndpoint); exists {
 		if pinned, ok := pinnedValue.(pluginruntime.PinnedEndpoint); ok && pinned.Plugin == a.plugin {
 			if protocolValue, present := c.Get(pluginruntime.ContextKeyProtocolRequest); present {
@@ -157,6 +175,9 @@ func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycom
 		if taskErr := relaycommon.ValidateBasicTaskRequest(c, info, "image_to_video"); taskErr != nil {
 			return taskErr
 		}
+	}
+	if err := a.applyChannelModelConfiguration(c, info); err != nil {
+		return service.TaskErrorWrapperLocal(err, "plugin_request_invalid", http.StatusBadRequest)
 	}
 	request, hasRequest := c.Get("task_request")
 	hasUsageProfiles := len(a.plugin.Meta.UsageProfiles) > 0
@@ -1211,6 +1232,20 @@ func (a *TaskAdaptor) applyUpstreamCredentials(ctx map[string]any, channelType i
 	if err != nil {
 		return err
 	}
+	// These reviewed media drivers treat authHeader as a complete Authorization
+	// value. Keep raw API keys available for other schemes (for example X-Api-Key),
+	// and leave OAuth and unrelated plugins on their existing credential contract.
+	if (a.plugin.Meta.Auth.Type == "" || a.plugin.Meta.Auth.Type == "none" || a.plugin.Meta.Auth.Type == "api_key") &&
+		slices.Contains([]string{"artbox_media", "cangyuan_media", "lxmone_media", "newapi_video_generations", "paisio_media", "xcmapi_media", "yuxibox_media", "zhangyuge_media"}, a.plugin.Meta.Key) {
+		header := strings.TrimSpace(key)
+		if header == "" || strings.ContainsAny(key, "\r\n") {
+			return fmt.Errorf("channel API key is missing or invalid")
+		}
+		if !strings.HasPrefix(strings.ToLower(header), "bearer ") {
+			header = "Bearer " + header
+		}
+		auth["authHeader"] = header
+	}
 	ctx["auth"] = auth
 	ctx["authHeader"] = auth["authHeader"]
 	if a.plugin.Meta.Auth.Type == "" || a.plugin.Meta.Auth.Type == "none" || a.plugin.Meta.Auth.Type == "api_key" {
@@ -1535,6 +1570,14 @@ func (a *TaskAdaptor) submitContext(c *gin.Context, info *relaycommon.RelayInfo)
 		ctx["originTasks"] = originTasks
 	}
 	ctx["publicTaskId"] = info.PublicTaskID
+	ctx["submittedAt"] = a.submissionTime
+	if a.submissionTime == 0 {
+		a.submissionTime = time.Now().Unix()
+		ctx["submittedAt"] = a.submissionTime
+	}
+	if c != nil {
+		ctx["configurationRevision"] = c.GetInt64(modelconfig.ContextKeyRevision)
+	}
 	ctx["model"] = info.OriginModelName
 	ctx["upstreamModel"] = info.UpstreamModelName
 	ctx["baseUrl"] = info.ChannelBaseUrl

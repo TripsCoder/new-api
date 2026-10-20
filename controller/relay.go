@@ -17,6 +17,7 @@ import (
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
 	"github.com/QuantumNous/new-api/relay"
 	"github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
@@ -647,6 +648,9 @@ func executeTaskSubmissionWith(
 		PerCallBilling:  common.StringsContains(constant.TaskPricePatches, relayInfo.OriginModelName) || relayInfo.PriceData.UsePrice,
 		TieredSnapshot:  relayInfo.TieredBillingSnapshot,
 	}
+	if value, present := c.Get(modelconfig.ContextKeyUpstreamCost); present {
+		task.PrivateData.BillingContext.UpstreamCost, _ = value.(*modelconfig.CostSnapshot)
+	}
 	task.Quota = result.Quota
 	task.Data = result.TaskData
 	if len(result.PluginState) > 0 {
@@ -674,7 +678,8 @@ func executeTaskSubmissionWith(
 	// retrievable afterwards. An asynchronous result on such a route keeps its
 	// snapshot because polling and retrieval need it. The OpenAI Images
 	// protocol delivers its images inline in the same HTTP response, so its
-	// immediate results follow the same rule; an asynchronous image task is
+	// immediate results follow the same rule. Administrative real tests retain
+	// results for their ordinary task/artifact view instead of an inline response; an asynchronous image task is
 	// expected there and is polled inside the request.
 	var insertOmits []string
 	immediateTerminal := result.Immediate != nil && (result.Immediate.Status == model.TaskStatusSuccess || result.Immediate.Status == model.TaskStatusFailure)
@@ -690,10 +695,15 @@ func executeTaskSubmissionWith(
 		}
 	}
 	if pinnedValue, exists := c.Get(pluginruntime.ContextKeyPinnedEndpoint); exists && immediateTerminal {
-		if pinned, ok := pinnedValue.(pluginruntime.PinnedEndpoint); ok && pinned.Protocol == pluginruntime.ProtocolOpenAIImage {
-			task.PrivateData.ResultDiscarded = true
-			insertOmits = append(insertOmits, "data")
+		if _, realConfigurationTest := c.Get(modelconfig.ContextKeyTestBudget); !realConfigurationTest {
+			if pinned, ok := pinnedValue.(pluginruntime.PinnedEndpoint); ok && pinned.Protocol == pluginruntime.ProtocolOpenAIImage {
+				task.PrivateData.ResultDiscarded = true
+				insertOmits = append(insertOmits, "data")
+			}
 		}
+	}
+	if result.Immediate != nil {
+		service.PrepareTaskUpstreamCostSettlement(task, result.Immediate)
 	}
 	diagnostics.insertStart(task)
 	if insertErr := task.InsertWithContext(c.Request.Context(), insertOmits...); insertErr != nil {

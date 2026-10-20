@@ -55,6 +55,14 @@ func registerChannelRoutes(apiRouter *gin.RouterGroup) {
 }
 
 var channelPermissionRoutes = []permissionRoute{
+	{method: http.MethodGet, path: "/:id/model-configuration/availability", permission: authz.ChannelRead, handler: controller.GetChannelModelConfigurationAvailability},
+	{method: http.MethodGet, path: "/:id/model-configuration/try/:task_id", permission: authz.ChannelOperate, handler: controller.GetChannelModelConfigurationRealTask},
+	{method: http.MethodPost, path: "/:id/model-configuration/try", permission: authz.ChannelSensitiveWrite, handler: controller.TryChannelModelConfiguration},
+	{method: http.MethodGet, path: "/:id/model-configuration", permission: authz.ChannelRead, handler: controller.GetChannelModelConfiguration},
+	{method: http.MethodPut, path: "/:id/model-configuration", permission: authz.ChannelSensitiveWrite, handler: controller.SaveChannelModelConfiguration},
+	{method: http.MethodPost, path: "/:id/model-configuration/restore", permission: authz.ChannelSensitiveWrite, handler: controller.RestoreChannelModelConfiguration},
+	{method: http.MethodPost, path: "/:id/model-configuration/check", permission: authz.ChannelOperate, handler: controller.CheckChannelModelConfiguration},
+
 	{method: http.MethodGet, path: "/", permission: authz.ChannelRead, handler: controller.GetAllChannels},
 	{method: http.MethodGet, path: "/search", permission: authz.ChannelRead, handler: controller.SearchChannels},
 	{method: http.MethodGet, path: "/models", permission: authz.ChannelRead, handler: controller.ChannelListModels},

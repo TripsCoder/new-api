@@ -1,0 +1,208 @@
+# 提交视频生成任务（兼容格式）
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/contents/generations/tasks:
+    post:
+      summary: 提交视频生成任务（兼容格式）
+      deprecated: false
+      description: |
+        与 POST /v1/videos 完全相同，兼容即梦/豆包格式。请求体和响应格式一致。
+      operationId: submitVideoCompat
+      tags:
+        - 视频生成
+        - 视频生成
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoRequest'
+      responses:
+        '200':
+          description: 任务提交成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoSubmitResponse'
+          headers: {}
+          x-apifox-name: ''
+      security: []
+      x-apifox-folder: 视频生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-483061436-run
+components:
+  schemas:
+    VideoRequest:
+      type: object
+      required:
+        - model
+        - prompt
+      properties:
+        model:
+          type: string
+          description: >-
+            视频模型名称。
+
+
+            ## 按秒计费模型（费用 = 单价 × 时长秒数）
+
+            | 模型 | 单价（🔥/秒） | 说明 |
+
+            |------|-------------|------|
+
+            | video-fast-480p | 0.32 | 快速生成 480p |
+
+            | video-fast-720p | 0.47 | 快速生成 720p |
+
+            | video-pro-480p | 0.39 | 高质量 480p |
+
+            | video-pro-720p | 0.56 | 高质量 720p |
+
+            | video-pro-1080p | 0.85 | 高质量 1080p |
+
+            | video1-pro-480p | 0.41 | Pro加速 480p |
+
+            | video1-pro-720p | 0.56 | Pro加速 720p |
+
+            | video1-pro-1080p | 0.86 | Pro加速 1080p |
+
+            | video-pro-4K | 1.85 | 超高清 4K |
+
+            | video1-fast-720 | 0.47 | Fast加速 720p |
+
+            | sd2-fast-pro | 0.25 | 极速 Pro（仅10/15秒） |
+
+            | sd2-pro | 0.31 | Pro版（仅10/15秒） |
+
+
+            ## 按次计费模型（固定费用）
+
+            | 模型 | 单价（🔥/次） | 说明 |
+
+            |------|-------------|------|
+
+            | seedance-2-fast | 5.5 | 快速版 |
+
+            | seedance-2 | 7 | 标准版 |
+
+            | seedance-2-pro-1080p | 12 | 1080p 高清版 |
+
+            | grok-imagine-video-1.5 | 0.35 | Grok 图生视频，1-15秒，**必须传参考图**，仅支持1张 |
+
+            | grok-imagine-video-1.5-fast | 0.28 | Grok
+            文/图生视频（快速），仅支持6或10秒，最多7张参考图 |
+          enum:
+            - video-fast-480p
+            - video-fast-720p
+            - video-pro-480p
+            - video-pro-720p
+            - video-pro-1080p
+            - video1-pro-480p
+            - video1-pro-720p
+            - video1-pro-1080p
+            - video-pro-4K
+            - video1-fast-720
+            - sd2-fast-pro
+            - sd2-pro
+            - seedance-2-fast
+            - seedance-2
+            - seedance-2-pro-1080p
+            - grok-imagine-video-1.5
+            - grok-imagine-video-1.5-fast
+        prompt:
+          type: string
+          description: |-
+            视频描述提示词，最多 2500 字符。
+
+            引用素材时在文本中插入占位符：@Image1~@Image9、@Video1~@Video3、@Audio1~@Audio3。
+        duration:
+          type: integer
+          description: 视频时长（秒）。不同模型支持的范围不同，详见模型说明。
+          default: 6
+        aspect_ratio:
+          type: string
+          description: 画面比例。支持：16:9、9:16、1:1、21:9、3:4、4:3
+          default: '16:9'
+        image_url:
+          type: string
+          format: uri
+          description: 首帧图片或参考图片的 URL（图生视频时必填）。必须为公网可访问的 HTTPS 链接。
+        extra_images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: 额外参考图片 URL 数组，最多 9 张。在 prompt 中用 @Image2~@Image9 引用。
+        extra_videos:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: 参考视频 URL 数组，最多 3 个。在 prompt 中用 @Video1~@Video3 引用。
+        extra_audios:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: 参考音频 URL 数组，最多 3 个。在 prompt 中用 @Audio1~@Audio3 引用。
+      x-apifox-orders:
+        - model
+        - prompt
+        - duration
+        - aspect_ratio
+        - image_url
+        - extra_images
+        - extra_videos
+        - extra_audios
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    VideoSubmitResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: 任务ID，用于轮询状态
+          examples:
+            - task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte
+        status:
+          type: string
+          enum:
+            - pending
+          examples:
+            - pending
+        model:
+          type: string
+          examples:
+            - sd2-720p
+      x-apifox-orders:
+        - task_id
+        - status
+        - model
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

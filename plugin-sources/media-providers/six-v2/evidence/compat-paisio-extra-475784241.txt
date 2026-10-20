@@ -1,0 +1,118 @@
+# 查询账户余额与价格
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/balance:
+    get:
+      summary: 查询账户余额与价格
+      deprecated: false
+      description: 查询当前 API Key 关联账户的余额、VIP等级、今日生成次数、以及当前适用的模型价格表。
+      operationId: getBalance
+      tags:
+        - 通用
+        - 账户
+      parameters: []
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+              example:
+                balance: 100.5
+                used: 49.5
+                currency: 🔥
+                tier: vip1
+                tier_name: vip1
+                today_count: 12
+                current_prices:
+                  sd2-720p: 0.29
+                  sd2-fast-720p: 0.23
+          headers: {}
+          x-apifox-name: ''
+      security: []
+      x-apifox-folder: 通用
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-475784241-run
+components:
+  schemas:
+    BalanceResponse:
+      type: object
+      description: 账户余额及价格信息
+      properties:
+        balance:
+          type: number
+          description: 当前余额（🔥）
+        used:
+          type: number
+          description: 累计已使用金额
+        currency:
+          type: string
+          description: 货币单位标识
+          examples:
+            - 🔥
+        tier:
+          type: string
+          description: 当前 VIP 等级
+          examples:
+            - vip1
+        tier_name:
+          type: string
+          description: 等级显示名称
+        today_count:
+          type: integer
+          description: 今日生成次数
+        next_tier:
+          type: string
+          description: 下一等级名称（已满级时为 null）
+          nullable: true
+        next_tier_at:
+          type: number
+          description: 升级到下一等级所需累计消费
+          nullable: true
+        current_prices:
+          type: object
+          description: 当前等级适用的模型价格表（模型名→单价）
+          additionalProperties:
+            type: number
+          x-apifox-orders: []
+          properties: {}
+          x-apifox-ignore-properties: []
+      x-apifox-orders:
+        - balance
+        - used
+        - currency
+        - tier
+        - tier_name
+        - today_count
+        - next_tier
+        - next_tier_at
+        - current_prices
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

@@ -1,0 +1,61 @@
+# 获取视频文件
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/videos/{task_id}/content:
+    get:
+      summary: 获取视频文件
+      deprecated: false
+      description: 302 重定向到视频文件 CDN 地址。通常直接使用轮询接口返回的 `video_url` 即可，此接口作为备用。
+      operationId: getVideoContent
+      tags:
+        - 视频生成
+        - 视频生成
+      parameters:
+        - name: task_id
+          in: path
+          description: ''
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '302':
+          description: 重定向到视频文件地址
+          headers: {}
+          x-apifox-name: ''
+        '404':
+          description: 视频文件不存在
+          headers: {}
+          x-apifox-name: ''
+      security: []
+      x-apifox-folder: 视频生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-489902738-run
+components:
+  schemas: {}
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

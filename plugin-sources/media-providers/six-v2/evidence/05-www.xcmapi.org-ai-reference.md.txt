@@ -1,0 +1,2687 @@
+# 鸡出没API · 完整接入参考（供 AI 与开发者读取）
+
+更新：2026-10-11。服务文档：https://www.xcmapi.com/docs/QuickStart.html 。
+
+## 先读：证据范围与使用规则
+
+这是一份公开的静态接口指南，不包含任何真实 API Key。本文基于 2026-10-11 读取的线上文档、软件官方配置资料与该页面保留的历史视频记录整理；本轮没有执行付费生成，也没有逐一登录这些客户端进行端到端验收。不要把文档更新日期当成所有模型的重新验证日期。
+
+用户是新手。先确认软件名称、安装版本、操作系统、用途（聊天/看图/生图/视频/编程），只问尚未确定的信息。先给最短操作步骤，成功后再介绍高级选项。
+
+真实 Key 由用户直接填写在软件的私有凭据区或本地环境变量。不要让用户把 Key 发到 AI 对话、公共链接、截图、代码仓库、日志、工作流 JSON 或前端 bundle 中。示例的占位符必须替换，不能照抄为真实模型。
+
+读取本站 /v1/models 只能证明该 Key 能看见目录，不能证明端点、工具调用、流式、视觉或生成能力已经可用。先验证最小请求。图片/视频有费用，先取得用户对模型、参数和费用的确认。不要自行创建多个任务“试错”。
+
+## 1. 地址、鉴权与协议速查
+
+站点与教程的域名不等于所有客户端应填的 API 地址。推荐 API Origin 是 https://xcmapi.org ，OpenAI SDK/兼容客户端 Base URL 是 https://xcmapi.org/v1 。HTTP 节点填写完整端点；会自动追加版本前缀的客户端应按其字段语义填写 Origin。最终路径不能含 /v1/v1。
+
+| 用途 | 方法与路径 | 鉴权 | 关键点 |
+| --- | --- | --- | --- |
+| 模型目录 | GET /v1/models | Authorization: Bearer KEY | 权限目录，不是价格或能力验收 API |
+| 聊天与看图 | POST /v1/chat/completions | Bearer | messages；普通结果 choices[].message.content |
+| Responses | POST /v1/responses | Bearer | input；返回 output；事件格式不同于聊天 |
+| Anthropic 原生 | POST /v1/messages | Bearer；anthropic-version: 2023-06-01 | max_tokens 必填；不是 OpenAI 请求体 |
+| Gemini 原生 | POST /v1beta/models/{MODEL_ID}:generateContent | x-goog-api-key | contents 与 parts；不能混用 OpenAI messages |
+| 生图 | POST /v1/images/generations | Bearer | model/prompt；可选尺寸数量受型号限制 |
+| 改图 | POST /v1/images/edits | Bearer | multipart 文件上传；image[] |
+| 创建视频 | POST /v1/videos 或 /v1/videos/generations | Bearer | 一次创建；H3 与混合型号参数不同 |
+| 查询视频 | GET /v1/videos/{task_id} | 与创建相同的 Bearer Key | 有限轮询，不再 POST |
+| 下载视频 | GET /v1/videos/{task_id}/content | 首次同源请求用 Bearer | 外部跳转目标不得携带本站 Key |
+
+## 2. 从零接入的决策流程
+
+1. 用户先在本站令牌管理创建 Key 并选择所需分组；AI 不索要真实 Key。
+2. 确认目标软件的协议。聊天 GUI 常用 OpenAI Chat Completions；Codex 用 Responses；Claude Code 用 Messages；Gemini CLI 用 Gemini 原生。
+3. 按软件字段选择根地址、带 /v1 的基础地址或完整 HTTP URL，不能一律填写同一值。
+4. 用户在私有界面填 Key，AI 帮用户从自己的目录中选完整模型 ID；保留后缀与大小写。
+5. 先执行“只回复 OK”并检查实际文本响应；编程助手再单独测试一次工具调用。
+6. 图片/视频先确认数量、时长、分辨率、费用；只发一次创建请求，保存结果或任务 ID。
+7. 保存去敏配置和验证结果（软件版本、模型 ID、方法/路径、HTTP 状态、时间、请求/任务 ID），不保存 Key。
+
+## 3. 可复制的最小请求
+
+下列 curl 采用 Bash 语法，Key 从 XCM_API_KEY 环境变量读取。Windows PowerShell 使用后文现行文档中的对应示例，不要直接粘贴 Bash 续行符。
+
+
+```bash
+curl "https://xcmapi.org/v1/chat/completions" \
+  -H "Authorization: Bearer $XCM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"<TEXT_MODEL_ID>","messages":[{"role":"user","content":"只回复 OK"}],"stream":false}'
+```
+
+图片理解请求体（仍提交到 /v1/chat/completions）：
+
+```json
+{
+  "model": "<VISION_MODEL_ID>",
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "请描述这张图片。"
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "<PUBLIC_IMAGE_URL_OR_DATA_URL>"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+
+
+```bash
+curl "https://xcmapi.org/v1/images/generations" \
+  -H "Authorization: Bearer $XCM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"<IMAGE_MODEL_ID>","prompt":"一只橘猫坐在窗台上，柔和自然光","size":"1024x1024","n":1}'
+```
+
+Responses 的最小 JSON：
+
+```json
+{
+  "model": "<RESPONSES_MODEL_ID>",
+  "input": "只回复 OK"
+}
+```
+
+Anthropic Messages 的最小 JSON：
+
+```json
+{
+  "model": "<ANTHROPIC_MODEL_ID>",
+  "max_tokens": 128,
+  "messages": [
+    {
+      "role": "user",
+      "content": "只回复 OK"
+    }
+  ]
+}
+```
+
+Gemini generateContent 的最小 JSON：
+
+```json
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "只回复 OK"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## 4. 按软件配置
+
+下面的“官方资料已核对”只表示配置方式有文档依据，不代表本站模型在该软件中全部实测通过。带“版本核验”的条目必须核对实际安装版本，不能保证专有功能。
+
+### Codex
+
+用途：OpenAI 编程助手。
+
+入口：CC Switch → 左侧 Codex → 添加供应商 → 自定义。
+
+协议：OpenAI Responses。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 找到 Codex 的配置入口：先安装并打开 Codex 与 CC Switch。在 CC Switch 左侧选 Codex，再点右上角「添加供应商」。不要在 Claude Code 页填 Codex 配置。
+2. 按对照填写 3 项：供应商名称可写「鸡出没API」。基础地址填写下面的地址，Key 填你在本站创建的私有 Key。模型填写当前 Key 支持 Responses 和工具调用的完整 ID。
+3. 启用后重新打开 Codex：保存供应商并启用。彻底退出旧 Codex 窗口或终端，再从相同环境重新打开。在一个空的测试文件夹里开始对话。
+4. 发第一条消息：发送「只回复 OK，不修改文件，不运行命令」。收到文字后，再单独测试读取测试文件。只显示模型名称不算成功。
+
+限制与验收：本页配置面向 Codex CLI 及读取该配置的客户端。桌面产品与组织策略会随版本变化，以安装版本的自定义服务商入口为准。；官方当前配置参考仅列出 wire_api=responses；聊天接口能用不能证明 Codex 可用。；截图是官方软件界面参考；本轮未用真实 Key 完成 Codex 调用。
+
+来源：https://learn.chatgpt.com/docs/config-file/config-reference
+
+状态：官方配置资料与真实界面参考已核对；本轮未逐客户端实机验收。
+
+### Claude Code
+
+用途：Anthropic 编程助手。
+
+入口：CC Switch → 左侧 Claude Code → 添加供应商。
+
+协议：Anthropic Messages。
+
+填写地址：https://xcmapi.org 。
+
+1. 确认打开的是 Claude Code：这里指可连接网关的 Claude Code 编程工具。普通 Claude 网页聊天的输入框不是 API 配置入口。安装后打开 CC Switch，选左侧 Claude Code。
+2. 新增并填写供应商：点击「添加供应商」，用下面 3 项配置。若从本站令牌行使用「导入到 CCS」，导入后仍需核对软件、地址、模型和这把 Key 的分组。
+3. 启用供应商，重新启动：保存、启用，再完全退出并重新打开 Claude Code。终端输入 claude 进入；已有配置不要同时再叠加另一套鉴权变量。
+4. 检查连接并发送消息：先输入 /status，核对 Anthropic base URL 指向本站且鉴权方式正确；再发「只回复 OK，不修改文件，不运行命令」。
+
+限制与验收：本页以 Claude Code 的网关能力为准，不将 Claude 网页聊天当作相同入口。；图中是官方演示，不能当作本站 API 已调用成功的证据。；本轮未实机验证客户端各版本的网关兼容性。
+
+来源：https://code.claude.com/docs/en/llm-gateway-connect
+
+状态：官方配置资料与真实界面参考已核对；本轮未逐客户端实机验收。
+
+### Hermes Agent
+
+用途：开源智能体。
+
+入口：已安装 Hermes 时，先退出正在进行的聊天，在终端运行 hermes model → Custom endpoint (self-hosted / VLLM / etc.)。Web UI 的 Models → Change 用于选择已经配置好的提供商。。
+
+协议：本指南采用 OpenAI Chat Completions。官方自定义端点说明要求服务实现 /v1/chat/completions；不要把其他协议直接填进这一方案。。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 打开自定义端点向导：在运行 Hermes 的终端退出当前会话，执行 hermes model，选择 Custom endpoint。聊天内 /model 仅切换已有配置，不能替代新建提供商。
+2. 填入地址和自己的密钥：基础 URL 填本站 /v1 地址。API Key 在自己的机器上填写，不发给别人。Hermes 官方默认示例支持在配置中引用环境变量，推荐把密钥与普通配置分开。
+3. 选择准确模型并保存：Model name 填 API 控制台实际提供的模型 ID；向导保存到 Hermes 的 config.yaml。若使用图中的 Web UI，在提供商列表选已配置来源，再选模型并点 Switch；该操作对新会话生效。
+4. 新建会话发一句测试：重新开始会话，确认当前模型后发送“只回复：连接成功。不要调用工具、不要读取文件。”。能回复只证明基础文本通道可用；工具、图片和长上下文仍需分别验证。
+
+限制与验收：Hermes 截图展示官方模型选择器，原图左下角可见 v0.11.0；图片不是当前已安装版本证明，也不是自定义 URL/API Key 表单。；官方仓库固定提交提供可追溯证据，不等于每位用户安装的稳定版具有相同界面。；本轮未运行 Hermes、未验证本站模型、流式输出、工具调用或辅助模型路由。；辅助模型可能有独立的路由/密钥需求；主模型连接成功并不意味着辅助能力均可用。
+
+来源：https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+状态：官方配置资料与真实界面参考已核对；本轮未逐客户端实机验收。
+
+### Cursor
+
+用途：代码编辑器。
+
+入口：Cursor Settings → Models → API Keys。
+
+协议：当前版本支持的 OpenAI 兼容聊天；按实际请求区分 Responses。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 打开 Models 设置：打开 Cursor Settings，进入 Models，找到 API Keys。图是 2025-09 的真实设置画面；你的版本可能改变排布。找不到 API Keys 时，先检查团队管理员是否允许个人 Key。
+2. 填写 Key 与本站地址：在 OpenAI API Key 中填自己的 Key 并启用。你的版本提供 Override OpenAI Base URL 时，打开它，将原有地址替换为下方地址。图内旧地址只是软件默认值，不要照抄。
+3. 添加模型并在聊天中选择：在 Models 中启用或添加完整模型 ID，回到新聊天，在模型选择器中选刚才的模型。先用普通问答模式，不要直接测试自动改项目。
+4. 发消息，按错误定位：发送「只回复 OK，不修改文件」。若版本没有自定义 Base URL 入口，本页不能让该版本直接接入本站；查看官方说明或改用已有兼容入口的软件。
+
+限制与验收：官方文档确认自带 Key 入口；任意第三方 Base URL 的支持受具体版本、模型和组织策略影响，不能保证所有功能可用。；官方说明：自定义 Key 随请求经 Cursor 后端完成提示构建，不能把它理解成仅在本机使用。；本轮未实机验证 Cursor 与本站的聊天或 Agent 调用。
+
+来源：https://cursor.com/help/models-and-usage/api-keys
+
+状态：官方配置资料与真实界面参考已核对；本轮未逐客户端实机验收。
+
+### WorkBuddy
+
+用途：桌面 AI 工作助手。
+
+入口：WorkBuddy → 设置 → 模型 → 添加模型 → 提供商选择 自定义 / Custom。。
+
+协议：OpenAI Chat Completions；官方表单标注“仅支持 OpenAI 兼容协议 API”。“自定义协议”只是 URL 路径处理开关，不是切换到 Anthropic 的协议选项。。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 进入模型设置并选 Custom：打开设置里的模型页，点击添加模型，在提供商中选择“自定义 / Custom”。如果安装版本没有这个入口，应先核对版本/发行渠道，不能直接推断支持。
+2. 填完整接口地址与密钥：“接口地址”填完整 Chat Completions 地址，“API KEY”填该服务自己的密钥。截图中的 api.example.com 是占位域名，不是要实际调用的地址。
+3. 填模型名并核对能力：模型名称填 API 控制台可用的准确 ID。工具调用、图片输入、推理模式只按服务实际能力勾选；基础文本初测先不启用不确定的能力。“自定义协议”默认关闭，只有标准路径处理不适用时才按官方说明开启。
+4. 保存并在对话中选中测试：点击保存，回到对话的模型选择器选新建模型，再发送“只回复：连接成功。不要调用工具、不要读取文件。”。先核对文本回复，再单独验收文件/工具等功能。
+
+限制与验收：结论对应 2026-10-11 读取的中国站官方文档；未核对所有旧版或海外版的功能一致性。；仅确认 OpenAI Chat Completions；没有证据证明此表单支持 Anthropic Messages 或 OpenAI Responses。；API Key 本地保存不代表请求不离开电脑；自定义模型对话会发到所填第三方服务。；没有安装或运行该软件，没有进行本站鉴权或收费测试。
+
+来源：https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Model
+
+状态：官方配置资料与真实界面参考已核对；本轮未逐客户端实机验收。
+
+### DeepSeek Harness
+
+用途：开源智能体工作台。
+
+入口：已经运行的 Web UI → 设置 → 模型 → 添加模型提供商 → 自定义模型 API。官方 README 启动命令为 npx @deepseek-ai/dsh web，默认本机页面 http://127.0.0.1:3080；本轮没有执行安装或启动。。
+
+协议：自定义模型 API 可选 OpenAI Chat Completions、OpenAI Responses、Anthropic Messages；分别写为 openai-completions、openai-responses、anthropic-messages。同一提供商只选一种协议。。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 打开“自定义模型 API”：进入设置→模型，点添加模型提供商，切到自定义模型 API 标签。不要将本站密钥填写在默认 DeepSeek 官方直连卡片中。
+2. 给提供商命名并填地址：Provider ID 使用小写字母开头的稳定标识，例如 xcm；显示名称可写“本站 API”。基础地址按网关说明填写。ID 创建后不可直接改名，先想好再保存。
+3. 选协议、填密钥并添加模型：此入门方案选择 OpenAI Chat Completions，填写本站 API Key。点击添加模型并手动填写可用模型 ID；“获取可用模型”是可选网络探测，不是接入保证。网关支持其他协议时，可另外新建提供商并选择相应协议。
+4. 创建提供商并在新会话中测试：创建后在模型选择器中选择刚添加的模型，再发“只回复：连接成功。不要调用工具、不要读取文件。”。模型设置在下一次请求生效；已有会话可能保留自己的模型记录，新建会话最清楚。
+
+限制与验收：官方 README 将该项目标为开发者预览，后续可能出现破坏兼容性的变更。；没有 OAuth 登录的第三方提供商支持保证；官方当前配置指南明确说 OAuth 提供商暂不支持。；截图与固定提交只证明产品能力与配置方式，不证明任意模型、网关或本站实际连接成功。；模型发现仅是便捷功能，不保证所有第三方端点都提供可识别列表。
+
+来源：https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/user/guide/providers.zh.md
+
+状态：官方配置资料与真实界面参考已核对；本轮未逐客户端实机验收。
+
+### ZCode
+
+用途：桌面编程助手。
+
+入口：对话框模型名称 → 模型选择器底部“管理模型” → 设置/模型设置 → 左侧底部“添加供应商”。旧图字段与当前文档可能略有差异。。
+
+协议：官方文档明确兼容 Anthropic / OpenAI；本卡采用 OpenAI Chat Completions。所核对页面未为任意第三方供应商明确承诺 OpenAI Responses，故不写成已支持。。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 打开模型设置并添加供应商：在模型选择器底部点管理模型，进入模型设置后点添加供应商。名称自定，例如“本站 API”；不要把本站密钥放进 Z.ai/BigModel 原生套餐登录入口。
+2. 选协议并填基础 URL：使用 OpenAI 兼容路径时，填写本站 /v1 基础地址；若界面显示“API 格式”，选择 Chat Completions。当前文档可能显示“OpenAI 接口地址”，按这个字段填写。
+3. 填密钥并添加准确模型：输入本站 API Key，点击添加模型，逐项填入本站控制台实际提供的模型 ID。不要照搬截图里的 DeepSeek 型号，也不要在 key 字段填写软件会员账号。
+4. 保存、启用并发送测试句：保存供应商并打开启用开关，回到对话框选择新模型，发送“只回复：连接成功。不要调用工具、不要读取文件。”。能返回文本后，再逐项验证需要的 agent、图片和长上下文能力。
+
+限制与验收：已选定 zcode.z.ai 官方桌面产品；同名项目不能套用本卡。；官方图片文件名日期为 2026-07-28，当前文档字段可能更新；原图中的 DeepSeek 示例根地址不作为本站填写模板，本站 OpenAI 方案以 /v1 基础地址为准。；不将第三方 OpenAI Responses、任意自定义请求体参数或所有模型视觉能力写成已支持。；未安装软件、未登录、未使用官方免费额度或付费套餐，也未调用本站模型。
+
+来源：https://zcode.z.ai/cn/docs/configuration
+
+状态：官方配置资料与真实界面参考已核对；本轮未逐客户端实机验收。
+
+### Cherry Studio
+
+用途：桌面聊天 · 看图 · 绘画。
+
+入口：设置 → 模型服务 → 添加服务商 → 自定义。
+
+协议：OpenAI Chat Completions；绘画单独使用 Images。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 名称填写「鸡出没API」，添加 OpenAI 端点，填写自己的 Key。
+2. OpenAI 的 API Base / 版本基础地址填写 https://xcmapi.org/v1；若输入框明确写完整端点，则用 /v1/chat/completions。
+3. 获取模型列表，选定当前 Key 允许的完整模型 ID，启用服务商并发送「只回复 OK」。
+
+限制与验收：新版本支持多个端点。绘画、Responses、Anthropic、Gemini 要单独配置对应端点；旧版 API Host 若自动补 /v1，就只填写 https://xcmapi.org。通过错误提示里的最终请求地址检查是否重复 /v1。
+
+来源：https://docs.cherry-ai.com/pre-basic/providers/zi-ding-yi-fu-wu-shang
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### Chatbox
+
+用途：桌面聊天 · 看图。
+
+入口：设置 → 模型提供方 → 自定义 / OpenAI 兼容。
+
+协议：OpenAI Compatible / Chat Completions。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 新增自定义提供方；不同版本的菜单名称可能不同。
+2. API Base URL 填 https://xcmapi.org/v1，Key 填自己的 Key，模型填完整 ID。
+3. 若同时要求 API Path，填写 /chat/completions，并确认最终地址只有一段 /v1/chat/completions；回到对话发送「只回复 OK」。
+
+限制与验收：若字段叫 API Host 且客户端固定追加 /v1，请填根地址 https://xcmapi.org。看图需要模型本身支持视觉，并先用小图片测试。
+
+来源：https://github.com/chatboxai/chatbox
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### Cline
+
+用途：VS Code 编程助手。
+
+入口：VS Code → Cline 面板 → 设置 → API Provider。
+
+协议：OpenAI Compatible / Chat Completions。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. API Provider 选择 OpenAI Compatible。
+2. Base URL 填 https://xcmapi.org/v1；API Key 填自己的 Key；Model ID 填完整 ID。
+3. 先发送「只回复 OK，不修改文件」。成功后，再在独立目录测试一次需要工具调用的任务。
+
+限制与验收：模型还需支持工具调用。上下文长度、图片能力、价格等自定义参数按真实型号填写，不能只因目录中可见就勾选全部能力。
+
+来源：https://docs.cline.bot/provider-config/openai-compatible
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### Continue
+
+用途：VS Code / JetBrains 编程助手。
+
+入口：Continue → 配置 → 编辑本地 config.yaml。
+
+协议：OpenAI Chat Completions（本模板固定使用 Chat）。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 添加 provider: openai，apiBase: https://xcmapi.org/v1，model 填完整 ID。
+2. API Key 用 Continue 支持的 secrets 引用注入；不要把真实 Key 提交到项目仓库。
+3. 本模板设置 useResponsesApi: false，固定 Chat Completions；配置 chat 角色后重新加载，再发一条短消息。
+
+限制与验收：需要 Responses 时，另建已确认支持该协议的模型配置并设置 useResponsesApi: true。chat 角色本身不会固定协议；不要把聊天模型当作 embedding 或 rerank 模型。
+
+来源：https://docs.continue.dev/customize/model-providers/top-level/openai
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### Gemini CLI
+
+用途：终端编程助手。
+
+入口：控制台令牌行 → 导入到 CCS → Gemini CLI。
+
+协议：Gemini generateContent。
+
+填写地址：https://xcmapi.org 。
+
+1. 在「导入到 CCS」弹窗中选择 Gemini CLI。
+2. 核对根地址与 Gemini 协议，Key 的分组应允许相应 Gemini 型号。
+3. 启用后重开 Gemini CLI；如果仍走 Google 登录，先检查当前认证模式是否使用导入的 API Key 配置。
+
+限制与验收：实际 API 路径是 /v1beta/models/{MODEL_ID}:generateContent。不能把 /v1/chat/completions 当作 Gemini 原生端点。
+
+来源：https://github.com/farion1231/cc-switch/blob/main/docs/user-manual/zh/2-providers/2.1-add.md
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### OpenCode
+
+用途：终端编程助手。
+
+入口：opencode.json → provider → 自定义服务商。
+
+协议：@ai-sdk/openai-compatible。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 添加自定义 provider，npm 指定 @ai-sdk/openai-compatible。
+2. options.baseURL 填 https://xcmapi.org/v1，apiKey 使用 {env:XCM_API_KEY}，models 的键使用完整模型 ID。
+3. 用 /models 选择「服务商ID/模型ID」，先发短消息，再验收工具调用。
+
+限制与验收：自定义兼容 provider 与内置 openai provider 的协议选择可能不同；按本站示例明确使用兼容适配器。
+
+来源：https://opencode.ai/docs/providers/
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### Aider
+
+用途：终端代码协作。
+
+入口：终端环境变量 + aider --model。
+
+协议：OpenAI compatible。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 设置 OPENAI_API_BASE=https://xcmapi.org/v1。
+2. OPENAI_API_KEY 用终端会话的环境变量传入自己的 Key。
+3. 运行 aider --model openai/你的完整模型ID，先在测试目录中开始只读对话。
+
+限制与验收：部分模型需额外模型元数据或编辑格式配置；先完成短对话，再测试改文件。
+
+来源：https://aider.chat/docs/llms/openai-compat.html
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### Dify
+
+用途：工作流 / 聊天应用。
+
+入口：设置 → 模型供应商 → OpenAI-API-compatible。
+
+协议：OpenAI-API-compatible 插件。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 安装并打开 OpenAI-API-compatible 模型供应商插件。
+2. 添加 LLM 模型，填写模型名称、Endpoint URL、API Key；Endpoint URL 使用 https://xcmapi.org/v1。
+3. 先保存并验证，再在测试应用中选择该模型发布预览对话。
+
+限制与验收：自部署服务器需能访问该地址。Embedding、Rerank、语音是其他模型类型，不能复用聊天模型名称假定支持。
+
+来源：https://github.com/langgenius/dify-official-plugins/tree/main/models/openai_api_compatible
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### n8n
+
+用途：自动化 · 文本 · 图片 · 视频。
+
+入口：画布 → 添加节点 → HTTP Request。
+
+协议：HTTP Request 节点。
+
+填写地址：https://xcmapi.org/v1/chat/completions 。
+
+1. 选择对应方法和完整 URL；聊天用 POST /v1/chat/completions。
+2. 认证选通用 Header Auth；凭据名称 Authorization，值为 Bearer 后加空格与自己的 Key。
+3. Send Body 选择 JSON；先运行一个文本节点。视频再按创建、等待、查状态、完成下载的顺序搭建。
+
+限制与验收：凭据保存在 n8n Credentials。不要放到节点 JSON、URL 或工作流导出文件中。视频 POST 禁止自动重试，轮询次数必须有限。
+
+来源：https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### curl / Postman / Apifox
+
+用途：接口调试。
+
+入口：新建 HTTP 请求或导入 curl。
+
+协议：直接 HTTP。
+
+填写地址：https://xcmapi.org/v1/chat/completions 。
+
+1. Method 选 POST，URL 填完整接口路径。
+2. Authorization 选 Bearer Token，Key 放在私有环境变量中；Body 选 JSON。
+3. 使用本站示例，替换 model 后发送。先确认 HTTP 2xx 与实际回复内容，再尝试其他接口。
+
+限制与验收：导出集合时去掉 Key。curl 示例按终端类型选择；Windows PowerShell 使用 curl.exe 或对应 PowerShell 示例。
+
+来源：https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/
+
+状态：已核对官方配置资料；本次未做该客户端实机验收。
+
+### Open WebUI
+
+用途：自部署聊天界面（版本相关）。
+
+入口：管理员设置中查找 Connections / OpenAI 连接。
+
+协议：OpenAI-compatible connection。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 新建 OpenAI 兼容连接，基础地址填写 https://xcmapi.org/v1。
+2. Key 通过管理员私有凭据保存，刷新模型目录并限制可选型号。
+3. 先用普通对话测试；确认服务器网络可达后再启用图片或工具。
+
+限制与验收：管理员权限、连接菜单和额外图像设置随版本变化。本次未实机核验；不要宣称聊天连接会自动启用 Images 或 Video。
+
+来源：https://docs.openwebui.com/
+
+状态：待安装版本核验。
+
+### AnythingLLM
+
+用途：知识库聊天（版本相关）。
+
+入口：LLM Preference 中查找 Generic OpenAI。
+
+协议：Generic OpenAI。
+
+填写地址：https://xcmapi.org/v1 。
+
+1. 选择 Generic OpenAI 类型并核对版本官方字段。
+2. LLM 基础地址填 https://xcmapi.org/v1，模型和 Key 填本站对应值。
+3. 先测试普通聊天；上传文档前另外配置可用的 embedding 模型。
+
+限制与验收：知识库需要独立的 embedding 支持。不能把文本生成模型当向量模型。本次未实机核验安装版本。
+
+来源：https://docs.anythingllm.com/
+
+状态：待安装版本核验。
+
+### ComfyUI
+
+用途：图像工作流（需要兼容节点）。
+
+入口：选择明确支持自定义 Images API 的可信节点。
+
+协议：HTTP / 与本站 Images 兼容的自定义节点。
+
+填写地址：https://xcmapi.org/v1/images/generations 。
+
+1. 先确认节点允许自定义完整 URL、Header 和 JSON 请求体。
+2. 用 Images API 的 model、prompt、size、n 生成请求；Key 放在本地私有配置中。
+3. 确认节点支持 data[].url 或 data[].b64_json 输出，再连接图片预览。
+
+限制与验收：ComfyUI 不是填入聊天 Base URL 就自动兼容本站的客户端；不同自定义节点差别很大。本页不推荐未经验证的插件，也不承诺原生视频兼容。
+
+来源：https://docs.comfy.org/
+
+状态：需要选定节点后核验。
+
+## 5. 编程助手配置文件模板
+
+先合并已有配置，保留用户其他提供方；不要覆盖整个文件。
+
+### Codex TOML
+
+
+```toml
+model = "<RESPONSES_MODEL_ID>"
+model_provider = "xcm"
+
+[model_providers.xcm]
+name = "鸡出没API"
+base_url = "https://xcmapi.org/v1"
+wire_api = "responses"
+env_key = "XCM_API_KEY"
+
+```
+
+XCM_API_KEY 必须存在于启动该客户端的进程环境。模型支持 Responses 还不等于满足该客户端全部工具或推理能力；保存配置后重新打开并验证。
+
+### Continue YAML
+
+
+```yaml
+name: 鸡出没API
+version: 1.0.0
+schema: v1
+models:
+  - name: 我的聊天模型
+    provider: openai
+    model: <TEXT_MODEL_ID>
+    apiBase: https://xcmapi.org/v1
+    useResponsesApi: false
+    apiKey: ${{ secrets.XCM_API_KEY }}
+    roles:
+      - chat
+
+```
+
+用 Continue 对应版本支持的 secrets 配置 XCM_API_KEY。只启用已验证的角色。
+
+### OpenCode JSON
+
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "xcm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "鸡出没API",
+      "options": {
+        "baseURL": "https://xcmapi.org/v1",
+        "apiKey": "{env:XCM_API_KEY}"
+      },
+      "models": {
+        "<TEXT_MODEL_ID>": {
+          "name": "我的聊天模型"
+        }
+      }
+    }
+  },
+  "model": "xcm/<TEXT_MODEL_ID>"
+}
+```
+
+环境中设置 XCM_API_KEY，通过 /models 选择提供方/模型。
+
+## 6. CC Switch：一键导入边界
+
+控制台入口：登录 → 令牌管理 → 目标 Key 所在行 → 导入到 CCS → Claude Code 或 Gemini CLI。浏览器将唤起已安装的 CC Switch。导入后必须核对协议、地址、模型并启用供应商，重开对应客户端发送短测试消息。
+
+当前网页一键选项不包含 Codex 或 OpenCode；它们应在 CC Switch 选择对应软件后手动添加。不要伪造通用 deeplink，不要把 Key 放在公开导入链接中。导入不会改变 Key 的额度、分组或权限。
+
+Claude Code → Messages → https://xcmapi.org 。Gemini CLI → Gemini → https://xcmapi.org 。Codex → Responses → https://xcmapi.org/v1 。OpenCode 的自定义兼容适配器 → https://xcmapi.org/v1 。
+
+## 7. 图片与视频流程约束
+
+### 图像
+
+- 看图：支持视觉的聊天模型，messages[].content 使用 text + image_url。远程 URL 必须可被服务端访问；本机路径不是 URL。
+- 生图：Images generation，模型必须支持该端点；不对所有型号假定相同 size/n/返回格式。
+- 改图：Images edit，上传文件；不要手动构造 multipart 边界。
+- 返回 data[].url 时读取临时资源；返回 data[].b64_json 时在本地解码，不要把它当 URL。
+- Gemini 原生图像能力按 Gemini 请求与响应结构处理，不能把生成模型硬塞进 OpenAI Images。
+
+### 视频
+
+1. 验证模型权限、对应参数和费用。H3 用 aspect_ratio；混合型号按配置用 ratio。
+2. 为一次业务生成只发一个 POST，记录 task_id 和发起时间。POST 超时或结果不确定时先核查，不自动重新创建；不假定支持 Idempotency-Key。
+3. 解析顶层或 data 中的 id / task_id / request_id，统一保存为任务 ID。
+4. 使用同一 Key，每 3–5 秒 GET 查询；设置最大次数、总超时和指数退避上限。遇到 Retry-After 按它等待。
+5. pending/queued/in_progress 继续等；done/completed/succeeded/success 取视频；failed/error/expired/cancelled/canceled 停止并记录。
+6. 未知状态或轮询超时保留 ID 并转人工，不能当作失败重新 POST。
+7. 下载 /content 时只给本站请求加 Authorization；外部 30x 或 video_url 请求不带 Key，禁止 curl --location-trusted。
+8. 播放或解析文件验证实际时长/尺寸/编码，再认定生成成功。停止轮询不等于取消任务；没有文档依据不要调用 DELETE。
+
+### n8n 节点连接
+
+手动触发 → HTTP Request（POST 创建，Retry On Fail 关闭）→ 提取并持久化 task_id → Wait 5 秒 → HTTP Request（GET 查询）→ If/Switch。完成分支下载，失败分支停止，运行中回到 Wait。不要连回创建节点。循环增加计数与开始时间，超出阈值停止自动轮询。Header Auth 凭据：Name=Authorization，Value=Bearer 加空格加私有 Key。工作流导出时移除凭据值。
+
+## 8. 新手错误处理与验收
+
+| 现象 | 先检查 | 避免 |
+| --- | --- | --- |
+| 401 | Key 是否为空、带空格、停用、过期 | 重复粘贴到公开对话 |
+| 403 | 分组、模型权限与接口权限 | 自动换未知模型 |
+| 404 | Origin/Base/完整 URL 与实际协议；是否 /v1/v1 | 盲目添加更多版本路径 |
+| 400 / 422 | 模型名与最小参数；类型/尺寸/时长是否支持 | 反复创建视频试参数 |
+| 429 | 余额、配额与速率错误正文；Retry-After | 无上限重试 |
+| 5xx / 网络超时 | 请求是否已被接受；视频查记录 | 自动再次 POST 视频 |
+| 有目录没有回复 | 真正端点、模型能力、客户端日志中的请求路径 | 把连通性当成功 |
+| CORS | 将业务 Key 留在服务端，由自己的后端调用 | 把私有 Key 写入公共前端 |
+| 工具调用失败 | 模型与适配器是否支持、返回格式是否正确 | 只测试聊天就宣布 Agent 可用 |
+
+验收至少记录：目标软件与版本、模型 ID、实际协议和路径、最小文本结果；需要视觉时记录具体图像描述；需要生成时记录一次受控生成结果；视频记录创建、查询、下载、可播放全过程。不要记录 Key 或签名下载地址。
+
+## 9. 现行站点的详细接口与历史验证记录
+
+以下内容来自 2026-10-11 读取的线上页面。保留其中原始日期、模型参数与历史验证范围；价格和目录可能变化，应以当前控制台及请求结果为准。特别是“未验证”“待验收”“配置已同步”不能解释为已出片通过。
+
+---
+
+## 鉴权与 Base URL
+
+先确认接口地址和 KEY，再验证分组权限。
+
+1. 在[API 密钥](https://www.xcmapi.com/keys)页创建 KEY，选择对应的文本、图片或视频分组。
+2. 把 KEY 存在服务端环境变量 `XCM_API_KEY`；不要把它嵌进网页 JavaScript 或移动端安装包。
+3. 用同一 KEY 请求模型目录；使用返回的完整模型 ID。
+
+| 配置项 | 填写内容 | 适用方式 |
+| --- | --- | --- |
+| Origin | `https://xcmapi.org` | 直接拼接完整路径，如 /v1/models |
+| Base URL | `https://xcmapi.org/v1` | OpenAI 兼容 SDK，SDK 会追加 /responses 等路径 |
+| 鉴权 | `Authorization: Bearer $XCM_API_KEY` | OpenAI 风格接口；Gemini 见原生协议章节 |
+| 请求类型 | `Content-Type: application/json` | JSON 请求；上传文件时采用对应 multipart 格式 |
+
+```
+export XCM_API_KEY="<YOUR_API_KEY>"
+
+export XCM_MODEL="<MODEL_ID>"
+
+export XCM_API_ORIGIN="https://xcmapi.org"
+```
+
+```
+$env:XCM_API_KEY = "<YOUR_API_KEY>"
+
+$env:XCM_MODEL = "<MODEL_ID>"
+
+$env:XCM_API_ORIGIN = "https://xcmapi.org"
+```
+
+常见地址错误 
+
+不要拼成 `/v1/v1/responses`，也不要把完整 `/v1/chat/completions` 当 SDK Base URL。遇到 401 先检查 KEY；404 先核对路径、模型 ID 与分组。
+
+---
+
+## 创建和管理 KEY
+
+KEY 与分组权限一起决定可调用模型。
+
+1 
+
+访问 [鸡出没API 控制台](https://www.xcmapi.com/) 并登录。
+
+2 
+
+进入“API 密钥”，点击“创建密钥”，按需要设置名称、额度和可用分组。
+
+3 
+
+创建后立即复制 Key。页面不会再次显示完整 Key，遗失后请撤销旧 Key 并重新创建。
+
+安全提示 不要把完整 API Key 发给他人，也不要写进前端网页、截图、公共仓库或日志。怀疑泄露时，请立即在API 密钥中撤销。
+
+---
+
+## 模型与分组
+
+模型目录由当前 KEY 的分组权限决定，不同 KEY 的返回列表可能不同。
+
+```
+curl --fail-with-body --max-time 30 "$XCM_API_ORIGIN/v1/models" \
+  -H "Authorization: Bearer $XCM_API_KEY"
+```
+
+取返回的 `data[].id` 填入 `model`。模型名称中的中文、数字、标点和大小写均应保留。模型在目录里出现不等于所有多模态接口均已开放，还需检查对应渠道的能力说明。
+
+| 使用目标 | 选择分组 | 验证内容 |
+| --- | --- | --- |
+| 文本或代码 | 支持该模型的文本分组 | 模型目录、协议、流式响应 |
+| 图片生成 | 明确支持生图的分组 | 模型、尺寸、图片输出格式 |
+| H3 视频 | 视频综合分组-全球顶尖视频模型-渠道版 | 模型 `h3`；独立请求参数、按秒价格与创建/查询/下载权限 |
+| 混合视频 | 视频综合分组-全球顶尖视频模型-渠道版 | 原 10 款按条型号；完整模型 ID、参数与实际验收范围见视频章节 |
+
+价格单独查询 
+
+前往[模型价格](https://www.xcmapi.com/price)选择分组。视频章节按当前目录显示开放状态与价格，具体以本站价格页为准。原生h3与Gway minimax-h3必须分别核对模型权限和协议，不能因名称相似混用。
+
+---
+
+## 完整路径速查
+
+以下为本文覆盖的现有接口。未列出的路径不应按名称自行推断。
+
+| 用途 | 地址 | 说明 |
+| --- | --- | --- |
+| 统一 API 地址 | `https://www.xcmapi.com/v1` | 填写到支持 OpenAI 兼容格式的客户端。 |
+| 模型目录 | `GET /v1/models` | 查看当前 Key 可用的模型。 |
+| 对话接口 | `POST /v1/chat/completions` | 兼容 Chat Completions 请求格式。 |
+| Responses 接口 | `POST /v1/responses` | 兼容 OpenAI Responses 请求格式。 |
+| 图片接口 | `POST /v1/images/generations` | 文生图；结果可能返回 URL 或 Base64。 |
+| H3 创建任务 | `POST /v1/videos` | 模型固定为 `h3`，异步创建视频任务。 |
+| H3 查询任务 | `GET /v1/videos/<REQUEST_ID>` | 轮询状态，完成后读取视频地址。 |
+| H3 下载视频 | `GET /v1/videos/<REQUEST_ID>/content` | 任务完成后下载 MP4 内容。 |
+
+---
+
+## 基础请求示例
+
+用于最小连通检查；请选择当前 KEY 可用的模型。
+
+#### 查看可用模型
+
+```
+curl https://www.xcmapi.com/v1/models \
+  -H "Authorization: Bearer $XCM_API_KEY"
+```
+
+#### 发送一次对话请求
+
+```
+curl https://www.xcmapi.com/v1/chat/completions \
+  -H "Authorization: Bearer $XCM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "你的模型名",
+
+    "messages": [{"role": "user", "content": "你好"}]
+
+  }'
+```
+
+#### Python
+
+```
+import os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["XCM_API_KEY"], base_url="https://www.xcmapi.com/v1")
+
+response = client.chat.completions.create(
+
+    model="你的模型名",
+
+    messages=[{"role": "user", "content": "你好"}],
+
+)
+
+print(response.choices[0].message.content)
+```
+
+---
+
+## 文本 API
+
+Chat Completions 与 Responses 是两套请求结构，按你的客户端协议选择。
+
+| 接口 | 请求内容 | 输出位置 |
+| --- | --- | --- |
+| POST /v1/chat/completions | messages 数组 | choices[].message / delta |
+| POST /v1/responses | input 字符串或消息 / 工具项 | output 数组或 Responses SSE 事件 |
+
+```
+curl "https://xcmapi.org/v1/chat/completions" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "<MODEL_ID>",
+
+    "messages": [{"role": "user", "content": "Hello"}],
+
+    "stream": false
+
+  }'
+```
+
+```
+curl "https://xcmapi.org/v1/responses" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "<MODEL_ID>",
+
+    "input": "Hello"
+
+  }'
+```
+
+不要混用字段 
+
+Chat Completions 使用 `messages`；Responses 使用 `input`。视频创建请求请使用视频章节中的专用路径。
+
+```
+import json, os, urllib.request
+
+origin = os.environ.get("XCM_API_ORIGIN", "https://xcmapi.org").rstrip("/")
+
+payload = {"model": os.environ["XCM_MODEL"], "input": "Reply OK", "stream": False}
+
+request = urllib.request.Request(origin + "/v1/responses",
+
+    data=json.dumps(payload).encode(), method="POST",
+
+    headers={"Authorization": "Bearer " + os.environ["XCM_API_KEY"],
+
+             "Content-Type": "application/json"})
+
+with urllib.request.urlopen(request, timeout=90) as response:
+
+    result = json.load(response)
+
+for item in result.get("output", []):
+
+    if item.get("type") == "message":
+
+        for content in item.get("content", []):
+
+            if content.get("type") == "output_text":
+
+                print(content["text"])
+```
+
+---
+
+## 流式响应与工具结果
+
+按完整 SSE 事件处理增量数据，并把工具结果与对应 call_id 配对。
+
+POST /v1/responses stream: true 
+
+```
+curl -N --fail-with-body --max-time 120 "$XCM_API_ORIGIN/v1/responses"   -H "Authorization: Bearer $XCM_API_KEY"   -H "Content-Type: application/json"   -d '{"model":"<MODEL_ID>","input":"Reply OK","stream":true}'
+```
+
+| 处理阶段 | 客户端动作 |
+| --- | --- |
+| 分片到达 | TCP 数据块不等于完整 JSON；按空行分割 SSE，合并同一事件的数据行后解析 |
+| 文本增量 | Chat 使用 choices[].delta；Responses 使用 response.output_text.delta |
+| 工具调用 | 收齐工具参数，再执行本地工具；保留完整工具项与 call_id |
+| 回传结果 | function_call 对应 function_call_output；custom_tool_call 对应 custom_tool_call_output |
+| 终态 | 检查完成、失败或不完整状态；HTTP 200 或连接关闭都不能单独证明任务成功 |
+
+```
+{
+
+  "model": "<MODEL_ID>",
+
+  "input": [
+
+    {"role": "user", "content": "查询测试数据"},
+
+    {"type":"function_call","call_id":"call_example","name":"lookup","arguments":"{\"id\":1}"},
+
+    {"type":"function_call_output","call_id":"call_example","output":"{\"result\":\"ok\"}"}
+
+  ]
+
+}
+```
+
+保留会话上下文 
+
+生产客户端应保留完整的已返回 output 项（包括需要续传的推理项）、原始 tools 定义及调用 ID。并行工具要逐个回传结果。不要在连接中断后自动重新执行有写入副作用的工具。`previous_response_id` 与服务端状态保存能力需按具体渠道确认。
+
+---
+
+## 图片生成与编辑
+
+图片 API 使用支持生图的 KEY 分组，上传和生成的请求格式不同。
+
+图片结果通常位于响应的 `data[].b64_json` 或 `data[].url` 字段。图片模型、尺寸和可用能力以模型目录为准。
+
+```
+curl "https://xcmapi.org/v1/images/generations" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "<IMAGE_MODEL_ID>",
+
+    "prompt": "A clean product photo",
+
+    "size": "1024x1024",
+
+    "n": 1
+
+  }'
+```
+
+```
+curl "https://xcmapi.org/v1/images/edits" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -F "model=<IMAGE_MODEL_ID>" \
+  -F "prompt=Remove the background" \
+  -F "image[]=@input.png"
+```
+
+响应格式 
+
+结果可能包含 `data[].url` 或 `data[].b64_json`；以实际响应为准。提交生成可能计费，超时后先核查记录再重试。
+
+---
+
+## Messages / Gemini
+
+只有具备对应能力的模型与 KEY 分组才能使用原生协议入口。
+
+```
+curl "https://xcmapi.org/v1/messages" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "<MODEL_ID>",
+
+    "max_tokens": 1024,
+
+    "messages": [{"role": "user", "content": "Hello"}]
+
+  }'
+```
+
+```
+curl "https://xcmapi.org/v1beta/models/<MODEL_ID>:generateContent" \
+  -H "x-goog-api-key: <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "contents": [{"parts": [{"text": "Hello"}]}]
+
+  }'
+```
+
+客户端设置 
+
+原生 Messages 使用 `max_tokens`、`messages` 和对应版本头。Gemini 使用 `/v1beta/models/{MODEL_ID}:generateContent` 与 `x-goog-api-key`。不要把 OpenAI 请求体直接发给这两个路径。
+
+---
+
+## 视频 API · 一分钟接入
+
+先确认 KEY 分组与完整模型 ID，再走一次创建、查询和下载。
+
+MVP 接入与验证范围 
+
+2026-10-04 已核对视频分组、本站价格页与 JK：原 10 款按条型号不变，新增 `h3` 按秒价格。Seedance 2.0 的 5 秒720p、单次扣费0.8元验收来自 2026-10-01 的真实回执；本轮未付费生成或复测 H3，不把配置、目录或 JK 展示当作出片保证。
+
+第一步：选对本站 KEY 
+
+当前分组为 视频综合分组-全球顶尖视频模型-渠道版，已配置 11 款：原 10 款混合视频与 `h3`。具体 KEY 权限仍以鉴权 `/v1/models` 为准，创建、查询、下载始终使用同一 KEY。不要把 KEY 放到网页 JS、前端仓库或公开日志；`h3` 使用独立参数，不与 `minimax-h3-933-2k-支持真人` 混用。
+
+1. 01 · 目录GET /v1/models
+2. 02 · 创建POST 一次并保存 ID
+3. 03 · 查询同一 KEY，只做 GET
+4. 04 · 下载完成后取文件并核对账单
+
+实测通过 · 5秒720p 
+
+#### `seedance-2.0-900-特惠`
+
+按条 · 当前单条价 0.8
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `seedance-2.5-900-特惠`
+
+按条 · 当前单条价 1.0
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `grok-1.5`
+
+按条 · 当前单条价 1.5
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `minimax-h3-933-2k-支持真人`
+
+按条 · 当前单条价 1.2
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `sd-2.0-933-720-fast-原生真人`
+
+按条 · 当前单条价 2.9
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `seedance-2.0-933-特惠`
+
+按条 · 当前单条价 1.5
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `seedance-2.5-1010-特惠`
+
+按条 · 当前单条价 1.8
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `seedance-2.5-3010-特惠`
+
+按条 · 当前单条价 4.0
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `seedance2.0-mini-A`
+
+按条 · 当前单条价 1.2
+
+复制请求 JSON → 目录可见 · 尚未通过验收 
+
+#### `seedance2.5-pro-G1`
+
+按条 · 当前单条价 15.0
+
+复制请求 JSON → 配置已同步 · 本轮未付费复测 
+
+#### `h3`
+
+按秒 · 480p 0.02 / 720p 0.08 / 1080p 0.40 元/秒
+
+查看 H3 独立接入与价格 → 站点地址与接口路径 
+
+站点根地址 `https://xcmapi.org`。若客户端的 Base URL 字段需要版本前缀则填 `https://xcmapi.org/v1`，避免拼成 `/v1/v1`。视频使用 JSON 异步接口，不发到 `/v1/chat/completions`。
+
+| 层次 | 当前事实 | 不能推出什么 |
+| --- | --- | --- |
+| 分组已配置 | 11 款：10 款按条 + h3 按秒 | 不等于每个 KEY 权限已验收或每款都可成功出片 |
+| 3 款待接入 | seedance2.0-720-满血、seedance2.5-满血、seedance2.5-pro-G2 | 上游目录缺失或时长计费门禁未通过，仍未放行 |
+| JK 展示 | 同组已自动显示 h3；当前 display_only / unknown | 展示同步不等于在线实测，不代表成功率或账单验收 |
+
+[开始接入](https://www.xcmapi.com/docs/QuickStart.html#video-params) · [型号与接入边界](https://www.xcmapi.com/docs/QuickStart.html#video-models) · [账单与错误处理](https://www.xcmapi.com/docs/QuickStart.html#video-billing) · [H3 专用](https://www.xcmapi.com/docs/QuickStart.html#h3-video)
+
+---
+
+## 原生 h3（独立协议）· 创建任务
+> 此处仅保留模型名h3的原生协议参考，本轮未验证该原生型号权限或生成。视频综合区的minimax-h3请使用后面的素材JSON示例，不使用reference_*字段。
+
+
+一次 POST 创建一个视频任务。创建超时后不要自动重复提交。
+
+H3 使用 OpenAI 风格的异步视频接口。模型名称固定为 `h3`；创建任务后保存返回的任务 ID，每 3 秒左右查询一次，状态完成后读取视频地址或通过 content 接口下载。
+
+协议边界：原生h3仅作独立协议参考，必须由当前Key单独确认；Gway视频综合区使用minimax-h3，参看本文“当前视频综合区：参考素材与完整请求”。
+
+| 已配置分辨率阶梯 | 本站价格（元/秒） | 说明 |
+| --- | --- | --- |
+| 480p | 0.02 | 价格配置已同步；本轮未付费验证出片 |
+| 720p | 0.08 | 价格配置已同步；本轮未付费验证出片 |
+| 1080p | 0.40 | 价格配置已同步；本轮未付费验证出片 |
+
+价格配置不是规格保证 
+
+原生h3的旧价格和规格仅属于历史说明，不作为当前Gway报价或权限依据。实际价格和参数应从当前Key及实时目录核对。
+
+调用前确认 先请求 GET /v1/models ，确认当前 Key 的模型列表包含 h3 。创建任务会产生真实费用，请勿在网络等待时自动重复提交；停止轮询或关闭页面不会取消已提交的服务端任务。 
+
+| 步骤 | 方法与路径 | 说明 |
+| --- | --- | --- |
+| 创建任务 | `POST /v1/videos`或 `POST /v1/videos/generations` | 提交模型、提示词、时长、画幅、分辨率和可选媒体引用。 |
+| 查询状态 | `GET /v1/videos/<REQUEST_ID>` | 建议约每 3 秒查询一次，最长等待 10 分钟。 |
+| 下载视频 | `GET /v1/videos/<REQUEST_ID>/content` | 任务完成后下载；也可读取状态响应中的视频 URL。 |
+
+```
+curl "https://xcmapi.org/v1/videos" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "h3",
+
+    "prompt": "一只白色鹈鹕在海边骑自行车，固定镜头，动作自然，画面清晰",
+
+    "duration": 6,
+
+    "aspect_ratio": "16:9",
+
+    "resolution": "480p"
+
+  }'
+```
+
+创建成功后，从响应顶层或 `data` 对象中读取 `request_id`、`id` 或 `task_id`，后续统一作为 `REQUEST_ID` 使用。
+
+下一步 
+
+取得任务 ID 后立即持久化。前往[查询与下载](https://www.xcmapi.com/docs/QuickStart.html#h3-poll)，或使用[完整 Python / Node 示例](https://www.xcmapi.com/docs/QuickStart.html#h3-sdk)。
+
+---
+
+## 原生 h3（独立协议）· 查询与下载
+
+轮询使用创建任务时相同的 KEY；建议 3–5 秒一次，设置总次数和超时上限。
+
+GET /v1/videos/{task_id} 
+
+```
+curl "https://xcmapi.org/v1/videos/<REQUEST_ID>" \
+  -H "Authorization: Bearer <YOUR_API_KEY>"
+
+curl -L "https://xcmapi.org/v1/videos/<REQUEST_ID>/content" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -o h3-output.mp4
+```
+
+| 状态 | 含义 | 处理方式 |
+| --- | --- | --- |
+| `pending` / `queued` | 任务已创建，等待执行 | 继续轮询，不要重复创建。 |
+| `in_progress` | 正在生成 | 约 3 秒后再次查询。 |
+| `done` / `completed` / `succeeded` / `success` | 生成完成 | 读取 `video.url`、`video_url`、顶层 `url`，或请求 content。 |
+| `failed` / `error` | 生成失败 | 记录任务 ID 和错误信息后联系管理员。 |
+
+下载与鉴权 
+
+先通过本站 `/content` 入口获取结果。如返回跳转地址，外部地址不要携带本站 Authorization。不要使用 `curl --location-trusted`。下载前确认状态已完成；过期链接需核查任务状态。
+
+重试与停止 
+
+只对 GET 查询采用有上限的重试。关闭页面或停止轮询不等于取消任务，本站未在本页提供取消接口；不要尝试未公布的 DELETE 路径。任务失败或超时时保留 task_id 和发生时间。
+
+---
+
+## 原生 h3（独立协议）· 首尾帧与多素材
+
+文生视频、首尾帧、多图与音频示例分开查看，不要混用不同模型的素材字段。
+
+H3 高级能力 以下示例使用 H3 1.5 线路的公开请求字段。图片统一使用 {"url":"<IMAGE_URL>"} ；音频使用 reference_audios 中的预设 voice_id 。是否开放首尾帧、多图或音频能力，以当前 Key 的模型目录和分组权限为准。 图片地址请替换 示例里的 <IMAGE_URL_n> 只是占位符，不是本站地址。请替换成你自己的、无需登录即可访问的公网 HTTPS 图片地址；不要填写 localhost 、 127.0.0.1 、局域网 IP 或只在本机浏览器中可打开的地址。 
+
+#### 首尾帧：固定开始和结束画面
+
+`image` 固定首帧，`last_frame` 固定尾帧；只传 `last_frame` 也可以让模型自动生成开场并落到指定尾帧。提示词可省略，但建议用来描述两帧之间的运动。
+
+```
+curl "https://xcmapi.org/v1/videos/generations" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "h3",
+
+    "prompt": "镜头平滑向前推进，人物从画面左侧走到右侧",
+
+    "image": {"url": "<IMAGE_URL_FIRST>"},
+
+    "last_frame": {"url": "<IMAGE_URL_LAST>"},
+
+    "duration": 8,
+
+    "aspect_ratio": "16:9",
+
+    "resolution": "720p"
+
+  }'
+```
+
+#### 多图参考：同时引用多个主体
+
+把人物、服装、道具或场景分别放入 `reference_images`，并在提示词中用 `<IMAGE_1>`、`<IMAGE_2>` 等标签指代。H3 1.5 单次最多 7 张参考图，超过上限会返回 400。
+
+```
+curl "https://xcmapi.org/v1/videos/generations" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "h3",
+
+    "prompt": "<IMAGE_1> 中的人物穿着 <IMAGE_2> 中的衣服，站在 <IMAGE_3> 的场景里，慢慢转身",
+
+    "reference_images": [
+
+      {"url": "<IMAGE_URL_1>"},
+
+      {"url": "<IMAGE_URL_2>"},
+
+      {"url": "<IMAGE_URL_3>"}
+
+    ],
+
+    "duration": 8,
+
+    "aspect_ratio": "9:16",
+
+    "resolution": "720p"
+
+  }'
+```
+
+#### 多图多音频：多角色分别绑定声音
+
+使用 `reference_images` 和 `reference_audios` 组合多个角色与声音，在提示词中用 `<AUDIO_0>`、`<AUDIO_1>` 绑定说话角色。公开接口的音频示例使用预设声音；自有音频文件需要当前渠道账号单独开通。
+
+```
+curl "https://xcmapi.org/v1/videos/generations" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "h3",
+
+    "prompt": "<IMAGE_1> 中的人物使用 <AUDIO_0> 的声音介绍产品，<IMAGE_2> 中的人物使用 <AUDIO_1> 的声音回应",
+
+    "reference_images": [
+
+      {"url": "<IMAGE_URL_1>"},
+
+      {"url": "<IMAGE_URL_2>"}
+
+    ],
+
+    "reference_audios": [
+
+      {"voice_id": "eve"},
+
+      {"voice_id": "leo"}
+
+    ],
+
+    "duration": 8,
+
+    "aspect_ratio": "16:9",
+
+    "resolution": "720p"
+
+  }'
+```
+
+#### 自动对口型：用参考声音驱动人物说话
+
+当前 H3 公开请求不需要额外传 `lip_sync` 字段。给人物图片配置 `reference_audios`，并在提示词中标记对应的 `<AUDIO_0>`，模型会按声音生成说话动作和口型；最终效果仍取决于人物画面、提示词和当前分组能力。
+
+```
+curl "https://xcmapi.org/v1/videos/generations" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+
+    "model": "h3",
+
+    "prompt": "<IMAGE_1> 中的人物正面看向镜头，用 <AUDIO_0> 的声音自然说话，嘴型与语音同步，保持面部身份一致",
+
+    "reference_images": [
+
+      {"url": "<IMAGE_URL_1>"}
+
+    ],
+
+    "reference_audios": [
+
+      {"voice_id": "eve"}
+
+    ],
+
+    "duration": 8,
+
+    "aspect_ratio": "9:16",
+
+    "resolution": "720p"
+
+  }'
+```
+
+| 字段 | 可用值 | 说明 |
+| --- | --- | --- |
+| `model` | `h3` | 必须使用当前 Key 模型目录中返回的名称。 |
+| `prompt` | 可选或非空字符串 | 描述主体、动作、镜头和画面风格；使用多图/多音频时用 `<IMAGE_n>`、`<AUDIO_n>` 指代输入。 |
+| `duration` | 1–15 秒 | 不传时按 8 秒处理；在线测试默认使用 6 秒。 |
+| `aspect_ratio` | `16:9`、`9:16`、`1:1` 等 | 视频画幅；首尾帧和参考图尽量使用与素材接近的比例。 |
+| `resolution` | `480p`、`720p`、`1080p` | 参考图/音频模式通常最高 720p；实际以当前分组配置为准。 |
+| `image` | `{"url":"..."}` | 固定首帧或进行单图生视频。 |
+| `last_frame` | `{"url":"..."}` | 固定尾帧；只传它时模型自动生成开场。 |
+| `reference_images` | 对象数组 | 多图参考，H3 1.5 单次最多 7 张。 |
+| `reference_audios` | `{"voice_id":"..."}` 数组 | 多音频/对口型；公开预设声音最多 3 个，自有音频需单独开通。 |
+
+---
+
+## 原生 h3（独立协议）· Python / Node 完整流程
+
+只创建一次，保存任务 ID。进程退出后可恢复查询，不会自动重新创建。
+
+示例运行方式 
+
+把下面代码保存为对应文件，先设置 `XCM_API_KEY`。`--submit` 会发起可能计费的真实生成；`--task-id` 只恢复查询。示例不在网页内执行。
+
+```
+# Choose Python OR Node.js, not both for the same intended task.
+
+python h3_client.py --submit
+
+# Resume later without another creation:
+
+python h3_client.py --task-id <TASK_ID>
+
+# Alternative Node.js implementation:
+
+node h3_client.mjs --submit
+
+node h3_client.mjs --task-id <TASK_ID>
+```
+
+**Python · 标准库 完整示例**
+
+```
+"""H3 example: POST once, persist task ID, resume polling without resubmission.
+
+Environment: XCM_API_KEY, optionally XCM_API_ORIGIN (HTTPS origin, no /v1).
+
+Usage: python h3_client.py --submit  OR  python h3_client.py --task-id TASK_ID
+
+Submitting generates a billable video. Polling success is not a billing guarantee.
+
+"""
+
+import argparse
+
+import json
+
+import os
+
+from pathlib import Path
+
+import time
+
+import urllib.error
+
+import urllib.parse
+
+import urllib.request
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+
+        return None  # Never forward the API key to a redirected host.
+
+def request(method, path, payload=None):
+
+    origin = os.environ.get('XCM_API_ORIGIN', 'https://xcmapi.org').rstrip('/')
+
+    parts = urllib.parse.urlsplit(origin)
+
+    if parts.scheme != 'https' or not parts.netloc or parts.path or parts.query or parts.fragment or parts.username:
+
+        raise ValueError('XCM_API_ORIGIN must be an HTTPS origin without /v1')
+
+    key = os.environ['XCM_API_KEY']
+
+    req = urllib.request.Request(origin + path, method=method,
+
+        headers={'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'},
+
+        data=json.dumps(payload).encode() if payload is not None else None)
+
+    try:
+
+        with urllib.request.build_opener(NoRedirect).open(req, timeout=30) as response:
+
+            data = json.load(response)
+
+            return response.status, data, None
+
+    except urllib.error.HTTPError as error:
+
+        retry = error.headers.get('Retry-After', '')
+
+        retry_seconds = min(15, max(3, int(retry))) if retry.isdigit() else None
+
+        # Do not print a raw body that might contain user content or credentials.
+
+        return error.code, {}, retry_seconds
+
+def unwrap(data):
+
+    return data['data'] if isinstance(data.get('data'), dict) else data
+
+def poll(task_id, attempts=120):
+
+    path = '/v1/videos/' + urllib.parse.quote(task_id, safe='')
+
+    for _ in range(attempts):
+
+        try:
+
+            status, response, retry = request('GET', path)
+
+        except (TimeoutError, urllib.error.URLError):
+
+            time.sleep(5)
+
+            continue  # Retrying GET does not create another video.
+
+        if status in (429, 502, 503, 504):
+
+            time.sleep(retry or 5)
+
+            continue
+
+        if status != 200:
+
+            raise RuntimeError(f'Query HTTP {status}; keep task ID and check the documentation')
+
+        data = unwrap(response)
+
+        state = data.get('status')
+
+        if state in ('failed', 'error', 'cancelled', 'canceled', 'expired'):
+
+            raise RuntimeError('Task ended without success; keep task ID for support')
+
+        if state in ('done', 'completed', 'succeeded', 'success'):
+
+            return data
+
+        if state not in ('pending', 'queued', 'in_progress', 'processing', 'running'):
+
+            raise RuntimeError('Unrecognized task status; inspect the response privately')
+
+        time.sleep(5)
+
+    raise TimeoutError('Polling stopped. Resume using --task-id; do not resubmit the POST')
+
+def download(ident, path):
+    """Fetch /content, following at most five HTTPS redirects/JSON links."""
+    import re
+    from urllib import request as http, error as errors, parse as urls
+    if not isinstance(ident, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}', ident):
+        raise ValueError('Invalid task ID')
+    if not path.is_absolute():
+        raise ValueError('Choose an explicit absolute output path')
+    if path.exists():
+        raise FileExistsError('Output exists; choose a new path')
+
+    def checked_url(value, base=None):
+        if not isinstance(value, str) or not value or any(ord(c) <= 32 or ord(c) == 127 for c in value) or '\\' in value:
+            raise ValueError('Invalid download URL')
+        target = urls.urljoin(base, value) if base else value
+        p = urls.urlsplit(target)
+        if p.scheme != 'https' or not p.hostname or p.username is not None or p.password is not None or p.fragment or p.port == 0:
+            raise ValueError('Download URL must be HTTPS without credentials or fragment')
+        return target, (p.hostname.lower(), p.port or 443)
+
+    origin = os.environ.get('XCM_API_ORIGIN', 'https://xcmapi.org').rstrip('/')
+    origin, auth_origin = checked_url(origin)
+    parsed = urls.urlsplit(origin)
+    if parsed.path or parsed.query:
+        raise ValueError('Use an HTTPS origin without /v1')
+    key = os.environ.get('XCM_API_KEY', '')
+    if not key.strip() or '\n' in key or '\r' in key:
+        raise ValueError('Set XCM_API_KEY in the server environment')
+    url = origin + '/v1/videos/' + urls.quote(ident, safe='') + '/content'
+    opener = http.build_opener(NoRedirect)
+    send_auth = True
+    hops = 0
+    limit = 250 * 1024 * 1024
+    part = path.with_name(path.name + '.partial')
+    created = False
+    try:
+        while True:
+            url, current_origin = checked_url(url)
+            send_auth = send_auth and current_origin == auth_origin
+            headers = {'Accept': 'video/mp4, application/octet-stream, application/json'}
+            if send_auth:
+                headers['Authorization'] = 'Bearer ' + key
+            req = http.Request(url, headers=headers)
+            try:
+                response = opener.open(req, timeout=90)
+            except errors.HTTPError as exc:
+                response = exc
+            with response:
+                kind = response.headers.get('Content-Type', '').split(';')[0].strip().lower()
+                if response.status in (301, 302, 303, 307, 308):
+                    target = response.headers.get('Location')
+                elif response.status != 200:
+                    raise RuntimeError(f'Download HTTP {response.status}; retain task ID')
+                elif kind == 'application/json' or kind.endswith('+json'):
+                    raw = response.read(1024 * 1024 + 1)
+                    if len(raw) > 1024 * 1024:
+                        raise RuntimeError('Download JSON exceeds 1MiB')
+                    try:
+                        data = json.loads(raw)
+                    except (ValueError, UnicodeError):
+                        raise RuntimeError('Invalid download JSON') from None
+                    if isinstance(data, dict) and isinstance(data.get('data'), dict):
+                        data = data['data']
+                    if not isinstance(data, dict):
+                        raise RuntimeError('Expected a download URL object')
+                    video = data.get('video')
+                    results = data.get('result_urls')
+                    target = (data.get('url') or data.get('download_url') or data.get('video_url') or data.get('content_url')
+                              or (video.get('url') if isinstance(video, dict) else None)
+                              or (results[0] if isinstance(results, list) and results else None))
+                else:
+                    if kind not in ('video/mp4', 'application/octet-stream'):
+                        raise RuntimeError('Not an MP4 download response')
+                    length = response.headers.get('Content-Length')
+                    if length is not None and (not length.isdigit() or not 0 < int(length) <= limit):
+                        raise RuntimeError('Invalid or excessive media length')
+                    first = response.read(4096)
+                    if len(first) < 12 or first[4:8] != b'ftyp':
+                        raise RuntimeError('Response is not an MP4')
+                    size = len(first)
+                    with part.open('xb') as stream:
+                        created = True
+                        stream.write(first)
+                        while True:
+                            chunk = response.read(1024 * 1024)
+                            if not chunk:
+                                break
+                            size += len(chunk)
+                            if size > limit:
+                                raise RuntimeError('Media exceeds the 250MiB client limit')
+                            stream.write(chunk)
+                    if length is not None and size != int(length):
+                        raise RuntimeError('Incomplete media response; retain task ID')
+                    break
+                if hops >= 5:
+                    raise RuntimeError('Too many download redirects/JSON links (maximum 5)')
+                url, _ = checked_url(target, url)
+                hops += 1
+        # Publish exclusively: a concurrent download must not overwrite this file.
+        for attempt in range(6):
+            try:
+                os.link(part, path)
+                break
+            except PermissionError:
+                if attempt == 5:
+                    raise
+                time.sleep(.1)
+        return size
+    finally:
+        if created:
+            part.unlink(missing_ok=True)
+
+def main():
+
+    parser = argparse.ArgumentParser(description=__doc__)
+
+    action = parser.add_mutually_exclusive_group(required=True)
+
+    action.add_argument('--submit', action='store_true')
+
+    action.add_argument('--task-id')
+
+    parser.add_argument('--output', type=Path, default=Path.cwd() / 'h3-output.mp4')
+
+    args = parser.parse_args()
+
+    task_id = args.task_id
+
+    if args.submit:
+
+        status, response, _ = request('POST', '/v1/videos', {
+
+            'model': 'h3', 'prompt': 'A cat walking slowly on a sunny beach',
+
+            'duration': 6, 'resolution': '480p', 'aspect_ratio': '16:9',
+
+        })
+
+        if status not in (200, 201, 202):
+
+            raise RuntimeError(f'Create HTTP {status}; do not automatically retry POST')
+
+        data = unwrap(response)
+
+        task_id = data.get('request_id') or data.get('id') or data.get('task_id')
+
+        if not isinstance(task_id, str) or not task_id:
+
+            raise RuntimeError('No task ID found; do not automatically resubmit')
+
+        # Contains only your task ID; use a private application database in production.
+
+        Path('h3-last-task.json').write_text(json.dumps({'task_id': task_id}), encoding='utf-8')
+
+    import re
+    if not isinstance(task_id, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}', task_id):
+        raise ValueError('Invalid task ID; do not resubmit')
+
+    print('Task ID:', task_id)
+
+    poll(task_id)
+
+    size = download(task_id, args.output)
+    print('Downloaded:', args.output, 'bytes:', size)
+
+if __name__ == '__main__':
+
+    main()
+```
+
+**Node.js 20+ 完整示例**
+
+```
+// Node.js 20+. XCM_API_KEY is read only from the environment.
+
+// node h3_client.mjs --submit   OR   node h3_client.mjs --task-id TASK_ID
+
+import {writeFile} from 'node:fs/promises';
+
+const origin = (process.env.XCM_API_ORIGIN || 'https://xcmapi.org').replace(/\/$/, '');
+
+const endpoint = new URL(origin);
+
+if (endpoint.protocol !== 'https:' || endpoint.pathname !== '/' || endpoint.search || endpoint.hash || endpoint.username || endpoint.password)
+
+  throw new Error('XCM_API_ORIGIN must be an HTTPS origin without /v1');
+
+if (!process.env.XCM_API_KEY) throw new Error('Set XCM_API_KEY');
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function request(method, path, body) {
+
+  return fetch(origin + path, {method, redirect:'error', signal:AbortSignal.timeout(30000),
+
+    headers:{Authorization:`Bearer ${process.env.XCM_API_KEY}`, 'Content-Type':'application/json'},
+
+    body:body === undefined ? undefined : JSON.stringify(body)});
+
+}
+
+async function download(taskId, output='h3-output.mp4') {
+  if(typeof taskId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(taskId))
+    throw new Error('Invalid task ID');
+  function checkedURL(value, base) {
+    if(typeof value !== 'string' || !value || /[\s\\\x00-\x1f\x7f]/.test(value)) throw new Error('Invalid download URL');
+    const u=new URL(value,base);
+    if(u.protocol!=='https:' || !u.hostname || u.username || u.password || u.hash || u.port==='0')
+      throw new Error('Download URL must be HTTPS without credentials or fragment');
+    return u;
+  }
+  async function readBounded(response, limit) {
+    const chunks=[]; let size=0;
+    if(!response.body) throw new Error('Missing download body');
+    for await(const chunk of response.body) {
+      size+=chunk.byteLength;
+      if(size>limit) throw new Error('Download body exceeds its limit');
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks,size);
+  }
+  let url=checkedURL(origin+'/v1/videos/'+encodeURIComponent(taskId)+'/content');
+  let sendAuth=true, hops=0;
+  const key=process.env.XCM_API_KEY;
+  if(!key || !key.trim() || /[\r\n]/.test(key)) throw new Error('Set XCM_API_KEY');
+  while(true) {
+    sendAuth=sendAuth && url.origin===endpoint.origin;
+    const headers={Accept:'video/mp4, application/octet-stream, application/json'};
+    if(sendAuth) headers.Authorization='Bearer '+key;
+    const response=await fetch(url.href,{method:'GET',redirect:'manual',headers,signal:AbortSignal.timeout(90000)});
+    const kind=(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    let target;
+    if([301,302,303,307,308].includes(response.status)) {
+      target=response.headers.get('location');
+      await response.body?.cancel();
+    } else if(response.status!==200) {
+      await response.body?.cancel();
+      throw new Error('Download HTTP '+response.status+'; retain task ID');
+    } else if(kind==='application/json' || kind.endsWith('+json')) {
+      let data=JSON.parse((await readBounded(response,1024*1024)).toString('utf8'));
+      if(data && typeof data.data==='object' && data.data!==null && !Array.isArray(data.data)) data=data.data;
+      if(!data || typeof data!=='object' || Array.isArray(data)) throw new Error('Expected a download URL object');
+      target=data.url || data.download_url || data.video_url || data.content_url || data.video?.url ||
+        (Array.isArray(data.result_urls)?data.result_urls[0]:undefined);
+    } else {
+      if(!['video/mp4','application/octet-stream'].includes(kind)) {
+        await response.body?.cancel(); throw new Error('Not an MP4 download response');
+      }
+      const limit=250*1024*1024, length=response.headers.get('content-length');
+      if(length!==null && (!/^\d+$/.test(length) || Number(length)<=0 || Number(length)>limit)) {
+        await response.body?.cancel(); throw new Error('Invalid or excessive media length');
+      }
+      const media=await readBounded(response,limit);
+      if(media.length<12 || media.toString('ascii',4,8)!=='ftyp') throw new Error('Response is not an MP4');
+      if(length!==null && media.length!==Number(length)) throw new Error('Incomplete media response');
+      await writeFile(output,media,{flag:'wx',mode:0o600});
+      return media.length;
+    }
+    if(hops>=5) throw new Error('Too many download redirects/JSON links (maximum 5)');
+    url=checkedURL(target,url);
+    hops++;
+  }
+}
+
+const args=process.argv.slice(2);
+
+let taskId;
+
+if(args.length === 2 && args[0] === '--task-id') taskId=args[1];
+
+else if(args.length === 1 && args[0] === '--submit') {
+
+  // One POST only. Do not retry creation automatically after a network timeout.
+
+  const response=await request('POST','/v1/videos',{model:'h3',prompt:'A cat walking slowly on a sunny beach',duration:6,resolution:'480p',aspect_ratio:'16:9'});
+
+  if(!response.ok) throw new Error(`Create HTTP ${response.status}; do not auto-retry POST`);
+
+  const result=await response.json(), data=result.data ?? result;
+
+  taskId=data.request_id ?? data.id ?? data.task_id;
+
+  if(typeof taskId !== 'string' || !taskId) throw new Error('Missing task ID; do not resubmit');
+
+  await writeFile('h3-last-task.json',JSON.stringify({task_id:taskId}),{mode:0o600});
+
+} else throw new Error('Use --submit OR --task-id TASK_ID');
+
+if(typeof taskId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(taskId)) throw new Error('Invalid task ID; do not resubmit');
+
+console.log('Task ID:',taskId);
+
+const taskPath='/v1/videos/'+encodeURIComponent(taskId);
+
+let completed=false;
+
+for(let attempt=0;attempt<120;attempt++) {
+
+  let response;
+
+  try {response=await request('GET',taskPath);} catch {await delay(5000);continue;}
+
+  if([429,502,503,504].includes(response.status)){
+
+    const retry=Number(response.headers.get('retry-after'));
+
+    await delay((Number.isFinite(retry)&&retry>0?Math.min(15,Math.max(3,retry)):5)*1000);continue;
+
+  }
+
+  if(!response.ok) throw new Error(`Query HTTP ${response.status}; retain task ID`);
+
+  const result=await response.json(),data=result.data ?? result,state=data.status;
+
+  if(['failed','error','cancelled','canceled','expired'].includes(state))throw new Error('Task failed; retain task ID');
+
+  if(['done','completed','succeeded','success'].includes(state)){completed=true;break;}
+
+  if(!['pending','queued','in_progress','processing','running'].includes(state))throw new Error('Unknown task status');
+
+  await delay(5000);
+
+}
+
+if(!completed)throw new Error('Polling stopped; resume with --task-id, do not resubmit');
+
+const savedBytes=await download(taskId);
+console.log('Downloaded: h3-output.mp4 bytes:',savedBytes);
+```
+
+生产集成 
+
+将示例中的本地 task_id 文件替换为你的业务数据库。KEY 放服务端配置；不要把结果 URL、用户输入或凭据直接写入公开日志。GET 轮询会采用有限重试，POST 创建不自动重试。
+
+---
+
+## 当前视频综合区：参考素材与完整请求
+
+本节适用于视频分组94的 Gway 协议，核对日期2026-10-14。先读取 `GET /v1/models` 验证自己的Key权限，再读取 `/api/public/prices` 的 `video_catalog` 查看实时参数、状态和售价。静态能力契约位于 https://xcmapi.org/docs/video-contract.json 。上游备注不是本站的能力承诺；不得猜数组结构、删除素材后退化为纯文生。
+
+### 上传文件与引用素材的区别
+
+当前视频创建接口为 `POST /v1/videos/generations`，也支持 `POST /v1/videos`；两者要求 `Authorization: Bearer YOUR_API_KEY` 和 `Content-Type: application/json`。没有向这些视频型号提供独立的素材文件存储上传接口。流程是：用户文件 → 你自己的存储/素材服务 → 公网HTTPS URL → 视频创建JSON。
+
+不能把本地路径、data URL、blob URL或multipart文件直接提交到视频JSON。`POST /v1/images/edits` 是图片编辑任务，不是视频素材上传仓库。不要为了上传素材而先执行图片生成/编辑。
+
+### 本站已开放素材能力
+
+以下是该日期的执行配置快照；当前可用性仍以实时目录和Key权限为准。数量是每个任务的上限，不表示已经提供上传端点。
+
+| 模型ID | 图片上限 | 视频上限 | 音频上限 | 范围 |
+|---|---:|---:|---:|---|
+| `dola-seedance-2.0-900` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `dola-seedance-2.0-933` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `dola-seedance-2.5-301010` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `dola-seedance-2.5-900` | 9 | 0 | 0 | 仅已声明素材字段 |
+| `grok-1.5` | 7 | 0 | 0 | 仅已声明素材字段 |
+| `minimax-h3` | 9 | 3 | 3 | 仅已声明素材字段 |
+| `seedance-2.0-G1` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `seedance-2.0-G2` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `seedance-2.0-G6` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `seedance-2.0-G6-x` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `seedance-2.5-G1` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `seedance-2.5-G2` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+| `seedance2.5-满血` | 0 | 0 | 0 | 仅文生，携带素材会拒绝 |
+
+### 数组与元素规则
+
+- `images`：URL字符串或对象 `{url,name?,type?,duration_seconds?}`；普通参考图省略type。帧类型仅 `first_frame`、`end_frame`。
+- `videos`：当前minimax-h3必须使用对象 `{url,duration_seconds,name?}`。
+- `audios`：URL字符串或对象 `{url,name?,duration_seconds?}`；音频时长字段可选。独立数组中的video/audio对象不带type。
+- `materials`：对象数组 `{type:image|video|audio,url,name?,duration_seconds?}`。H3的video项必须有duration_seconds。
+- `materials` 不能与非空images/videos/audios混用。首尾帧各最多1个，尾帧必须伴随首帧；帧模式不能混入普通参考图、视频或音频。
+- `duration` 是输出视频时长；`duration_seconds` 是素材本身时长，正数且最多120秒，不能当作输出时长。
+- 元素不接受这些字段以外的属性；name为1到80字符。
+
+视频适配层JSON请求体最大128KiB；这不是素材文件大小上限。二进制文件不随JSON上传。
+
+URL必须是公网HTTPS（443），不含用户名、密码、片段或空白，长度最多8192。禁止localhost、私网IP与本地域名。可以保留签名查询参数，但有效期要覆盖素材读取和任务处理。不得把本站Key交给素材域名。适配层没有声明完整的源文件MIME/体积/分辨率上限，不可从URL后缀或宣传备注推断。
+
+占位 `your-cdn.example.com` 可能通过URL格式校验，但不代表实际可读取。所有占位URL和业务号必须替换；错误素材转发上游后不保证免费失败。每个业务单只发送一次，原业务号重复或冲突会拒绝，不自动新建任务。
+
+### minimax-h3：单张参考图
+
+先替换全部素材 URL 和唯一业务号。结构经当前网关代码和本地模拟传输校验，未发起真实生成。
+
+<!-- video-example:h3_reference_image -->
+```json
+{
+  "model": "minimax-h3",
+  "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+  "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+  "duration": 5,
+  "ratio": "16:9",
+  "resolution": "2k",
+  "images": [
+    {
+      "url": "https://your-cdn.example.com/reference-1.jpg",
+      "name": "人物参考"
+    }
+  ]
+}
+```
+
+### minimax-h3：图片、视频、音频分别传入
+
+先替换全部素材 URL 和唯一业务号。结构经当前网关代码和本地模拟传输校验，未发起真实生成。
+
+<!-- video-example:h3_mixed_arrays -->
+```json
+{
+  "model": "minimax-h3",
+  "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+  "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+  "duration": 5,
+  "ratio": "16:9",
+  "resolution": "2k",
+  "images": [
+    {
+      "url": "https://your-cdn.example.com/reference-1.jpg",
+      "name": "人物参考"
+    }
+  ],
+  "videos": [
+    {
+      "url": "https://your-cdn.example.com/motion-reference.mp4",
+      "name": "动作参考",
+      "duration_seconds": 8
+    }
+  ],
+  "audios": [
+    {
+      "url": "https://your-cdn.example.com/voice-reference.mp3",
+      "name": "声音参考"
+    }
+  ]
+}
+```
+
+### minimax-h3：统一materials数组（另一种写法）
+
+先替换全部素材 URL 和唯一业务号。结构经当前网关代码和本地模拟传输校验，未发起真实生成。
+
+<!-- video-example:h3_materials -->
+```json
+{
+  "model": "minimax-h3",
+  "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+  "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+  "duration": 5,
+  "ratio": "16:9",
+  "resolution": "2k",
+  "materials": [
+    {
+      "type": "image",
+      "url": "https://your-cdn.example.com/reference-1.jpg",
+      "name": "人物参考"
+    },
+    {
+      "type": "video",
+      "url": "https://your-cdn.example.com/motion-reference.mp4",
+      "name": "动作参考",
+      "duration_seconds": 8
+    },
+    {
+      "type": "audio",
+      "url": "https://your-cdn.example.com/voice-reference.mp3",
+      "name": "声音参考"
+    }
+  ]
+}
+```
+
+### minimax-h3：首尾帧结构（未验证上游帧语义）
+
+先替换全部素材 URL 和唯一业务号。结构经当前网关代码和本地模拟传输校验，未发起真实生成。首尾帧的上游语义和实际出片尚未验证。
+
+<!-- video-example:h3_frames -->
+```json
+{
+  "model": "minimax-h3",
+  "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+  "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+  "duration": 5,
+  "ratio": "16:9",
+  "resolution": "2k",
+  "images": [
+    {
+      "type": "first_frame",
+      "url": "https://your-cdn.example.com/first-frame.jpg"
+    },
+    {
+      "type": "end_frame",
+      "url": "https://your-cdn.example.com/last-frame.jpg"
+    }
+  ]
+}
+```
+
+### dola-seedance-2.5-900：参考图片
+
+先替换全部素材 URL 和唯一业务号。结构经当前网关代码和本地模拟传输校验，未发起真实生成。
+
+<!-- video-example:dola_reference_image -->
+```json
+{
+  "model": "dola-seedance-2.5-900",
+  "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+  "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+  "duration": 5,
+  "ratio": "16:9",
+  "resolution": "720p",
+  "images": [
+    "https://your-cdn.example.com/reference-1.jpg"
+  ]
+}
+```
+
+### grok-1.5：参考图片
+
+先替换全部素材 URL 和唯一业务号。结构经当前网关代码和本地模拟传输校验，未发起真实生成。
+
+<!-- video-example:grok_reference_image -->
+```json
+{
+  "model": "grok-1.5",
+  "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+  "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+  "duration": 5,
+  "ratio": "16:9",
+  "resolution": "720p",
+  "images": [
+    "https://your-cdn.example.com/reference-1.jpg"
+  ]
+}
+```
+
+### dola-seedance-2.0-933：仅文生，不接受参考素材
+
+先替换全部素材 URL 和唯一业务号。结构经当前网关代码和本地模拟传输校验，未发起真实生成。
+
+<!-- video-example:text_only -->
+```json
+{
+  "model": "dola-seedance-2.0-933",
+  "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+  "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+  "duration": 5,
+  "ratio": "16:9",
+  "resolution": "720p"
+}
+```
+
+### 只提交一次：curl
+
+```bash
+# 将上面的一个 JSON 保存为 video-request.json，先替换 URL 与唯一业务号。
+# 保留同一订单的 client_request_id；出错时不要改号重新发送。
+if grep -Eq 'your-cdn\.example\.com|YOUR_UNIQUE_ORDER_ID' video-request.json; then
+  echo '请先替换素材地址与业务请求号' >&2
+  exit 1
+fi
+curl --fail-with-body "https://xcmapi.org/v1/videos/generations" \
+  -H "Authorization: Bearer ${XCM_API_KEY:?先配置环境变量}" \
+  -H "Content-Type: application/json" \
+  --data-binary @video-request.json
+```
+
+### 只提交一次：Python
+
+```python
+import json, os
+from pathlib import Path
+from urllib import request
+
+payload = json.loads(Path("video-request.json").read_text(encoding="utf-8"))
+serialized = json.dumps(payload, ensure_ascii=False)
+if "your-cdn.example.com" in serialized or "YOUR_UNIQUE_ORDER_ID" in serialized:
+    raise SystemExit("先替换素材 URL 和固定的业务请求号")
+
+class NoRedirect(request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+req = request.Request(
+    "https://xcmapi.org/v1/videos/generations",
+    data=serialized.encode("utf-8"),
+    headers={
+        "Authorization": "Bearer " + os.environ["XCM_API_KEY"],
+        "Content-Type": "application/json",
+    },
+    method="POST",
+)
+# 只发送一次。超时、422 或其他错误时保留原业务号，先核查，不自动重试。
+with request.build_opener(NoRedirect()).open(req, timeout=90) as response:
+    result = json.load(response)
+Path("video-create-response.json").write_text(
+    json.dumps(result, ensure_ascii=False), encoding="utf-8"
+)
+print(result.get("task_id") or result.get("id") or result.get("request_id"))
+```
+
+返回后持久化task_id/id/request_id，使用原Key进行 `GET /v1/videos/{task_id}` 查询，完成后请求 `GET /v1/videos/{task_id}/content`。创建超时或结果不明时先核查原单，不更换client_request_id重发。
+
+### H3视频时长的已知校验边界
+
+上游要求视频对象包含duration_seconds，但当前适配层可能放行遗漏时长的对象或单独URL字符串。本文OpenAPI和推荐请求在客户端先要求填齐；不能承诺缺字段会在本地拒绝，或上游失败不会扣费。
+
+### 错误与停止条件
+
+| 问题 | 适配层错误 | 处理 |
+|---|---|---|
+| 不支持的素材、超限、非法URL、错误元素、混用 | 400 invalid_request_error | 修正原输入；不能删除素材后假装成功 |
+| 视频创建使用文件multipart | 415 unsupported_media_type | 使用JSON与公网URL |
+| 缺少/无效业务号 | 422 video_request_id_required / video_request_id_invalid | 使用固定唯一的16–128位[A-Za-z0-9_.:-] |
+| 同号重复/内容冲突 | 422 video_request_already_submitted / video_request_conflict | 查询原任务或人工核查，不换号重建 |
+
+原生模型 `h3` 与本节 `minimax-h3` 是不同接入协议。原生h3的reference_images/reference_audios/aspect_ratio不能搬到本节；本节推荐ratio和images/videos/audios/materials，ratio的兼容别名不是原生协议兼容承诺。原生h3须由Key单独确认，参看 https://xcmapi.org/docs/QuickStart.html#h3-video 。
+
+本轮验证仅为线上配置核对、代码校验和模拟透传。没有真实生成/素材拉取/成片验证，不对首尾帧效果或上游计费作新增保证。
+
+## 生产 API 对接方案
+
+将鉴权、请求生命周期、任务恢复和计费核对放到服务端。
+
+1. CLIENT用户请求
+2. YOUR SERVER权限 / 限流 / 业务单
+3. SITE API文本或视频任务
+4. WORKER保存结果与账单关联
+
+| 模块 | 实现要求 | 验收标准 |
+| --- | --- | --- |
+| 鉴权配置 | 以环境变量 / 密钥服务保存 KEY；按业务选择明确的分组 | 请求中仅向本站携带 KEY，错误日志脱敏 |
+| 模型选择 | 按 KEY 获取 /v1/models，保存用户选择的完整模型 ID | 模型不存在时明确报错，不静默切换昂贵模型 |
+| 文本转发 | 透传当前协议支持的字段；设置连接和读取超时 | JSON / SSE 各自解析，终态与业务成功分开判断 |
+| 视频创建 | 先建立本地业务单；创建成功立即记录任务 ID | 重复点击只创建一次，进程重启不会自动重发 POST |
+| 状态 Worker | 3–5 秒轮询，有限并发；429 依据 Retry-After 退避 | 断线后可通过 task_id 恢复，失败与过期状态终止 |
+| 结果存储 | 记录返回格式与过期时间；必要时安全保存生成文件 | 不会把本站 KEY 传给外部下载 URL |
+| 计费关联 | 业务单与 request_id / task_id、模型、分辨率、用量记录关联 | 调价后采用实时分组价，异常可追踪，不推测退款政策 |
+
+建议的本地任务表 
+
+字段：business_id（唯一）、key_config_id（非真实 KEY）、model、resolution、duration、state、task_id、created_at、last_polled_at、attempt_count、error_code。状态采用 creating → submitted → running → completed/failed/unknown；unknown 表示创建结果不确定，需要查询核实。
+
+幂等边界 
+
+不要假设服务端已支持任意 `Idempotency-Key` 或 webhook。先在你自己的数据库使用唯一业务单和互斥锁防重；只有渠道正式文档公布时才使用服务端幂等或回调。
+
+#### 超时建议（客户端配置，不是服务承诺）
+
+模型目录 30 秒；文本请求按模型设置合理的首包及读取超时；视频创建可用 60 秒、单次查询 30 秒、后台轮询最多 120 次。每次网络请求自身也有超时，因此总耗时可能高于轮询间隔之和。长期任务应由后台 Worker 承担，不依赖浏览器页面一直打开。
+
+---
+
+## 错误码与排查
+
+先按请求阶段排查，再检查模型、分组和协议。
+
+| 状态码 | 常见场景 | 处理方式 |
+| --- | --- | --- |
+| 400 | 字段、枚举、媒体组合或 JSON 不合法 | 按错误消息修正请求。 |
+| 401 | Key 缺失、无效或已撤销 | 检查鉴权头和 Key。 |
+| 402 | 余额、订阅或额度不足 | 检查账户余额和分组额度。 |
+| 403 | 分组未开启对应能力 | 更换有权限的 Key 或联系管理员。 |
+| 404 | 模型、任务或接口不存在 | 检查模型目录、任务 ID 和路径。 |
+| 429 | 频率或并发受限 | 降低并发并稍后重试。 |
+| 502/503 | 渠道不可用或暂无可调度账号 | 稍后重试；持续出现时联系售后。 |
+
+排查顺序 
+
+1. GET /v1/models 验证鉴权 → 2. 检查 KEY 分组 → 3. 核对完整路径 → 4. 最小请求体 → 5. 检查任务 ID / 请求 ID → 6. 联系客服时提供时间、模型、状态码和脱敏错误。
+
+| 现象 | 优先检查 |
+| --- | --- |
+| 200 但没有内容 | 响应终态是否 failed/incomplete，SSE 是否有 error 事件 |
+| 工具调用后续接失败 | call_id 是否匹配、工具结果类型是否正确、前次 output 是否完整 |
+| 视频参数 400 | duration/resolution 范围、素材数量、首尾帧和音频是否混用 |
+| 视频接口 404 | 该分组是否支持视频路径；内测混合分组目前暂未开放 |
+| 任务已完成但下载失败 | 结果 URL 是否过期、是否使用正确 KEY / 任务归属、content 是否可用 |
+
+联系支持 
+
+保留必要的请求 ID、任务 ID、时间和客户端版本；完整 KEY、Cookie、用户提示词和私密素材地址不必公开。
+
+---
+
+## 接入验收清单
+
+完成协议验收后再开通业务流量。不要用一次成功代表所有模型和素材组合都可用。
+
+- □ 未登录可阅读文档和价格；API 使用无效 KEY 时正确拒绝。
+- □ 文本、图片、视频各使用正确分组，模型 ID 完整。
+- □ 非流式 JSON 与流式 SSE 的成功、失败和中断均可处理。
+- □ 视频创建只提交一次；查询成功、失败、未知、超时均有终态处理。
+- □ 进程重启能凭 task_id 续查；并发请求不会重复建单。
+- □ 480p/720p/1080p 和按条/按秒分别核对；售价只乘一次倍率。
+- □ 返回链接的下载不携带本站 KEY 给其他域名。
+- □ 素材超限、无效 URL、过期任务、429 与 5xx 有明确处理。
+- □ 测试使用独立 KEY 和额度；生成视频会产生真实费用。
+- □ 混合视频仍为内测时，不发布可生成的承诺或执行示例。
+
+---
+
+## 环境与依赖
+
+使用对应客户端的配置说明；模型权限与协议仍以 KEY 分组为准。
+
+1 
+
+打开终端，确认已安装 Node.js 20 或更高版本。
+
+2 
+
+如果命令不存在，请安装 Node.js 后重新打开终端。
+
+```
+node --version
+
+npm --version
+```
+
+## 10. 文件索引与优先级
+
+- HTML 图文指南：https://www.xcmapi.com/docs/QuickStart.html
+- 本文完整无脚本版：https://www.xcmapi.com/docs/ai-reference.md
+- 软件配方：https://www.xcmapi.com/docs/software-recipes.json
+- 常用接口 OpenAPI 子集：https://www.xcmapi.com/docs/openapi.json
+- 原页面视频契约（保留原始时间与验证状态）：https://www.xcmapi.com/docs/video-contract.json
+- 纯文本全集：https://www.xcmapi.com/docs/llms-full.txt
+
+如遇冲突：实际 API 返回与控制台权限优先；视频的型号参数以带原始日期的契约及对应章节为据；OpenAPI 是通用端点描述，不承诺型号能力。客户端字段以实际安装版本的官方说明为准。不要用本文去覆盖用户无关配置。
+## 文档分组与旧链接兼容
+
+用户主入口包括文本、图文、视频、CC Switch、AI 读取、API 软件连接目录六类；模型按用途归组。文本分组区分 GPT / OpenAI 兼容、Claude 与 Gemini 协议。图文分组区分图片理解、生成和编辑，不根据名称猜测能力。视频分组按 H3、Seedance 2.0、Seedance 2.5、Grok、MiniMax H3 展示已有型号；实际参数与历史验证范围沿用原始契约。H3 的创建、查询、素材和 SDK 合在一页；旧 h3-poll/h3-media/h3-sdk 仍定位对应小节。旧 video 链接定位视频入门；旧 ccs-import 链接定位 CC Switch 教程。
+
+
+## 11. API 软件连接目录：七款软件的完整步骤
+
+资料核对日期：2026-10-11。真实界面参考不等于本站端到端调用成功。URL 的 /v1 规则取决于软件字段，以下逐项说明。
+
+### Codex
+
+软件身份 / 官网：https://developers.openai.com/codex
+
+配置文档：https://learn.chatgpt.com/docs/config-file/config-reference
+
+协议：OpenAI Responses
+
+Base URL：https://xcmapi.org/v1
+
+入口：CC Switch → 左侧 Codex → 添加供应商 → 自定义
+
+1. 找到 Codex 的配置入口：先安装并打开 Codex 与 CC Switch。在 CC Switch 左侧选 Codex，再点右上角「添加供应商」。不要在 Claude Code 页填 Codex 配置。
+2. 按对照填写 3 项：供应商名称可写「鸡出没API」。基础地址填写下面的地址，Key 填你在本站创建的私有 Key。模型填写当前 Key 支持 Responses 和工具调用的完整 ID。
+   - 基础地址 Base URL：https://xcmapi.org/v1
+   - API Key：在软件私有输入框中粘贴自己的 Key
+   - 模型 ID：从当前 Key 的模型目录复制完整 ID
+3. 启用后重新打开 Codex：保存供应商并启用。彻底退出旧 Codex 窗口或终端，再从相同环境重新打开。在一个空的测试文件夹里开始对话。
+4. 发第一条消息：发送「只回复 OK，不修改文件，不运行命令」。收到文字后，再单独测试读取测试文件。只显示模型名称不算成功。
+
+成功标准（供用户后续验证）：新对话实际返回 OK；接入方用量记录能找到这次请求。若要编程，继续单独验证一次文件读取或工具调用。
+
+排错：
+- 404：核对最终请求是 /v1/responses，不能用仅支持聊天的端点代替。
+- 提示缺少 XCM_API_KEY：按手动模板设置变量后完全重启软件；CC Switch 配置则检查所选供应商是否已启用。
+- 能聊天却不能读文件：核对模型、服务商对工具调用的支持。
+
+边界：
+- 本页配置面向 Codex CLI 及读取该配置的客户端。桌面产品与组织策略会随版本变化，以安装版本的自定义服务商入口为准。
+- 官方当前配置参考仅列出 wire_api=responses；聊天接口能用不能证明 Codex 可用。
+- 截图是官方软件界面参考；本轮未用真实 Key 完成 Codex 调用。
+
+图片参考：
+- Codex 官方界面展示（局部）；用于辨认软件。连接配置请看上方 CC Switch 编号图，桌面端是否读取该配置以安装版本为准。：https://openai.com/codex/
+
+证据来源：
+- https://learn.chatgpt.com/docs/config-file/config-reference — 自定义服务商 base_url、env_key、model_provider、wire_api=responses。
+- https://openai.com/codex/ — Codex 官方产品页面的局部界面展示；不是 CLI 截图或本站实测。
+
+### Claude Code
+
+软件身份 / 官网：https://code.claude.com/docs/en/overview
+
+配置文档：https://code.claude.com/docs/en/llm-gateway-connect
+
+协议：Anthropic Messages
+
+Base URL：https://xcmapi.org
+
+入口：CC Switch → 左侧 Claude Code → 添加供应商
+
+1. 确认打开的是 Claude Code：这里指可连接网关的 Claude Code 编程工具。普通 Claude 网页聊天的输入框不是 API 配置入口。安装后打开 CC Switch，选左侧 Claude Code。
+2. 新增并填写供应商：点击「添加供应商」，用下面 3 项配置。若从本站令牌行使用「导入到 CCS」，导入后仍需核对软件、地址、模型和这把 Key 的分组。
+   - 基础地址 Base URL：https://xcmapi.org
+   - API Key / Auth Token：在软件私有输入框中粘贴自己的 Key
+   - 模型 ID：选择支持 Anthropic Messages 的完整模型 ID
+3. 启用供应商，重新启动：保存、启用，再完全退出并重新打开 Claude Code。终端输入 claude 进入；已有配置不要同时再叠加另一套鉴权变量。
+4. 检查连接并发送消息：先输入 /status，核对 Anthropic base URL 指向本站且鉴权方式正确；再发「只回复 OK，不修改文件，不运行命令」。
+
+成功标准（供用户后续验证）：状态页显示配置的网关地址，且实际收到 OK。之后再单独验证一个无破坏性的工具操作。
+
+排错：
+- 仍显示原账号登录：检查是否启用了供应商，以及旧终端是否完全退出。
+- 404：基础地址填根域名，避免最终路径变成 /v1/v1/messages。
+- 401：只保留当前配置要求的一种凭据；检查复制时有没有空格或换行。
+
+边界：
+- 本页以 Claude Code 的网关能力为准，不将 Claude 网页聊天当作相同入口。
+- 图中是官方演示，不能当作本站 API 已调用成功的证据。
+- 本轮未实机验证客户端各版本的网关兼容性。
+
+图片参考：
+- Claude Code 官方 VS Code 扩展界面展示；不是终端画面。连接配置请看上方 CC Switch 编号图，图中示例项目无需照抄。：https://code.claude.com/docs/en/vs-code
+
+证据来源：
+- https://code.claude.com/docs/en/llm-gateway-connect — ANTHROPIC_BASE_URL、网关凭据与 /status 核验方法。
+- https://code.claude.com/docs/en/vs-code — Claude Code 官方 VS Code 扩展界面；不是终端 CLI 或本站调用结果。
+
+### Hermes Agent
+
+软件身份 / 官网：https://hermes-agent.nousresearch.com/
+
+配置文档：https://hermes-agent.nousresearch.com/docs/integrations/providers
+
+协议：本指南采用 OpenAI Chat Completions。官方自定义端点说明要求服务实现 /v1/chat/completions；不要把其他协议直接填进这一方案。
+
+Base URL：https://xcmapi.org/v1
+
+入口：已安装 Hermes 时，先退出正在进行的聊天，在终端运行 hermes model → Custom endpoint (self-hosted / VLLM / etc.)。Web UI 的 Models → Change 用于选择已经配置好的提供商。
+
+1. ① 打开自定义端点向导：在运行 Hermes 的终端退出当前会话，执行 hermes model，选择 Custom endpoint。聊天内 /model 仅切换已有配置，不能替代新建提供商。
+   - 命令：hermes model
+   - 提供商：Custom endpoint (self-hosted / VLLM / etc.)
+2. ② 填入地址和自己的密钥：基础 URL 填本站 /v1 地址。API Key 在自己的机器上填写，不发给别人。Hermes 官方默认示例支持在配置中引用环境变量，推荐把密钥与普通配置分开。
+   - API base URL：https://xcmapi.org/v1（本站示例；不追加 /chat/completions）
+   - API key：你自己的 API Key（不使用软件订阅登录代替本站 API Key）
+3. ③ 选择准确模型并保存：Model name 填 API 控制台实际提供的模型 ID；向导保存到 Hermes 的 config.yaml。若使用图中的 Web UI，在提供商列表选已配置来源，再选模型并点 Switch；该操作对新会话生效。
+   - Model name：<你的可用模型ID>
+   - provider：custom
+4. ④ 新建会话发一句测试：重新开始会话，确认当前模型后发送“只回复：连接成功。不要调用工具、不要读取文件。”。能回复只证明基础文本通道可用；工具、图片和长上下文仍需分别验证。
+
+成功标准（供用户后续验证）：新会话从选定提供商/模型收到文本回复，未出现认证、模型不存在或协议错误。
+
+排错：
+- 没有找到自定义来源或 /model 里没有模型：先退出聊天，用 hermes model 新建端点；已有 Web UI 对话不会自动切换到新默认模型。
+- 404 或接口路径重复：本方案基础 URL 为 /v1；不要填成 /v1/chat/completions 再由客户端追加路径。
+- 401/403：确认填的是本站 API Key，密钥和地址属于同一服务；不提交密钥截图。
+- 文本能回复，工具或图片失败：分别核对模型与端点的工具调用、视觉和上下文能力；不能由普通文本回复推定 agent 全能力通过。
+
+边界：
+- Hermes 截图展示官方模型选择器，原图左下角可见 v0.11.0；图片不是当前已安装版本证明，也不是自定义 URL/API Key 表单。
+- 官方仓库固定提交提供可追溯证据，不等于每位用户安装的稳定版具有相同界面。
+- 本轮未运行 Hermes、未验证本站模型、流式输出、工具调用或辅助模型路由。
+- 辅助模型可能有独立的路由/密钥需求；主模型连接成功并不意味着辅助能力均可用。
+
+配置资料：
+{
+  "files": [
+    "~/.hermes/config.yaml",
+    "~/.hermes/.env"
+  ],
+  "environment": [
+    "XCM_API_KEY：本文建议的自定义变量名，须由 model.key_env 显式引用；不是软件预置变量。"
+  ],
+  "example": "model:\n  provider: custom\n  default: <你的可用模型ID>\n  base_url: https://xcmapi.org/v1\n  key_env: XCM_API_KEY\n",
+  "notes": [
+    "默认路径为官方文档中的用户目录写法；本文不创建这些文件。使用现有 profile/HERMES_HOME 时以当前 profile 实际路径为准。",
+    "模型与地址由 config.yaml 管理；不要套用过时的 LLM_MODEL 环境变量方案。",
+    "OPENAI_BASE_URL 只适用于 openai-api 提供商；本指南使用 custom，应设置 model.base_url。"
+  ]
+}
+
+图片参考：
+- Hermes 官方模型选择器＋①②③④编号与箭头；①是终端向导文字指引，图中没有自定义 URL/API Key 表单。保留官方原图，非本站实测。：https://raw.githubusercontent.com/NousResearch/hermes-agent/0aa764feddf00aed631019763ef777d38faf4335/website/static/img/docs/dashboard-models/picker-dialog.png
+- Hermes 官方模型选择器，供切换已配置的提供商/模型；不是自定义端点填写界面，非本站实测。：https://raw.githubusercontent.com/NousResearch/hermes-agent/0aa764feddf00aed631019763ef777d38faf4335/website/static/img/docs/dashboard-models/picker-dialog.png
+
+证据来源：
+- https://github.com/NousResearch/hermes-agent/blob/0aa764feddf00aed631019763ef777d38faf4335/website/docs/integrations/providers.md — 确认 hermes model 自定义端点向导及 model.provider/default/base_url/key_env；区分聊天内 /model 与终端向导。
+- https://github.com/NousResearch/hermes-agent/blob/0aa764feddf00aed631019763ef777d38faf4335/website/docs/user-guide/configuring-models.md — 官方真实截图的 Models → Change → Switch 流程，切换默认模型只影响新会话。
+- https://github.com/NousResearch/hermes-agent/blob/0aa764feddf00aed631019763ef777d38faf4335/website/docs/user-guide/configuration.md — 默认 ~/.hermes/config.yaml 与 ~/.hermes/.env 的配置分工。
+
+### Cursor
+
+软件身份 / 官网：https://cursor.com
+
+配置文档：https://cursor.com/help/models-and-usage/api-keys
+
+协议：当前版本支持的 OpenAI 兼容聊天；按实际请求区分 Responses
+
+Base URL：https://xcmapi.org/v1
+
+入口：Cursor Settings → Models → API Keys
+
+1. 打开 Models 设置：打开 Cursor Settings，进入 Models，找到 API Keys。图是 2025-09 的真实设置画面；你的版本可能改变排布。找不到 API Keys 时，先检查团队管理员是否允许个人 Key。
+2. 填写 Key 与本站地址：在 OpenAI API Key 中填自己的 Key 并启用。你的版本提供 Override OpenAI Base URL 时，打开它，将原有地址替换为下方地址。图内旧地址只是软件默认值，不要照抄。
+   - OpenAI Base URL：https://xcmapi.org/v1
+   - OpenAI API Key：在软件私有输入框中粘贴自己的 Key
+   - 模型 ID：从当前 Key 的目录选择兼容模型
+3. 添加模型并在聊天中选择：在 Models 中启用或添加完整模型 ID，回到新聊天，在模型选择器中选刚才的模型。先用普通问答模式，不要直接测试自动改项目。
+4. 发消息，按错误定位：发送「只回复 OK，不修改文件」。若版本没有自定义 Base URL 入口，本页不能让该版本直接接入本站；查看官方说明或改用已有兼容入口的软件。
+
+成功标准（供用户后续验证）：选中目标模型后收到实际回复。自己的 Key 并不覆盖 Cursor 所有功能，Tab 等功能另有产品规则。
+
+排错：
+- 找不到 API Keys：团队的 Restrict Personal API Keys 设置可能隐藏入口，需管理员确认。
+- 404 或 input/messages 错误：核对当前 Cursor 实际使用的是 Responses 还是聊天协议。
+- 改地址后其他模型失败：先恢复原地址或切回对应供应商，避免全局覆盖影响其他模型。
+
+边界：
+- 官方文档确认自带 Key 入口；任意第三方 Base URL 的支持受具体版本、模型和组织策略影响，不能保证所有功能可用。
+- 官方说明：自定义 Key 随请求经 Cursor 后端完成提示构建，不能把它理解成仅在本机使用。
+- 本轮未实机验证 Cursor 与本站的聊天或 Agent 调用。
+
+图片参考：
+- Cursor 官方社区真实设置截图（2025-09-17）。图内默认地址需换成本站地址；下图编号说明填写位置。：https://forum.cursor.com/t/how-to-use-grok-api-key-with-cursor/133794
+
+证据来源：
+- https://cursor.com/help/models-and-usage/api-keys — Models / API Keys 入口、支持范围与 Key 的请求流向。
+- https://forum.cursor.com/t/how-to-use-grok-api-key-with-cursor/133794 — 历史设置界面，来源为 Cursor 官方社区帖子；不是当前版本兼容承诺。
+
+### WorkBuddy
+
+软件身份 / 官网：https://www.codebuddy.cn/work/
+
+配置文档：https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Model
+
+协议：OpenAI Chat Completions；官方表单标注“仅支持 OpenAI 兼容协议 API”。“自定义协议”只是 URL 路径处理开关，不是切换到 Anthropic 的协议选项。
+
+Base URL：https://xcmapi.org/v1
+
+入口：WorkBuddy → 设置 → 模型 → 添加模型 → 提供商选择 自定义 / Custom。
+
+1. ① 进入模型设置并选 Custom：打开设置里的模型页，点击添加模型，在提供商中选择“自定义 / Custom”。如果安装版本没有这个入口，应先核对版本/发行渠道，不能直接推断支持。
+   - 提供商：自定义 / Custom
+2. ② 填完整接口地址与密钥：“接口地址”填完整 Chat Completions 地址，“API KEY”填该服务自己的密钥。截图中的 api.example.com 是占位域名，不是要实际调用的地址。
+   - 接口地址：https://xcmapi.org/v1/chat/completions（本站示例，完整路径包含 /v1/chat/completions）
+   - API KEY：你自己的 API Key
+3. ③ 填模型名并核对能力：模型名称填 API 控制台可用的准确 ID。工具调用、图片输入、推理模式只按服务实际能力勾选；基础文本初测先不启用不确定的能力。“自定义协议”默认关闭，只有标准路径处理不适用时才按官方说明开启。
+   - 模型名称：<你的可用模型ID>
+   - 工具调用 / 图片输入 / 推理模式：按实际能力选择
+   - 自定义协议：初次使用保持关闭（此开关不能把消息体格式变成 Anthropic/Responses）
+4. ④ 保存并在对话中选中测试：点击保存，回到对话的模型选择器选新建模型，再发送“只回复：连接成功。不要调用工具、不要读取文件。”。先核对文本回复，再单独验收文件/工具等功能。
+
+成功标准（供用户后续验证）：对话模型选择器显示新模型并能返回文本，未出现鉴权、模型 ID 或路径错误。
+
+排错：
+- 找不到 自定义/Custom：核对是否为本卡对应的 WorkBuddy 版本与地区发行版；入口变化以当前软件为准。
+- 404、/chat/completions 重复或端点被改写：先填官方示例同形的完整 /v1/chat/completions 地址；对于网关非标准路径才考虑开启“自定义协议”，再按服务要求填完整 URL。
+- 400 或工具调用报错：核对能力选项，不勾选服务不支持的工具/图片/推理能力；“自定义协议”不会修复消息体协议不兼容。
+- 401/403/模型不存在：分别核对本站 API Key、模型 ID、服务地址和授权范围。
+
+边界：
+- 结论对应 2026-10-11 读取的中国站官方文档；未核对所有旧版或海外版的功能一致性。
+- 仅确认 OpenAI Chat Completions；没有证据证明此表单支持 Anthropic Messages 或 OpenAI Responses。
+- API Key 本地保存不代表请求不离开电脑；自定义模型对话会发到所填第三方服务。
+- 没有安装或运行该软件，没有进行本站鉴权或收费测试。
+
+配置资料：
+{
+  "files": [
+    "官方文档兼容提示：~/.codebuddy/models.json",
+    "同页数据说明：workbuddy/models.json（未给绝对路径，不能据此拼接 Windows 路径）"
+  ],
+  "environment": [],
+  "notes": [
+    "官方推荐当前版本通过图形界面管理；保存后自动持久化，不需要本教程直接编辑配置文件。",
+    "同一官方页面出现上述两种路径写法，实际安装版路径待核实；不要声称它们都已在本机验证，也不要把任一路径当成所有版本的固定路径。",
+    "当前官方模型页未给出第三方端点通用环境变量映射，本卡不编造变量名。",
+    "官方说明密钥本地保存，使用自定义模型产生的费用由对应第三方服务结算。"
+  ]
+}
+
+图片参考：
+- WorkBuddy 官方 Custom 配置表单＋①②③④填写指引，保留原占位地址；侧栏给出本站完整 Chat Completions URL。非本站实测。：https://download.codebuddy.cn/web/docs/58cb23ac03eddfd4f57622ab247bb99af32bf29e/docs/static/model-7.Buzcl1Ob.png
+- WorkBuddy 官方添加模型→自定义/Custom 配置表单，仅支持 OpenAI 兼容 API；非本站实测。：https://download.codebuddy.cn/web/docs/58cb23ac03eddfd4f57622ab247bb99af32bf29e/docs/static/model-7.Buzcl1Ob.png
+
+证据来源：
+- https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Model — 明确给出 设置→模型、Custom 手动 URL/API Key/模型名、OpenAI 兼容表单和自定义协议开关含义。
+- https://download.codebuddy.cn/web/docs/58cb23ac03eddfd4f57622ab247bb99af32bf29e/docs/static/model-7.Buzcl1Ob.png — 真实表单可见完整 /v1/chat/completions 占位 URL、密钥、模型名与能力复选框；没有 Anthropic/Responses 选择器。
+- https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Model — 兼容段落写 ~/.codebuddy/models.json，信息收集段落写 workbuddy/models.json；无法据此唯一确定当前安装的绝对路径。
+
+### DeepSeek Harness
+
+软件身份 / 官网：https://github.com/deepseek-ai/deepseek-harness
+
+配置文档：https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/user/guide/providers.zh.md
+
+协议：自定义模型 API 可选 OpenAI Chat Completions、OpenAI Responses、Anthropic Messages；分别写为 openai-completions、openai-responses、anthropic-messages。同一提供商只选一种协议。
+
+Base URL：https://xcmapi.org/v1
+
+入口：已经运行的 Web UI → 设置 → 模型 → 添加模型提供商 → 自定义模型 API。官方 README 启动命令为 npx @deepseek-ai/dsh web，默认本机页面 http://127.0.0.1:3080；本轮没有执行安装或启动。
+
+1. ① 打开“自定义模型 API”：进入设置→模型，点添加模型提供商，切到自定义模型 API 标签。不要将本站密钥填写在默认 DeepSeek 官方直连卡片中。
+   - 标签：自定义模型 API
+2. ② 给提供商命名并填地址：Provider ID 使用小写字母开头的稳定标识，例如 xcm；显示名称可写“本站 API”。基础地址按网关说明填写。ID 创建后不可直接改名，先想好再保存。
+   - Provider ID：xcm（创建后不可直接改名）
+   - 显示名称：本站 API
+   - API 地址：https://xcmapi.org/v1（基础 URL，不追加 /chat/completions）
+3. ③ 选协议、填密钥并添加模型：此入门方案选择 OpenAI Chat Completions，填写本站 API Key。点击添加模型并手动填写可用模型 ID；“获取可用模型”是可选网络探测，不是接入保证。网关支持其他协议时，可另外新建提供商并选择相应协议。
+   - API 协议：OpenAI Chat Completions（保存值 openai-completions）
+   - API 密钥：你自己的 API Key
+   - 模型 ID：<你的可用模型ID>
+4. ④ 创建提供商并在新会话中测试：创建后在模型选择器中选择刚添加的模型，再发“只回复：连接成功。不要调用工具、不要读取文件。”。模型设置在下一次请求生效；已有会话可能保留自己的模型记录，新建会话最清楚。
+
+成功标准（供用户后续验证）：新提供商与模型出现在选择器中，文本回复成功，无 MISSING_CREDENTIAL、UNKNOWN_MODEL 或协议报错。
+
+排错：
+- MISSING_CREDENTIAL：用模型页保存密钥，或确认 apiKeyEnv 引用的变量已在进程环境里设置。
+- UNKNOWN_MODEL 或列表为空：按本站控制台填写准确模型 ID；模型探测要求兼容 GET /models，探测失败时仍可手工添加。
+- 网关拒绝 developer 角色或 max_completion_tokens：只有服务错误明确指向这些字段时，才按官方文档在对应路由 compat 中设置 supportsDeveloperRole: false 或 maxTokensField: max_tokens；不要无差别复制。
+- 地址正确但消息格式错误：检查选中协议是否与服务一致；一个提供商只使用一种协议，多协议应建不同提供商。
+
+边界：
+- 官方 README 将该项目标为开发者预览，后续可能出现破坏兼容性的变更。
+- 没有 OAuth 登录的第三方提供商支持保证；官方当前配置指南明确说 OAuth 提供商暂不支持。
+- 截图与固定提交只证明产品能力与配置方式，不证明任意模型、网关或本站实际连接成功。
+- 模型发现仅是便捷功能，不保证所有第三方端点都提供可识别列表。
+
+配置资料：
+{
+  "files": [
+    "$DSH_HOME/profiles/web/cordis.patch.yml（默认 dsh web 的 profile）",
+    "$DSH_HOME/.credentials.yaml（保存密钥；设置只持有凭据引用）"
+  ],
+  "environment": [
+    "DSH_HOME：官方文档使用的数据根变量；不在本文推定 Windows 默认绝对路径。",
+    "XCM_API_KEY：仅用于下面 apiKeyEnv 的自定义示例变量，不是 dsh 预置变量。"
+  ],
+  "example": "- id: llm-pi-ai\n  config:\n    providers:\n      xcm:\n        apiKeyEnv: XCM_API_KEY\n        api: openai-completions\n        baseURL: https://xcmapi.org/v1\n        models:\n          - id: <你的可用模型ID>\n",
+  "notes": [
+    "优先使用 GUI；示例仅解释字段，不是让新手覆盖已有 cordis.patch.yml。",
+    "手工编辑要保留其他 provider 和字段，profile 配置覆盖会替换完整条目。",
+    "图中协议下拉框默认 Chat Completions；三种协议的支持来自同一固定提交的官方文字说明。"
+  ]
+}
+
+图片参考：
+- DeepSeek AI 官方 Harness 中文自定义模型 API 表单＋①②③④指引：页签、地址、协议/密钥、添加模型/创建。非本站实测。：https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/user/guide/providers-custom-form.zh.png
+- DeepSeek Harness 官方设置→模型页面及添加模型提供商入口，非本站实测。：https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/user/guide/providers-models-page.zh.png
+- DeepSeek Harness 官方中文自定义模型 API 表单，包含协议、地址、密钥和模型目录，非本站实测。：https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/user/guide/providers-custom-form.zh.png
+
+证据来源：
+- https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/README.zh.md — 确认项目身份、dsh 命令、npm 包、开发者预览阶段和默认 3080 端口。
+- https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/user/guide/providers.zh.md — 明确中转站/公司网关入口、三种协议、永久 Provider ID、凭据保存路径、手工模型与兼容开关。
+- https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/user/guide/providers-custom-form.zh.png — 真实软件表单可核对 Provider ID、显示名称、API 地址、协议、密钥与添加模型按钮。
+
+### ZCode
+
+软件身份 / 官网：https://zcode.z.ai/
+
+配置文档：https://zcode.z.ai/cn/docs/configuration
+
+协议：官方文档明确兼容 Anthropic / OpenAI；本卡采用 OpenAI Chat Completions。所核对页面未为任意第三方供应商明确承诺 OpenAI Responses，故不写成已支持。
+
+Base URL：https://xcmapi.org/v1
+
+入口：对话框模型名称 → 模型选择器底部“管理模型” → 设置/模型设置 → 左侧底部“添加供应商”。旧图字段与当前文档可能略有差异。
+
+1. ① 打开模型设置并添加供应商：在模型选择器底部点管理模型，进入模型设置后点添加供应商。名称自定，例如“本站 API”；不要把本站密钥放进 Z.ai/BigModel 原生套餐登录入口。
+   - 名称：本站 API
+2. ② 选协议并填基础 URL：使用 OpenAI 兼容路径时，填写本站 /v1 基础地址；若界面显示“API 格式”，选择 Chat Completions。当前文档可能显示“OpenAI 接口地址”，按这个字段填写。
+   - Base URL / OpenAI 接口地址：https://xcmapi.org/v1（本站示例，不是 Z.ai 官方端点）
+   - API 格式（若当前界面提供）：Chat Completions (/chat/completions)
+3. ③ 填密钥并添加准确模型：输入本站 API Key，点击添加模型，逐项填入本站控制台实际提供的模型 ID。不要照搬截图里的 DeepSeek 型号，也不要在 key 字段填写软件会员账号。
+   - API Key：你自己的 API Key
+   - 添加模型 / 模型 ID：<你的可用模型ID>
+4. ④ 保存、启用并发送测试句：保存供应商并打开启用开关，回到对话框选择新模型，发送“只回复：连接成功。不要调用工具、不要读取文件。”。能返回文本后，再逐项验证需要的 agent、图片和长上下文能力。
+
+成功标准（供用户后续验证）：供应商已启用，选中的准确模型能回复文本且没有认证、协议或模型 ID 报错。
+
+排错：
+- 能保存但模型不出现在对话中：确认至少添加一个模型且供应商启用开关已打开，然后在对话选择器重新选中。
+- 404 或协议错误：核对 OpenAI/Anthropic 地址与 API 格式是否对应；基础 URL 不机械追加另一种协议的路径。
+- 思考强度最高档报 400：第三方部署支持的档位可能不同；先尝试其支持的较低档，再核对服务文档，不能假定同名模型参数一致。
+- 图片失败或被移除：检查模型与接口的图片能力；官方会依据能力信息保留、移除或尝试发送，文本接通不能推断视觉兼容。
+
+边界：
+- 已选定 zcode.z.ai 官方桌面产品；同名项目不能套用本卡。
+- 官方图片文件名日期为 2026-07-28，当前文档字段可能更新；原图中的 DeepSeek 示例根地址不作为本站填写模板，本站 OpenAI 方案以 /v1 基础地址为准。
+- 不将第三方 OpenAI Responses、任意自定义请求体参数或所有模型视觉能力写成已支持。
+- 未安装软件、未登录、未使用官方免费额度或付费套餐，也未调用本站模型。
+
+配置资料：
+{
+  "files": [
+    "~/.zcode/v2/config.json"
+  ],
+  "environment": [],
+  "recognized_connection_options": [
+    "apiKey",
+    "baseURL",
+    "apiKeyRequired",
+    "headers"
+  ],
+  "notes": [
+    "官方配置指南明确提到上述 v2 文件与供应商 options 的连接参数；推荐使用界面，本文不编造完整 JSON 层级或自动改文件。",
+    "所查官方页没有给出任意第三方连接的通用环境变量配置方法，本卡不猜测。",
+    "直接向供应商 options 塞 reasoning_effort、vl_high_resolution_images 等自定义请求字段不会自动进入消息体，官方明确说明这些字段可能被静默忽略。"
+  ]
+}
+
+图片参考：
+- Z.ai ZCode 官方模型设置截图＋①②③④指引；官方原图为 DeepSeek 示例，本站值只写在侧栏，未改原 UI。非本站实测。：https://zcode.z.ai/content/docs/v2/screenshots/apikey-custom-deepseek-20260728.webp
+- ZCode 官方自定义提供商配置图（以 DeepSeek 为例），非本站实测；示例厂商和地址需换成自己的接口。：https://zcode.z.ai/content/docs/v2/screenshots/apikey-custom-deepseek-20260728.webp
+
+证据来源：
+- https://zcode.z.ai/cn/docs/configuration — 自定义供应商明确支持 Anthropic/OpenAI、添加供应商、Base URL/API Key、添加模型与启用流程。
+- https://zcode.z.ai/cn/docs/configuration — 说明 ~/.zcode/v2/config.json、供应商连接 options 受支持字段及未知请求参数不会写入请求体。
+- https://zcode.z.ai/content/docs/v2/screenshots/apikey-custom-deepseek-20260728.webp — 真实模型设置界面；含 Base URL、Chat Completions API 格式、API Key、模型列表和添加供应商入口。
+
+
+<a id="n8n-video-workflow"></a>
+## 12. n8n 视频工作流
+
+# n8n H3 视频入门模板：导入、绑定凭据、查询与手动下载
+
+交付日期：2026-10-11。当前完成的是本地模板与离线验证；尚未在 n8n UI/CLI 中实际导入或运行。没有执行真实生成、媒体下载或生产更新。
+
+## 文件与适用版本
+
+- 模板：`deploy/docs/assets/guide/n8n-video-starter.json`。
+- 验证报告：本目录 `n8n-workflow-validation.md`、`n8n-workflow-validation.json`。
+- 可重跑脚本：本目录 `n8n-workflow-validation.mjs`；来源与固定提交：`n8n-workflow-validation.sources.json`。
+- 官方源码核对基线：**n8n 2.42.6**，2026-10-09 发布，提交 `34ab9c7bf3d0c6d2ec3422e12e0b970aea5717c7`。这表示节点结构与参数已按该版本源码审阅，不表示已通过真实导入；其他版本未验证，旧版本可能不识别这些节点版本。
+- 仅含内置节点：Manual Trigger 1、Edit Fields/Set 3.4、Code 2、HTTP Request 4.5、Wait 1.1、IF 2.2；不依赖社区节点或 Code 外部模块。
+
+## 第一次导入与凭据设置
+
+1. 在 n8n 新建空工作流，打开画布右上角工作流菜单，选择 **Import from File**，选中 `n8n-video-starter.json`。成功导入后应看到 16 个节点，起点为“01 手动开始”；暂不执行。
+2. 打开“05 创建视频（仅一次）”。Authentication 应为 **Generic Credential Type**，Generic Auth Type 为 **Header Auth**。在凭据下拉框选择 **Create New Credential**，取名例如 `H3 API`。
+3. 在凭据里填写 **Name = Authorization**，**Value = Bearer 用户自己的Key**，即 `Bearer` 后一个空格，再接自己的 Key。这里只说明格式，没有可用 Key。保存凭据；不要把 Key 填入“02 参数设置”、HTTP 手写 Headers、URL、Code 或工作流备注。
+4. 再打开“11 查询任务（同一凭据）”，选择刚才创建的**同一个 Header Auth 凭据**。模板两个 `credentials` 均留空，导入后需要分别选择；工作流无法替用户确认两个选择是否一致。
+5. 打开“02 参数设置（不填 Key）”，只修改下表中的非机密参数。确认后再点击画布的 **Execute Workflow**。每次从起点执行都会新建一次任务，真实执行可能产生费用；此交付没有进行该操作。
+
+若实例限制 Code 节点、凭据访问或不支持上述节点版本，应先解决实例兼容问题，不能通过把 Key 改写到共享节点来绕过。以后分享重新导出的 JSON 时，清理凭据名称/ID、执行样本、固定数据和可能敏感的提示词；模板原件没有任何用户凭据。
+
+## 参数说明
+
+| 参数 | 默认值 | 本模板接受的范围与用途 |
+| --- | --- | --- |
+| `model` | `h3` | 仅接受 `h3`，其他视频型号须使用各自契约 |
+| `prompt` | 蓝色纸船的简短画面描述 | 去掉首尾空白后 1–4000 个 JavaScript 字符单位 |
+| `duration` | `6` | 1–15 的整数，提交的请求时长，单位秒 |
+| `poll_interval_seconds` | `5` | 1–30 的整数，每轮查询前等待秒数 |
+| `max_polls` | `120` | 1–120 的整数，最多发送的查询 GET 次数 |
+| `max_seconds` | `600` | 1–600 的整数，从参数校验通过开始计时，包含创建、等待和查询 |
+
+数字字段保持 Number 类型，不加引号。只向创建接口发送 `model`、`prompt`、`duration`；查询参数不会进入创建请求。模板未默认发送 `resolution`、`aspect_ratio`，本地视频契约中的价格档不能当作实际出片规格保证；本轮也未验证 H3 真实时长、计费或画质。
+
+## 执行顺序与停止条件
+
+手动开始 → 集中设置/校验 → 创建一次 POST → 提取 task_id → 等待 → 限额检查 → GET 查询 → 判断状态 → 成功输出或停止输出。只有查询循环会返回等待节点，任何分支都不能返回创建节点。
+
+- 创建固定请求 `POST https://xcmapi.org/v1/videos`，查询固定请求 `GET https://xcmapi.org/v1/videos/{task_id}`。两者均关闭自动重试和重定向，没有分页。
+- task_id 从响应顶层或 `data` 内的 `task_id`、`id`、`request_id` 提取，优先 task_id。只接受以字母/数字开头、后续为字母/数字/下划线/横线、最长 200 字符的 ID；不接受 URL、路径或查询串。
+- 响应中的 `polling_url`、`status_url`、`poll_url` 一律不作为请求目标。HTTP 请求始终使用固定本站 origin，避免向外部轮询地址发送凭据。
+- `done/completed/succeeded/success` 进入成功；`failed/error/expired/cancelled/canceled` 立即停止。未知状态、响应 ID 不一致、HTTP/网络错误也停止，保留原 task_id。
+- 达到次数上限或时间上限即停止；最多 120 次查询、最多 600 秒，二者以先到者为准，较小自定义值生效。查询前后均检查时间，并约预留 1 秒用于输出；实际可能少于 120 次。
+- 创建请求超时或没有有效 ID 时，服务端可能已经受理。先核查控制台任务/账单，不能直接重新执行创建。停止本地查询不等于取消服务端任务，也不保证停止收费。
+
+工作流还设置 `executionTimeout=600`。实例自己的超时限制可能更短；强制超时、手动停止或进程终止可能来不及执行最终整理节点。正常执行时应在“06 保存任务 ID”出现后及时复制 ID；最终节点未运行时，也可从本次“06”或“09 查询前检查上限”的现有输出查找。模板关闭成功、失败、手动执行数据及执行进度保存，不承诺刷新页面或重启后恢复任务。
+
+## 查看结果与错误
+
+“15 完成（手动下载）”输出 `ok=true`、`task_id`、`poll_count`、`content_url`、可选的 `result_url`；并明确标记 `download_status=not_downloaded`、`file_saved=false`。成功仅表示服务端报告生成完成，**没有下载或保存本地视频文件**。
+
+“16 停止（保留 task_id）”输出 `ok=false`、`error_code`、`task_id`、`message` 和下一步。校验失败或创建未返回有效 ID 时 `task_id` 可以为 null，`task_id_display` 会说明原因。常见代码：`INVALID_SETTINGS`、`CREATE_RESULT_UNKNOWN`、`MISSING_TASK_ID`、`QUERY_HTTP_ERROR`、`POLL_LIMIT`、`TIME_LIMIT`。
+
+停止通过普通 Code 输出实现，因此 n8n 本身可能显示绿色“执行完成”；请以最终 JSON 的 `ok` 和 `generation_status` 判断视频结果。拿到 task_id 后排查问题时，只单独 GET 查询原任务，不从“01”或“05”重跑。
+
+## 安全手动下载
+
+1. 先复制 `task_id`。如果有可信的外部 HTTPS `result_url`，在普通浏览器中打开并下载；**不附加本站 Authorization**。链接可能过期，且应按临时私密地址处理。HTTPS 格式校验不等于认可任意来源的内容，确认域名后再打开。
+2. 若没有可用的直链，使用输出中的固定本站 `content_url`：`https://xcmapi.org/v1/videos/{task_id}/content`。在独立的手动工作流里配置一个 HTTP Request GET，选择与创建相同的 Header Auth 凭据；**不要连接回原工作流的创建节点**。URL 必须保持上述本站路径，不接受返回的外部 URL 替换。
+3. 此手动请求关闭 **Follow Redirects** 和 **Send Credentials on Cross Origin Redirect**。打开 **Include Response Headers and Status**、**Never Error**；Response Format 设为 **File**，Put Output in Field 设为 `data`。先检查返回的状态和 Content-Type；只有 2xx 且确认是视频文件（或已确认的二进制文件）后，才在 Binary 输出中使用 Download 保存。
+4. 若返回 30x 的 Location 或 JSON 内的外部下载地址，不要把它接到含 Header Auth 的节点继续请求，也不要把 JSON/错误体当成 MP4 保存。确认目标后用普通浏览器，或另建 **Authentication=None、无 Authorization Header** 的请求下载；必要时将本站请求改成 JSON 响应格式查看地址。Key 不能放在下载 URL 或查询参数中。
+
+模板故意没有自动下载节点；只有实际收到完整文件并保存后，才算下载完成。上述步骤是留给使用者的手动操作，本轮未执行任何真实下载。
+
+## 验证范围与复跑
+
+离线执行器直接运行模板中的 Code 与表达式，模拟 HTTP、Wait、IF 和 item 关联；115/115 项通过，覆盖连接、单次创建、ID 提取/拒绝恶意 ID、全部终态、错误、忽略外部轮询地址、120 次/10 分钟边界、独立执行以及受保护文件哈希。
+
+在项目根目录用 PowerShell 复跑（所有本任务临时路径都在 D 盘）：
+
+```powershell
+$env:TEMP = 'D:\codex\codex-1\WorkBuddyProjects\AI中转站API\output\docs-beginner-20261011'
+$env:TMP = $env:TEMP
+$env:NODE_DISABLE_COMPILE_CACHE = '1'
+node --check 'output/docs-beginner-20261011/n8n-workflow-validation.mjs'
+node 'output/docs-beginner-20261011/n8n-workflow-validation.mjs'
+```
+
+这只会读取本地模板、运行内存中的模拟响应并更新同名验证 JSON/Markdown，不会请求真实 API。未实机验证 n8n 导入、原生引擎分支/item 关联、凭据选择与权限、网络超时/中断/跳转行为或视频生成/下载；离线通过不能替代这些验收。
+
+## 官方依据
+
+- [导出/导入工作流 JSON 与分享凭据注意事项](https://docs.n8n.io/workflows/export-import/)
+- [HTTP Request 凭据：Header Auth Name/Value](https://docs.n8n.io/integrations/builtin/credentials/httprequest/)
+- [HTTP Request 参数与响应选项](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/)
+- [Wait 节点](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.wait/)
+- [工作流超时与执行保存设置](https://docs.n8n.io/workflows/settings/)
+- [Code 节点 item 关联](https://docs.n8n.io/data/data-mapping/data-item-linking/item-linking-code-node/)
+- [n8n 2.42.6 官方发行版](https://github.com/n8n-io/n8n/releases/tag/n8n%402.42.6)
+
+固定提交下的节点源码路径、对应行号、blob SHA、源码 SHA256 与本地视频契约哈希均记录在 `n8n-workflow-validation.sources.json`，便于后续审阅时复核，避免将滚动文档视为固定版本的运行证明。

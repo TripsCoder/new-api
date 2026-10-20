@@ -63,6 +63,7 @@ type ModelCategoryProps = {
   aliases?: Record<string, string>
   discovery?: UpstreamModelDiscovery
   existingModels: string[]
+  onViewParameters?: (model: string) => void
 }
 
 function ModelCategory(props: ModelCategoryProps) {
@@ -143,6 +144,19 @@ function ModelCategory(props: ModelCategoryProps) {
               >
                 {model}
               </Label>
+              {props.onViewParameters &&
+                props.existingModels.includes(model) && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='xs'
+                    className='-my-0.5 shrink-0'
+                    aria-label={t('View parameters for {{model}}', { model })}
+                    onClick={() => props.onViewParameters?.(model)}
+                  >
+                    {t('View parameters')}
+                  </Button>
+                )}
               {props.discovery && (
                 <div className='flex flex-wrap gap-1'>
                   <Badge variant='outline'>
@@ -216,16 +230,21 @@ type UpstreamModelSelectionProps = {
   redirectSourceModels?: string[]
   showChanges?: boolean
   summaryText?: string
+  /** Shared search supplied by a parent that renders its own search input. */
+  search?: string
+  showSelectionSummary?: boolean
   /** Renders a per-model action that starts a redirect for that model. */
   onRedirectModel?: (model: string) => void
   /** Upstream model name to the request name it is published under. */
   aliases?: Record<string, string>
   discovery?: UpstreamModelDiscovery
+  onViewParameters?: (model: string) => void
 }
 
 export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
   const { t } = useTranslation()
-  const [search, setSearch] = useState('')
+  const [localSearch, setSearch] = useState('')
+  const search = props.search ?? localSearch
   // Keep models seen in this picker session available even after deselection.
   const [candidateModels, setCandidateModels] = useState(props.selected)
   const candidateSet = new Set(candidateModels)
@@ -311,13 +330,15 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
           )}
         </p>
       )}
-      <Input
-        aria-label={t('Search models...')}
-        placeholder={t('Search models...')}
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-      />
-      {!showChanges && (
+      {props.search === undefined && (
+        <Input
+          aria-label={t('Search models...')}
+          placeholder={t('Search models...')}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      )}
+      {!showChanges && props.summaryText !== '' && (
         <div className='flex items-center justify-between gap-2'>
           <span className='text-muted-foreground text-xs'>
             {props.summaryText ??
@@ -393,6 +414,7 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
                 redirectOnly={categorized.redirectOnly}
                 onChange={props.onChange}
                 onRedirectModel={props.onRedirectModel}
+                onViewParameters={props.onViewParameters}
                 aliases={props.aliases}
                 discovery={props.discovery}
                 existingModels={props.existingModels}
@@ -413,6 +435,7 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
                   redirectOnly={categorized.redirectOnly}
                   onChange={props.onChange}
                   onRedirectModel={props.onRedirectModel}
+                  onViewParameters={props.onViewParameters}
                   aliases={props.aliases}
                   discovery={props.discovery}
                   existingModels={props.existingModels}
@@ -437,6 +460,7 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
                 redirectOnly={categorized.redirectOnly}
                 onChange={props.onChange}
                 onRedirectModel={props.onRedirectModel}
+                onViewParameters={props.onViewParameters}
                 aliases={props.aliases}
                 discovery={props.discovery}
                 existingModels={props.existingModels}
@@ -455,6 +479,7 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
               redirectOnly={categorized.redirectOnly}
               onChange={props.onChange}
               onRedirectModel={props.onRedirectModel}
+              onViewParameters={props.onViewParameters}
               aliases={props.aliases}
               discovery={props.discovery}
               existingModels={props.existingModels}
@@ -467,9 +492,11 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
           )}
         </div>
       )}
-      <p className='text-muted-foreground text-sm'>
-        {t('{{n}} model(s) selected', { n: props.selected.length })}
-      </p>
+      {props.showSelectionSummary !== false && (
+        <p className='text-muted-foreground text-sm'>
+          {t('{{n}} model(s) selected', { n: props.selected.length })}
+        </p>
+      )}
     </div>
   )
 }

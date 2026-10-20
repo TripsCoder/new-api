@@ -127,7 +127,7 @@ func PrepareTaskPluginRoute() gin.HandlerFunc {
 		if len(pinned.Route.Models) > 0 {
 			bodyValue, _ := bodyObject["value"].(map[string]any)
 			claimedModel, _ := bodyValue["model"].(string)
-			if claimedModel == "" || !slices.Contains(pinned.Route.Models, claimedModel) {
+			if claimedModel == "" || (!slices.Contains(pinned.Route.Models, claimedModel) && !manualRouteOwnsModel(c, pinned, claimedModel)) {
 				logger.LogWarn(
 					c,
 					common.LogText("task_plugin subsystem=route event=prepare_rejected generation=%d plugin=%q stage=resolve_request reason=model_not_allowed model=%q",
@@ -203,7 +203,7 @@ func PrepareTaskPluginRoute() gin.HandlerFunc {
 				abortTaskPluginRouteErrorDetail(c, http.StatusBadRequest, "decoded request is missing a model")
 				return
 			}
-			owned := slices.Contains(pinned.Plugin.Meta.Models, modelName)
+			owned := slices.Contains(pinned.Plugin.Meta.Models, modelName) || manualRouteOwnsModel(c, pinned, modelName)
 			if !owned {
 				logger.LogWarn(
 					c,
@@ -391,6 +391,15 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 			}
 		}
 		binding, found := generation.LookupEndpoint(c.Request.Method, c.Request.URL.Path, lookupModel)
+		manualChannelID := 0
+		if requestedChannel != nil {
+			manualChannelID = requestedChannel.Id
+		}
+		manualCandidates := service.ManualProtocolCandidates(c.Request.Context(), generation, c.Request.Method, c.Request.URL.Path, claimedModel, manualChannelID)
+		if !found && len(manualCandidates) > 0 {
+			binding = manualCandidates[0]
+			found = true
+		}
 		if !found || binding.Plugin == nil {
 			if requestedChannel != nil && requestedChannel.Type == constant.ChannelTypeTaskPlugin {
 				abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgRequestedChannelProtocolUnsupported))
@@ -409,6 +418,18 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 		modelRequest.Model = pinModel
 		c.Set(contextKeyTaskPluginEndpointModel, *modelRequest)
 		candidates := generation.LookupEndpointCandidates(c.Request.Method, c.Request.URL.Path, lookupModel)
+		for _, manual := range manualCandidates {
+			exists := false
+			for _, candidate := range candidates {
+				if candidate.Plugin == manual.Plugin {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				candidates = append(candidates, manual)
+			}
+		}
 		if len(candidates) == 0 {
 			candidates = []pluginruntime.ProtocolBinding{binding}
 		}
@@ -675,6 +696,9 @@ func PrepareTaskPluginEndpoint() gin.HandlerFunc {
 			candidateContext := protocolContext
 			candidateContext.Protocol = candidate.Protocol
 			candidateContext.Operation = candidate.Operation.Name
+			if pinned.MappedModel == "" {
+				candidateContext.UpstreamModel = candidate.Model
+			}
 			// Parsing belongs to durable submission; disconnecting only stops
 			// the later Responses observation.
 			resolvedValue, requestBodyText, callErr := candidate.Plugin.Engine.CallPathWithMemberJSON(
@@ -700,7 +724,7 @@ func PrepareTaskPluginEndpoint() gin.HandlerFunc {
 			} else if model, _ := result["model"].(string); strings.TrimSpace(model) == "" {
 				reason = "invalid_model"
 				detail = "decoded request is missing a model"
-			} else if model != pinned.Model || (pinned.MappedModel == "" && !slices.Contains(candidate.Plugin.Meta.Models, model)) {
+			} else if model != pinned.Model || (pinned.MappedModel == "" && !candidate.ConfigurationBound && !pluginOwnsModelSpelling(candidate.Plugin, model)) {
 				reason = "resolved_model_not_owned"
 				detail = fmt.Sprintf("model %q is not served by this plugin", model)
 			}
@@ -1544,4 +1568,24 @@ func PrepareTaskPluginSubmit() gin.HandlerFunc {
 		)
 		c.Next()
 	}
+}
+
+// Native route reuse uses the exact same saved, confirmed contract as shared
+// endpoints; it never widens the manifest for unconfigured names.
+func manualRouteOwnsModel(c *gin.Context, pinned pluginruntime.PinnedRoute, name string) bool {
+	path := strings.TrimPrefix(pinned.Route.Path, "/"+pinned.Plugin.Meta.Key)
+	for _, candidate := range service.ManualProtocolCandidates(c.Request.Context(), pinned.Generation, c.Request.Method, path, name, 0) {
+		if candidate.Plugin == pinned.Plugin {
+			return true
+		}
+	}
+	return false
+}
+
+func pluginOwnsModelSpelling(plugin *pluginruntime.LoadedPlugin, name string) bool {
+	if plugin == nil {
+		return false
+	}
+	_, ok := plugin.Meta.CanonicalModel(name)
+	return ok
 }

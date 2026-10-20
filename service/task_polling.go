@@ -15,6 +15,7 @@ import (
 	taskdto "github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
 	"github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
@@ -63,6 +64,7 @@ type BatchTaskResult struct {
 // GetTaskAdaptorFunc 由 main 包注入，用于获取指定平台的任务适配器。
 // 打破 service -> relay -> relay/channel -> service 的循环依赖。
 var GetTaskAdaptorFunc func(platform constant.TaskPlatform) TaskPollingAdaptor
+var GetTaskAdaptorForTaskFunc func(task *model.Task) TaskPollingAdaptor
 
 // sweepTimedOutTasks 在主轮询之前独立清理超时任务。
 // 每次最多处理 100 条，剩余的下个周期继续处理。
@@ -369,6 +371,9 @@ func updateBatchTasks(ctx context.Context, adaptor BatchTaskPollingAdaptor, chan
 
 		isDone := task.Status == model.TaskStatusSuccess || task.Status == model.TaskStatusFailure
 		terminalTransition := isDone && snap.Status != task.Status
+		if isDone {
+			PrepareTaskUpstreamCostSettlement(task, &responseItem.TaskInfo)
+		}
 		won, updateErr := task.UpdateWithStatus(snap.Status)
 		if updateErr != nil {
 			common.SysLog(common.LogText("UpdateSunoTask task error: %s", updateErr.Error()))
@@ -444,7 +449,7 @@ func updateVideoTasks(ctx context.Context, platform constant.TaskPlatform, chann
 		return fmt.Errorf("CacheGetChannel failed: %w", err)
 	}
 	adaptor := GetTaskAdaptorFunc(platform)
-	if adaptor == nil {
+	if adaptor == nil && GetTaskAdaptorForTaskFunc == nil {
 		return fmt.Errorf("video adaptor not found")
 	}
 	info := &relaycommon.RelayInfo{}
@@ -461,7 +466,19 @@ func updateVideoTasks(ctx context.Context, platform constant.TaskPlatform, chann
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		if err := updateVideoSingleTask(ctx, adaptor, cacheGetChannel, taskId, taskM); err != nil {
+		taskAdaptor := adaptor
+		if task := taskM[taskId]; GetTaskAdaptorForTaskFunc != nil && ReviewedProviderTask(task) {
+			taskAdaptor = GetTaskAdaptorForTaskFunc(task)
+			if taskAdaptor == nil {
+				logger.LogError(ctx, common.LogText("Historical task plugin unavailable for task %s", taskId))
+				continue
+			}
+			taskAdaptor.Init(info)
+		}
+		if taskAdaptor == nil {
+			continue
+		}
+		if err := updateVideoSingleTask(ctx, taskAdaptor, cacheGetChannel, taskId, taskM); err != nil {
 			logger.LogError(ctx, common.LogText("Failed to update video task %s: %s", taskId, err.Error()))
 		}
 		if disablePollingSleep || i == len(taskIds)-1 {
@@ -605,6 +622,7 @@ func updateVideoSingleTask(ctx context.Context, adaptor TaskPollingAdaptor, ch *
 
 	isDone := task.Status == model.TaskStatusSuccess || task.Status == model.TaskStatusFailure
 	if isDone && snap.Status != task.Status {
+		PrepareTaskUpstreamCostSettlement(task, taskResult)
 		won, err := task.UpdateWithStatus(snap.Status)
 		if err != nil {
 			logger.LogError(ctx, common.LogText("UpdateWithStatus failed for task %s: %s", task.TaskID, err.Error()))
@@ -830,4 +848,20 @@ func failTasksFromPoll(ctx context.Context, adaptor TaskPollingAdaptor, tasks []
 		}
 	}
 	return firstErr
+}
+
+// PrepareTaskUpstreamCostSettlement runs before the existing terminal CAS so
+// the cost snapshot is persisted together with status, even when quota is equal.
+// It neither adjusts customer funding nor reloads the current configuration.
+func PrepareTaskUpstreamCostSettlement(task *model.Task, result *relaycommon.TaskInfo) {
+	if task == nil || result == nil || task.PrivateData.BillingContext == nil {
+		return
+	}
+	snapshot := task.PrivateData.BillingContext.UpstreamCost
+	if snapshot == nil {
+		return
+	}
+	if err := modelconfig.SettleUpstreamCost(snapshot, result.UsageFacts, task.Status == model.TaskStatusSuccess); err != nil {
+		snapshot.Status = "pending_bill_verification"
+	}
 }

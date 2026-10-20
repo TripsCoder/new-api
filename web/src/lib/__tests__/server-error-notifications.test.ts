@@ -28,6 +28,7 @@ import { createElement, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { afterEach, expect, it, vi } from 'vitest'
 
+import { tryModelConfiguration } from '@/features/channels/model-configuration/api'
 import { saveModelPricing } from '@/features/model-pricing/api'
 import { useUpdateOption } from '@/features/system-settings/hooks/use-update-option'
 import { handleServerError } from '@/lib/handle-server-error'
@@ -41,6 +42,83 @@ import {
 import { useAuthStore, type AuthBundle } from '@/stores/auth-store'
 
 const originalAdapter = api.defaults.adapter
+
+it.each([2_000_000_000, 1])(
+  'submits a paid model test once and preserves upstream 401 and login (token expiry %i)',
+  async (expiresAt) => {
+    window.history.replaceState({}, '', '/sign-in')
+    const bundle: AuthBundle = {
+      access_token: 'fixture-access',
+      token_type: 'Bearer',
+      access_expires_at: expiresAt,
+      user: { id: 1, username: 'test-user', role: 1 },
+      session: {
+        sid: 'fixture-session',
+        current: true,
+        login_method: 'password',
+        ip: '',
+        user_agent: '',
+        created_at: 1,
+        last_active_at: 1,
+        expires_at: 2_000_000_000,
+      },
+    }
+    useAuthStore.getState().auth.setBundle(bundle)
+    const events: string[] = []
+    const send = vi
+      .spyOn(XMLHttpRequest.prototype, 'send')
+      .mockImplementation(function (this: XMLHttpRequest) {
+        events.push('refresh')
+        Object.defineProperties(this, {
+          status: { value: 200, configurable: true },
+          statusText: { value: 'OK', configurable: true },
+          readyState: { value: 4, configurable: true },
+          responseText: {
+            value: JSON.stringify({
+              success: true,
+              data: {
+                ...bundle,
+                access_token: 'fixture-fresh-access',
+                access_expires_at: 2_000_000_000,
+              },
+            }),
+            configurable: true,
+          },
+        })
+        this.onloadend?.(new ProgressEvent('loadend'))
+      })
+    const adapter = vi.fn<AxiosAdapter>(async (config) => {
+      events.push('submit')
+      throw new AxiosError('HTTP 401', 'ERR_BAD_REQUEST', config, undefined, {
+        data: { message: 'Upstream rejected API key' },
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: {},
+        config,
+      })
+    })
+    api.defaults.adapter = adapter
+    const notify = vi.spyOn(toast, 'error').mockReturnValue('error')
+    await expect(
+      tryModelConfiguration(
+        12,
+        17,
+        'minimax-h3-a',
+        'text_video',
+        { prompt: 'fixture' },
+        1,
+        true
+      )
+    ).rejects.toThrow('Upstream rejected API key')
+    expect(adapter).toHaveBeenCalledTimes(1)
+    expect(useAuthStore.getState().auth.accessToken).toBe(
+      expiresAt === 1 ? 'fixture-fresh-access' : 'fixture-access'
+    )
+    expect(events).toEqual(expiresAt === 1 ? ['refresh', 'submit'] : ['submit'])
+    expect(send).toHaveBeenCalledTimes(expiresAt === 1 ? 1 : 0)
+    expect(notify).not.toHaveBeenCalled()
+  }
+)
 
 afterEach(() => {
   api.defaults.adapter = originalAdapter

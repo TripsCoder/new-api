@@ -1,0 +1,582 @@
+# MiniMax创建
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/videos:
+    post:
+      summary: MiniMax创建
+      deprecated: false
+      description: >
+        # MiniMax 视频生成接口文档
+
+
+        ## 接口地址
+
+
+        `POST /v1/videos`
+
+
+        ## 功能说明
+
+
+        支持 MiniMax H3 系列模型的文生视频，以及图片、视频、音频参考内容驱动的视频生成。
+
+
+        ### 当前模型
+
+
+        | 模型名 | 支持模式 | 时长 | 说明 |
+
+        |--------|----------|------|------|
+
+        | `minimax-h3` | 文生视频、参考内容生成 | 4～15 秒 | MiniMax H3 标准模型 |
+
+        | `minimax-h3-max` | 文生视频、参考内容生成 | 4～15 秒 | MiniMax H3 Max 模型 |
+
+
+        两款模型都通过 `seconds` 指定 4～15 秒的输出时长。调用时必须使用表格中的完整模型名。
+
+
+        ### 模式判定
+
+
+        | 模式 | 传参方式 |
+
+        |------|----------|
+
+        | 文生视频 | 不传 `images`、`videos`、`audios`，或全部传空数组 |
+
+        | 参考内容生成 | 至少传入一项图片、视频或音频参考内容 |
+
+
+        MiniMax H3 的参考素材按“参考内容”使用。应在 `prompt` 中说明每项素材的作用和编号。
+
+
+        ---
+
+
+        ## 请求方式
+
+
+        | 方式 | Content-Type | 参考素材字段 |
+
+        |------|--------------|--------------|
+
+        | JSON | `application/json` | `images`、`videos`、`audios` |
+
+        | 表单 | `multipart/form-data` | 只使用可重复的 `input_reference` |
+
+
+        > 表单没有 `video_reference` 或 `audio_reference` 字段。无论文件类型，均重复使用
+        `input_reference`。
+
+
+        ## 请求头
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | Authorization | string | 是 | `Bearer YOUR_API_KEY` |
+
+        | Content-Type | string | 是 | `application/json` 或 `multipart/form-data`
+        |
+
+
+        ---
+
+
+        ## JSON 请求体说明
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | model | string | 是 | `minimax-h3` 或 `minimax-h3-max` |
+
+        | prompt | string | 是 | 视频生成提示词 |
+
+        | images | string[] | 否 | 图片 URL 或完整 Base64 data URI |
+
+        | videos | string[] | 否 | 可公网访问的视频文件直链 |
+
+        | audios | string[] | 否 | 可公网访问的音频文件直链 |
+
+        | aspect_ratio | string | 否 | 支持 `16:9`、`9:16`、`1:1`、`4:3`、`3:4`、`21:9`
+        |
+
+        | resolution | string | 否 | 输出分辨率，例如 `720p`、`1080p`；可用值以服务端配置为准 |
+
+        | seconds | string | 是 | 输出时长，字符串形式，支持 `"4"`～`"15"` |
+
+
+        ### 参考素材 JSON 结构
+
+
+        ```json
+
+        {
+          "images": [
+            "https://example.com/ref.png"
+          ],
+          "videos": [
+            "https://example.com/ref.mp4"
+          ],
+          "audios": [
+            "https://example.com/ref.mp3"
+          ]
+        }
+
+        ```
+
+
+        数组元素必须直接填写实际 URL。例如应填写 `"https://example.com/ref.png"`，不要填写 Markdown 形式的
+        `[https://...](https://...)`。
+
+
+        ### 素材数量约定
+
+
+        - 图片、视频、音频合计最多 9 项。
+
+        - 多项素材按各自数组中的顺序编号为图片 1、图片 2、视频 1、音频 1 等。
+
+        - 文件数量越多、单个文件越大，上传和生成耗时越长。
+
+
+        ---
+
+
+        ## 表单字段说明
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | model | string | 是 | `minimax-h3` 或 `minimax-h3-max` |
+
+        | prompt | string | 是 | 视频生成提示词 |
+
+        | input_reference | 可重复字段 | 否 | 图片、视频、音频文件或 URL；每项重复传一次 |
+
+        | aspect_ratio | string | 否 | 视频宽高比 |
+
+        | resolution | string | 否 | 输出分辨率，可用值以服务端配置为准 |
+
+        | seconds | string | 是 | 输出时长，支持 4～15 |
+
+
+        ### `input_reference` 的传法
+
+
+        | 方式 | 示例 |
+
+        |------|------|
+
+        | 本地图片 | `-F "input_reference=@/path/to/ref.png"` |
+
+        | 本地视频 | `-F "input_reference=@/path/to/ref.mp4"` |
+
+        | 本地音频 | `-F "input_reference=@/path/to/ref.mp3"` |
+
+        | 公网直链 | `-F "input_reference=https://example.com/ref.png"` |
+
+
+        ---
+
+
+        ## 请求示例
+
+
+        ### 文生视频（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "minimax-h3-max",
+            "prompt": "未来城市的夜晚，无人驾驶跑车穿过雨后的霓虹街道，电影质感",
+            "aspect_ratio": "16:9",
+            "resolution": "720p",
+            "seconds": "10"
+          }'
+        ```
+
+
+        ### 单图参考（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "minimax-h3",
+            "prompt": "以图片 1 中的产品为主体，生成一支简洁的旋转展示广告",
+            "images": [
+              "https://example.com/product.png"
+            ],
+            "aspect_ratio": "16:9",
+            "resolution": "720p",
+            "seconds": "8"
+          }'
+        ```
+
+
+        ### 多图参考（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "minimax-h3",
+            "prompt": "图片 1 是产品，图片 2 是人物，图片 3 是场景；保持主体一致，制作商业广告",
+            "images": [
+              "https://example.com/product.png",
+              "https://example.com/person.png",
+              "https://example.com/scene.png"
+            ],
+            "aspect_ratio": "9:16",
+            "resolution": "720p",
+            "seconds": "10"
+          }'
+        ```
+
+
+        ### 图片、视频和音频组合参考（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "minimax-h3",
+            "prompt": "图片 1 提供产品外观，视频 1 提供镜头运动，音频 1 控制剪辑节奏",
+            "images": [
+              "https://example.com/ref.png"
+            ],
+            "videos": [
+              "https://example.com/ref.mp4"
+            ],
+            "audios": [
+              "https://example.com/ref.mp3"
+            ],
+            "aspect_ratio": "16:9",
+            "resolution": "720p",
+            "seconds": "12"
+          }'
+        ```
+
+
+        ### 图片 + 音频（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "minimax-h3",
+            "prompt": "使用图片 1 的画面主体，全程使用音频 1 作为背景音乐并按节拍转场",
+            "images": [
+              "https://example.com/ref.png"
+            ],
+            "audios": [
+              "https://example.com/ref.mp3"
+            ],
+            "aspect_ratio": "16:9",
+            "seconds": "10"
+          }'
+        ```
+
+
+        ### 本地组合参考文件（表单，仅使用 `input_reference`）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -F "model=minimax-h3" \
+          -F "prompt=图片作为主体参考，视频作为运镜参考，音频作为节奏参考" \
+          -F "input_reference=@/path/to/ref.png" \
+          -F "input_reference=@/path/to/ref.mp4" \
+          -F "input_reference=@/path/to/ref.mp3" \
+          -F "aspect_ratio=16:9" \
+          -F "resolution=720p" \
+          -F "seconds=12"
+        ```
+
+
+        ---
+
+
+        ## 响应参数
+
+
+        完成态视频地址位于顶层 `url` 和 `video_url`，两者值相同。
+
+
+        | 参数名 | 类型 | 说明 |
+
+        |--------|------|------|
+
+        | id | string | 任务 ID |
+
+        | object | string | 固定值 `video` |
+
+        | model | string | 实际使用的模型名称 |
+
+        | status | string | `queued`、`in_progress`、`completed`、`failed` |
+
+        | progress | number | 任务进度，0～100 |
+
+        | created_at | number | 创建时间戳（秒） |
+
+        | completed_at | number | 完成时间戳（秒，仅完成态） |
+
+        | url | string | 视频直链（仅完成态） |
+
+        | video_url | string | 与 `url` 同值（仅完成态） |
+
+        | error | object | 失败信息，通常包含 `code`、`message` |
+
+
+        ### 提交成功
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "minimax-h3",
+          "status": "queued",
+          "progress": 0,
+          "created_at": 1791320000
+        }
+
+        ```
+
+
+        ### 任务完成
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "minimax-h3",
+          "status": "completed",
+          "progress": 100,
+          "created_at": 1791320000,
+          "completed_at": 1791320060,
+          "url": "https://example.com/output.mp4",
+          "video_url": "https://example.com/output.mp4"
+        }
+
+        ```
+
+
+        ### 任务失败
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "minimax-h3",
+          "status": "failed",
+          "progress": 0,
+          "created_at": 1791320000,
+          "error": {
+            "code": "invalid_request",
+            "message": "请求参数不符合模型能力限制"
+          }
+        }
+
+        ```
+
+
+        ---
+
+
+        ## 查询任务状态
+
+
+        `GET /v1/videos/{task_id}`
+
+
+        ```bash
+
+        curl -X GET "https://xxxxx.com/v1/videos/task_xxxxxxxxxxxxx" \
+          -H "Authorization: Bearer YOUR_API_KEY"
+        ```
+
+
+        `queued` / `in_progress` 时继续轮询；`completed` 时读取顶层 `url` 或
+        `video_url`；`failed` 时读取 `error.message`。
+
+
+        ---
+
+
+        ## 注意事项
+
+
+        1. `minimax-h3` 和 `minimax-h3-max` 的 `seconds` 都必须使用字符串，支持 `"4"`～`"15"`。
+
+        2. 文生视频不传参考素材；传入任意参考素材后按参考内容模式处理。
+
+        3. JSON 分别用 `images`、`videos`、`audios`；表单只有可重复的 `input_reference`。
+
+        4. JSON 数组元素只填写实际文件直链或受支持的 data URI，不要填写 Markdown 链接语法。
+
+        5. 图片、视频、音频合计最多 9 项；建议在 `prompt` 中明确每项素材的编号和用途。
+
+        6. URL 必须是无需登录、可直接返回文件内容的公网直链。
+
+        7. 分辨率是否可用取决于具体模型配置；未确认时可不传 `resolution`，使用模型默认值。
+
+        8. 接口为异步接口，提交成功后需轮询任务状态。
+      tags:
+        - 视频生成（Videos）
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: true
+          example: Bearer {{YOUR_API_KEY}}
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: ''
+          required: false
+          example: application/json
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                prompt:
+                  type: string
+                size:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - model
+                - prompt
+                - size
+                - images
+              x-apifox-orders:
+                - model
+                - prompt
+                - size
+                - images
+            example:
+              model: minimax-h3
+              prompt: 图片 1 提供产品外观，视频 1 提供镜头运动，音频 1 控制剪辑节奏
+              images:
+                - https://example.com/ref.png
+              videos:
+                - https://example.com/ref.mp4
+              audios:
+                - https://example.com/ref.mp3
+              aspect_ratio: '16:9'
+              resolution: 720p
+              seconds: '12'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  object:
+                    type: string
+                  model:
+                    type: string
+                  status:
+                    type: string
+                  progress:
+                    type: integer
+                  created_at:
+                    type: integer
+                  completed_at:
+                    type: integer
+                  size:
+                    type: string
+                required:
+                  - id
+                  - object
+                  - model
+                  - status
+                  - progress
+                  - created_at
+                  - completed_at
+                  - size
+                x-apifox-orders:
+                  - id
+                  - object
+                  - model
+                  - status
+                  - progress
+                  - created_at
+                  - completed_at
+                  - size
+              example:
+                id: task_xxxxxxxxxxxxx
+                object: video
+                model: veo_3_1-fast
+                status: completed
+                progress: 100
+                created_at: 1709876543
+                completed_at: 1709876600
+                size: 1920x1080
+          headers: {}
+          x-apifox-name: 成功
+      security: []
+      x-apifox-folder: 视频生成（Videos）
+      x-apifox-status: developing
+      x-run-in-apifox: https://app.apifox.com/web/project/7902379/apis/api-521606932-run
+components:
+  schemas: {}
+  securitySchemes: {}
+servers: []
+security: []
+
+```

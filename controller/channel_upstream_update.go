@@ -18,6 +18,7 @@ import (
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	"github.com/QuantumNous/new-api/relay/channel/advancedcustom"
 	"github.com/QuantumNous/new-api/relay/channel/gemini"
 	"github.com/QuantumNous/new-api/relay/channel/ollama"
@@ -488,7 +489,12 @@ func fetchChannelUpstreamModelsWithDetails(channel *model.Channel) ([]string, an
 // Discovery never executes generation hooks or falls back to meta.models.
 // The channel supplies the origin/key; the plugin only supplies a reviewed path.
 func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) ([]string, error) {
-	if meta.ModelDiscovery == nil {
+	// The six OpenAI-compatible gateways support an authenticated standard
+	// probe even without a documentation declaration. No static IDs are added.
+	discoveryPath := "/v1/models"
+	if meta.ModelDiscovery != nil {
+		discoveryPath = meta.ModelDiscovery.Path
+	} else if !modelconfig.SupportedProvider(meta.Key) {
 		return nil, errors.New("This plugin has no verified upstream model-list endpoint; configure models manually")
 	}
 	if err := jsplugin.ValidateV1Meta(meta); err != nil {
@@ -510,7 +516,7 @@ func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) (
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+meta.ModelDiscovery.Path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+discoveryPath, nil)
 	if err != nil {
 		return nil, errors.New("The channel model discovery address is invalid")
 	}
@@ -656,14 +662,24 @@ func taskPluginDiscoveryDetails(channel *model.Channel, meta jsplugin.Meta, ids 
 	for _, id := range ids {
 		models = append(models, gin.H{"id": id, "adapted": taskPluginAdaptsChannelModel(channel, meta, id), "configured": slices.Contains(channel.GetModels(), id), "pricing_status": "not_checked"})
 	}
-	return gin.H{"source": "upstream", "checked_at": common.GetTimestamp(), "plugin_key": meta.Key, "source_url": meta.ModelDiscovery.SourceURL, "source_sha256": meta.ModelDiscovery.SourceSHA256, "models": models}
+	sourceURL, sourceSHA, method := strings.TrimSuffix(strings.TrimRight(channel.GetBaseURL(), "/"), "/v1")+"/v1/models", "", "standard_openai_probe"
+	if meta.ModelDiscovery != nil {
+		sourceURL = meta.ModelDiscovery.SourceURL
+		sourceSHA = meta.ModelDiscovery.SourceSHA256
+		method = "documented_endpoint"
+		if meta.ModelDiscovery.SourceStatus != "" {
+			method = meta.ModelDiscovery.SourceStatus
+		}
+	}
+	return gin.H{"source": "upstream", "checked_at": common.GetTimestamp(), "plugin_key": meta.Key, "source_url": sourceURL, "source_sha256": sourceSHA, "discovery_method": method, "models": models}
 }
 
 func taskPluginAdaptsChannelModel(channel *model.Channel, meta jsplugin.Meta, name string) bool {
 	// Reuse channel-local mapping and cycle handling, without global canonical
 	// names or another plugin's declarations making an unadapted model eligible.
 	target, err := model.ResolveTaskModelForChannel(nil, channel, name)
-	return err == nil && slices.Contains(meta.Models, target)
+	_, adapted := meta.CanonicalModel(target)
+	return err == nil && adapted
 }
 
 func refreshChannelRuntimeCache() {

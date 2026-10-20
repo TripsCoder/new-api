@@ -17,11 +17,13 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	"github.com/QuantumNous/new-api/relay/channel"
 	"github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	relayconstant "github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/relay/helper"
+	kitdto "github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
 	"github.com/QuantumNous/new-api/types"
@@ -209,6 +211,7 @@ func ApplyOriginTaskAffinity(c *gin.Context, info *relaycommon.RelayInfo) *dto.T
 // 构建/发送/解析上游请求 → 提交后计费调整(AdjustBillingOnSubmit)。
 // 共享控制器编排负责未落库退款、最终额度预留、落库和结算。
 func RelayTaskSubmit(c *gin.Context, info *relaycommon.RelayInfo) (*TaskSubmitResult, *dto.TaskError) {
+	c.Set(modelconfig.ContextKeyUpstreamAttempted, false)
 	info.InitChannelMeta(c)
 
 	// 1. 确定 platform → 创建适配器 → 验证请求
@@ -268,7 +271,35 @@ func RelayTaskSubmit(c *gin.Context, info *relaycommon.RelayInfo) (*TaskSubmitRe
 	if pinnedPlugin.Plugin != nil {
 		pluginKey = pinnedPlugin.Plugin.Meta.Key
 	}
+
+	if pluginKey == "xcmapi_media" && pinnedPlugin.Plugin != nil && modelconfig.ReviewedPluginVersion(pinnedPlugin.Plugin.Meta.Version) {
+		status := service.GetReviewedProviderAvailability(c.Request.Context(), pluginKey).Models[info.UpstreamModelName]
+		if modelconfig.XCMExplicitlyUnavailable(status) {
+			return nil, service.TaskErrorWrapperLocal(errors.New("XCM supplier currently does not accept this model; saved configuration is retained"), "provider_availability_pending", http.StatusServiceUnavailable)
+		}
+	}
 	exprStr, exists := billing_setting.ResolveTaskBillingExpr(pluginKey, modelName, info.UpstreamModelName)
+	if value, present := c.Get(modelconfig.ContextKeyResolvedMode); present {
+		if resolved, ok := value.(modelconfig.ResolvedMode); ok {
+			if resolved.Definition.Billing != nil && resolved.Definition.Billing.Confirmed {
+				exprStr = resolved.Definition.Billing.Expression
+				exists = true
+			}
+			if meter, ok := adaptor.(channel.TaskValidatedUsageFactsProvider); ok {
+				facts, costErr := meter.ExtractUsageFactsValidated(c, info)
+				if costErr != nil {
+					return nil, service.TaskErrorWrapperLocal(costErr, "plugin_usage_invalid", http.StatusBadRequest)
+				}
+				snapshot, costErr := modelconfig.FreezeUpstreamCost(resolved, facts)
+				if costErr != nil {
+					return nil, service.TaskErrorWrapperLocal(costErr, "model_price_error", http.StatusBadRequest)
+				}
+				c.Set(modelconfig.ContextKeyUpstreamCost, snapshot)
+			} else if resolved.Definition.Cost.Confirmed {
+				return nil, service.TaskErrorWrapperLocal(errors.New("account cost usage meter is unavailable"), "model_price_error", http.StatusBadRequest)
+			}
+		}
+	}
 	useTiered := exists || billing_setting.GetBillingMode(modelName) == billing_setting.BillingModeTieredExpr
 	if useTiered {
 		provider, supported := adaptor.(channel.TaskUsageFactsProvider)
@@ -294,7 +325,7 @@ func RelayTaskSubmit(c *gin.Context, info *relaycommon.RelayInfo) (*TaskSubmitRe
 		} else {
 			facts = provider.ExtractUsageFacts(c, info)
 		}
-		cost, trace, runErr := billingexpr.RunExprWithRequest(exprStr, billingexpr.TokenParams{}, billingexpr.RequestInput{Usage: facts})
+		cost, trace, runErr := billingexpr.RunExprWithRequest(exprStr, billingexpr.TokenParams{}, billingexpr.RequestInput{Usage: facts, PricingTimestamp: c.GetInt64(modelconfig.ContextKeyPricingTime)})
 		if runErr != nil || cost < 0 {
 			if runErr == nil {
 				runErr = fmt.Errorf("negative task expression result")
@@ -305,7 +336,7 @@ func RelayTaskSubmit(c *gin.Context, info *relaycommon.RelayInfo) (*TaskSubmitRe
 		quota, clamp := common.QuotaRoundChecked(cost * common.QuotaPerUnit * groupRatioInfo.GroupRatio)
 		noteTaskQuotaClamp(info, clamp)
 		priceData = types.PriceData{Quota: quota, QuotaToPreConsume: quota, GroupRatioInfo: groupRatioInfo}
-		info.TieredBillingSnapshot = &billingexpr.BillingSnapshot{BillingMode: billing_setting.BillingModeTieredExpr, ModelName: modelName, ExprString: exprStr, ExprHash: billingexpr.ExprHashString(exprStr), GroupRatio: groupRatioInfo.GroupRatio, EstimatedQuotaBeforeGroup: cost * common.QuotaPerUnit, EstimatedQuotaAfterGroup: quota, EstimatedTier: trace.MatchedTier, QuotaPerUnit: common.QuotaPerUnit, ExprVersion: billingexpr.ExprVersion(exprStr), TaskUsageBilling: true, UsageFacts: facts}
+		info.TieredBillingSnapshot = &billingexpr.BillingSnapshot{PricingTimestamp: c.GetInt64(modelconfig.ContextKeyPricingTime), BillingMode: billing_setting.BillingModeTieredExpr, ModelName: modelName, ExprString: exprStr, ExprHash: billingexpr.ExprHashString(exprStr), GroupRatio: groupRatioInfo.GroupRatio, EstimatedQuotaBeforeGroup: cost * common.QuotaPerUnit, EstimatedQuotaAfterGroup: quota, EstimatedTier: trace.MatchedTier, QuotaPerUnit: common.QuotaPerUnit, ExprVersion: billingexpr.ExprVersion(exprStr), TaskUsageBilling: true, UsageFacts: facts}
 	} else {
 		priceData, err = helper.ModelPriceHelperPerCall(c, info)
 		if err != nil {
@@ -343,6 +374,18 @@ func RelayTaskSubmit(c *gin.Context, info *relaycommon.RelayInfo) (*TaskSubmitRe
 	}
 
 	// 7. 预扣费（仅首次 — 重试时 info.Billing 已存在，跳过）
+
+	if value, exists := c.Get(modelconfig.ContextKeyTestBudget); exists {
+		budget, ok := value.(modelconfig.TestCallBudget)
+		if !ok {
+			return nil, service.TaskErrorWrapperLocal(errors.New("invalid real call estimate limit"), "test_budget_invalid", http.StatusBadRequest)
+		}
+		costValue, _ := c.Get(modelconfig.ContextKeyUpstreamCost)
+		cost, _ := costValue.(*modelconfig.CostSnapshot)
+		if err := budget.Check(float64(info.PriceData.Quota)/common.QuotaPerUnit, cost); err != nil {
+			return nil, service.TaskErrorWrapperLocal(err, "test_budget_exceeded", http.StatusBadRequest)
+		}
+	}
 	if info.Billing == nil && !info.PriceData.FreeModel {
 		info.ForcePreConsume = true
 		if apiErr := service.PreConsumeBilling(c, info.PriceData.Quota, info); apiErr != nil {
@@ -357,6 +400,7 @@ func RelayTaskSubmit(c *gin.Context, info *relaycommon.RelayInfo) (*TaskSubmitRe
 	}
 
 	// 9. 发送请求
+	c.Set(modelconfig.ContextKeyUpstreamAttempted, true)
 	resp, err := adaptor.DoRequest(c, info, requestBody)
 	if err != nil {
 		return nil, service.TaskErrorWrapper(err, "do_request_failed", http.StatusInternalServerError)
@@ -369,7 +413,14 @@ func RelayTaskSubmit(c *gin.Context, info *relaycommon.RelayInfo) (*TaskSubmitRe
 	// or 202 Accepted, and parseSubmitResponse receives the exact status code.
 	if resp.StatusCode/100 != 2 {
 		responseBody, _ := io.ReadAll(resp.Body)
-		return nil, service.TaskErrorWrapper(fmt.Errorf("%s", string(responseBody)), "fail_to_fetch_task", resp.StatusCode)
+		message := string(responseBody)
+		if modelconfig.SupportedProvider(pluginKey) && resp.StatusCode >= 400 && resp.StatusCode < 500 {
+			var upstreamError kitdto.GeneralErrorResponse
+			if common.Unmarshal(responseBody, &upstreamError) == nil && upstreamError.ToMessage() != "" {
+				message = common.MaskSensitiveInfo(upstreamError.ToMessage())
+			}
+		}
+		return nil, service.TaskErrorWrapper(errors.New(message), "fail_to_fetch_task", resp.StatusCode)
 	}
 
 	// 10. Parse only. The controller presents the response after the durable
@@ -508,7 +559,7 @@ func videoFetchByIDRespBodyBuilder(c *gin.Context) (respBody []byte, taskResp *d
 
 	// OpenAI Video API 格式: 走各 adaptor 的 ConvertToOpenAIVideo
 	if isOpenAIVideoAPI {
-		adaptor := GetTaskAdaptor(originTask.Platform)
+		adaptor := GetTaskAdaptorForTask(originTask)
 		if adaptor == nil {
 			taskResp = service.TaskErrorWrapperLocal(fmt.Errorf("invalid channel id: %d", originTask.ChannelId), "invalid_channel_id", http.StatusBadRequest)
 			return

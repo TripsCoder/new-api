@@ -8,9 +8,11 @@ import (
 )
 
 type RequestInput struct {
-	Headers map[string]string
-	Body    []byte
-	Usage   map[string]any
+	// PricingTimestamp freezes optional request-time rules; zero preserves legacy evaluation time.
+	PricingTimestamp int64
+	Headers          map[string]string
+	Body             []byte
+	Usage            map[string]any
 	// ImageCount is a validated billing quantity, separate from the frozen
 	// request's n. Settlement can replace it with the actual returned count.
 	ImageCount *int
@@ -62,6 +64,7 @@ type TraceResult struct {
 // auto-group retry and settlement. It is fully serializable and contains no
 // compiled program pointers.
 type BillingSnapshot struct {
+	PricingTimestamp          int64          `json:"pricing_timestamp,omitempty"`
 	EstimatedImageCount       *int           `json:"estimated_image_count,omitempty"`
 	BillingMode               string         `json:"billing_mode"`
 	ModelName                 string         `json:"model_name"`

@@ -352,3 +352,14 @@ test('lxmone audio duration input is model-scoped, one-to-one and finite positiv
   ctx.model = ctx.upstreamModel = ctx.requestBody.input.model = 'seedance2.5';
   assert.throws(() => plugin.buildSubmitRequest(ctx), /unsupported field: audio_durations/);
 });
+
+test('six-provider decoding permits channel aliases but final request validation still rejects unmapped fields',()=>{
+ const key='paisio_media',p=profiles[key];
+ const model=Object.keys(p.models).find(name=>p.models[name].kind==='image');
+ const plugin=loadRuntime(key);
+ const decoded=plugin.protocols.openai_image.decodeRequest({model,operation:'generate',body:{kind:'json',value:{model,custom_prompt:'fixture'}}});
+ const ctx=requestContext(model);ctx.requestBody=decoded.requestBody;
+ assert.throws(()=>plugin.buildSubmitRequest(ctx),/unsupported field/);
+ ctx.requestBody.input.prompt=ctx.requestBody.input.custom_prompt;delete ctx.requestBody.input.custom_prompt;
+ assert.equal(plugin.buildSubmitRequest(ctx).body.prompt,'fixture');
+});

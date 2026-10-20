@@ -1,0 +1,721 @@
+{
+  "submit": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/contents/generations/tasks": {
+        "post": {
+          "summary": "提交视频生成任务（兼容格式）",
+          "deprecated": false,
+          "description": "与 POST /v1/videos 完全相同，兼容即梦/豆包格式。请求体和响应格式一致。\n",
+          "operationId": "submitVideoCompat",
+          "tags": [
+            "视频生成",
+            "视频生成"
+          ],
+          "parameters": [],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "任务提交成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/VideoSubmitResponse"
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "视频生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-483061436-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "VideoRequest": {
+          "type": "object",
+          "required": [
+            "model",
+            "prompt"
+          ],
+          "properties": {
+            "model": {
+              "type": "string",
+              "description": "视频模型名称。\n\n## 按秒计费模型（费用 = 单价 × 时长秒数）\n| 模型 | 单价（🔥/秒） | 说明 |\n|------|-------------|------|\n| video-fast-480p | 0.32 | 快速生成 480p |\n| video-fast-720p | 0.47 | 快速生成 720p |\n| video-pro-480p | 0.39 | 高质量 480p |\n| video-pro-720p | 0.56 | 高质量 720p |\n| video-pro-1080p | 0.85 | 高质量 1080p |\n| video1-pro-480p | 0.41 | Pro加速 480p |\n| video1-pro-720p | 0.56 | Pro加速 720p |\n| video1-pro-1080p | 0.86 | Pro加速 1080p |\n| video-pro-4K | 1.85 | 超高清 4K |\n| video1-fast-720 | 0.47 | Fast加速 720p |\n| sd2-fast-pro | 0.25 | 极速 Pro（仅10/15秒） |\n| sd2-pro | 0.31 | Pro版（仅10/15秒） |\n\n## 按次计费模型（固定费用）\n| 模型 | 单价（🔥/次） | 说明 |\n|------|-------------|------|\n| seedance-2-fast | 5.5 | 快速版 |\n| seedance-2 | 7 | 标准版 |\n| seedance-2-pro-1080p | 12 | 1080p 高清版 |\n| grok-imagine-video-1.5 | 0.35 | Grok 图生视频，1-15秒，**必须传参考图**，仅支持1张 |\n| grok-imagine-video-1.5-fast | 0.28 | Grok 文/图生视频（快速），仅支持6或10秒，最多7张参考图 |",
+              "enum": [
+                "video-fast-480p",
+                "video-fast-720p",
+                "video-pro-480p",
+                "video-pro-720p",
+                "video-pro-1080p",
+                "video1-pro-480p",
+                "video1-pro-720p",
+                "video1-pro-1080p",
+                "video-pro-4K",
+                "video1-fast-720",
+                "sd2-fast-pro",
+                "sd2-pro",
+                "seedance-2-fast",
+                "seedance-2",
+                "seedance-2-pro-1080p",
+                "grok-imagine-video-1.5",
+                "grok-imagine-video-1.5-fast"
+              ]
+            },
+            "prompt": {
+              "type": "string",
+              "description": "视频描述提示词，最多 2500 字符。\n\n引用素材时在文本中插入占位符：@Image1~@Image9、@Video1~@Video3、@Audio1~@Audio3。"
+            },
+            "duration": {
+              "type": "integer",
+              "description": "视频时长（秒）。不同模型支持的范围不同，详见模型说明。",
+              "default": 6
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "description": "画面比例。支持：16:9、9:16、1:1、21:9、3:4、4:3",
+              "default": "16:9"
+            },
+            "image_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "首帧图片或参考图片的 URL（图生视频时必填）。必须为公网可访问的 HTTPS 链接。"
+            },
+            "extra_images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "description": "额外参考图片 URL 数组，最多 9 张。在 prompt 中用 @Image2~@Image9 引用。"
+            },
+            "extra_videos": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "description": "参考视频 URL 数组，最多 3 个。在 prompt 中用 @Video1~@Video3 引用。"
+            },
+            "extra_audios": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "description": "参考音频 URL 数组，最多 3 个。在 prompt 中用 @Audio1~@Audio3 引用。"
+            }
+          },
+          "x-apifox-orders": [
+            "model",
+            "prompt",
+            "duration",
+            "aspect_ratio",
+            "image_url",
+            "extra_images",
+            "extra_videos",
+            "extra_audios"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        },
+        "VideoSubmitResponse": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "任务ID，用于轮询状态",
+              "examples": [
+                "task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending"
+              ],
+              "examples": [
+                "pending"
+              ]
+            },
+            "model": {
+              "type": "string",
+              "examples": [
+                "sd2-720p"
+              ]
+            }
+          },
+          "x-apifox-orders": [
+            "task_id",
+            "status",
+            "model"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        }
+      },
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "query": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/contents/generations/tasks/{task_id}": {
+        "get": {
+          "summary": "查询视频任务状态（兼容格式）",
+          "deprecated": false,
+          "description": "与 GET /v1/videos/{task_id} 完全相同，兼容即梦/豆包格式。",
+          "operationId": "getVideoStatusCompat",
+          "tags": [
+            "视频生成",
+            "视频生成"
+          ],
+          "parameters": [
+            {
+              "name": "task_id",
+              "in": "path",
+              "description": "",
+              "required": true,
+              "example": "",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "任务状态",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/VideoStatusResponse"
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "视频生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-483061437-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "VideoStatusResponse": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "completed",
+                "failed"
+              ],
+              "description": "pending→processing→completed/failed"
+            },
+            "progress": {
+              "type": "integer",
+              "description": "进度百分比 0-100",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "video_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "视频下载URL（仅 completed 时存在），CDN地址无需鉴权，有效期约24小时"
+            },
+            "cost": {
+              "type": "number",
+              "description": "实际扣费金额（¥），仅 completed 时返回",
+              "examples": [
+                2.9
+              ]
+            },
+            "error": {
+              "type": "object",
+              "description": "错误信息（仅 failed 时存在），失败已自动全额退款",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              },
+              "x-apifox-orders": [
+                "message"
+              ],
+              "x-apifox-ignore-properties": []
+            }
+          },
+          "x-apifox-orders": [
+            "task_id",
+            "status",
+            "progress",
+            "video_url",
+            "cost",
+            "error"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        }
+      },
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "pathVariant": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/contents/{model}:videoGenerate": {
+        "post": {
+          "summary": "提交视频生成（即梦/豆包兼容格式）",
+          "deprecated": false,
+          "description": "兼容即梦/豆包格式的视频生成接口，功能与 POST /v1/videos 相同。model 通过路径参数指定。",
+          "operationId": "createVideoCompat",
+          "tags": [
+            "视频生成",
+            "视频生成"
+          ],
+          "parameters": [
+            {
+              "name": "model",
+              "in": "path",
+              "description": "模型名称",
+              "required": true,
+              "example": "video-pro-720p",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "prompt": {
+                      "type": "string",
+                      "description": "视频描述"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "minimum": 4,
+                      "maximum": 15
+                    },
+                    "aspect_ratio": {
+                      "type": "string",
+                      "enum": [
+                        "16:9",
+                        "9:16",
+                        "1:1",
+                        "21:9",
+                        "3:4",
+                        "4:3"
+                      ]
+                    },
+                    "image_url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "prompt"
+                  ],
+                  "x-apifox-orders": [
+                    "prompt",
+                    "duration",
+                    "aspect_ratio",
+                    "image_url"
+                  ],
+                  "x-apifox-ignore-properties": []
+                },
+                "example": {
+                  "prompt": "城市夜景延时摄影，车流如光带",
+                  "duration": 8,
+                  "aspect_ratio": "16:9"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "任务提交成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/VideoTaskCreated"
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ],
+                        "x-apifox-orders": [
+                          "code",
+                          "message"
+                        ],
+                        "x-apifox-ignore-properties": []
+                      }
+                    },
+                    "x-apifox-orders": [
+                      "error"
+                    ],
+                    "x-apifox-ignore-properties": []
+                  },
+                  "example": {
+                    "error": {
+                      "code": "INVALID_RATIO",
+                      "message": "不支持的宽高比"
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "BadRequest"
+            },
+            "401": {
+              "description": "认证失败",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "example": {
+                    "error": {
+                      "code": "INVALID_TOKEN",
+                      "message": "无效的认证令牌"
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "Unauthorized"
+            },
+            "402": {
+              "description": "余额不足",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ],
+                        "x-apifox-orders": [
+                          "code",
+                          "message"
+                        ],
+                        "x-apifox-ignore-properties": []
+                      }
+                    },
+                    "x-apifox-orders": [
+                      "error"
+                    ],
+                    "x-apifox-ignore-properties": []
+                  },
+                  "example": {
+                    "error": {
+                      "code": "INSUFFICIENT_BALANCE",
+                      "message": "余额不足，请充值后重试"
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "InsufficientBalance"
+            },
+            "429": {
+              "description": "请求频率超限",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "example": {
+                    "error": {
+                      "code": "RATE_LIMIT",
+                      "message": "请求过于频繁，请稍后重试"
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "RateLimited"
+            },
+            "500": {
+              "description": "服务不可用",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ],
+                        "x-apifox-orders": [
+                          "code",
+                          "message"
+                        ],
+                        "x-apifox-ignore-properties": []
+                      }
+                    },
+                    "x-apifox-orders": [
+                      "error"
+                    ],
+                    "x-apifox-ignore-properties": []
+                  },
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "服务暂时不可用"
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "ServerError"
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "视频生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-491861720-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "VideoTaskCreated": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "任务 ID",
+              "examples": [
+                "task_abc123def456"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending"
+              ],
+              "examples": [
+                "pending"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "examples": [
+                "任务已提交，请轮询状态接口获取结果"
+              ]
+            }
+          },
+          "x-apifox-orders": [
+            "task_id",
+            "status",
+            "message"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        },
+        "ErrorResponse": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "错误码",
+                  "enum": [
+                    "UNAUTHORIZED",
+                    "INVALID_REQUEST",
+                    "FILE_TOO_LARGE",
+                    "UNSUPPORTED_FORMAT",
+                    "UPLOAD_FAILED"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "description": "错误描述"
+                }
+              },
+              "required": [
+                "code",
+                "message"
+              ],
+              "x-apifox-orders": [
+                "code",
+                "message"
+              ],
+              "x-apifox-ignore-properties": []
+            }
+          },
+          "required": [
+            "error"
+          ],
+          "x-apifox-orders": [
+            "error"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        }
+      },
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "reviewedModelUnits": {
+    "video-fast-480p": "seconds",
+    "video-fast-720p": "seconds",
+    "video-pro-480p": "seconds",
+    "video-pro-720p": "seconds",
+    "video-pro-1080p": "seconds",
+    "video1-pro-480p": "seconds",
+    "video1-pro-720p": "seconds",
+    "video1-pro-1080p": "seconds",
+    "video-pro-4K": "seconds",
+    "video1-fast-720": "seconds",
+    "sd2-fast-pro": "seconds",
+    "sd2-pro": "seconds",
+    "seedance-2-fast": "request_count",
+    "seedance-2": "request_count",
+    "seedance-2-pro-1080p": "request_count",
+    "grok-imagine-video-1.5": "request_count",
+    "grok-imagine-video-1.5-fast": "request_count"
+  }
+}

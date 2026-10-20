@@ -1,0 +1,1788 @@
+{
+  "16-6l0ket291i.apifox.cn-424653897e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos": {
+        "post": {
+          "summary": "veo创建",
+          "deprecated": false,
+          "description": "# Veo视频生成接口文档\n\n## 接口地址\n`POST /v1/videos`\n\n## 功能说明\n支持 Veo 模型的文生视频和图生视频，图生视频支持两种模式：\n- **文生视频**：使用 `veo_3_1-fast` 模型\n- **图生视频首尾帧模式**：使用 `veo_3_1-fast-fl` 模型，支持 1～2 张图片作为首尾帧\n- **图生视频参考图模式**：使用 `veo_3_1-fast` 模型，支持最多 3 张参考图片\n\n## 可用模型列表\n\nVeo 模型按**画质档位**（标准 / 高清 hd / 4K）与**速度档位**（高质量 / fast 快速 / lite 轻量）组合，并区分**文生 / 参考图**模式与**首尾帧（`-fl`）**模式：\n\n| 模型名称 | 系列 | 画质档位 | 模式 |\n|----------|------|----------|------|\n| `veo_3_1` | 高质量 | 标准 | 文生 / 参考图 |\n| `veo_3_1-fl` | 高质量 | 标准 | 首尾帧 |\n| `veo_3_1-hd` | 高质量 | 高清 | 文生 / 参考图 |\n| `veo_3_1-hd-fl` | 高质量 | 高清 | 首尾帧 |\n| `veo_3_1-4K` | 高质量 | 4K | 文生 / 参考图 |\n| `veo_3_1-4K-fl` | 高质量 | 4K | 首尾帧 |\n| `veo_3_1-fast` | 快速 | 标准 | 文生 / 参考图 |\n| `veo_3_1-fast-fl` | 快速 | 标准 | 首尾帧 |\n| `veo_3_1-fast-hd` | 快速 | 高清 | 文生 / 参考图 |\n| `veo_3_1-fast-fl-hd` | 快速 | 高清 | 首尾帧 |\n| `veo_3_1-fast-4K` | 快速 | 4K | 文生 / 参考图 |\n| `veo_3_1-fast-4K-fl` | 快速 | 4K | 首尾帧 |\n| `veo_3_1-lite` | 轻量 | 标准 | 文生 / 参考图 |\n| `veo_3_1-lite-fl` | 轻量 | 标准 | 首尾帧 |\n| `veo_3_1-lite-hd` | 轻量 | 高清 | 文生 / 参考图 |\n| `veo_3_1-lite-hd-fl` | 轻量 | 高清 | 首尾帧 |\n| `veo_3_1-lite-4K` | 轻量 | 4K | 文生 / 参考图 |\n| `veo_3_1-lite-4K-fl` | 轻量 | 4K | 首尾帧 |\n\n> **关于模型可用性的说明**：以上为模型全集，但**实际可调用的模型会随平台风控策略与上游资源情况动态调整**。在内容安全审核收紧（封控）或上游算力 / 资源紧张时，平台可能**临时只开放其中部分模型**，其余模型会被下线或返回不可用错误，待限制解除后再恢复开放。因此：\n> - 调用前建议先确认当前实际开放的模型范围，不要假设文档列出的所有模型均可直接使用；\n> - 如请求中指定的 `model` 当前未开放，接口会返回相应错误，此时可改用其他档位（如将 `hd`/`4K` 降级为标准档，或将 `veo_3_1`/`fast` 切换为 `lite`）重试；\n> - 长期集成建议做好\"模型不可用\"的错误处理与备选模型降级逻辑，避免因临时限流影响业务连续性。\n\n## 请求方式\n\n支持两种方式，**任选其一**：\n\n| 方式 | Content-Type | 图生视频时的图片字段 |\n|------|----------------|----------------------|\n| **multipart/form-data** | `multipart/form-data` | 使用 **`input_reference`**（可重复字段，每张图一个字段），见下文「表单字段说明」 |\n| **application/json** | `application/json` | 必须使用 **`images`**（字符串数组，**每项对应一张图**）；**每张图的取值类型与表单 `input_reference` 一致**（图片 URL、Base64 data URI；本地文件见下）。**不得**在 JSON 中使用 `input_reference` / `input_reference` |\n\n说明：除**字段名与结构**不同（表单为重复的 `input_reference`，JSON 为 `images` 数组）外，**单张图的传法与校验规则与表单相同**。文生视频用 JSON 时不传 `images` 或传空数组 `[]` 即可。\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | `Bearer YOUR_API_KEY` |\n| Content-Type | string | 是 | `multipart/form-data` 或 `application/json`，须与请求体一致 |\n\n## 表单字段说明\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | 模型名称：文生 `veo_3_1-fast`；首尾帧 `veo_3_1-fast-fl`；参考图 `veo_3_1-fast` |\n| prompt | string | 是 | 文本提示词 |\n| size | string | 否 | 视频尺寸，格式 `widthxheight`，如 `1280x720`、`1920x1080`（详见文末说明） |\n| input_reference | 可重复 | 否 | 图生视频时传递，**同一字段名可重复多次**，每次对应一张图。支持三种取值方式见下表。文生视频不携带本字段即可。 |\n\n### `input_reference` 的三种传法\n\n| 方式 | 说明 |\n|------|------|\n| **本地文件** | multipart 里以文件部件提交，例如 curl 的 `-F \"input_reference=@/path/to/image.jpg\"` |\n| **图片 URL** | 以普通表单文本提交**可公网访问的图片直链**，例如 `-F \"input_reference=https://example.com/a.png\"`（勿传需登录的短链页面） |\n| **Base64** |  以文本字段提交完整 data URI，例如 `-F \"input_reference=data:image/jpeg;base64,/9j/4AAQSkZJRg...\"` 。多图则多个 `-F \"input_reference=...\"`，注意 shell 中转义与长度限制。 |\n\nJSON 请求中对应写法见下文 **`images` 每项取值**表：每张图一个数组元素，取值规则与上表一致。\n\n**顺序约定**：\n- **首尾帧模式**：第 1 个 `input_reference` 为首帧，第 2 个为尾帧；仅 1 个时表示只指定首帧。\n- **参考图模式**：最多 3 个 `input_reference`，顺序为参考图 1、2、3。\n\n---\n\n## JSON 请求体说明（`application/json`）\n\n### `images` 每项取值（与表单「单张图」规则一致）\n\n| 方式 | 表单 `input_reference` | JSON `images` 数组元素 |\n|------|---------------------------|-------------------------|\n| **本地文件** | multipart 中以文件部件上传，例如 `-F \"input_reference=@/path/to/image.jpg\"` | 请求体为纯 JSON 时无法附带文件部件；请将文件**读成字节后编码为完整 data URI 字符串**写入 `images`，与表单以**文本**提交 Base64 的方式等价 |\n| **图片 URL** | 表单文本：`-F \"input_reference=https://...\"` | 同左：字符串为**可公网访问的图片直链** |\n| **Base64** | 表单文本：`-F \"input_reference=data:image/jpeg;base64,...\"` | 同左：字符串为完整 **`data:image/...;base64,...`** |\n\n多图 = 数组多个元素，**顺序约定与表单相同**（首尾帧：第 1、2 张为首尾；参考图：最多 3 张）。\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | 与表单一致：文生 `veo_3_1-fast`；首尾帧 `veo_3_1-fast-fl`；参考图 `veo_3_1-fast`（若网关另有 slug 以实际为准） |\n| prompt | string | 是 | 文本提示词 |\n| size | string | 否 | 视频尺寸，格式 `widthxheight`，如 `1280x720` |\n| images | string[] | 否 | **图生视频必填**（有图时）：每项为**一张图**，取值见上表（URL / data URI 等，规则同表单）。**禁止使用** `input_reference`、`input_reference` 传图。文生视频不传本字段或 `[]`。 |\n\n### JSON 示例 · 图生视频 · 首尾帧（URL 列表）"
+        }
+      }
+    }
+  },
+  "17-6l0ket291i.apifox.cn-462450037e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos": {
+        "post": {
+          "summary": "Omni创建",
+          "deprecated": false,
+          "description": "# Omni 视频生成接口文档\n\n## 接口地址\n`POST /v1/videos`\n\n## 功能说明\n\n支持 Omni 系列模型的文生视频、图生视频和视频修改：\n\n- **文生视频**：不传图片，仅用提示词生成，使用 `omni_flash-10s`\n- **图生视频（首尾帧模式）**：使用 `omni_flash-10s-fl`，支持 1～2 张图片作为首尾帧\n- **图生视频（参考图模式）**：使用 `omni_flash-10s`，支持最多 **7 张**参考图片\n- **视频修改**：将视频文件或视频 URL 通过图片字段传入（表单用 `input_reference` 传文件，JSON 用 `images` 传 URL），配合提示词对视频进行修改\n\n### 当前可用模型\n\n当前接口模型对应官方 **Gemini Omni Flash 1.1**（官方模型名 `gemini-omni-1.1-flash`）：\n\n| 模型名 | 时长 | 分辨率 | 说明 |\n|--------|------|--------|------|\n| `omni_flash-10s` | 10s | 720p | 文生 / 参考图 / 视频修改，横竖屏均支持 |\n| `omni_flash-10s-fl` | 10s | 720p | 首尾帧，横竖屏均支持 |\n\n> 后续将陆续新增更多档位（更高分辨率、更长时长等），字段用法不变。\n\n---\n\n## 请求方式\n\n支持两种方式，**任选其一**：\n\n| 方式 | Content-Type | 图生视频时的图片字段 |\n|------|--------------|----------------------|\n| **multipart/form-data** | `multipart/form-data` | 使用 **`input_reference`**（可重复字段，每张图一个字段） |\n| **application/json** | `application/json` | 使用 **`images`**（字符串数组，每项对应一张图）；**不得**在 JSON 中使用 `input_reference` |\n\n---\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | `Bearer YOUR_API_KEY` |\n| Content-Type | string | 是 | `multipart/form-data` 或 `application/json`，须与请求体一致 |\n\n---\n\n## 表单字段说明\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | 模型名称：文生 / 参考图 / 视频修改用 `omni_flash-10s`；首尾帧用 `omni_flash-10s-fl` |\n| prompt | string | 是 | 文本提示词 |\n| size | string | 否 | 视频尺寸，固定枚举：`1280x720`（横屏）、`720x1280`（竖屏） |\n| input_reference | 可重复 | 否 | 图生视频或视频修改时传递，**同一字段名可重复多次**，每次对应一张图或一个视频文件。文生视频不传本字段。**传视频文件时**，以本地文件方式提交视频，配合提示词对其进行修改。 |\n\n### `input_reference` 的传法\n\n| 方式 | 说明 |\n|------|------|\n| **本地文件（图片）** | multipart 里以文件部件提交，例如 `-F \"input_reference=@/path/to/image.jpg\"` |\n| **本地文件（视频）** | multipart 里以文件部件提交视频，例如 `-F \"input_reference=@/path/to/video.mp4\"` |\n| **图片 URL** | 以普通表单文本提交**可公网访问的图片直链**，例如 `-F \"input_reference=https://example.com/a.png\"`（勿传需登录的短链页面） |\n| **Base64** | 以文本字段提交完整 data URI，例如 `-F \"input_reference=data:image/jpeg;base64,/9j/4AAQSkZJRg...\"` |\n\n> 传入图片 URL 时，网关会自动将其下载并转为 Base64 后发给上游，请确保 URL 为**可公网访问的图片直链**。\n\n**顺序约定**：\n- **首尾帧模式**：第 1 个 `input_reference` 为首帧，第 2 个为尾帧；仅 1 个时表示只指定首帧。\n- **参考图模式**：按传入顺序作为参考图 1、2……7，最多 7 张。\n\n---\n\n## JSON 请求体说明（`application/json`）\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | 与表单一致：文生 / 参考图 / 视频修改用 `omni_flash-10s`；首尾帧用 `omni_flash-10s-fl` |\n| prompt | string | 是 | 文本提示词 |\n| size | string | 否 | 视频尺寸，固定枚举：`1280x720`（横屏）、`720x1280`（竖屏） |\n| images | string[] | 否 | **图生视频或视频修改时传**：每项为一张图或一个视频（URL / Base64 data URI）。首尾帧 1～2 项；参考图最多 7 项。**修改视频时传视频 URL**（不支持直接传视频文件，须使用可公网访问的视频直链）。文生视频不传或传 `[]`。**禁止使用** `input_reference`。多图顺序约定与表单相同（首尾帧：第 1、2 张为首尾；参考图：最多 7 张）。 |\n\n### `images` 每项取值\n\n| 方式 | JSON `images` 数组元素 |\n|------|------------------------|\n| **图片 URL** | `\"https://example.com/a.png\"`（须为可公网访问的图片直链） |\n| **视频 URL** | `\"https://example.com/video.mp4\"`（须为可公网访问的视频直链，用于视频修改） |\n| **Base64** | `\"data:image/jpeg;base64,/9j/4AAQSkZJRg...\"`（完整 data URI） |\n| **本地文件** | JSON 无法直接附带文件，请先读取为字节后编码为 data URI 字符串写入 `images`；**视频修改建议改用表单方式传本地视频文件** |\n\n---\n\n## 请求示例\n\n### 文生视频（JSON）"
+        }
+      }
+    }
+  },
+  "18-6l0ket291i.apifox.cn-521606507e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos": {
+        "post": {
+          "summary": "Grok创建",
+          "deprecated": false,
+          "description": "# Grok 视频生成接口文档\n\n## 接口地址\n\n`POST /v1/videos`\n\n## 功能说明\n\n支持 Grok Imagine Video 1.5 系列模型的文生视频、首帧/首尾帧视频和多参考内容视频生成。\n\n### 当前可用模型与能力\n\n| 模型名 | 文生视频 | 首帧/首尾帧 | 多参考图 | 时长说明 |\n|--------|----------|-------------|----------|----------|\n| `grok-imagine-video-1.5` | 支持 | 支持首帧和首尾帧 | 最多 7 张图片 | 4～15 秒 |\n| `grok-imagine-video-1.5-fast` | 支持 | 支持首帧，最长 15 秒 | 支持；多图模式最长 10 秒 | 4～15 秒，受模式限制 |\n| `grok-imagine-video-1.5-lite` | 支持 | 支持首帧，最长 15 秒 | **不支持多图** | 4～15 秒，受模式限制 |\n\n> `fast` 和 `lite` 的首帧模式只传 1 张图片并设置 `first_last_frame: true`。标准版传 2 张图片时可作为首尾帧。Lite 不支持多图输入。\n\n### 模式判定\n\n| 模式 | 传参方式 |\n|------|----------|\n| 文生视频 | 不传 `images`，也可传空数组 `[]` |\n| 首帧 | `images` 传 1 张图片，并传 `first_last_frame: true` |\n| 首尾帧 | 仅标准版支持；`images` 依次传首帧、尾帧，并传 `first_last_frame: true` |\n| 参考模式 | 传入参考素材，且不传 `first_last_frame` 或传 `false` |\n\n`first_last_frame` 只决定图片是首/尾帧还是普通参考图：\n\n- `true`：首帧或首尾帧模式；第 1 张图是首帧，第 2 张图是尾帧。\n- `false` 或不传：参考模式；图片按传入顺序作为参考内容。\n\n---\n\n## 请求方式\n\n支持以下两种方式，任选其一：\n\n| 方式 | Content-Type | 参考素材字段 |\n|------|--------------|--------------|\n| JSON | `application/json` | 图片使用 `images` |\n| 表单 | `multipart/form-data` | 本地图片或图片 URL 使用可重复的 `input_reference` 字段 |\n\n> Grok 接口只接收图片参考内容。不要把 Markdown 链接（例如 `[图片](https://...)`）原样写入数组，只填写实际的 `https://...` 图片直链。\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | `Bearer YOUR_API_KEY` |\n| Content-Type | string | 是 | `application/json` 或 `multipart/form-data`，须与请求体一致 |\n\n---\n\n## JSON 请求体说明\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | Grok 模型名称，见上方模型表 |\n| prompt | string | 是 | 视频生成提示词 |\n| images | string[] | 否 | 图片 URL 或完整 Base64 data URI；文生视频不传或传 `[]` |\n| aspect_ratio | string | 否 | 视频宽高比，例如 `16:9`、`9:16`、`21:9` |\n| resolution | string | 否 | 输出分辨率，例如 `720p`；可用值以模型服务端配置为准 |\n| seconds | string | 是 | 输出时长，字符串形式，如 `\"9\"`；范围 4～15 |\n| first_last_frame | boolean | 否 | `true` 表示首帧/首尾帧模式；不传或 `false` 表示参考模式 |\n\n### 参考素材格式\n"
+        }
+      }
+    }
+  },
+  "19-6l0ket291i.apifox.cn-521606855e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos": {
+        "post": {
+          "summary": "Seedance创建",
+          "deprecated": false,
+          "description": "# Seedance 视频生成接口文档\n\n## 接口地址\n\n`POST /v1/videos`\n\n## 功能说明\n\n支持 Seedance 系列模型的文生视频和图片参考生成；Seedance 2.0 系列额外支持视频、音频组合参考。\n\n### 当前模型\n\n| 模型名 | 支持模式 | 视频/音频参考 | 时长 | `seconds` 取值 |\n|--------|----------|---------------|------|----------------|\n| `seedance-2.0` | 文生、首帧/首尾帧、参考内容 | 支持 | 4～15 秒 | `\"4\"`～`\"15\"` |\n| `seedance-2.0-mini` | 文生、首帧/首尾帧、参考内容 | 支持 | 4～15 秒 | `\"4\"`～`\"15\"` |\n| `seedance-2.5-10s` | 文生、首帧/首尾帧、图片参考 | **不支持** | 固定 10 秒 | `\"10\"` |\n| `seedance-2.5-15s` | 文生、首帧/首尾帧、图片参考 | **不支持** | 固定 15 秒 | `\"15\"` |\n| `seedance-2.5-30s` | 文生、首帧/首尾帧、图片参考 | **不支持** | 固定 30 秒 | `\"30\"` |\n\n> Seedance 2.0 系列通过 `seconds` 自由选择 4～15 秒，并支持图片、视频、音频参考。Seedance 2.5 系列的时长由模型名固定，只支持图片参考，不支持视频或音频参考。\n\n### 支持的参考内容\n\n- 图片：通过 `images` 数组传递。\n- 视频：仅 `seedance-2.0`、`seedance-2.0-mini` 支持，通过 `videos` 数组传递。\n- 音频：仅 `seedance-2.0`、`seedance-2.0-mini` 支持，通过 `audios` 数组传递。\n- Seedance 2.0 系列可组合使用图片 + 视频、图片 + 音频、视频 + 音频，或图片 + 视频 + 音频。\n- `seedance-2.5-10s`、`seedance-2.5-15s`、`seedance-2.5-30s` 不得传 `videos` 或 `audios`。\n\n### 模式判定\n\n| 模式 | 传参方式 |\n|------|----------|\n| 文生视频 | 不传 `images`、`videos`、`audios`，或全部传空数组 |\n| 首帧 | `images` 传 1 张图，`first_last_frame: true` |\n| 首尾帧 | `images` 依次传首帧、尾帧，`first_last_frame: true` |\n| 参考模式 | 传参考素材，不传 `first_last_frame` 或传 `false` |\n\n参考模式下，素材的具体用途应在 `prompt` 中明确，例如“图片 1 是产品外观”“视频 1 作为运镜参考”“音频 1 作为背景音乐”。\n\n---\n\n## 请求方式\n\n| 方式 | Content-Type | 参考素材字段 |\n|------|--------------|--------------|\n| JSON | `application/json` | `images`、`videos`、`audios` |\n| 表单 | `multipart/form-data` | 只使用可重复的 `input_reference` |\n\n> 表单没有 `video_reference` 或 `audio_reference` 字段。图片、视频、音频文件或 URL 均通过重复的 `input_reference` 传递。\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | `Bearer YOUR_API_KEY` |\n| Content-Type | string | 是 | `application/json` 或 `multipart/form-data` |\n\n---\n\n## JSON 请求体说明\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | Seedance 模型名称 |\n| prompt | string | 是 | 视频生成提示词；组合参考时应说明每项素材的用途 |\n| images | string[] | 否 | 图片 URL 或完整 Base64 data URI |\n| videos | string[] | 否 | 可公网访问的视频文件直链；仅 Seedance 2.0 系列支持 |\n| audios | string[] | 否 | 可公网访问的音频文件直链；仅 Seedance 2.0 系列支持 |\n| aspect_ratio | string | 否 | 支持 `16:9`、`9:16`、`1:1`、`4:3`、`3:4`、`21:9` |\n| resolution | string | 否 | 输出分辨率；使用模型默认值时可不传，可用值以服务端配置为准 |\n| seconds | string | 是 | Seedance 2.0 系列支持 `\"4\"`～`\"15\"`；2.5 固定时长模型必须传与模型名一致的 `\"10\"`、`\"15\"` 或 `\"30\"` |\n| first_last_frame | boolean | 否 | `true` 为首帧/首尾帧模式；不传或 `false` 为参考模式 |\n\n### Seedance 2.0 组合参考素材 JSON 结构\n"
+        }
+      }
+    }
+  },
+  "20-6l0ket291i.apifox.cn-521606932e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos": {
+        "post": {
+          "summary": "MiniMax创建",
+          "deprecated": false,
+          "description": "# MiniMax 视频生成接口文档\n\n## 接口地址\n\n`POST /v1/videos`\n\n## 功能说明\n\n支持 MiniMax H3 系列模型的文生视频，以及图片、视频、音频参考内容驱动的视频生成。\n\n### 当前模型\n\n| 模型名 | 支持模式 | 时长 | 说明 |\n|--------|----------|------|------|\n| `minimax-h3` | 文生视频、参考内容生成 | 4～15 秒 | MiniMax H3 标准模型 |\n| `minimax-h3-max` | 文生视频、参考内容生成 | 4～15 秒 | MiniMax H3 Max 模型 |\n\n两款模型都通过 `seconds` 指定 4～15 秒的输出时长。调用时必须使用表格中的完整模型名。\n\n### 模式判定\n\n| 模式 | 传参方式 |\n|------|----------|\n| 文生视频 | 不传 `images`、`videos`、`audios`，或全部传空数组 |\n| 参考内容生成 | 至少传入一项图片、视频或音频参考内容 |\n\nMiniMax H3 的参考素材按“参考内容”使用。应在 `prompt` 中说明每项素材的作用和编号。\n\n---\n\n## 请求方式\n\n| 方式 | Content-Type | 参考素材字段 |\n|------|--------------|--------------|\n| JSON | `application/json` | `images`、`videos`、`audios` |\n| 表单 | `multipart/form-data` | 只使用可重复的 `input_reference` |\n\n> 表单没有 `video_reference` 或 `audio_reference` 字段。无论文件类型，均重复使用 `input_reference`。\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | `Bearer YOUR_API_KEY` |\n| Content-Type | string | 是 | `application/json` 或 `multipart/form-data` |\n\n---\n\n## JSON 请求体说明\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | `minimax-h3` 或 `minimax-h3-max` |\n| prompt | string | 是 | 视频生成提示词 |\n| images | string[] | 否 | 图片 URL 或完整 Base64 data URI |\n| videos | string[] | 否 | 可公网访问的视频文件直链 |\n| audios | string[] | 否 | 可公网访问的音频文件直链 |\n| aspect_ratio | string | 否 | 支持 `16:9`、`9:16`、`1:1`、`4:3`、`3:4`、`21:9` |\n| resolution | string | 否 | 输出分辨率，例如 `720p`、`1080p`；可用值以服务端配置为准 |\n| seconds | string | 是 | 输出时长，字符串形式，支持 `\"4\"`～`\"15\"` |\n\n### 参考素材 JSON 结构\n"
+        }
+      }
+    }
+  },
+  "21-6l0ket291i.apifox.cn-424659184e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos/{task_id}": {
+        "get": {
+          "summary": "任务查询",
+          "deprecated": false,
+          "description": "# 任务查询接口文档\n\n## 接口地址\n`GET /v1/videos/{task_id}`\n\n## 功能说明\n查询视频生成和图片生成任务的状态和结果（适用于Sora、Veo、图片生成等所有任务）\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | Bearer YOUR_API_KEY |\n\n## 路径参数\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| task_id | string | 是 | 任务ID，由提交接口返回 |\n\n## 请求示例\n"
+        }
+      }
+    }
+  },
+  "22-6l0ket291i.apifox.cn-424561006e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos": {
+        "post": {
+          "summary": "香蕉（异步）",
+          "deprecated": false,
+          "description": "# 图片生成接口文档\n\n## 接口地址\n`POST /v1/videos`\n\n## 功能说明\n支持文生图和图生图两种模式的图片生成（与视频生成共用接口，通过 `model` 参数区分）。\n\n## 支持的模型\n\n| model 参数 | 说明 |\n|-----------|------|\n| `nano_banana_2` | 标准版，速度快 |\n| `nano_banana_2-2K` | 标准版，2K 分辨率 |\n| `nano_banana_2-4K` | 标准版，4K 分辨率 |\n| `nano-banana-2.1` | Nano Banana 2.1，支持通过 `image_size` 选择 1K、2K、4K 分辨率 |\n| `nano_banana_pro-1K` | Pro 版，1K 分辨率 |\n| `nano_banana_pro-2K` | Pro 版，2K 分辨率 |\n| `nano_banana_pro-4K` | Pro 版，4K 分辨率 |\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | Bearer YOUR_API_KEY |\n| Content-Type | string | 是 | application/json |\n\n## 请求参数\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | 模型名称，如 `nano_banana_2`、`nano-banana-2.1`、`nano_banana_pro-1K` 等 |\n| prompt | string | 是 | 文本提示词，最大长度 10000 字符 |\n| aspect_ratio | string | 否 | 宽高比，可选值：`1:1`、`9:16`、`16:9`、`3:4`、`4:3`、`3:2`、`2:3`、`5:4`、`4:5`、`21:9`、`auto`，默认 `auto` |\n| image_size | string | 否 | 输出分辨率档位。`nano-banana-2.1` 支持 `1K`、`2K`、`4K`；不传时使用模型默认值 |\n| images | string[] | 否 | 参考图片数组（支持 Base64 或 URL），最多 8 张。传此参数为图生图模式，不传或传空数组为文生图模式 |\n\n### 分辨率控制\n\n| 模型 | 分辨率控制方式 |\n|------|----------------|\n| `nano-banana-2.1` | 使用顶层 `image_size` 字段，可选 `1K`、`2K`、`4K` |\n| `nano_banana_pro-1K` / `-2K` / `-4K` | 分辨率由模型名后缀决定，不需要传 `image_size` |\n| `nano_banana_2` | 使用模型默认分辨率 |\n\n### `images` 数组元素传法\n\n| 方式 | 示例 |\n|------|------|\n| **图片 URL** | `\"https://example.com/reference.jpg\"` |\n| **Base64** | `\"data:image/jpeg;base64,/9j/4AAQSkZJRg...\"` |\n\n> **注意**：传入图片 URL 时，网关会自动将其下载并转为 Base64 后发给上游，请确保 URL 为**可公网访问的图片直链**。\n\n## 请求示例\n\n### Nano Banana 2.1 文生图（4K）\n"
+        }
+      }
+    }
+  },
+  "23-6l0ket291i.apifox.cn-447634846e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos": {
+        "post": {
+          "summary": "gpt-image-2（异步）",
+          "deprecated": false,
+          "description": "# gpt-image-2 接口文档（/v1/videos 视频接口格式）\n\n## 接口地址\n`POST /v1/videos`\n\n## 功能说明\n通过 `/v1/videos` 接口调用 GPT 图片生成能力（与视频生成共用接口，通过 `model` 参数区分），支持文生图和图生图两种模式，采用异步任务方式，先提交返回任务 ID，再轮询获取结果。\n\n**画幅 / 宽高比**：支持三种控制方式：\n1. `aspect_ratio` 传入固定比例字符串（如 `9:16`、`16:9` 等），精确控制输出比例\n2. `size` 传入像素尺寸字符串（如 `\"1280x720\"`、`\"1456x624\"`）——与 `aspect_ratio` 二选一，不需要同时传\n3. 传 `\"auto\"`，或**两个参数均不传**——两者等价，均根据提示词内容自动推断，无固定比例；提示词中若写明了比例（如\"竖屏 9:16\"），模型也会据此生成\n\n**分辨率档位**（`gpt-image-2.5-flare` / `gpt-image-2.5-sunburst` 用参数选档，见下文「分辨率控制」）：\n- 旧档 `gpt-image-2` / `gpt-image-2-2K` / `gpt-image-2-4K`：档位写在 `model` 里\n- `gpt-image-2.5`：**仅 1K**，不要传 `2K` / `4K`\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：同一模型出 **1K / 2K / 4K**，用 `size` 像素，或 `aspect_ratio` + `image_size` / `resolution`；二者调用方式相同\n\n## 支持的模型\n\n| model 参数 | 分辨率 | 说明 |\n|-----------|--------|------|\n| `gpt-image-2` | 1K | GPT 图片生成（标准档） |\n| `gpt-image-2-2K` | 2K | 2K 档，档位写在模型名里 |\n| `gpt-image-2-4K` | 4K | 4K 档，档位写在模型名里 |\n| `gpt-image-2.5` | **仅 1K** | 新版标准档；不支持 2K / 4K |\n| `gpt-image-2.5-flare` | **1K / 2K / 4K** | 用参数选分辨率，不要换模型名 |\n| `gpt-image-2.5-sunburst` | **1K / 2K / 4K** | 调用方式与 `gpt-image-2.5-flare` 相同 |\n\n以上均走同一套 `/v1/videos` 异步流程，仅 `model` 与分辨率控档方式不同；计费与渠道路由以 `model` 区分。\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | Bearer YOUR_API_KEY |\n| Content-Type | string | 是 | application/json |\n\n## 请求参数\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | 模型名称，见上表。大小写须与上表一致（`2K`/`4K` 为大写 K；`gpt-image-2.5` 系列中间是点号） |\n| prompt | string | 是 | 文本提示词 |\n| aspect_ratio | string | 否 | 宽高比。传固定比例字符串（见下表）则精确控制；传 `\"auto\"` 或**不传**则根据提示词自动推断。与 `size` **二选一** |\n| size | string | 否 | 像素尺寸，格式 `\"宽x高\"`（如 `\"1280x720\"`、`\"1456x624\"`、`\"3696x1584\"`）。按对照表选 1K / 2K / 4K 列即可直接出对应分辨率。与 `aspect_ratio` 二选一 |\n| image_size | string | 否 | 分辨率档位：`1K`、`2K`、`4K`（大写 K）。与 `resolution` **完全等价**，只传其中一个。配合 `aspect_ratio` 使用；`gpt-image-2.5` 仅允许 `1K`（可不传，默认 1K） |\n| resolution | string | 否 | 与 `image_size` 通用、等价，取值同样是 `1K` / `2K` / `4K`。不要与 `image_size` 同时传不同值 |\n| images | string[] | 否 | 参考图片数组（支持 Base64 或 URL），最多 8 张。传此参数为图生图模式，不传或传空数组为文生图模式 |\n\n### `aspect_ratio` 支持的值\n\n| 值 | 方向 | 适用场景 |\n|----|------|----------|\n| `auto` | 自动 | 不指定比例，根据提示词内容自动推断（与不传等价） |\n| `1:1` | 正方形 | 通用、社交媒体 |\n| `16:9` | 横向（宽屏） | 横屏内容、PC 端 |\n| `9:16` | 竖向 | 短视频、手机竖屏 |\n| `4:3` | 横向 | 传统屏幕 |\n| `3:4` | 竖向 | 竖屏内容 |\n| `3:2` | 横向 | 摄影常用 |\n| `2:3` | 竖向 | 竖版海报 |\n| `5:4` | 横向 | 大幅横图 |\n| `4:5` | 竖向 | Instagram 竖图 |\n| `21:9` | 超宽横向 | 影院宽幅 |\n\n### 比例与 `size` 对照\n\n`gpt-image-2` / `gpt-image-2-2K` / `gpt-image-2-4K`：按 **model 档位** 选对应列。  \n`gpt-image-2.5`：只能用 **1K** 列。  \n`gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：三列都可用，见下方「分辨率控制」。\n\n| 比例 | 1K | 2K | 4K |\n|------|----|----|-----|\n| 1:1 | 1024x1024 | 2048x2048 | 2880x2880 |\n| 16:9 | 1280x720 | 2560x1440 | 3840x2160 |\n| 9:16 | 720x1280 | 1440x2560 | 2160x3840 |\n| 3:2 | 1248x832 | 2496x1664 | 3504x2336 |\n| 2:3 | 832x1248 | 1664x2496 | 2336x3504 |\n| 4:3 | 1152x864 | 2304x1728 | 3264x2448 |\n| 3:4 | 864x1152 | 1728x2304 | 2448x3264 |\n| 5:4 | 1120x896 | 2240x1792 | 3200x2560 |\n| 4:5 | 896x1120 | 1792x2240 | 2560x3200 |\n| 21:9 | 1456x624 | 3024x1296 | 3696x1584 |\n\n### `gpt-image-2.5` / `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst` 分辨率控制\n\n`image_size` 与 `resolution` 是**通用字段**，语义完全相同，取值均为 `1K` / `2K` / `4K`（大写 K），只传其中一个。\n\n| 模型 | 可用档位 | 说明 |\n|------|----------|------|\n| `gpt-image-2.5` | 仅 1K | 不传档位即 1K；不要传 `2K` / `4K`；`size` 只取上表 1K 列 |\n| `gpt-image-2.5-flare`、`gpt-image-2.5-sunburst` | 1K / 2K / 4K | 调用方式相同；用下面两种方式选档，**不要**改成带 `-2K` / `-4K` 后缀的模型名 |\n\n**方式一：`size` 直接传目标像素**（与 `aspect_ratio` 二选一）\n\n按上表选对应列的 `\"宽x高\"`，像素本身就决定了 1K / 2K / 4K，不必再传 `image_size` / `resolution`。例如 `\"size\": \"1456x624\"` 为 21:9 的 1K，2K 用 `\"3024x1296\"`，4K 用 `\"3696x1584\"`。`gpt-image-2.5` 只能传 1K 列。\n\n**方式二：`aspect_ratio` + `image_size` 或 `resolution`**\n\n`aspect_ratio` 传固定比例（如 `\"21:9\"`）；档位用 `image_size` 或 `resolution`（二者等价）。例如 `\"aspect_ratio\": \"21:9\"` + `\"image_size\": \"4K\"` 即为 21:9 的 4K。`gpt-image-2.5` 档位只能是 `1K` 或不传。\n\n> **宽高比 / 分辨率控制方式对比**\n>\n> | 方式 | 用法 | 效果 |\n> |------|------|------|\n> | 像素尺寸 | `\"size\": \"1456x624\"` 或 `\"size\": \"3696x1584\"` | 直接按像素出 1K / 2K / 4K，与 `aspect_ratio` 二选一 |\n> | 比例 + 档位 | `\"aspect_ratio\": \"21:9\"` + `\"image_size\"` / `\"resolution\"` | 比例与分辨率分开传；两字段通用等价 |\n> | 固定比例 | `\"aspect_ratio\": \"9:16\"` | 精确输出指定比例；旧档分辨率看 model，flare / sunburst 可再加 `image_size` / `resolution` |\n> | 自动推断 | `\"aspect_ratio\": \"auto\"` 或两者均不传 | 根据提示词内容自动决定，无固定比例 |\n> | 提示词描述 | 不传或传 `\"auto\"`，prompt 中写明比例 | 模型从提示词中读取比例并遵循 |\n\n### `images` 数组元素传法\n\n| 方式 | 示例 |\n|------|------|\n| **图片 URL** | `\"https://example.com/reference.jpg\"` |\n| **Base64** | `\"data:image/jpeg;base64,/9j/4AAQSkZJRg...\"` |\n\n> **注意**：传入图片 URL 时，网关会自动将其下载并转为 Base64 后发给上游，请确保 URL 为**可公网访问的图片直链**。\n\n## 请求示例\n\n### 文生图 — 固定比例"
+        }
+      }
+    }
+  },
+  "24-6l0ket291i.apifox.cn-447357296e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/images/generations": {
+        "post": {
+          "summary": "gpt-image-2（同步）",
+          "deprecated": false,
+          "description": "# gpt-image-2 接口文档（OpenAI 原生格式）\n\n## 接口地址\n\n| 用途 | 方法 | 路径 | 响应格式 |\n|------|------|------|----------|\n| 文生图（图片 API） | POST | `/v1/images/generations` | `{ created, data: [{ url, b64_json }] }`（缺省双给，可用 `response_format` 单选） |\n| 图生图（图片编辑） | POST | `/v1/images/edits` | 同上 |\n| 文生图 / 图生图（Chat API） | POST | `/v1/chat/completions` | `chat.completion`；图片在 `message.content` 的 markdown 里，Base64 在 `message.images[0].b64_json` |\n\n\n## 功能说明\n\n采用 OpenAI 原生端点格式的图片生成接口，支持文生图和图生图两种模式。\n\n- **`/v1/images/generations`、`/v1/images/edits`**：标准图片 API，缺省返回 `{ data: [{ url, b64_json }] }`。\n- **`/v1/chat/completions`**：兼容 Chat Completions 调用方式；将 `messages` 自动转为内部提示词与参考图，**响应为 Chat 格式**（`![image](链接)`），Base64 走扩展字段。\n\n三个端点的 **`response_format` 语义完全一致**：\n\n| 传值 | 返回内容 |\n|------|----------|\n| **不传**（推荐） | **同时返回 URL 与 Base64** |\n| `\"url\"` | 只返回图片 URL |\n| `\"b64_json\"` | 只返回 Base64（纯字符串，不含 `data:` 前缀） |\n\n> 缺省双给时回包体积更大；若只需要链接，请显式传 `\"response_format\": \"url\"`。\n---\n\n## 支持的模型\n\n| model 参数 | 分辨率 | 说明 |\n|-----------|--------|------|\n| `gpt-image2` | **1K / 2K / 4K** | 全档位；需要 2K、4K 或更大像素尺寸时使用 |\n| `image2` | **仅 1K** | 更便宜；只需 1K 档图片时优先使用 |\n\n**选型建议**\n\n- 要用 **1K、2K、4K** 或较大自定义像素（如 `3696x1584`）→ 用 **`gpt-image2`**\n- 只要 **1K**，追求更低成本 → 用 **`image2`**\n\n---\n\n## 请求头\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| Authorization | string | 是 | `Bearer YOUR_API_KEY` |\n| Content-Type | string | 是 | 图片 API：支持 **`application/json`** 与 **`multipart/form-data`**；Chat API：**仅 `application/json`** |\n\n---\n\n## 一、文生图接口\n\n### 接口地址\n\n`POST /v1/images/generations`\n\n### 请求参数\n\n| 参数名 | 类型 | 必填 | 说明 |\n|--------|------|------|------|\n| model | string | 是 | 模型名称 |\n| prompt | string | 是 | 图片描述，用于生成图片 |\n| size | string | 否 | 图片尺寸，格式 `\"宽x高\"`。同步接口**仅支持 `size`**，固定比例见下表；`image2` 仅可用 1K 列 |\n| response_format | string | 否 | 不传 = URL + Base64 双给；`\"url\"` = 只要链接；`\"b64_json\"` = 只要 Base64 |\n\n### 常用 size 速查（1K 列，`image2` 可用）\n\n| 比例 | size（1K） | size（2K） | size（4K） |\n|------|-----------|------------------------------|------------------------------|\n| 1:1 | 1024x1024 | 2048x2048 | 2880x2880 |\n| 16:9 | 1280x720 | 2560x1440 | 3840x2160 |\n| 9:16 | 720x1280 | 1440x2560 | 2160x3840 |\n| 3:2 | 1248x832 | 2496x1664 | 3504x2336 |\n| 2:3 | 832x1248 | 1664x2496 | 2336x3504 |\n| 4:3 | 1152x864 | 2304x1728 | 3264x2448 |\n| 3:4 | 864x1152 | 1728x2304 | 2448x3264 |\n| 5:4 | 1120x896 | 2240x1792 | 3200x2560 |\n| 4:5 | 896x1120 | 1792x2240 | 2560x3200 |\n| 21:9 | 1456x624 | 3024x1296 | 3696x1584 |\n\n### 请求示例（JSON — 纯文生图，1K 省钱）\n"
+        }
+      }
+    }
+  },
+  "25-6l0ket291i.apifox.cn-466136668e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1beta/models/{model}:generateContent": {
+        "post": {
+          "summary": "香蕉（gemini原生格式同步） ",
+          "deprecated": false,
+          "description": "# 图片生成接口文档\n\n## 接口地址\n"
+        }
+      }
+    }
+  },
+  "26-y5dprsil1i.apifox.cn-475784235e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos": {
+        "post": {
+          "summary": "提交视频生成任务",
+          "deprecated": false,
+          "description": "## 使用流程\n\n1. **提交任务** → 返回 `task_id`\n2. **轮询状态** `GET /v1/videos/{task_id}` → 每 3-5 秒\n3. **获取视频** status=completed 时 `video_url` 可直接下载（无需鉴权）\n\n---\n\n## 兼容路由\n\n以下路径功能完全相同，参数和响应格式一致：\n- `POST /v1/videos`（推荐）\n- `POST /v1/video/generations`（兼容格式）\n\n---\n\n## 统一参数\n\n所有视频模型使用完全相同的请求参数格式，后台自动处理各模型的格式差异。\n\n---\n\n## @引用语法\n\n在 prompt 中使用 @引用 来精确指代传入的素材：\n\n| 写法 | 对应字段 | 说明 |\n|------|----------|------|\n| `@Image1` 或 `@Img1` | image_url | 主参考图 |\n| `@Image2` 或 `@Img2` | extra_images[0] | 第1张额外图 |\n| `@Image3` 或 `@Img3` | extra_images[1] | 第2张额外图 |\n| `@Video1` 或 `@Vid1` | extra_videos[0] | 第1个参考视频 |\n| `@Audio1` 或 `@Aud1` | extra_audios[0] | 第1个参考音频 |\n\n引用不区分大小写。\n\n**示例：** `\"@Image1 在街道上与@Image2 愉快的对话\"` — 让主图中的人物和第一张额外图中的人物互动。\n\n---\n\n## 素材格式说明\n\n所有素材字段支持两种格式（可混用）：\n- **字符串格式**：`\"https://example.com/file.png\"`\n- **对象格式**：`{\"url\": \"https://example.com/file.png\"}`\n\n素材 URL 要求：\n- 必须为公网可访问的 http/https 链接\n- 图片：jpg / png / webp，建议 ≤ 10MB\n- 视频：mp4，建议 ≤ 100MB\n- 音频：mp3 / wav，建议 ≤ 20MB\n\n---\n\n## 计费规则\n\n- 按秒计费模型：预扣 duration × 单价，失败自动全额退款\n- 按次计费模型：提交时一次性扣费，失败自动全额退款",
+          "operationId": "submitVideoTask",
+          "tags": [
+            "视频生成",
+            "视频生成"
+          ],
+          "parameters": [],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoSubmitRequest"
+                },
+                "examples": {
+                  "01_textToVideo": {
+                    "value": {
+                      "model": "sd2-720p",
+                      "prompt": "一只橘猫在月球上漫步，背景是星空"
+                    },
+                    "summary": "纯文生视频（最简请求）"
+                  },
+                  "02_withParams": {
+                    "value": {
+                      "model": "sd2-fast-720p",
+                      "prompt": "航拍城市夜景，霓虹灯光闪烁，车流如织",
+                      "duration": 10,
+                      "aspect_ratio": "16:9"
+                    },
+                    "summary": "指定时长和比例"
+                  },
+                  "03_imageToVideo": {
+                    "value": {
+                      "model": "sd2-720p",
+                      "prompt": "让画面中的人物缓缓转头微笑",
+                      "image_url": "https://your-domain.com/uploads/portrait.png",
+                      "duration": 6,
+                      "aspect_ratio": "9:16"
+                    },
+                    "summary": "图生视频（首帧参考图）"
+                  },
+                  "04_multiCharacter": {
+                    "value": {
+                      "model": "sd2-720p",
+                      "prompt": "@Image1 在街道上与@Image2 愉快的对话，阳光明媚",
+                      "image_url": "https://your-domain.com/uploads/person_a.png",
+                      "extra_images": [
+                        "https://your-domain.com/uploads/person_b.png"
+                      ],
+                      "duration": 8,
+                      "aspect_ratio": "16:9"
+                    },
+                    "summary": "多人物交互（@引用）"
+                  },
+                  "05_videoRef": {
+                    "value": {
+                      "model": "sd2-720p",
+                      "prompt": "@Image1 模仿@Video1 中的舞蹈动作",
+                      "image_url": "https://your-domain.com/uploads/dancer.png",
+                      "extra_videos": [
+                        "https://your-domain.com/uploads/dance_ref.mp4"
+                      ],
+                      "duration": 10,
+                      "aspect_ratio": "9:16"
+                    },
+                    "summary": "动作迁移（视频参考+@引用）"
+                  },
+                  "06_audioDriven": {
+                    "value": {
+                      "model": "sd2-720p",
+                      "prompt": "@Image1 跟着@Audio1 的节奏律动",
+                      "image_url": "https://your-domain.com/uploads/character.png",
+                      "extra_audios": [
+                        "https://your-domain.com/uploads/beat.mp3"
+                      ],
+                      "duration": 15,
+                      "aspect_ratio": "1:1"
+                    },
+                    "summary": "音频驱动"
+                  },
+                  "07_mixedMedia": {
+                    "value": {
+                      "model": "sd2-720p",
+                      "prompt": "@Image1 跟着@Audio1 的节奏模仿@Video1 的动作",
+                      "image_url": "https://your-domain.com/uploads/character.png",
+                      "extra_images": [
+                        "https://your-domain.com/uploads/background.png"
+                      ],
+                      "extra_videos": [
+                        {
+                          "url": "https://your-domain.com/uploads/ref_dance.mp4"
+                        }
+                      ],
+                      "extra_audios": [
+                        {
+                          "url": "https://your-domain.com/uploads/music.mp3"
+                        }
+                      ],
+                      "duration": 15,
+                      "aspect_ratio": "16:9"
+                    },
+                    "summary": "混合素材（图+视频+音频全部使用）"
+                  },
+                  "08_startEndFrame": {
+                    "value": {
+                      "model": "sd2-720p",
+                      "prompt": "从白天平滑过渡到夜晚的城市延时摄影",
+                      "start_image_url": "https://your-domain.com/uploads/city_day.png",
+                      "end_image_url": "https://your-domain.com/uploads/city_night.png",
+                      "duration": 10,
+                      "aspect_ratio": "16:9"
+                    },
+                    "summary": "首尾帧控制"
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "任务提交成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/VideoSubmitResponse"
+                  },
+                  "example": {
+                    "task_id": "task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte",
+                    "status": "pending",
+                    "model": "sd2-720p"
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            },
+            "400": {
+              "description": "认证失败",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "example": {
+                    "error": {
+                      "code": "INVALID_TOKEN",
+                      "message": "无效的认证令牌"
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "Unauthorized"
+            },
+            "401": {
+              "description": "请求参数校验失败",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "example": {
+                    "error": {
+                      "code": "INVALID_MODEL",
+                      "message": "不支持的模型"
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "ValidationError"
+            },
+            "402": {
+              "description": "余额不足",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "example": {
+                    "error": {
+                      "code": "INSUFFICIENT_BALANCE",
+                      "message": "余额不足"
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "视频生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-475784235-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "VideoSubmitRequest": {
+          "type": "object",
+          "required": [
+            "model",
+            "prompt"
+          ],
+          "description": "视频生成请求体。所有视频模型使用相同的参数格式。",
+          "properties": {
+            "model": {
+              "type": "string",
+              "description": "模型名称。通过 /v1/models 或控制台获取可用列表",
+              "examples": [
+                "sd2-720p"
+              ]
+            },
+            "prompt": {
+              "type": "string",
+              "description": "视频描述提示词。支持 @Image1 @Video1 @Audio1 引用素材",
+              "examples": [
+                "@Image1 在街道上与@Image2 愉快的对话"
+              ]
+            },
+            "duration": {
+              "type": "integer",
+              "description": "视频时长（秒）。默认 6，大多数模型范围 4-15",
+              "default": 6,
+              "minimum": 1,
+              "maximum": 30
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "description": "画面比例。默认 16:9。也接受 ratio 作为别名",
+              "default": "16:9",
+              "enum": [
+                "16:9",
+                "9:16",
+                "1:1",
+                "4:3",
+                "3:4",
+                "21:9",
+                "3:2",
+                "2:3"
+              ]
+            },
+            "image_url": {
+              "description": "主参考图（对应 prompt 中的 @Image1）。支持字符串URL或 {url:\"...\"} 对象格式",
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "x-apifox-orders": [
+                    "url"
+                  ],
+                  "x-apifox-ignore-properties": []
+                }
+              ]
+            },
+            "extra_images": {
+              "type": "array",
+              "description": "额外参考图数组（@Image2、@Image3...）。每项支持字符串URL或 {url:\"...\"} 对象",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    },
+                    "x-apifox-orders": [
+                      "url"
+                    ],
+                    "x-apifox-ignore-properties": []
+                  }
+                ]
+              }
+            },
+            "extra_videos": {
+              "type": "array",
+              "description": "参考视频数组（@Video1、@Video2...）。格式同上",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    },
+                    "x-apifox-orders": [
+                      "url"
+                    ],
+                    "x-apifox-ignore-properties": []
+                  }
+                ]
+              }
+            },
+            "extra_audios": {
+              "type": "array",
+              "description": "参考音频数组（@Audio1、@Audio2...）。格式同上",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    },
+                    "x-apifox-orders": [
+                      "url"
+                    ],
+                    "x-apifox-ignore-properties": []
+                  }
+                ]
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "视频首帧图片URL（部分模型支持）",
+              "nullable": true
+            },
+            "end_image_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "视频末帧图片URL（部分模型支持首尾帧控制）",
+              "nullable": true
+            }
+          },
+          "x-apifox-orders": [
+            "model",
+            "prompt",
+            "duration",
+            "aspect_ratio",
+            "image_url",
+            "extra_images",
+            "extra_videos",
+            "extra_audios",
+            "start_image_url",
+            "end_image_url"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        },
+        "VideoSubmitResponse": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "description": "任务ID，用于轮询状态",
+              "examples": [
+                "task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending"
+              ],
+              "examples": [
+                "pending"
+              ]
+            },
+            "model": {
+              "type": "string",
+              "examples": [
+                "sd2-720p"
+              ]
+            }
+          },
+          "x-apifox-orders": [
+            "task_id",
+            "status",
+            "model"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        },
+        "ErrorResponse": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "错误码",
+                  "enum": [
+                    "UNAUTHORIZED",
+                    "INVALID_REQUEST",
+                    "FILE_TOO_LARGE",
+                    "UNSUPPORTED_FORMAT",
+                    "UPLOAD_FAILED"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "description": "错误描述"
+                }
+              },
+              "required": [
+                "code",
+                "message"
+              ],
+              "x-apifox-orders": [
+                "code",
+                "message"
+              ],
+              "x-apifox-ignore-properties": []
+            }
+          },
+          "required": [
+            "error"
+          ],
+          "x-apifox-orders": [
+            "error"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        }
+      },
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "27-y5dprsil1i.apifox.cn-475784236e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos/{task_id}": {
+        "get": {
+          "summary": "查询视频任务状态",
+          "deprecated": false,
+          "description": "轮询视频生成任务状态。建议间隔 3-5 秒。\n\n## 状态流转\n\n`pending` → `processing` → `completed` / `failed`\n\n## 结果说明\n\n- **completed**: `video_url` 为 CDN 地址，无需鉴权可直接下载，有效期约 6 小时，一定要及时下载。\n- **failed**: 已自动全额退款，`error.message` 包含失败原因",
+          "operationId": "getVideoStatus",
+          "tags": [
+            "视频生成",
+            "视频生成"
+          ],
+          "parameters": [
+            {
+              "name": "task_id",
+              "in": "path",
+              "description": "任务ID（提交接口返回的 task_id）",
+              "required": true,
+              "example": "task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "查询成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/VideoStatusResponse"
+                  },
+                  "examples": {
+                    "processing": {
+                      "summary": "生成中",
+                      "value": {
+                        "task_id": "task_xxx",
+                        "status": "processing",
+                        "progress": 45
+                      }
+                    },
+                    "completed": {
+                      "summary": "生成完成",
+                      "value": {
+                        "task_id": "task_xxx",
+                        "status": "completed",
+                        "progress": 100,
+                        "video_url": "https://cdn.paisio.online/videos/result.mp4"
+                      }
+                    },
+                    "failed": {
+                      "summary": "生成失败（已自动退款）",
+                      "value": {
+                        "task_id": "task_xxx",
+                        "status": "failed",
+                        "error": {
+                          "message": "生成失败，已自动退款"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "视频生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-475784236-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "VideoStatusResponse": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "completed",
+                "failed"
+              ],
+              "description": "pending→processing→completed/failed"
+            },
+            "progress": {
+              "type": "integer",
+              "description": "进度百分比 0-100",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "video_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "视频下载URL（仅 completed 时存在），CDN地址无需鉴权，有效期约24小时"
+            },
+            "cost": {
+              "type": "number",
+              "description": "实际扣费金额（¥），仅 completed 时返回",
+              "examples": [
+                2.9
+              ]
+            },
+            "error": {
+              "type": "object",
+              "description": "错误信息（仅 failed 时存在），失败已自动全额退款",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              },
+              "x-apifox-orders": [
+                "message"
+              ],
+              "x-apifox-ignore-properties": []
+            }
+          },
+          "x-apifox-orders": [
+            "task_id",
+            "status",
+            "progress",
+            "video_url",
+            "cost",
+            "error"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        }
+      },
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "28-y5dprsil1i.apifox.cn-489902738e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/videos/{task_id}/content": {
+        "get": {
+          "summary": "获取视频文件",
+          "deprecated": false,
+          "description": "302 重定向到视频文件 CDN 地址。通常直接使用轮询接口返回的 `video_url` 即可，此接口作为备用。",
+          "operationId": "getVideoContent",
+          "tags": [
+            "视频生成",
+            "视频生成"
+          ],
+          "parameters": [
+            {
+              "name": "task_id",
+              "in": "path",
+              "description": "",
+              "required": true,
+              "example": "",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "302": {
+              "description": "重定向到视频文件地址",
+              "headers": {},
+              "x-apifox-name": ""
+            },
+            "404": {
+              "description": "视频文件不存在",
+              "headers": {},
+              "x-apifox-name": ""
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "视频生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-489902738-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {},
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "29-y5dprsil1i.apifox.cn-475784237e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/images/generations": {
+        "post": {
+          "summary": "图片生成（统一接口）",
+          "deprecated": false,
+          "description": "统一图片生成接口。GPT-Image-2 系列、GPT-Image-2.5 系列和 Gemini 系列均通过此端点调用。\n\n## 文生图 vs 图生图\n\n- **文生图**：只传 model + prompt\n- **图生图**：额外传 image 字段，prompt 描述编辑指令\n\n## image 字段格式\n\n- URL：`\"https://example.com/photo.png\"`\n- data-URI：`\"data:image/png;base64,iVBORw0KGgo...\"`\n- 裸Base64：`\"iVBORw0KGgo...\"`\n\n## 尺寸控制（推荐 imageSize + aspectRatio）\n\n- `imageSize`：分辨率档位 `1K` / `2K` / `4K`\n- `aspectRatio`：`1:1` / `16:9` / `9:16` / `4:3` / `3:4` / `3:2` / `2:3` / `21:9` / `9:21`\n\n也可直接传 `size`（像素格式如 `1024x1024`），但 imageSize+aspectRatio 更方便。\n\n## 异步模式（推荐用于高质量模型）\n\n启用方式（三选一）：\n- Body: `\"async\": true`\n- URL 参数: `?async=true`\n- 请求头: `X-Async: true`\n\n异步流程：提交 → 返回 task_id → 轮询 `GET /v1/images/generations/{task_id}`\n\n## 计费\n\n按张数（n）计费，生成前预扣费，失败自动全额退款。\n\n---\n\n## GPT Image 2.5 新模型\n\n| 模型 | 定位 | 价格 |\n|------|------|------|\n| `gpt-image2.5-flare` | 快速日常生成，速度优先 | ¥0.13/次 |\n| `gpt-image2.5-sunburst` | 精细编辑，质量优先 | ¥0.13/次 |\n\n### quality 参数（GPT Image 2.5 专属）\n\n两个模型均支持 6 档质量，**价格统一，不区分质量和分辨率**：\n\n| quality | 说明 |\n|---------|------|\n| `low` | 草图级，速度最快，适合预览和批量生成 |\n| `medium` | 标准质量，适合日常使用 |\n| `high` | 高质量，适合正式出图 |\n| `xhigh` | 超高质量，适合商业用途 |\n| `max` | 极致质量，适合印刷级输出 |\n| `auto` | 自动选择（默认值） |\n\n### Flare vs Sunburst 如何选择\n\n- **Flare**：速度快 50%，适合日常出图、批量生成、对速度有要求的场景\n- **Sunburst**：编辑精度高，人脸一致性好，适合需要多次迭代修改的精细创作",
+          "operationId": "createImage",
+          "tags": [
+            "图片生成",
+            "图片生成"
+          ],
+          "parameters": [],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "examples": {
+                  "textToImage": {
+                    "value": {
+                      "model": "gpt-image2-high",
+                      "prompt": "赛博朋克城市夜景，霓虹灯光，细雨",
+                      "imageSize": "2K",
+                      "aspectRatio": "16:9",
+                      "n": 1
+                    },
+                    "summary": "文生图（推荐参数）"
+                  },
+                  "imageToImage": {
+                    "value": {
+                      "model": "gpt-image2-medium",
+                      "prompt": "把这张照片变成油画风格",
+                      "image": "https://your-domain.com/photo.jpg",
+                      "imageSize": "2K",
+                      "aspectRatio": "1:1",
+                      "n": 1
+                    },
+                    "summary": "图生图（传参考图URL）"
+                  },
+                  "asyncMode": {
+                    "value": {
+                      "model": "gpt-image2-high",
+                      "prompt": "极致细节的风景画",
+                      "imageSize": "4K",
+                      "aspectRatio": "16:9",
+                      "n": 1,
+                      "async": true
+                    },
+                    "summary": "异步模式（避免超时）"
+                  },
+                  "flare_basic": {
+                    "value": {
+                      "model": "gpt-image2.5-flare",
+                      "prompt": "一只橘猫坐在窗台上看日落",
+                      "quality": "high",
+                      "size": "1024x1024"
+                    },
+                    "summary": "GPT Image 2.5 Flare 基础生成"
+                  },
+                  "sunburst_4k": {
+                    "value": {
+                      "model": "gpt-image2.5-sunburst",
+                      "prompt": "产品包装设计，极简风格",
+                      "quality": "max",
+                      "size": "4096x4096"
+                    },
+                    "summary": "GPT Image 2.5 Sunburst 4K 高质量"
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "生成成功（同步模式）或任务已提交（异步模式）",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {},
+                    "x-apifox-orders": []
+                  },
+                  "examples": {
+                    "sync": {
+                      "summary": "同步模式 - 直接返回结果",
+                      "value": {
+                        "data": [
+                          {
+                            "url": "https://cdn.paisio.online/images/result.png",
+                            "revised_prompt": "..."
+                          }
+                        ]
+                      }
+                    },
+                    "async": {
+                      "summary": "异步模式 - 返回 task_id",
+                      "value": {
+                        "task_id": "img_1786788696612_ybztef",
+                        "status": "pending",
+                        "model": "gpt-image2-high"
+                      }
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "图片生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-475784237-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {},
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "30-y5dprsil1i.apifox.cn-475784238e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/images/edits": {
+        "post": {
+          "summary": "图片编辑（图生图）",
+          "deprecated": false,
+          "description": "图片编辑端点，支持 JSON 和 multipart/form-data 两种格式。\n\n**推荐直接使用 `/v1/images/generations` + image 字段代替。**\n\n此接口仅支持 GPT-Image2 系列模型。Gemini 系列的图生图请使用 `/v1/images/generations`。\n\n**JSON格式**：image 字段传 URL / data-URI / Base64 / 数组\n**Multipart格式**：image 字段上传二进制文件",
+          "tags": [
+            "图片生成",
+            "图片生成"
+          ],
+          "parameters": [],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageGenerationRequest"
+                },
+                "examples": {
+                  "json_edit": {
+                    "value": {
+                      "model": "gpt-image2-1-high",
+                      "prompt": "把背景替换为星空",
+                      "image": "https://example.com/original.jpg",
+                      "imageSize": "2K",
+                      "aspectRatio": "1:1"
+                    },
+                    "summary": "JSON格式图片编辑"
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "编辑成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ImageGenerationResponse"
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "成功"
+            }
+          },
+          "security": [
+            {
+              "bearerAuth": [],
+              "x-apifox": {
+                "schemeGroups": [
+                  {
+                    "id": "CLDlKRequKePNpGQ3hAjI",
+                    "schemeIds": [
+                      "bearerAuth"
+                    ]
+                  }
+                ],
+                "required": true,
+                "use": {
+                  "id": "CLDlKRequKePNpGQ3hAjI"
+                },
+                "scopes": {
+                  "CLDlKRequKePNpGQ3hAjI": {
+                    "bearerAuth": []
+                  }
+                }
+              }
+            }
+          ],
+          "x-apifox-folder": "图片生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-475784238-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ImageGenerationRequest": {
+          "type": "object",
+          "required": [
+            "model",
+            "prompt"
+          ],
+          "properties": {
+            "model": {
+              "type": "string",
+              "description": "模型名称。不同模型对应不同的质量、速度和价格，详见接口说明中的模型分类表。",
+              "enum": [
+                "gpt-image2-low",
+                "gpt-image2-medium",
+                "gpt-image2-high",
+                "gpt-image2-1-low",
+                "gpt-image2-1-medium",
+                "gpt-image2-1-high",
+                "gpt-image2-2-low",
+                "gpt-image2-2-medium",
+                "gpt-image2-2-high",
+                "gpt-image-2-1k",
+                "gpt-image-2-2k",
+                "gpt-image-2-4k",
+                "image-2-1K",
+                "image-2-2K",
+                "gemini-3.1-flash-image-preview",
+                "gemini-3.1-flash-image-preview1",
+                "gemini-3.1-flash-image-preview2",
+                "gemini-3.1-flash-image-preview3",
+                "gemini-3-pro-image-preview",
+                "gemini-3-pro-image-preview1",
+                "gemini-3-pro-image-preview2",
+                "gemini-3-pro-image-preview3",
+                "gemini-3-pro-image-preview4",
+                "nano-banana-2-1k",
+                "nano-banana-2-2k",
+                "nano-banana-2-4k",
+                "nano-banana-pro-1k",
+                "nano-banana-pro-2k",
+                "nano-banana-pro-4k"
+              ]
+            },
+            "prompt": {
+              "type": "string",
+              "description": "图片描述提示词。图生图时描述编辑指令。"
+            },
+            "n": {
+              "type": "integer",
+              "description": "生成张数。GPT-Image2 和 Gemini 系列支持 1-4 张。",
+              "minimum": 1,
+              "maximum": 4,
+              "default": 1
+            },
+            "image": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "参考图片（图生图时使用）。\n- 单张：传字符串\n- 多张：传字符串数组\n\n支持的格式：\n- URL：`https://example.com/photo.jpg`\n- Data URI：`data:image/png;base64,iVBORw0KGgo...`\n- 裸 Base64：`iVBORw0KGgo...`\n\n**注意：** `gemini-3-pro-image-preview4` 仅支持 HTTP/HTTPS URL，不支持 Base64 和 Data URI。"
+            },
+            "image_url": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "参考图片 URL（与 image / images 可同时使用，会合并）。仅支持 HTTP/HTTPS URL。功能与 image 字段相同，推荐在只传 URL 时使用此字段。"
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "参考图片数组（与 image / image_url 可同时使用，会合并）。支持 URL / Data URI / Base64。"
+            },
+            "imageSize": {
+              "type": "string",
+              "enum": [
+                "1K",
+                "2K",
+                "4K"
+              ],
+              "description": "分辨率档位。推荐使用此字段配合 aspectRatio，比直接传像素 size 更方便。\n- 1K：最大边 1024px\n- 2K：最大边 2048px\n- 4K：最大边 3840px\n\n别名：`image_size`"
+            },
+            "aspectRatio": {
+              "type": "string",
+              "enum": [
+                "1:1",
+                "16:9",
+                "9:16",
+                "4:3",
+                "3:4",
+                "3:2",
+                "2:3",
+                "21:9",
+                "9:21"
+              ],
+              "description": "画面比例。配合 imageSize 使用，系统自动计算精确像素。\n\n别名：`aspect_ratio`"
+            },
+            "size": {
+              "type": "string",
+              "description": "精确像素尺寸（如 `2048x1152`）。仅 GPT-Image2 系列支持。要求：宽高为 16 的倍数，最大边 ≤ 3840，长宽比 ≤ 3:1，总像素 655,360 ~ 8,294,400。\n\n当同时传了 imageSize + aspectRatio 时，此字段被忽略。",
+              "examples": [
+                "2048x2048"
+              ]
+            },
+            "output_format": {
+              "type": "string",
+              "enum": [
+                "jpeg",
+                "png",
+                "webp"
+              ],
+              "default": "jpeg",
+              "description": "输出图片格式。仅 GPT-Image2 系列支持此参数。"
+            },
+            "async": {
+              "type": "boolean",
+              "default": false,
+              "description": "启用异步模式。启用后立即返回 task_id，通过轮询接口获取结果。推荐在使用 4K 分辨率或高质量模型时启用。\n\n也可通过 URL 参数 `?async=true` 或请求头 `X-Async: true` 启用。"
+            }
+          },
+          "x-apifox-orders": [
+            "model",
+            "prompt",
+            "n",
+            "image",
+            "image_url",
+            "images",
+            "imageSize",
+            "aspectRatio",
+            "size",
+            "output_format",
+            "async"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        },
+        "ImageGenerationResponse": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "description": "生成的图片列表（同步模式返回）",
+              "items": {
+                "$ref": "#/components/schemas/ImageDataItem"
+              }
+            },
+            "task_id": {
+              "type": "string",
+              "description": "异步模式时返回的任务ID（格式：img_xxx）"
+            },
+            "status": {
+              "type": "string",
+              "description": "异步模式时的任务状态",
+              "enum": [
+                "pending",
+                "processing"
+              ]
+            },
+            "model": {
+              "type": "string",
+              "description": "异步模式时返回的模型名称"
+            }
+          },
+          "x-apifox-orders": [
+            "data",
+            "task_id",
+            "status",
+            "model"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        },
+        "ImageDataItem": {
+          "type": "object",
+          "description": "单张图片结果",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "图片下载地址（CDN），有效期约 2 小时，请及时下载保存。Gemini 系列始终返回此字段。"
+            },
+            "b64_json": {
+              "type": "string",
+              "description": "图片 Base64 编码数据。GPT-Image2 系列可能同时返回 url 和 b64_json。"
+            },
+            "revised_prompt": {
+              "type": "string",
+              "description": "模型优化后的提示词（部分模型返回）"
+            }
+          },
+          "x-apifox-orders": [
+            "url",
+            "b64_json",
+            "revised_prompt"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        }
+      },
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "31-y5dprsil1i.apifox.cn-498909445e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/images/generations/{task_id}": {
+        "get": {
+          "summary": "查询异步图片任务状态",
+          "deprecated": false,
+          "description": "查询异步图片生成任务的状态。建议轮询间隔 3-5 秒。\n\nGemini 系列通常 20-60 秒完成，GPT-Image2 系列通常 30-90 秒完成。",
+          "tags": [
+            "图片生成",
+            "图片生成"
+          ],
+          "parameters": [
+            {
+              "name": "task_id",
+              "in": "path",
+              "description": "异步提交时返回的任务ID（格式：img_xxx）",
+              "required": true,
+              "example": "",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "任务状态",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AsyncTaskResponse"
+                  },
+                  "examples": {
+                    "pending": {
+                      "summary": "等待中",
+                      "value": {
+                        "status": "in_progress",
+                        "progress": 10
+                      }
+                    },
+                    "processing": {
+                      "summary": "生成中",
+                      "value": {
+                        "status": "in_progress",
+                        "progress": 50
+                      }
+                    },
+                    "completed": {
+                      "summary": "已完成",
+                      "value": {
+                        "status": "completed",
+                        "data": [
+                          {
+                            "url": "https://cdn.paisio.online/pv/img_a1b2c3d4e5f6.png"
+                          }
+                        ],
+                        "model": "gemini-3-pro-image-preview3",
+                        "created": 1789729831
+                      }
+                    },
+                    "failed": {
+                      "summary": "失败（已自动退款）",
+                      "value": {
+                        "status": "failed",
+                        "error": {
+                          "message": "生成失败，已自动退款"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            }
+          },
+          "security": [
+            {
+              "bearerAuth": [],
+              "x-apifox": {
+                "schemeGroups": [
+                  {
+                    "id": "9JmJHbXdFwClzHPB9WJdH",
+                    "schemeIds": [
+                      "bearerAuth"
+                    ]
+                  }
+                ],
+                "required": true,
+                "use": {
+                  "id": "9JmJHbXdFwClzHPB9WJdH"
+                },
+                "scopes": {
+                  "9JmJHbXdFwClzHPB9WJdH": {
+                    "bearerAuth": []
+                  }
+                }
+              }
+            }
+          ],
+          "x-apifox-folder": "图片生成",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-498909445-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "AsyncTaskResponse": {
+          "type": "object",
+          "description": "异步图片任务状态",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "in_progress",
+                "completed",
+                "failed"
+              ],
+              "description": "任务状态"
+            },
+            "progress": {
+              "type": "integer",
+              "description": "进度百分比 0-100（仅 in_progress 时返回）"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ImageDataItem"
+              },
+              "description": "图片结果列表（仅 completed 时返回）"
+            },
+            "model": {
+              "type": "string",
+              "description": "模型名称（仅 completed 时返回）"
+            },
+            "created": {
+              "type": "integer",
+              "description": "任务创建时间戳（秒）"
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              },
+              "description": "错误信息（仅 failed 时返回，已自动退款）",
+              "x-apifox-orders": [
+                "message"
+              ],
+              "x-apifox-ignore-properties": []
+            }
+          },
+          "x-apifox-orders": [
+            "status",
+            "progress",
+            "data",
+            "model",
+            "created",
+            "error"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        },
+        "ImageDataItem": {
+          "type": "object",
+          "description": "单张图片结果",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "图片下载地址（CDN），有效期约 2 小时，请及时下载保存。Gemini 系列始终返回此字段。"
+            },
+            "b64_json": {
+              "type": "string",
+              "description": "图片 Base64 编码数据。GPT-Image2 系列可能同时返回 url 和 b64_json。"
+            },
+            "revised_prompt": {
+              "type": "string",
+              "description": "模型优化后的提示词（部分模型返回）"
+            }
+          },
+          "x-apifox-orders": [
+            "url",
+            "b64_json",
+            "revised_prompt"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        }
+      },
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "32-y5dprsil1i.apifox.cn-475784240e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/models": {
+        "get": {
+          "summary": "获取可用模型列表",
+          "deprecated": false,
+          "description": "获取当前可用的所有模型列表。格式兼容 OpenAI `/v1/models`。",
+          "operationId": "listModels",
+          "tags": [
+            "通用",
+            "账户"
+          ],
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "获取成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": "成功"
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "通用",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-475784240-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {},
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  },
+  "33-y5dprsil1i.apifox.cn-475784241e0.md.txt": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "",
+      "description": "",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/v1/balance": {
+        "get": {
+          "summary": "查询账户余额与价格",
+          "deprecated": false,
+          "description": "查询当前 API Key 关联账户的余额、VIP等级、今日生成次数、以及当前适用的模型价格表。",
+          "operationId": "getBalance",
+          "tags": [
+            "通用",
+            "账户"
+          ],
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "查询成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BalanceResponse"
+                  },
+                  "example": {
+                    "balance": 100.5,
+                    "used": 49.5,
+                    "currency": "🔥",
+                    "tier": "vip1",
+                    "tier_name": "vip1",
+                    "today_count": 12,
+                    "current_prices": {
+                      "sd2-720p": 0.29,
+                      "sd2-fast-720p": 0.23
+                    }
+                  }
+                }
+              },
+              "headers": {},
+              "x-apifox-name": ""
+            }
+          },
+          "security": [],
+          "x-apifox-folder": "通用",
+          "x-apifox-status": "released",
+          "x-run-in-apifox": "https://app.apifox.com/web/project/8358720/apis/api-475784241-run"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "BalanceResponse": {
+          "type": "object",
+          "description": "账户余额及价格信息",
+          "properties": {
+            "balance": {
+              "type": "number",
+              "description": "当前余额（🔥）"
+            },
+            "used": {
+              "type": "number",
+              "description": "累计已使用金额"
+            },
+            "currency": {
+              "type": "string",
+              "description": "货币单位标识",
+              "examples": [
+                "🔥"
+              ]
+            },
+            "tier": {
+              "type": "string",
+              "description": "当前 VIP 等级",
+              "examples": [
+                "vip1"
+              ]
+            },
+            "tier_name": {
+              "type": "string",
+              "description": "等级显示名称"
+            },
+            "today_count": {
+              "type": "integer",
+              "description": "今日生成次数"
+            },
+            "next_tier": {
+              "type": "string",
+              "description": "下一等级名称（已满级时为 null）",
+              "nullable": true
+            },
+            "next_tier_at": {
+              "type": "number",
+              "description": "升级到下一等级所需累计消费",
+              "nullable": true
+            },
+            "current_prices": {
+              "type": "object",
+              "description": "当前等级适用的模型价格表（模型名→单价）",
+              "additionalProperties": {
+                "type": "number"
+              },
+              "x-apifox-orders": [],
+              "properties": {},
+              "x-apifox-ignore-properties": []
+            }
+          },
+          "x-apifox-orders": [
+            "balance",
+            "used",
+            "currency",
+            "tier",
+            "tier_name",
+            "today_count",
+            "next_tier",
+            "next_tier_at",
+            "current_prices"
+          ],
+          "x-apifox-ignore-properties": [],
+          "x-apifox-folder": ""
+        }
+      },
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "bearerAuth": {
+          "type": "bearer",
+          "scheme": "bearer",
+          "description": "API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建"
+        },
+        "QueryKeyAuth": {
+          "type": "apikey",
+          "in": "query",
+          "name": "key",
+          "description": "也可以通过 query 参数 ?key=sk-xxx 传入 API Key"
+        }
+      }
+    },
+    "servers": [],
+    "security": []
+  }
+}

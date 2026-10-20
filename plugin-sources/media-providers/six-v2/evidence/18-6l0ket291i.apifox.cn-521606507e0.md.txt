@@ -1,0 +1,597 @@
+# Grok创建
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/videos:
+    post:
+      summary: Grok创建
+      deprecated: false
+      description: >
+        # Grok 视频生成接口文档
+
+
+        ## 接口地址
+
+
+        `POST /v1/videos`
+
+
+        ## 功能说明
+
+
+        支持 Grok Imagine Video 1.5 系列模型的文生视频、首帧/首尾帧视频和多参考内容视频生成。
+
+
+        ### 当前可用模型与能力
+
+
+        | 模型名 | 文生视频 | 首帧/首尾帧 | 多参考图 | 时长说明 |
+
+        |--------|----------|-------------|----------|----------|
+
+        | `grok-imagine-video-1.5` | 支持 | 支持首帧和首尾帧 | 最多 7 张图片 | 4～15 秒 |
+
+        | `grok-imagine-video-1.5-fast` | 支持 | 支持首帧，最长 15 秒 | 支持；多图模式最长 10 秒 |
+        4～15 秒，受模式限制 |
+
+        | `grok-imagine-video-1.5-lite` | 支持 | 支持首帧，最长 15 秒 | **不支持多图** | 4～15
+        秒，受模式限制 |
+
+
+        > `fast` 和 `lite` 的首帧模式只传 1 张图片并设置 `first_last_frame: true`。标准版传 2
+        张图片时可作为首尾帧。Lite 不支持多图输入。
+
+
+        ### 模式判定
+
+
+        | 模式 | 传参方式 |
+
+        |------|----------|
+
+        | 文生视频 | 不传 `images`，也可传空数组 `[]` |
+
+        | 首帧 | `images` 传 1 张图片，并传 `first_last_frame: true` |
+
+        | 首尾帧 | 仅标准版支持；`images` 依次传首帧、尾帧，并传 `first_last_frame: true` |
+
+        | 参考模式 | 传入参考素材，且不传 `first_last_frame` 或传 `false` |
+
+
+        `first_last_frame` 只决定图片是首/尾帧还是普通参考图：
+
+
+        - `true`：首帧或首尾帧模式；第 1 张图是首帧，第 2 张图是尾帧。
+
+        - `false` 或不传：参考模式；图片按传入顺序作为参考内容。
+
+
+        ---
+
+
+        ## 请求方式
+
+
+        支持以下两种方式，任选其一：
+
+
+        | 方式 | Content-Type | 参考素材字段 |
+
+        |------|--------------|--------------|
+
+        | JSON | `application/json` | 图片使用 `images` |
+
+        | 表单 | `multipart/form-data` | 本地图片或图片 URL 使用可重复的 `input_reference` 字段 |
+
+
+        > Grok 接口只接收图片参考内容。不要把 Markdown 链接（例如 `[图片](https://...)`）原样写入数组，只填写实际的
+        `https://...` 图片直链。
+
+
+        ## 请求头
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | Authorization | string | 是 | `Bearer YOUR_API_KEY` |
+
+        | Content-Type | string | 是 | `application/json` 或
+        `multipart/form-data`，须与请求体一致 |
+
+
+        ---
+
+
+        ## JSON 请求体说明
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | model | string | 是 | Grok 模型名称，见上方模型表 |
+
+        | prompt | string | 是 | 视频生成提示词 |
+
+        | images | string[] | 否 | 图片 URL 或完整 Base64 data URI；文生视频不传或传 `[]` |
+
+        | aspect_ratio | string | 否 | 视频宽高比，例如 `16:9`、`9:16`、`21:9` |
+
+        | resolution | string | 否 | 输出分辨率，例如 `720p`；可用值以模型服务端配置为准 |
+
+        | seconds | string | 是 | 输出时长，字符串形式，如 `"9"`；范围 4～15 |
+
+        | first_last_frame | boolean | 否 | `true` 表示首帧/首尾帧模式；不传或 `false` 表示参考模式
+        |
+
+
+        ### 参考素材格式
+
+
+        ```json
+
+        {
+          "images": [
+            "https://example.com/ref.png"
+          ]
+        }
+
+        ```
+
+
+        所有 URL 必须是无需登录、可由服务器直接下载文件内容的公网直链。
+
+
+        ---
+
+
+        ## 表单字段说明
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | model | string | 是 | Grok 模型名称 |
+
+        | prompt | string | 是 | 视频生成提示词 |
+
+        | input_reference | 可重复字段 | 否 | 本地图片、图片公网直链或图片 Base64；每张图片重复传一次 |
+
+        | aspect_ratio | string | 否 | 视频宽高比 |
+
+        | resolution | string | 否 | 输出分辨率，可用值以服务端配置为准 |
+
+        | seconds | string | 是 | 输出时长，范围 4～15 |
+
+        | first_last_frame | boolean/string | 否 | `true` 为首帧/首尾帧模式；不传或 `false`
+        为参考模式 |
+
+
+        ### `input_reference` 的传法
+
+
+        | 方式 | 示例 |
+
+        |------|------|
+
+        | 本地文件 | `-F "input_reference=@/path/to/ref.jpg"` |
+
+        | 公网 URL | `-F "input_reference=https://example.com/ref.jpg"` |
+
+        | 图片 Base64 | `-F "input_reference=data:image/jpeg;base64,/9j/..."` |
+
+
+        ---
+
+
+        ## 请求示例
+
+
+        ### 文生视频（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "grok-imagine-video-1.5",
+            "prompt": "一支具有电影质感的未来科技产品广告",
+            "aspect_ratio": "16:9",
+            "resolution": "720p",
+            "seconds": "9"
+          }'
+        ```
+
+
+        ### 标准版首尾帧（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "grok-imagine-video-1.5",
+            "prompt": "让两个画面之间自然、连贯地过渡",
+            "images": [
+              "https://example.com/first.webp",
+              "https://example.com/last.webp"
+            ],
+            "aspect_ratio": "21:9",
+            "resolution": "720p",
+            "seconds": "9",
+            "first_last_frame": true
+          }'
+        ```
+
+
+        ### 标准版多参考图（JSON，最多 7 张）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "grok-imagine-video-1.5",
+            "prompt": "参考产品、场景和人物形象制作一支广告",
+            "images": [
+              "https://example.com/product.png",
+              "https://example.com/scene.png",
+              "https://example.com/person.png"
+            ],
+            "aspect_ratio": "16:9",
+            "resolution": "720p",
+            "seconds": "12"
+          }'
+        ```
+
+
+        ### Fast 首帧视频（JSON，最长 15 秒）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "grok-imagine-video-1.5-fast",
+            "prompt": "从首帧开始，镜头缓慢推进，产品表面出现流动高光",
+            "images": [
+              "https://example.com/first.png"
+            ],
+            "aspect_ratio": "16:9",
+            "resolution": "720p",
+            "seconds": "15",
+            "first_last_frame": true
+          }'
+        ```
+
+
+        ### Fast 多图参考（JSON，最长 10 秒）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "grok-imagine-video-1.5-fast",
+            "prompt": "综合参考图中的产品和场景生成广告",
+            "images": [
+              "https://example.com/product.png",
+              "https://example.com/scene.png"
+            ],
+            "aspect_ratio": "16:9",
+            "resolution": "720p",
+            "seconds": "10",
+            "first_last_frame": false
+          }'
+        ```
+
+
+        ### Lite 首帧视频（JSON，最长 15 秒）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "grok-imagine-video-1.5-lite",
+            "prompt": "人物从静止逐渐转身并看向镜头",
+            "images": [
+              "https://example.com/first.png"
+            ],
+            "aspect_ratio": "9:16",
+            "resolution": "720p",
+            "seconds": "15",
+            "first_last_frame": true
+          }'
+        ```
+
+
+        ### 本地图片（表单）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -F "model=grok-imagine-video-1.5" \
+          -F "prompt=参考这些图片制作广告" \
+          -F "input_reference=@/path/to/product.png" \
+          -F "input_reference=@/path/to/scene.png" \
+          -F "aspect_ratio=16:9" \
+          -F "resolution=720p" \
+          -F "seconds=10"
+        ```
+
+
+        ---
+
+
+        ## 响应参数
+
+
+        完成态视频地址位于顶层 `url` 和 `video_url`，两者值相同。
+
+
+        | 参数名 | 类型 | 说明 |
+
+        |--------|------|------|
+
+        | id | string | 任务 ID |
+
+        | object | string | 固定值 `video` |
+
+        | model | string | 实际使用的模型名称 |
+
+        | status | string | `queued`、`in_progress`、`completed` 或 `failed` |
+
+        | progress | number | 任务进度，0～100 |
+
+        | created_at | number | 创建时间戳（秒） |
+
+        | completed_at | number | 完成时间戳（秒，仅完成态） |
+
+        | url | string | 生成视频直链（仅完成态） |
+
+        | video_url | string | 与 `url` 同值（仅完成态） |
+
+        | error | object | 失败信息，通常包含 `code`、`message` |
+
+
+        ### 提交成功
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "grok-imagine-video-1.5",
+          "status": "queued",
+          "progress": 0,
+          "created_at": 1791320000
+        }
+
+        ```
+
+
+        ### 任务完成
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "grok-imagine-video-1.5",
+          "status": "completed",
+          "progress": 100,
+          "created_at": 1791320000,
+          "completed_at": 1791320060,
+          "url": "https://example.com/output.mp4",
+          "video_url": "https://example.com/output.mp4"
+        }
+
+        ```
+
+
+        ### 任务失败
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "grok-imagine-video-1.5",
+          "status": "failed",
+          "progress": 0,
+          "created_at": 1791320000,
+          "error": {
+            "code": "invalid_request",
+            "message": "请求参数不符合模型能力限制"
+          }
+        }
+
+        ```
+
+
+        ---
+
+
+        ## 查询任务状态
+
+
+        `GET /v1/videos/{task_id}`
+
+
+        ```bash
+
+        curl -X GET "https://xxxxx.com/v1/videos/task_xxxxxxxxxxxxx" \
+          -H "Authorization: Bearer YOUR_API_KEY"
+        ```
+
+
+        `queued` / `in_progress` 时继续轮询；`completed` 时读取顶层 `url` 或
+        `video_url`；`failed` 时读取 `error.message`。
+
+
+        ---
+
+
+        ## 注意事项
+
+
+        1. `seconds` 必须使用字符串，支持 `"4"`～`"15"`。
+
+        2. 标准版参考图最多 7 张；首尾帧模式最多传 2 张图片。
+
+        3. `fast` 多图参考模式最长 10 秒；首帧模式可到 15 秒。
+
+        4. `lite` 仅支持文生视频或单张首帧图生视频，**不支持多图输入和尾帧模式**。
+
+        5. 首帧/首尾帧必须显式传 `first_last_frame: true`；不传或传 `false` 会按普通参考模式处理。
+
+        6. Grok 参考内容只支持图片：JSON 使用 `images`，表单使用可重复的 `input_reference`。
+
+        7. JSON 与表单二选一。JSON 不能直接携带本地文件；本地文件请使用 `multipart/form-data`。
+
+        8. 接口为异步接口，提交成功不代表视频已经生成完成。
+      tags:
+        - 视频生成（Videos）
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: true
+          example: Bearer {{YOUR_API_KEY}}
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: ''
+          required: false
+          example: application/json
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                prompt:
+                  type: string
+                size:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - model
+                - prompt
+                - size
+                - images
+              x-apifox-orders:
+                - model
+                - prompt
+                - size
+                - images
+            example:
+              model: grok-imagine-video-1.5
+              prompt: 帮我做个广告
+              images:
+                - https://example.com/first.webp
+                - https://example.com/last.webp
+              aspect_ratio: '21:9'
+              resolution: 720p
+              seconds: '9'
+              first_last_frame: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  object:
+                    type: string
+                  model:
+                    type: string
+                  status:
+                    type: string
+                  progress:
+                    type: integer
+                  created_at:
+                    type: integer
+                  completed_at:
+                    type: integer
+                  size:
+                    type: string
+                required:
+                  - id
+                  - object
+                  - model
+                  - status
+                  - progress
+                  - created_at
+                  - completed_at
+                  - size
+                x-apifox-orders:
+                  - id
+                  - object
+                  - model
+                  - status
+                  - progress
+                  - created_at
+                  - completed_at
+                  - size
+              example:
+                id: task_xxxxxxxxxxxxx
+                object: video
+                model: veo_3_1-fast
+                status: completed
+                progress: 100
+                created_at: 1709876543
+                completed_at: 1709876600
+                size: 1920x1080
+          headers: {}
+          x-apifox-name: 成功
+      security: []
+      x-apifox-folder: 视频生成（Videos）
+      x-apifox-status: developing
+      x-run-in-apifox: https://app.apifox.com/web/project/7902379/apis/api-521606507-run
+components:
+  schemas: {}
+  securitySchemes: {}
+servers: []
+security: []
+
+```

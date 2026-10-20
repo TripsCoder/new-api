@@ -1,0 +1,2949 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "鸡出没API · 常用端点参考",
+    "version": "2026-10-14-media-docs",
+    "description": "常用端点参考。视频综合区的素材字段来自当前适配代码和能力快照；示例经代码校验与模拟透传验证，未发起真实生成。说明文字或模型可见性不代表支持任意素材。",
+    "x-documentation": "https://www.xcmapi.com/docs/QuickStart.html",
+    "x-video-contract": "https://xcmapi.org/docs/video-contract.json"
+  },
+  "servers": [
+    {
+      "url": "https://xcmapi.org",
+      "description": "API Origin，不含 /v1；下面路径已含版本前缀。"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "用户自己的 API Key"
+      },
+      "geminiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-goog-api-key"
+      }
+    },
+    "schemas": {
+      "MediaRefString": {
+        "type": "string",
+        "format": "uri",
+        "maxLength": 8192,
+        "description": "公网HTTPS（443）地址；不能是本地路径、data/blob URL、私网地址或带用户名密码/片段的URL。签名查询参数可保留。",
+        "pattern": "^https://"
+      },
+      "ImageRef": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "$ref": "#/components/schemas/MediaRefString"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 120,
+            "description": "素材自身时长（秒），与输出duration无关。"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "first_frame",
+              "end_frame"
+            ],
+            "description": "仅首尾帧模式使用；普通参考图省略type。"
+          }
+        }
+      },
+      "AudioRef": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "$ref": "#/components/schemas/MediaRefString"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 120,
+            "description": "素材自身时长（秒），与输出duration无关。"
+          }
+        }
+      },
+      "VideoRef": {
+        "type": "object",
+        "required": [
+          "url",
+          "duration_seconds"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "$ref": "#/components/schemas/MediaRefString"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 120,
+            "description": "素材自身时长（秒），与输出duration无关。"
+          }
+        },
+        "description": "上游minimax-h3的参考视频应提供duration_seconds；当前适配层不会提前拦截遗漏，本规范在客户端先限制，不承诺省略后免费失败。"
+      },
+      "MaterialItem": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "$ref": "#/components/schemas/MediaRefString"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "duration_seconds": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 120,
+                "description": "素材自身时长（秒），与输出duration无关。"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "image"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "url",
+              "duration_seconds"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "$ref": "#/components/schemas/MediaRefString"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "duration_seconds": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 120,
+                "description": "素材自身时长（秒），与输出duration无关。"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "video"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "$ref": "#/components/schemas/MediaRefString"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "duration_seconds": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 120,
+                "description": "素材自身时长（秒），与输出duration无关。"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "audio"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "GwayVideoCreate": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt",
+          "client_request_id"
+        ],
+        "additionalProperties": false,
+        "description": "视频综合区Gway协议。只使用当前模型声明的media字段；数量和范围以video-contract.json及实时目录为准。",
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "dola-seedance-2.0-900",
+              "dola-seedance-2.0-933",
+              "dola-seedance-2.5-301010",
+              "dola-seedance-2.5-900",
+              "grok-1.5",
+              "minimax-h3",
+              "seedance-2.0-G1",
+              "seedance-2.0-G2",
+              "seedance-2.0-G6",
+              "seedance-2.0-G6-x",
+              "seedance-2.5-G1",
+              "seedance-2.5-G2",
+              "seedance2.5-满血"
+            ]
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "client_request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{16,128}$",
+            "description": "每个业务单唯一且固定；替换示例占位值。重试不能更换ID。重复提交可能返回422，不能据此再新建订单。"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "description": "输出时长；每个模型范围不同。示例均不超过15秒，不能从公共上限推断任意模型支持30秒。"
+          },
+          "ratio": {
+            "type": "string",
+            "description": "建议使用的画幅字段；取值以当前模型为准。"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "deprecated": true,
+            "description": "ratio的兼容别名；二者同时传时必须一致。推荐仅传ratio。"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "当前模型支持的分辨率；minimax-h3按实时执行参数使用小写2k。不要把旧768p或自行猜测的拼写当作当前有效参数。"
+          },
+          "images": {
+            "type": "array",
+            "maxItems": 9,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MediaRefString"
+                },
+                {
+                  "$ref": "#/components/schemas/ImageRef"
+                }
+              ]
+            }
+          },
+          "videos": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "$ref": "#/components/schemas/VideoRef"
+            }
+          },
+          "audios": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MediaRefString"
+                },
+                {
+                  "$ref": "#/components/schemas/AudioRef"
+                }
+              ]
+            }
+          },
+          "materials": {
+            "type": "array",
+            "maxItems": 15,
+            "items": {
+              "$ref": "#/components/schemas/MaterialItem"
+            }
+          }
+        },
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "materials",
+                    "images"
+                  ],
+                  "properties": {
+                    "materials": {
+                      "minItems": 1
+                    },
+                    "images": {
+                      "minItems": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "materials",
+                    "videos"
+                  ],
+                  "properties": {
+                    "materials": {
+                      "minItems": 1
+                    },
+                    "videos": {
+                      "minItems": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "materials",
+                    "audios"
+                  ],
+                  "properties": {
+                    "materials": {
+                      "minItems": 1
+                    },
+                    "audios": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "x-model-constraints": {
+          "dola-seedance-2.0-900": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ]
+          },
+          "dola-seedance-2.0-933": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ]
+          },
+          "dola-seedance-2.5-301010": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 5,
+            "duration_max": 30,
+            "resolutions": [
+              "720p"
+            ]
+          },
+          "dola-seedance-2.5-900": {
+            "media_fields": [
+              "images",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 5,
+            "duration_max": 30,
+            "resolutions": [
+              "720p"
+            ]
+          },
+          "grok-1.5": {
+            "media_fields": [
+              "images",
+              "materials"
+            ],
+            "max_images": 7,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 3,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ]
+          },
+          "minimax-h3": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 3,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "2k"
+            ]
+          },
+          "seedance-2.0-G1": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "480p",
+              "720p"
+            ]
+          },
+          "seedance-2.0-G2": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ]
+          },
+          "seedance-2.0-G6": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ]
+          },
+          "seedance-2.0-G6-x": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ]
+          },
+          "seedance-2.5-G1": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 5,
+            "duration_max": 15,
+            "resolutions": [
+              "480p",
+              "720p",
+              "1080p"
+            ]
+          },
+          "seedance-2.5-G2": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 5,
+            "duration_max": 15,
+            "resolutions": [
+              "480p",
+              "720p"
+            ]
+          },
+          "seedance2.5-满血": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "480p",
+              "720p",
+              "1080p"
+            ]
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "dola-seedance-2.0-900"
+                ]
+              },
+              "duration": {
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "dola-seedance-2.0-933"
+                ]
+              },
+              "duration": {
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "dola-seedance-2.5-301010"
+                ]
+              },
+              "duration": {
+                "minimum": 5,
+                "maximum": 30
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "dola-seedance-2.5-900"
+                ]
+              },
+              "duration": {
+                "minimum": 5,
+                "maximum": 30
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "images": {
+                "maxItems": 9
+              },
+              "materials": {
+                "maxItems": 9,
+                "items": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "image"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "grok-1.5"
+                ]
+              },
+              "duration": {
+                "minimum": 3,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "images": {
+                "maxItems": 7
+              },
+              "materials": {
+                "maxItems": 7,
+                "items": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "image"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "minimax-h3"
+                ]
+              },
+              "duration": {
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "2k"
+                ]
+              },
+              "images": {
+                "maxItems": 9
+              },
+              "videos": {
+                "maxItems": 3
+              },
+              "audios": {
+                "maxItems": 3
+              },
+              "materials": {
+                "maxItems": 15,
+                "items": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "image",
+                        "video",
+                        "audio"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.0-G1"
+                ]
+              },
+              "duration": {
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.0-G2"
+                ]
+              },
+              "duration": {
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.0-G6"
+                ]
+              },
+              "duration": {
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.0-G6-x"
+                ]
+              },
+              "duration": {
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-G1"
+                ]
+              },
+              "duration": {
+                "minimum": 5,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "480p",
+                  "720p",
+                  "1080p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-G2"
+                ]
+              },
+              "duration": {
+                "minimum": 5,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance2.5-满血"
+                ]
+              },
+              "duration": {
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "480p",
+                  "720p",
+                  "1080p"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "NativeH3Create": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "h3"
+            ]
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 15,
+            "description": "官方计费上限 15 秒；实际时长是否允许以该模型上游约束为准。"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "description": "H3 使用该字段而非 ratio；具体值以模型约束为准。"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "计价档不等于经过出片验证；见现行 H3 章节。"
+          }
+        },
+        "additionalProperties": true,
+        "description": "仅供模型名h3的独立原生协议参考，需当前Key另有该模型权限；不属于Gway minimax-h3。保留原字段，本次未做该原生协议的付费测试。"
+      }
+    }
+  },
+  "paths": {
+    "/v1/models": {
+      "get": {
+        "operationId": "listModels",
+        "summary": "读取当前 Key 可见模型目录",
+        "description": "不是价格 API，也不证明端点或模态已经通过测试。",
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/chat/completions": {
+      "post": {
+        "operationId": "chatCompletions",
+        "summary": "聊天与视觉理解",
+        "description": "messages 中可用文字或图片内容块；流式为 SSE，解析 choices[].delta，不能套用 Responses 事件。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "messages"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "messages": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "role",
+                            "content"
+                          ],
+                          "properties": {
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "system",
+                                "developer",
+                                "user"
+                              ]
+                            },
+                            "content": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "role"
+                          ],
+                          "properties": {
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "assistant"
+                              ]
+                            },
+                            "content": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                  }
+                                }
+                              ]
+                            },
+                            "tool_calls": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          "additionalProperties": true,
+                          "anyOf": [
+                            {
+                              "required": [
+                                "content"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "tool_calls"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "role",
+                            "content",
+                            "tool_call_id"
+                          ],
+                          "properties": {
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "tool"
+                              ]
+                            },
+                            "content": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                  }
+                                }
+                              ]
+                            },
+                            "tool_call_id": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  },
+                  "max_tokens": {
+                    "type": "integer"
+                  },
+                  "temperature": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\ndata: [DONE]\n\n"
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/responses": {
+      "post": {
+        "operationId": "responses",
+        "summary": "Responses API",
+        "description": "input 和 output 结构；流式事件与聊天不同。模型需支持该端点。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "input"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "input": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      }
+                    ]
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "按 Responses 事件类型处理。"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/messages": {
+      "post": {
+        "operationId": "anthropicMessages",
+        "summary": "Anthropic Messages 原生协议",
+        "description": "需当前 Key 与渠道支持；与 OpenAI 消息格式不同。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "messages",
+                  "max_tokens"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "messages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "role",
+                        "content"
+                      ],
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "assistant"
+                          ]
+                        },
+                        "content": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "max_tokens": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  },
+                  "system": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "anthropic-version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "2023-06-01"
+            }
+          }
+        ]
+      }
+    },
+    "/v1beta/models/{model}:generateContent": {
+      "post": {
+        "operationId": "geminiGenerateContent",
+        "summary": "Gemini 原生内容生成",
+        "description": "使用 x-goog-api-key，不套用 OpenAI Chat 请求体。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "contents"
+                ],
+                "properties": {
+                  "contents": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "generationConfig": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "geminiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "model",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/images/generations": {
+      "post": {
+        "operationId": "generateImage",
+        "summary": "根据提示词生成图片",
+        "description": "只支持指定图像模型。size/n 等值由型号决定。返回 data[].url 或 data[].b64_json。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "prompt"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "string"
+                  },
+                  "n": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "response_format": {
+                    "type": "string",
+                    "enum": [
+                      "url",
+                      "b64_json"
+                    ]
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/images/edits": {
+      "post": {
+        "operationId": "editImage",
+        "summary": "上传图片并编辑",
+        "description": "multipart 文件上传。字段与多图上限受模型约束；不要手动设置 boundary。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "prompt",
+                  "image[]"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "image[]": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "size": {
+                    "type": "string"
+                  },
+                  "n": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/videos": {
+      "post": {
+        "operationId": "createVideo",
+        "summary": "创建一个视频任务",
+        "description": "创建视频任务。两路径进入同一视频适配校验。视频综合区使用GwayVideoCreate；原生h3为不同协议。Content-Type必须为application/json；不接受本地素材文件作为本端点上传。每个订单只提交一次。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/GwayVideoCreate"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NativeH3Create"
+                  }
+                ]
+              },
+              "examples": {
+                "h3_reference_image": {
+                  "summary": "minimax-h3：单张参考图",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "2k",
+                    "images": [
+                      {
+                        "url": "https://your-cdn.example.com/reference-1.jpg",
+                        "name": "人物参考"
+                      }
+                    ]
+                  }
+                },
+                "h3_mixed_arrays": {
+                  "summary": "minimax-h3：图片、视频、音频分别传入",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "2k",
+                    "images": [
+                      {
+                        "url": "https://your-cdn.example.com/reference-1.jpg",
+                        "name": "人物参考"
+                      }
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/motion-reference.mp4",
+                        "name": "动作参考",
+                        "duration_seconds": 8
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/voice-reference.mp3",
+                        "name": "声音参考"
+                      }
+                    ]
+                  }
+                },
+                "h3_materials": {
+                  "summary": "minimax-h3：统一materials数组（另一种写法）",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "2k",
+                    "materials": [
+                      {
+                        "type": "image",
+                        "url": "https://your-cdn.example.com/reference-1.jpg",
+                        "name": "人物参考"
+                      },
+                      {
+                        "type": "video",
+                        "url": "https://your-cdn.example.com/motion-reference.mp4",
+                        "name": "动作参考",
+                        "duration_seconds": 8
+                      },
+                      {
+                        "type": "audio",
+                        "url": "https://your-cdn.example.com/voice-reference.mp3",
+                        "name": "声音参考"
+                      }
+                    ]
+                  }
+                },
+                "h3_frames": {
+                  "summary": "minimax-h3：首尾帧结构（未验证上游帧语义）",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "2k",
+                    "images": [
+                      {
+                        "type": "first_frame",
+                        "url": "https://your-cdn.example.com/first-frame.jpg"
+                      },
+                      {
+                        "type": "end_frame",
+                        "url": "https://your-cdn.example.com/last-frame.jpg"
+                      }
+                    ]
+                  }
+                },
+                "dola_reference_image": {
+                  "summary": "dola-seedance-2.5-900：参考图片",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "dola-seedance-2.5-900",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference-1.jpg"
+                    ]
+                  }
+                },
+                "grok_reference_image": {
+                  "summary": "grok-1.5：参考图片",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "grok-1.5",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference-1.jpg"
+                    ]
+                  }
+                },
+                "text_only": {
+                  "summary": "dola-seedance-2.0-933：仅文生，不接受参考素材",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "dola-seedance-2.0-933",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "任务已创建。ID 可能位于顶层或 data 中。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "任务已受理，继续查询。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或素材格式不支持。不会静默删除素材后改为文生。"
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "创建视频接口要求application/json，不能使用文件multipart上传。"
+          },
+          "422": {
+            "description": "请求号缺失/无效、重复/冲突、计费保护或创建结果不确定；保留原业务号与任务号，不自动重发。"
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/videos/generations": {
+      "post": {
+        "operationId": "createVideoAlias",
+        "summary": "创建一个视频任务",
+        "description": "创建视频任务。两路径进入同一视频适配校验。视频综合区使用GwayVideoCreate；原生h3为不同协议。Content-Type必须为application/json；不接受本地素材文件作为本端点上传。每个订单只提交一次。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/GwayVideoCreate"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NativeH3Create"
+                  }
+                ]
+              },
+              "examples": {
+                "h3_reference_image": {
+                  "summary": "minimax-h3：单张参考图",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "2k",
+                    "images": [
+                      {
+                        "url": "https://your-cdn.example.com/reference-1.jpg",
+                        "name": "人物参考"
+                      }
+                    ]
+                  }
+                },
+                "h3_mixed_arrays": {
+                  "summary": "minimax-h3：图片、视频、音频分别传入",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "2k",
+                    "images": [
+                      {
+                        "url": "https://your-cdn.example.com/reference-1.jpg",
+                        "name": "人物参考"
+                      }
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/motion-reference.mp4",
+                        "name": "动作参考",
+                        "duration_seconds": 8
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/voice-reference.mp3",
+                        "name": "声音参考"
+                      }
+                    ]
+                  }
+                },
+                "h3_materials": {
+                  "summary": "minimax-h3：统一materials数组（另一种写法）",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "2k",
+                    "materials": [
+                      {
+                        "type": "image",
+                        "url": "https://your-cdn.example.com/reference-1.jpg",
+                        "name": "人物参考"
+                      },
+                      {
+                        "type": "video",
+                        "url": "https://your-cdn.example.com/motion-reference.mp4",
+                        "name": "动作参考",
+                        "duration_seconds": 8
+                      },
+                      {
+                        "type": "audio",
+                        "url": "https://your-cdn.example.com/voice-reference.mp3",
+                        "name": "声音参考"
+                      }
+                    ]
+                  }
+                },
+                "h3_frames": {
+                  "summary": "minimax-h3：首尾帧结构（未验证上游帧语义）",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "2k",
+                    "images": [
+                      {
+                        "type": "first_frame",
+                        "url": "https://your-cdn.example.com/first-frame.jpg"
+                      },
+                      {
+                        "type": "end_frame",
+                        "url": "https://your-cdn.example.com/last-frame.jpg"
+                      }
+                    ]
+                  }
+                },
+                "dola_reference_image": {
+                  "summary": "dola-seedance-2.5-900：参考图片",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "dola-seedance-2.5-900",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference-1.jpg"
+                    ]
+                  }
+                },
+                "grok_reference_image": {
+                  "summary": "grok-1.5：参考图片",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "grok-1.5",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference-1.jpg"
+                    ]
+                  }
+                },
+                "text_only": {
+                  "summary": "dola-seedance-2.0-933：仅文生，不接受参考素材",
+                  "description": "先替换所有URL和唯一业务ID；此示例未发起真实生成。",
+                  "value": {
+                    "model": "dola-seedance-2.0-933",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "任务已创建。ID 可能位于顶层或 data 中。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "任务已受理，继续查询。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或素材格式不支持。不会静默删除素材后改为文生。"
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "创建视频接口要求application/json，不能使用文件multipart上传。"
+          },
+          "422": {
+            "description": "请求号缺失/无效、重复/冲突、计费保护或创建结果不确定；保留原业务号与任务号，不自动重发。"
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/videos/{task_id}": {
+      "get": {
+        "operationId": "getVideoTask",
+        "summary": "查询同一个视频任务",
+        "description": "每 3–5 秒查询，设置总次数和时间上限。成功：done/completed/succeeded/success；失败：failed/error/expired/cancelled/canceled；未知状态停止自动轮询并保留 ID。",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "创建时返回的 id/task_id/request_id。始终使用同一 Key 查询。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/videos/{task_id}/content": {
+      "get": {
+        "operationId": "downloadVideo",
+        "summary": "下载已完成的视频",
+        "description": "若返回外部地址，后续下载不要携带本站 Authorization；禁止 location-trusted。",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "创建时返回的 id/task_id/request_id。始终使用同一 Key 查询。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "视频内容或依渠道给出的下载结果；检查 Content-Type。",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "下载跳转；后续请求不得向外部域名转发 API Key。",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "307": {
+            "description": "临时跳转，遵守相同凭据隔离要求。"
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

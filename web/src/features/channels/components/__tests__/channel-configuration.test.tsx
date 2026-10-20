@@ -420,6 +420,48 @@ test('model mapping help supports keyboard activation and wraps long model names
   expect(trigger).toHaveAttribute('aria-expanded', 'false')
 })
 
+test('document-driven plugins use upstream discovery instead of model metadata presets', async () => {
+  pluginOptions = [{ ...plugins[0], requiresModelDiscovery: true }]
+  vi.spyOn(api, 'post').mockResolvedValue({
+    data: {
+      success: true,
+      data: ['real-from-upstream'],
+      discovery: {
+        source: 'upstream',
+        checked_at: 1,
+        plugin_key: 'video-a',
+        source_url: 'https://docs.example.test/models',
+        source_sha256: 'a'.repeat(64),
+        models: [
+          {
+            id: 'real-from-upstream',
+            adapted: true,
+            configured: false,
+            pricing_status: 'not_checked',
+          },
+        ],
+      },
+    },
+  })
+  const user = userEvent.setup()
+  render(<ConfigurationHarness />)
+  await user.click(await screen.findByRole('option', { name: /Video A/ }))
+  expect(screen.queryByText('video-a-1')).not.toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: 'Fill Related Models' })
+  ).toBeDisabled()
+  fireEvent.change(screen.getByLabelText('API Key *'), {
+    target: { value: 'fixture-secret' },
+  })
+  await user.click(screen.getByRole('button', { name: 'Fetch from Upstream' }))
+  expect(
+    await screen.findByRole('checkbox', { name: 'real-from-upstream' })
+  ).not.toBeChecked()
+  expect(
+    screen.queryByRole('checkbox', { name: 'video-a-1' })
+  ).not.toBeInTheDocument()
+})
+
 test('selecting a plugin opens a prefilled channel and creates its explicit binding', async () => {
   const post = vi
     .spyOn(api, 'post')

@@ -226,8 +226,8 @@ func TestTaskPluginUpstreamApplyKeepsUnadaptedModelsPending(t *testing.T) {
 			require.NoError(t, err)
 			mapping := `{"alias":"mapped","chain":"hop","hop":"chain-target","redirected":"unsupported","cycle":"cycle2","cycle2":"cycle"}`
 			pending := []string{"known", "alias", "chain", "new", "foreign", "Known", "redirected", "cycle", "legacy"}
-			wantAdded := []string{"known", "alias", "chain", "legacy"}
-			wantRemaining := []string{"new", "foreign", "Known", "redirected", "cycle"}
+			wantAdded := []string{"known", "alias", "chain", "Known", "legacy"}
+			wantRemaining := []string{"new", "foreign", "redirected", "cycle"}
 			channels := []*model.Channel{
 				{Type: constant.ChannelTypeTaskPlugin, Name: "bound plugin", Models: "legacy", ModelMapping: &mapping},
 				{Type: constant.ChannelTypeTaskPlugin, Name: "missing plugin", Models: "legacy"},
@@ -276,7 +276,7 @@ func TestTaskPluginUpstreamApplyKeepsUnadaptedModelsPending(t *testing.T) {
 				require.NoError(t, err)
 				switch i {
 				case 0:
-					assert.Equal(t, []string{"legacy", "known", "alias", "chain"}, saved.GetModels())
+					assert.Equal(t, []string{"legacy", "known", "alias", "chain", "Known"}, saved.GetModels())
 					assert.Equal(t, wantRemaining, saved.GetOtherSettings().UpstreamModelUpdateLastDetectedModels)
 				case 1:
 					assert.Equal(t, "legacy", saved.Models)
@@ -890,4 +890,42 @@ func TestDetectAllChannelUpstreamModelUpdatesRejectsExistingActiveTask(t *testin
 	require.Equal(t, http.StatusConflict, recorder.Code)
 	require.Contains(t, recorder.Body.String(), existing.TaskID)
 	require.Contains(t, recorder.Body.String(), "A model update task is already running or queued")
+}
+
+func TestSixProviderDiscoveryUsesAuthenticatedStandardEndpointWithoutMetadata(t *testing.T) {
+	for _, key := range []string{"paisio_media", "yuxibox_media", "xcmapi_media", "artbox_media", "lxmone_media", "zhangyuge_media"} {
+		t.Run(key, func(t *testing.T) {
+			requests := 0
+			status := http.StatusOK
+			body := `{"data":[{"id":"returned-only"}]}`
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				assert.Equal(t, "GET", r.Method)
+				assert.Equal(t, "/v1/models", r.URL.Path)
+				assert.Equal(t, "Bearer isolated-discovery", r.Header.Get("Authorization"))
+				w.WriteHeader(status)
+				_, _ = w.Write([]byte(body))
+			}))
+			defer server.Close()
+			base := server.URL + "/v1/"
+			channel := &model.Channel{Type: 61, Key: "isolated-discovery", BaseURL: &base, Models: "existing-kept"}
+			meta := jsplugin.Meta{APIVersion: 1, Key: key, Name: "fixture", Version: "2.0.0", Author: jsplugin.AuthorMeta{Name: "test"}, Models: []string{"static-must-not-appear"}, FetchMode: "per_task"}
+			ids, err := fetchTaskPluginUpstreamModels(channel, meta)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"returned-only"}, ids)
+			assert.Equal(t, "existing-kept", channel.Models)
+			body = `{"data":[]}`
+			ids, err = fetchTaskPluginUpstreamModels(channel, meta)
+			require.NoError(t, err)
+			assert.Empty(t, ids)
+			assert.Equal(t, "existing-kept", channel.Models)
+			status = 401
+			ids, err = fetchTaskPluginUpstreamModels(channel, meta)
+			require.ErrorContains(t, err, "HTTP 401")
+			assert.Nil(t, ids)
+			assert.NotContains(t, err.Error(), "isolated-discovery")
+			assert.Equal(t, "existing-kept", channel.Models)
+			assert.Equal(t, 3, requests)
+		})
+	}
 }

@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>接入文档 - ArtBox</title>
+    <link rel="icon" href="./logo.png" />
+    <link rel="stylesheet" href="./styles.css?v=9" />
+    <link rel="stylesheet" href="/storefront/styles.css?v=9" />
+  </head>
+  <body data-page="docs">
+    <header class="site-header" id="site-header"></header>
+    <main class="docs-shell">
+      <aside class="docs-aside">
+        <nav class="docs-side">
+          <a href="#start">快速开始</a>
+          <a href="#apikey">API Key</a>
+          <a href="#base-url">Base URL</a>
+          <a href="#models">模型列表 <span class="rec">推荐</span></a>
+          <a href="#text-to-video">文生视频 <span class="rec">推荐</span></a>
+          <a href="#image-to-video">图生视频 <span class="rec">推荐</span></a>
+          <a href="#refs">多参考与音频 <span class="rec">推荐</span></a>
+          <a href="#query">查询任务</a>
+          <a href="#billing">计费</a>
+          <a href="#verify">验证</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+      </aside>
+      <div class="docs-col">
+        <section class="docs-intro docs-anchor" id="start">
+        <div class="docs-hero">
+          <div class="docs-path"><span class="pill">新手教程</span> /docs</div>
+          <h1>Artdance 视频接入教程</h1>
+          <p class="lede">
+            本页按本站实际视频接口整理。创建和查询都走 <code>/v1/video/generations</code>，不要使用 Chat Completions。
+            模型名已锁定分辨率。所有示例使用当前域名 <code>https://artbox.top</code>。
+          </p>
+        </div>
+
+        <div class="docs-facts">
+          <div class="fact">
+            <div class="fact-ico">/</div>
+            <div>
+              <b>Base URL</b>
+              <span>https://artbox.top/v1，客户端必须带 /v1</span>
+            </div>
+          </div>
+          <div class="fact">
+            <div class="fact-ico">↑</div>
+            <div>
+              <b>创建任务</b>
+              <span>POST /v1/video/generations，立即返回 id / task_id</span>
+            </div>
+          </div>
+          <div class="fact">
+            <div class="fact-ico">↓</div>
+            <div>
+              <b>查询任务</b>
+              <span>GET /v1/video/generations/{task_id}，同一把 Key 轮询</span>
+            </div>
+          </div>
+          <div class="fact">
+            <div class="fact-ico">✓</div>
+            <div>
+              <b>分组权限</b>
+              <span>模型是否可用以 API Key 所属分组为准，公开页展示 default</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="docs-jumps">
+          <a class="jump" href="#text-to-video">
+            <div class="jump-top"><span class="ico">▷</span><span class="rec">推荐</span></div>
+            <h3>文生视频</h3>
+            <p>最少只要 model、prompt、seconds。适合直接从文本出片。</p>
+            <em>查看教程 →</em>
+          </a>
+          <a class="jump" href="#image-to-video">
+            <div class="jump-top"><span class="ico">▣</span><span class="rec">推荐</span></div>
+            <h3>图生视频</h3>
+            <p>image_urls、首尾帧把参考图推进成片。</p>
+            <em>查看教程 →</em>
+          </a>
+          <a class="jump" href="#refs">
+            <div class="jump-top"><span class="ico">◎</span><span class="rec">推荐</span></div>
+            <h3>多参考与音频</h3>
+            <p>2.5 档支持多图、多视频、多音频，以及原生同步音频。</p>
+            <em>查看教程 →</em>
+          </a>
+          <a class="jump" href="#query">
+            <div class="jump-top"><span class="ico">↻</span></div>
+            <h3>查询与轮询</h3>
+            <p>保存 task_id，直到 completed / failed。不要重复提交。</p>
+            <em>查看教程 →</em>
+          </a>
+        </div>
+        </section>
+
+        <section class="docs-section docs-anchor" id="apikey">
+          <div class="sec-head">
+            <div class="sec-ico">#</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">API KEY</div>
+              <h2>创建本站 API Key</h2>
+            </div>
+          </div>
+          <p>登录控制台创建密钥。后续所有请求都使用同一个本站 API Key 认证。</p>
+          <div class="docs-steps">
+            <article class="docs-step">
+              <h3>登录本站</h3>
+              <p>使用账号登录。没有账号先注册，或通过 Telegram 联系开通。</p>
+            </article>
+            <article class="docs-step">
+              <h3>创建 API Key</h3>
+              <p>进入 API Keys 页面，新建密钥并复制。密钥只放本机环境变量或配置文件。</p>
+            </article>
+            <article class="docs-step">
+              <h3>确认分组可用</h3>
+              <p>如果返回模型不可用，通常是 Key 所属分组没有开启对应模型。</p>
+            </article>
+          </div>
+          <p>
+            <a class="primary-btn" href="https://artbox.top/sign-up" style="height:36px;padding:0 12px;font-size:13px">获取 API Key</a>
+            <a class="secondary-btn" href="https://t.me/luosishou" style="height:36px;padding:0 12px;font-size:13px;margin-left:8px">Telegram</a>
+          </p>
+
+        </section>
+        <section class="docs-section docs-anchor" id="base-url">
+          <div class="sec-head">
+            <div class="sec-ico">/</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">BASE URL</div>
+              <h2>填写 Base URL 和鉴权</h2>
+            </div>
+          </div>
+          <p>视频接口走 OpenAI 风格的 Bearer 鉴权。Base URL 必须带 <code>/v1</code>。</p>
+          <div class="kv">
+            <div>
+              <div class="kv-key">BASE_URL</div>
+              <div class="kv-desc">客户端入口，必须带 /v1</div>
+            </div>
+            <div class="kv-val">
+              https://artbox.top/v1
+              <button class="copy-mini" type="button" data-copy="https://artbox.top/v1">复制</button>
+            </div>
+          </div>
+          <div class="kv">
+            <div>
+              <div class="kv-key">AUTHORIZATION</div>
+              <div class="kv-desc">在本站创建的 API Key</div>
+            </div>
+            <div class="kv-val">
+              Bearer sk-your-key
+              <button class="copy-mini" type="button" data-copy="Authorization: Bearer sk-your-key">复制</button>
+            </div>
+          </div>
+          <div class="kv">
+            <div>
+              <div class="kv-key">CREATE</div>
+              <div class="kv-desc">提交异步视频任务</div>
+            </div>
+            <div class="kv-val">
+              POST /v1/video/generations
+              <button class="copy-mini" type="button" data-copy="POST /v1/video/generations">复制</button>
+            </div>
+          </div>
+          <div class="kv">
+            <div>
+              <div class="kv-key">QUERY</div>
+              <div class="kv-desc">用创建时返回的 id / task_id 查询</div>
+            </div>
+            <div class="kv-val">
+              GET /v1/video/generations/{task_id}
+              <button class="copy-mini" type="button" data-copy="GET /v1/video/generations/{task_id}">复制</button>
+            </div>
+          </div>
+          <div class="callout" style="margin-top:14px">不要把视频请求打到 <code>/v1/chat/completions</code>。任务只对创建它的 API Key 可见。</div>
+
+        </section>
+        <section class="docs-section docs-anchor" id="models">
+          <div class="sec-head">
+            <div class="sec-ico">≡</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">MODELS</div>
+              <h2>当前支持模型</h2>
+            </div>
+          </div>
+          <p>模型名已经锁定分辨率。选 <code>Artdance 2.5-720p</code> 就是 720p，不要再传 size / resolution 去改档。</p>
+          <div class="docs-table-wrap">
+            <table class="docs-table">
+              <thead>
+                <tr>
+                  <th>模型 ID</th>
+                  <th>支持能力</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>Artdance 2 Mini-720p</code></td>
+                  <td>文生 / 图生 / 多参考 / 首尾帧</td>
+                  <td>入门档，720p。</td>
+                </tr>
+                <tr>
+                  <td><code>Artdance 2.0-720p</code><br /><code>Artdance 2.0-1080p</code><br /><code>Artdance 2.0-4K</code></td>
+                  <td>满配多参考</td>
+                  <td>成片约 4–15 秒。模型名决定分辨率。</td>
+                </tr>
+                <tr>
+                  <td><code>Artdance 2.5-480p</code><br /><code>Artdance 2.5-720p</code><br /><code>Artdance 2.5-1080p</code></td>
+                  <td>文生 / 图生 / 多图 / 多视频 / 多音频 / 同步音频</td>
+                  <td>旗舰档，最长 30 秒。近期热推 720p。</td>
+                </tr>
+                <tr>
+                  <td><code>Artdance Fast-720p</code></td>
+                  <td>文生 / 图生 / 多参考 / 首尾帧</td>
+                  <td>加速档，720p，成片约 4–15 秒。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>完整单价见 <a href="./pricing.html">模型价格</a>。官渠视频分组稍后单独补文档。</p>
+
+        </section>
+        <section class="docs-section docs-anchor" id="text-to-video">
+          <div class="sec-head">
+            <div class="sec-ico">▷</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">TEXT TO VIDEO</div>
+              <h2>文生视频</h2>
+            </div>
+          </div>
+          <p>只支持异步任务。提交后保存 <code>id</code> 或 <code>task_id</code>，使用同一把 API Key 轮询，不要重复提交。</p>
+          <div class="tri">
+            <article>
+              <h3>认证与分组</h3>
+              <p>使用对应分组的本站 API Key。任务只对创建它的 Key 可见。</p>
+            </article>
+            <article>
+              <h3>异步任务</h3>
+              <p>POST 立即返回任务 ID。收到后只轮询，不要再 POST 一次。</p>
+            </article>
+            <article>
+              <h3>时长与分辨率</h3>
+              <p>时长用 seconds 或 duration。分辨率写在模型名里，不要另传 size。</p>
+            </article>
+          </div>
+          <h3>常用字段</h3>
+          <ul>
+            <li><code>model</code>：必须是价格页上的完整模型名</li>
+            <li><code>prompt</code>：文本描述</li>
+            <li><code>seconds</code> 或 <code>duration</code>：时长（秒），计费按成片秒数乘单价</li>
+          </ul>
+          <div class="code-panel">
+            <div class="code-panel-head">
+              <div class="titles">
+                <p class="label">文生视频 · 创建任务</p>
+                <p class="lang">BASH</p>
+              </div>
+              <button type="button" data-copy-pre>复制</button>
+            </div>
+            <pre>curl -sS https://artbox.top/v1/video/generations \
+  -H "Authorization: Bearer sk-your-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Artdance 2.5-720p",
+    "prompt": "一只猫在阳光街道上走路，电影感运镜",
+    "seconds": "5"
+  }'</pre>
+          </div>
+
+        </section>
+        <section class="docs-section docs-anchor" id="image-to-video">
+          <div class="sec-head">
+            <div class="sec-ico">▣</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">IMAGE TO VIDEO</div>
+              <h2>图生视频</h2>
+            </div>
+          </div>
+          <p>用公网可访问的图片 URL 作为参考。首尾帧走 <code>start_image_url</code> / <code>end_image_url</code>；多图走 <code>image_urls</code>。</p>
+          <ul>
+            <li>图片必须是可公开访问的 HTTP(S) URL</li>
+            <li><code>image_urls</code> 建议不超过 9 张（2.5 档可更多，见下一节）</li>
+            <li>prompt 里可用 <code>@图片1</code> 对齐数组下标（从 1 起）</li>
+          </ul>
+          <div class="code-panel">
+            <div class="code-panel-head">
+              <div class="titles">
+                <p class="label">图生视频 · 参考图 + 首尾帧</p>
+                <p class="lang">BASH</p>
+              </div>
+              <button type="button" data-copy-pre>复制</button>
+            </div>
+            <pre>curl -sS https://artbox.top/v1/video/generations \
+  -H "Authorization: Bearer sk-your-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Artdance 2.5-720p",
+    "prompt": "参考 @图片1 的人物与光线，缓慢推进",
+    "seconds": "5",
+    "image_urls": ["https://cdn.example/i1.png"],
+    "start_image_url": "https://cdn.example/start.png",
+    "end_image_url": "https://cdn.example/end.png"
+  }'</pre>
+          </div>
+
+        </section>
+        <section class="docs-section docs-anchor" id="refs">
+          <div class="sec-head">
+            <div class="sec-ico">◎</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">REFERENCES</div>
+              <h2>多参考与音频</h2>
+            </div>
+          </div>
+          <p>Artdance 2.5 支持图片、视频、音频在同一任务中混合使用。素材必须是公网 URL；失败任务不会返回成片地址。</p>
+          <ul>
+            <li>2.5：图片最多 30、视频最多 10、音频最多 10</li>
+            <li>2.0 / Mini / Fast：<code>image_urls</code>≤9、<code>video_urls</code>≤3、<code>audio_urls</code>≤3</li>
+            <li>prompt 可用 <code>@图片N</code> / <code>@视频N</code> / <code>@音频N</code> 对齐数组下标</li>
+            <li><code>generate_audio</code>：2.5 档可开原生同步音频</li>
+            <li>2.5 最长 30 秒；2.0 / Fast / Mini 约 4–15 秒</li>
+          </ul>
+          <div class="code-panel">
+            <div class="code-panel-head">
+              <div class="titles">
+                <p class="label">2.5 · 多图 / 多视频 / 多音频</p>
+                <p class="lang">BASH</p>
+              </div>
+              <button type="button" data-copy-pre>复制</button>
+            </div>
+            <pre>curl -sS https://artbox.top/v1/video/generations \
+  -H "Authorization: Bearer sk-your-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Artdance 2.5-720p",
+    "prompt": "参考 @图片1 的人物、@视频1 的运镜，配上 @音频1 的节奏",
+    "seconds": "8",
+    "image_urls": ["https://cdn.example/i1.png"],
+    "video_urls": ["https://cdn.example/v1.mp4"],
+    "audio_urls": ["https://cdn.example/a1.mp3"],
+    "generate_audio": true
+  }'</pre>
+          </div>
+
+        </section>
+        <section class="docs-section docs-anchor" id="query">
+          <div class="sec-head">
+            <div class="sec-ico">↻</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">QUERY</div>
+              <h2>查询任务</h2>
+            </div>
+          </div>
+          <p>创建响应里的 <code>id</code> 或 <code>task_id</code> 拿来轮询。状态直到 <code>completed</code> / <code>success</code> 或 <code>failed</code> / <code>error</code>。完成后读取成片地址，不要重复 POST。</p>
+          <div class="code-pair">
+          <div class="code-panel">
+            <div class="code-panel-head">
+              <div class="titles">
+                <p class="label">查询单次</p>
+                <p class="lang">BASH</p>
+              </div>
+              <button type="button" data-copy-pre>复制</button>
+            </div>
+            <pre>curl -sS https://artbox.top/v1/video/generations/{task_id} \
+  -H "Authorization: Bearer sk-your-key"</pre>
+          </div>
+          <div class="code-panel">
+            <div class="code-panel-head">
+              <div class="titles">
+                <p class="label">创建并轮询 · 完整脚本</p>
+                <p class="lang">PYTHON</p>
+              </div>
+              <button type="button" data-copy-pre>复制</button>
+            </div>
+            <pre>import time, requests
+
+BASE = "https://artbox.top/v1"
+headers = {
+    "Authorization": "Bearer sk-your-key",
+    "Content-Type": "application/json",
+}
+
+created = requests.post(
+    f"{BASE}/video/generations",
+    headers=headers,
+    json={
+        "model": "Artdance 2.5-720p",
+        "prompt": "一只猫在阳光街道上走路，电影感运镜",
+        "seconds": "5",
+    },
+    timeout=60,
+)
+created.raise_for_status()
+task = created.json()
+task_id = task.get("id") or task.get("task_id")
+print("task_id", task_id)
+
+while True:
+    r = requests.get(f"{BASE}/video/generations/{task_id}", headers=headers, timeout=60)
+    r.raise_for_status()
+    data = r.json()
+    status = (data.get("status") or "").lower()
+    print("status", status)
+    if status in {"completed", "success", "failed", "error"}:
+        print(data)
+        break
+    time.sleep(5)</pre>
+          </div>
+          </div>
+
+        </section>
+        <section class="docs-section docs-anchor" id="billing">
+          <div class="sec-head">
+            <div class="sec-ico">¥</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">BILLING</div>
+              <h2>计费</h2>
+            </div>
+          </div>
+          <p>公开价格页展示 default 分组，单位是人民币 / 秒。实际扣费 = 成片秒数 × 模型单价，以控制台用量记录为准。</p>
+          <ul>
+            <li>模型名锁定分辨率，720p 和 1080p 不是同一个价</li>
+            <li>失败任务是否扣费以账单记录为准，不要用预估秒数对账</li>
+            <li>官渠视频上架后会走单独的价格分组，不和 default 的 Artdance 混在一栏</li>
+          </ul>
+
+        </section>
+        <section class="docs-section docs-anchor" id="verify">
+          <div class="sec-head">
+            <div class="sec-ico">✓</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">VERIFY</div>
+              <h2>验证接入是否成功</h2>
+            </div>
+          </div>
+          <p>用 5 秒、720p 热推模型打一条文生，能拿到 task_id 并轮询到 completed，就算通了。</p>
+          <ol>
+            <li>创建 Key，确认分组看得到 <code>Artdance 2.5-720p</code></li>
+            <li>POST 文生示例，响应里有 <code>id</code> 或 <code>task_id</code></li>
+            <li>GET 轮询直到 completed，用量记录里能对上秒数和费用</li>
+          </ol>
+
+        </section>
+        <section class="docs-section docs-anchor" id="faq">
+          <div class="sec-head">
+            <div class="sec-ico">?</div>
+            <div>
+              <div class="docs-kicker" style="margin:0">FAQ</div>
+              <h2>接入前需要知道的事</h2>
+            </div>
+          </div>
+          <div class="docs-faq">
+            <details>
+              <summary>平台主要支持哪些能力？</summary>
+              <div class="answer">目前公开的是 Artdance 视频：文生、图生、多参考和音频。官渠视频会单独成 Tab。不要使用 /v1/chat/completions。</div>
+            </details>
+            <details>
+              <summary>Base URL 应该怎么填写？</summary>
+              <div class="answer">填写 https://artbox.top/v1。创建和查询都在 /video/generations 下。</div>
+            </details>
+            <details>
+              <summary>任务提交后怎么查结果？</summary>
+              <div class="answer">POST 拿到 task_id，再 GET /v1/video/generations/{task_id}，直到 completed 或 failed。同一把 Key，不要换号查。</div>
+            </details>
+            <details>
+              <summary>为什么不能改分辨率？</summary>
+              <div class="answer">分辨率写在模型名里，例如 Artdance 2.5-720p。传 size / resolution 不会改档，也容易对不上价格。</div>
+            </details>
+            <details>
+              <summary>价格和扣费在哪里查看？</summary>
+              <div class="answer">公开价格页看 default 的元/秒。实际扣费以控制台用量记录为准。</div>
+            </details>
+          </div>
+        </section>
+      </div>
+    </main>
+    <footer class="site-footer" id="site-footer"></footer>
+    <script src="./app.js?v=9"></script>
+    <script src="/storefront/app.js?v=9"></script>
+  </body>
+</html>

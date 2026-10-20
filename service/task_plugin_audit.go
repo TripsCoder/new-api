@@ -4,6 +4,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,7 +15,8 @@ func TaskExecutionSnapshotFromContext(ctx *gin.Context) *model.TaskExecutionSnap
 		return nil
 	}
 	snapshot := &model.TaskExecutionSnapshot{
-		RequestID: ctx.GetString(common.RequestIdKey),
+		RequestID:                         ctx.GetString(common.RequestIdKey),
+		ChannelModelConfigurationRevision: ctx.GetInt64(modelconfig.ContextKeyRevision),
 	}
 	if ctx.Request != nil && ctx.Request.URL != nil {
 		snapshot.RequestPath = ctx.Request.URL.Path
@@ -30,9 +32,10 @@ func TaskExecutionSnapshotFromContext(ctx *gin.Context) *model.TaskExecutionSnap
 			}
 			meta := pinned.Plugin.Meta
 			snapshot.TaskPlugin = &model.TaskPluginSnapshot{
-				Key:     meta.Key,
-				Name:    meta.Name,
-				Version: meta.Version,
+				Key:          meta.Key,
+				SourceSHA256: pinned.Plugin.SourceSHA256,
+				Name:         meta.Name,
+				Version:      meta.Version,
 				Author: &model.TaskPluginAuthorSnapshot{
 					Name: meta.Author.Name,
 					URL:  meta.Author.URL,
@@ -69,10 +72,11 @@ func AppendTaskPluginAuditInfo(other *model.LogOther, snapshot *model.TaskPlugin
 	}
 	other.SetAdmin("task_plugin", taskPlugin)
 	other.SetRoot("task_plugin", map[string]any{
-		"key":         snapshot.Key,
-		"version":     snapshot.Version,
-		"api_version": snapshot.APIVersion,
-		"generation":  snapshot.Generation,
+		"key":           snapshot.Key,
+		"version":       snapshot.Version,
+		"api_version":   snapshot.APIVersion,
+		"generation":    snapshot.Generation,
+		"source_sha256": snapshot.SourceSHA256,
 	})
 }
 
@@ -83,5 +87,19 @@ func AppendTaskPluginContextAuditInfo(ctx *gin.Context, other *model.LogOther) {
 	if execution == nil {
 		return
 	}
+
 	AppendTaskPluginAuditInfo(other, execution.TaskPlugin)
+	if execution.ChannelModelConfigurationRevision > 0 {
+		other.SetRoot("channel_model_configuration_revision", execution.ChannelModelConfigurationRevision)
+	}
+	if ctx.GetBool(modelconfig.ContextKeyUpstreamAttempted) {
+		value, _ := ctx.Get(modelconfig.ContextKeyUpstreamCost)
+		if cost, ok := value.(*modelconfig.CostSnapshot); ok && cost != nil {
+			// An uncertain upstream failure is not a zero provider bill. Copy the
+			// estimate into the existing root-only error audit without another debit.
+			pending := *cost
+			_ = modelconfig.SettleUpstreamCost(&pending, nil, false)
+			other.SetRoot("upstream_cost", &pending)
+		}
+	}
 }

@@ -1,0 +1,266 @@
+# 提交视频生成（即梦/豆包兼容格式）
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/contents/{model}:videoGenerate:
+    post:
+      summary: 提交视频生成（即梦/豆包兼容格式）
+      deprecated: false
+      description: 兼容即梦/豆包格式的视频生成接口，功能与 POST /v1/videos 相同。model 通过路径参数指定。
+      operationId: createVideoCompat
+      tags:
+        - 视频生成
+        - 视频生成
+      parameters:
+        - name: model
+          in: path
+          description: 模型名称
+          required: true
+          example: video-pro-720p
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                  description: 视频描述
+                duration:
+                  type: integer
+                  minimum: 4
+                  maximum: 15
+                aspect_ratio:
+                  type: string
+                  enum:
+                    - '16:9'
+                    - '9:16'
+                    - '1:1'
+                    - '21:9'
+                    - '3:4'
+                    - '4:3'
+                image_url:
+                  type: string
+                  format: uri
+              required:
+                - prompt
+              x-apifox-orders:
+                - prompt
+                - duration
+                - aspect_ratio
+                - image_url
+              x-apifox-ignore-properties: []
+            example:
+              prompt: 城市夜景延时摄影，车流如光带
+              duration: 8
+              aspect_ratio: '16:9'
+      responses:
+        '200':
+          description: 任务提交成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoTaskCreated'
+          headers: {}
+          x-apifox-name: ''
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                      - code
+                      - message
+                    x-apifox-orders:
+                      - code
+                      - message
+                    x-apifox-ignore-properties: []
+                x-apifox-orders:
+                  - error
+                x-apifox-ignore-properties: []
+              example:
+                error:
+                  code: INVALID_RATIO
+                  message: 不支持的宽高比
+          headers: {}
+          x-apifox-name: BadRequest
+        '401':
+          description: 认证失败
+          content:
+            application/json:
+              schema: &ref_0
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_TOKEN
+                  message: 无效的认证令牌
+          headers: {}
+          x-apifox-name: Unauthorized
+        '402':
+          description: 余额不足
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                      - code
+                      - message
+                    x-apifox-orders:
+                      - code
+                      - message
+                    x-apifox-ignore-properties: []
+                x-apifox-orders:
+                  - error
+                x-apifox-ignore-properties: []
+              example:
+                error:
+                  code: INSUFFICIENT_BALANCE
+                  message: 余额不足，请充值后重试
+          headers: {}
+          x-apifox-name: InsufficientBalance
+        '429':
+          description: 请求频率超限
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error:
+                  code: RATE_LIMIT
+                  message: 请求过于频繁，请稍后重试
+          headers: {}
+          x-apifox-name: RateLimited
+        '500':
+          description: 服务不可用
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                      - code
+                      - message
+                    x-apifox-orders:
+                      - code
+                      - message
+                    x-apifox-ignore-properties: []
+                x-apifox-orders:
+                  - error
+                x-apifox-ignore-properties: []
+              example:
+                error:
+                  code: INTERNAL_ERROR
+                  message: 服务暂时不可用
+          headers: {}
+          x-apifox-name: ServerError
+      security: []
+      x-apifox-folder: 视频生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-491861720-run
+components:
+  schemas:
+    VideoTaskCreated:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: 任务 ID
+          examples:
+            - task_abc123def456
+        status:
+          type: string
+          enum:
+            - pending
+          examples:
+            - pending
+        message:
+          type: string
+          examples:
+            - 任务已提交，请轮询状态接口获取结果
+      x-apifox-orders:
+        - task_id
+        - status
+        - message
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: 错误码
+              enum:
+                - UNAUTHORIZED
+                - INVALID_REQUEST
+                - FILE_TOO_LARGE
+                - UNSUPPORTED_FORMAT
+                - UPLOAD_FAILED
+            message:
+              type: string
+              description: 错误描述
+          required:
+            - code
+            - message
+          x-apifox-orders:
+            - code
+            - message
+          x-apifox-ignore-properties: []
+      required:
+        - error
+      x-apifox-orders:
+        - error
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

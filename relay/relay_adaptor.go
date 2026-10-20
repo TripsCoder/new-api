@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/model"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
 	_ "github.com/QuantumNous/new-api/plugins"
 	"github.com/QuantumNous/new-api/relay/channel"
@@ -44,6 +45,7 @@ import (
 	"github.com/QuantumNous/new-api/relay/channel/xunfei"
 	"github.com/QuantumNous/new-api/relay/channel/zhipu"
 	"github.com/QuantumNous/new-api/relay/channel/zhipu_4v"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -183,6 +185,25 @@ func TaskPlatformUnavailableError(platform constant.TaskPlatform) (string, strin
 		}
 	}
 	return "invalid_api_platform", fmt.Sprintf("invalid api platform: %s", platform)
+}
+
+// GetTaskAdaptorForTask uses retained submit-time code for an existing task.
+// New submissions continue to resolve against the active registry generation.
+func GetTaskAdaptorForTask(task *model.Task) channel.TaskAdaptor {
+	if task == nil {
+		return nil
+	}
+	if service.ReviewedProviderTask(task) {
+		if !service.VersionedProviderTask(task) {
+			return nil
+		}
+		plugin, err := service.ResolvePinnedTaskPlugin(task)
+		if err != nil {
+			return nil
+		}
+		return jspluginadaptor.New(plugin)
+	}
+	return GetTaskAdaptor(task.Platform)
 }
 
 func GetTaskAdaptor(platform constant.TaskPlatform) channel.TaskAdaptor {

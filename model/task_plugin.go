@@ -10,6 +10,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -129,6 +130,11 @@ func SaveTaskPlugin(plugin *TaskPlugin) error {
 			return err
 		}
 		plugin.Active = count == 0
+		if plugin.Active {
+			if err := guardReviewedProviderVersionReplacement(tx, plugin.Key, plugin.Version); err != nil {
+				return err
+			}
+		}
 		return tx.Create(plugin).Error
 	})
 }
@@ -243,6 +249,9 @@ func GetTaskPluginSource(id int64) (LongText, error) {
 
 func ActivateTaskPlugin(key, version string) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
+		if err := guardReviewedProviderVersionReplacement(tx, key, version); err != nil {
+			return err
+		}
 		var target TaskPlugin
 		if err := tx.Where(&TaskPlugin{Key: key, Version: version}).First(&target).Error; err != nil {
 			return err
@@ -273,6 +282,16 @@ type TaskPluginDeleteResult struct {
 func DeleteTaskPluginVersion(key, version string) (TaskPluginDeleteResult, error) {
 	result := TaskPluginDeleteResult{}
 	err := DB.Transaction(func(tx *gorm.DB) error {
+		if modelconfig.SupportedProvider(key) {
+			history, err := reviewedProviderTaskHistory(tx, key)
+			if err != nil {
+				return err
+			}
+			if history.MissingSnapshot > 0 || history.Versions[version] > 0 {
+				return errors.New("historical tasks still reference this reviewed provider source; retain the plugin version")
+			}
+		}
+
 		var plugin TaskPlugin
 		if err := lockForUpdate(tx).Where(&TaskPlugin{Key: key, Version: version}).First(&plugin).Error; err != nil {
 			return err
@@ -294,6 +313,9 @@ func DeleteTaskPluginVersion(key, version string) (TaskPluginDeleteResult, error
 			return nil
 		}
 		if err != nil {
+			return err
+		}
+		if err := guardReviewedProviderVersionReplacement(tx, promoted.Key, promoted.Version); err != nil {
 			return err
 		}
 		if err = tx.Model(&promoted).Update("active", true).Error; err != nil {

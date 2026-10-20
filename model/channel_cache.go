@@ -129,7 +129,17 @@ func GetRandomSatisfiedChannel(
 	defer channelSyncLock.RUnlock()
 
 	// First, try to find channels with the exact model name.
-	channels, _ := filterCandidateIDs(group2model2channels[group][model], model, filters)
+	candidateIDs := []int{}
+	seenIDs := map[int]bool{}
+	for _, name := range taskRoutingModelNames(model, filters) {
+		for _, id := range group2model2channels[group][name] {
+			if !seenIDs[id] {
+				seenIDs[id] = true
+				candidateIDs = append(candidateIDs, id)
+			}
+		}
+	}
+	channels, _ := filterCandidateIDs(candidateIDs, model, filters)
 
 	// If no channels found, try to find channels with the normalized model name.
 	if len(channels) == 0 {

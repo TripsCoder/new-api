@@ -1,0 +1,96 @@
+# 用户 API Key：模型、人民币售价和介绍自动同步
+
+## 请求
+
+```http
+GET /v1/sub2api/model-catalog HTTP/1.1
+Host: lxmone.xyz
+Authorization: Bearer <用户自己的 API Key>
+```
+
+这是供工作台同步模型目录的只读接口。已有用户 Key 无需单独修改权限即可读取；原有生成权限、分组限制和计费规则保持不变。
+
+- 返回模型广场中公开且已启用的模型条目。
+- 返回目录不代表该 Key 有权限调用所有条目。实际调用仍按该 Key 原有分组、额度、余额、订阅和模型权限验证；如只想列出该 Key 的调用目录，请另用原有 `/v1/models` 并按模型名称取交集。
+- 有效 Key 在余额为零或额度耗尽时仍可读取。停用/不存在/过期 Key、停用用户、IP 限制及分组鉴权限制仍生效。
+- 只支持 GET；Key 必须放在请求头，禁止放在 URL 查询参数中。
+- 本接口仅查询目录，不生成媒体、不扣费、不累计生成次数，也不更新 Key 的最后调用时间。
+
+## 响应
+
+通用封装 `{ "code": 0, "message": "success", "data": ... }`。以下为结构示例，价格请以实时响应为准：
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "schema_version": 1,
+    "version": "<目录内容 SHA-256>",
+    "generated_at": "2026-10-09T15:00:00Z",
+    "refresh_after_seconds": 30,
+    "currency": "CNY",
+    "price_scope": "public_default",
+    "models": [
+      {
+        "name": "wan3-720",
+        "vendor": "wanxiang",
+        "purposes": ["video"],
+        "description": "720p 视频生成，支持多种参考素材",
+        "enabled": true,
+        "billing_mode": "video",
+        "unit": "CNY/second",
+        "prices": {},
+        "tiers": [{ "label": "720p", "prices": { "per_second": "0.16" } }],
+        "peak_rate_enabled": false
+      }
+    ]
+  }
+}
+```
+
+### 字段与价格口径
+
+- `name`：模型名称，也是调用时使用的 `model`。
+- `vendor`：AI 厂商分类标签。
+- `purposes`：`image` 生图、`video` 视频、`language` 语言模型。
+- `description`：模型介绍，与模型广场同步，可能为空。工作台应按纯文本显示。
+- `currency` 固定 `CNY`。所有价格为**人民币销售价十进制字符串**，已完成汇率和公开分组倍率折算；消费端**不要再乘汇率或分组倍率**。
+- `price_scope=public_default` 表示公开基准价格，不含用户专属折扣。`time_pricing`、`peak_rate_*` 若存在，是基准价之外的动态倍率规则；不支持这些规则的工作台应标注“基准价”，不可承诺所有时段实付一致。
+- `billing_mode`：`token`、`image`、`per_request`、`video`、`unknown`。
+- `unit`：主要计费单位，对应 `CNY/1M_tokens`、`CNY/image`、`CNY/request`、`CNY/second`、`unknown`。
+- `prices.input/output/cache_write/cache_read/image_input/image_output` 均为人民币/百万 token；`prices.per_request` 为人民币/次或张；视频 `tiers[].prices.per_second` 为人民币/秒。
+- `tiers` 返回图片分辨率档位、视频分辨率档位或上下文档位的绝对单价；`min_tokens/max_tokens` 表示 token 档位边界，`long_context_basis` 为整单档位或边际计价规则。
+- 缺失的价格字段或 `unknown` 表示未配置/未知，**不要当作免费**。明确字符串 `"0"` 才表示已配置零价。
+- `enabled` 对本接口返回的条目恒为 true。停用或取消公开展示的条目会在完整目录中消失；工作台将其标记不可选，不删除既有任务或历史引用。
+
+
+
+## 近实时同步
+
+工作台**后端**统一拉取、缓存，再供自己的前端使用。每 30 秒一次，不要让每个浏览器重复轮询。可以提供手动刷新。
+
+响应包含 `ETag`。首次成功后保存该值，下次发送：
+
+```http
+GET /v1/sub2api/model-catalog HTTP/1.1
+Authorization: Bearer <用户自己的 API Key>
+If-None-Match: "<上次返回的 version>"
+```
+
+- `200`：解析完整目录，原子替换自动同步数据、保存新版本和更新时间。
+- `304`：目录未变化，无响应体，保留现有数据。每次请求仍验证 Key，不因缓存绕过鉴权。
+- `401/403`：Key 或访问权限异常，提示重新检查 Key；停止自动重试，保留上次数据并明确标记未更新。
+- `404`：模型广场未启用或目录不可用。
+- `503`/网络故障：保留上次完整数据、标记更新时间和同步失败，退避重试；不要清空列表或把未知价格改为 0。
+
+`version` 由输出目录内容计算。价格、介绍或启停变化会改变版本；`generated_at` 是本次响应生成时间，不是数据库修改时间。缓存策略为 `private, no-cache`。本版为轮询近实时同步，不是 WebSocket/推送服务。
+
+调用示例：
+
+```bash
+curl -sS https://lxmone.xyz/v1/sub2api/model-catalog \
+  -H "Authorization: Bearer ${SUB2API_API_KEY}"
+```
+
+仅在可信工作台后端保存用户 Key；文档、日志和前端发布包均不填写真实 Key。

@@ -86,7 +86,11 @@ function unpack(ctx, operation) {
   const body = { operation, input, uploads: copy(decoded.files || []) };
   const driver = { model, upstreamModel: ctx.upstreamModel || model, requestBody: body, files: decoded.files || [] };
   // Aliases may be resolved only on the second decode. The driver always revalidates.
-  if (own(PROVIDER.models, driver.upstreamModel)) normalize(driver);
+  // The six channel editors apply aliases/defaults after final protocol decode.
+  // Validate them in buildSubmitRequest before reservation, not before the
+  // channel overlay has a chance to translate the original standard input.
+  const configuredProviders = ['paisio_media','yuxibox_media','xcmapi_media','artbox_media','lxmone_media','zhangyuge_media'];
+  if (!configuredProviders.includes(PROVIDER.key) && own(PROVIDER.models, driver.upstreamModel)) normalize(driver);
   return { kind: 'submit', model, action: operation, requestBody: body };
 }
 function media(value, type, p) {

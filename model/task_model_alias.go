@@ -13,6 +13,9 @@ import (
 // ResolveTaskModelForChannel resolves only the explicitly authorized channel's
 // mapping. Cross-channel alias aggregation must not choose a different supplier.
 func ResolveTaskModelForChannel(g *jsplugin.RoutingGeneration, channel *Channel, name string) (string, error) {
+	if g == nil {
+		g = jsplugin.DefaultRegistry.Generation()
+	}
 	modelMap := map[string]string{}
 	if mapping := channel.GetModelMapping(); mapping != "" {
 		if err := common.UnmarshalJsonStr(mapping, &modelMap); err != nil {
@@ -22,6 +25,17 @@ func ResolveTaskModelForChannel(g *jsplugin.RoutingGeneration, channel *Channel,
 	target, cyclic := followChannelModelMapping(modelMap, name)
 	if cyclic {
 		return "", fmt.Errorf("channel model mapping contains a cycle")
+	}
+	for _, plugin := range g.Plugins() {
+		owned := channel.GetSetting().BindsTaskPlugin(plugin.Meta.Key)
+		if indexed, ok := g.GetByChannelType(channel.Type); ok && indexed == plugin {
+			owned = true
+		}
+		if owned {
+			if declared, ok := plugin.Meta.CanonicalModel(target); ok {
+				return declared, nil
+			}
+		}
 	}
 	if declared, ok := g.CanonicalModel(target); ok {
 		return declared, nil

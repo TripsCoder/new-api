@@ -1,0 +1,624 @@
+# Seedance创建
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/videos:
+    post:
+      summary: Seedance创建
+      deprecated: false
+      description: >
+        # Seedance 视频生成接口文档
+
+
+        ## 接口地址
+
+
+        `POST /v1/videos`
+
+
+        ## 功能说明
+
+
+        支持 Seedance 系列模型的文生视频和图片参考生成；Seedance 2.0 系列额外支持视频、音频组合参考。
+
+
+        ### 当前模型
+
+
+        | 模型名 | 支持模式 | 视频/音频参考 | 时长 | `seconds` 取值 |
+
+        |--------|----------|---------------|------|----------------|
+
+        | `seedance-2.0` | 文生、首帧/首尾帧、参考内容 | 支持 | 4～15 秒 | `"4"`～`"15"` |
+
+        | `seedance-2.0-mini` | 文生、首帧/首尾帧、参考内容 | 支持 | 4～15 秒 | `"4"`～`"15"` |
+
+        | `seedance-2.5-10s` | 文生、首帧/首尾帧、图片参考 | **不支持** | 固定 10 秒 | `"10"` |
+
+        | `seedance-2.5-15s` | 文生、首帧/首尾帧、图片参考 | **不支持** | 固定 15 秒 | `"15"` |
+
+        | `seedance-2.5-30s` | 文生、首帧/首尾帧、图片参考 | **不支持** | 固定 30 秒 | `"30"` |
+
+
+        > Seedance 2.0 系列通过 `seconds` 自由选择 4～15 秒，并支持图片、视频、音频参考。Seedance 2.5
+        系列的时长由模型名固定，只支持图片参考，不支持视频或音频参考。
+
+
+        ### 支持的参考内容
+
+
+        - 图片：通过 `images` 数组传递。
+
+        - 视频：仅 `seedance-2.0`、`seedance-2.0-mini` 支持，通过 `videos` 数组传递。
+
+        - 音频：仅 `seedance-2.0`、`seedance-2.0-mini` 支持，通过 `audios` 数组传递。
+
+        - Seedance 2.0 系列可组合使用图片 + 视频、图片 + 音频、视频 + 音频，或图片 + 视频 + 音频。
+
+        - `seedance-2.5-10s`、`seedance-2.5-15s`、`seedance-2.5-30s` 不得传 `videos`
+        或 `audios`。
+
+
+        ### 模式判定
+
+
+        | 模式 | 传参方式 |
+
+        |------|----------|
+
+        | 文生视频 | 不传 `images`、`videos`、`audios`，或全部传空数组 |
+
+        | 首帧 | `images` 传 1 张图，`first_last_frame: true` |
+
+        | 首尾帧 | `images` 依次传首帧、尾帧，`first_last_frame: true` |
+
+        | 参考模式 | 传参考素材，不传 `first_last_frame` 或传 `false` |
+
+
+        参考模式下，素材的具体用途应在 `prompt` 中明确，例如“图片 1 是产品外观”“视频 1 作为运镜参考”“音频 1 作为背景音乐”。
+
+
+        ---
+
+
+        ## 请求方式
+
+
+        | 方式 | Content-Type | 参考素材字段 |
+
+        |------|--------------|--------------|
+
+        | JSON | `application/json` | `images`、`videos`、`audios` |
+
+        | 表单 | `multipart/form-data` | 只使用可重复的 `input_reference` |
+
+
+        > 表单没有 `video_reference` 或 `audio_reference` 字段。图片、视频、音频文件或 URL 均通过重复的
+        `input_reference` 传递。
+
+
+        ## 请求头
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | Authorization | string | 是 | `Bearer YOUR_API_KEY` |
+
+        | Content-Type | string | 是 | `application/json` 或 `multipart/form-data`
+        |
+
+
+        ---
+
+
+        ## JSON 请求体说明
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | model | string | 是 | Seedance 模型名称 |
+
+        | prompt | string | 是 | 视频生成提示词；组合参考时应说明每项素材的用途 |
+
+        | images | string[] | 否 | 图片 URL 或完整 Base64 data URI |
+
+        | videos | string[] | 否 | 可公网访问的视频文件直链；仅 Seedance 2.0 系列支持 |
+
+        | audios | string[] | 否 | 可公网访问的音频文件直链；仅 Seedance 2.0 系列支持 |
+
+        | aspect_ratio | string | 否 | 支持 `16:9`、`9:16`、`1:1`、`4:3`、`3:4`、`21:9`
+        |
+
+        | resolution | string | 否 | 输出分辨率；使用模型默认值时可不传，可用值以服务端配置为准 |
+
+        | seconds | string | 是 | Seedance 2.0 系列支持 `"4"`～`"15"`；2.5
+        固定时长模型必须传与模型名一致的 `"10"`、`"15"` 或 `"30"` |
+
+        | first_last_frame | boolean | 否 | `true` 为首帧/首尾帧模式；不传或 `false` 为参考模式 |
+
+
+        ### Seedance 2.0 组合参考素材 JSON 结构
+
+
+        ```json
+
+        {
+          "images": [
+            "https://example.com/ref.png"
+          ],
+          "videos": [
+            "https://example.com/ref.mp4"
+          ],
+          "audios": [
+            "https://example.com/ref.mp3"
+          ]
+        }
+
+        ```
+
+
+        数组元素必须是实际的文件直链。不要写成 Markdown 链接：
+
+
+        ```text
+
+        错误：[https://example.com/ref.png](https://example.com/ref.png)
+
+        正确：https://example.com/ref.png
+
+        ```
+
+
+        ### 素材数量约定
+
+
+        - 首帧/首尾帧：`images` 传 1～2 张图片。
+
+        - 纯参考图：建议传 1～4 张图片。
+
+        - Seedance 2.0 组合参考内容：图片、视频、音频合计最多 9 项。
+
+        - Seedance 2.5 固定时长模型：只可传图片，不得传视频或音频。
+
+        - 多项素材按各自数组中的顺序编号为图片 1、视频 1、音频 1 等。
+
+
+        ---
+
+
+        ## 表单字段说明
+
+
+        | 参数名 | 类型 | 必填 | 说明 |
+
+        |--------|------|------|------|
+
+        | model | string | 是 | Seedance 模型名称 |
+
+        | prompt | string | 是 | 视频生成提示词 |
+
+        | input_reference | 可重复字段 | 否 | 图片、视频、音频的本地文件、URL 或受支持的
+        Base64；每项重复传一次。Seedance 2.5 固定时长模型只允许图片 |
+
+        | aspect_ratio | string | 否 | 视频宽高比 |
+
+        | resolution | string | 否 | 输出分辨率，可用值以服务端配置为准 |
+
+        | seconds | string | 是 | 2.0 系列支持 4～15；2.5 系列必须与模型名中的固定秒数一致 |
+
+        | first_last_frame | boolean/string | 否 | `true` 为首帧/首尾帧；不传或 `false`
+        为参考模式 |
+
+
+        ### Seedance 2.0 `input_reference` 组合参考示例
+
+
+        ```bash
+
+        -F "input_reference=@/path/to/ref.png" \
+
+        -F "input_reference=@/path/to/ref.mp4" \
+
+        -F "input_reference=@/path/to/ref.mp3"
+
+        ```
+
+
+        ---
+
+
+        ## 请求示例
+
+
+        ### 文生视频（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "seedance-2.0-mini",
+            "prompt": "清晨的森林中，一只白鹿从薄雾里缓慢走出，电影感运镜",
+            "aspect_ratio": "16:9",
+            "seconds": "10"
+          }'
+        ```
+
+
+        ### 首帧视频（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "seedance-2.0-mini",
+            "prompt": "从图片 1 开始，镜头向前推进，人物自然转头看向镜头",
+            "images": [
+              "https://example.com/first.png"
+            ],
+            "aspect_ratio": "9:16",
+            "seconds": "8",
+            "first_last_frame": true
+          }'
+        ```
+
+
+        ### 首尾帧视频（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "seedance-2.5-10s",
+            "prompt": "从首帧自然过渡到尾帧，保持人物和产品外观一致",
+            "images": [
+              "https://example.com/first.png",
+              "https://example.com/last.png"
+            ],
+            "aspect_ratio": "16:9",
+            "seconds": "10",
+            "first_last_frame": true
+          }'
+        ```
+
+
+        ### 多参考图（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "seedance-2.0",
+            "prompt": "图片 1 是产品，图片 2 是人物，图片 3 是场景；生成一支统一风格的广告",
+            "images": [
+              "https://example.com/product.png",
+              "https://example.com/person.png",
+              "https://example.com/scene.png"
+            ],
+            "aspect_ratio": "16:9",
+            "seconds": "12",
+            "first_last_frame": false
+          }'
+        ```
+
+
+        ### 图片、视频和音频组合参考（JSON）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "seedance-2.0",
+            "prompt": "使用图片 1 的产品；参考视频 1 的第一视角运镜；全程使用音频 1 作为背景音乐",
+            "images": [
+              "https://example.com/ref.png"
+            ],
+            "videos": [
+              "https://example.com/ref.mp4"
+            ],
+            "audios": [
+              "https://example.com/ref.mp3"
+            ],
+            "aspect_ratio": "16:9",
+            "seconds": "11"
+          }'
+        ```
+
+
+        ### 本地组合参考文件（表单，仅使用 `input_reference`）
+
+
+        ```bash
+
+        curl -X POST "https://xxxxx.com/v1/videos" \
+          -H "Authorization: Bearer YOUR_API_KEY" \
+          -F "model=seedance-2.0" \
+          -F "prompt=图片作为产品参考，视频作为运镜参考，音频作为背景音乐" \
+          -F "input_reference=@/path/to/ref.png" \
+          -F "input_reference=@/path/to/ref.mp4" \
+          -F "input_reference=@/path/to/ref.mp3" \
+          -F "aspect_ratio=16:9" \
+          -F "seconds=11"
+        ```
+
+
+        ---
+
+
+        ## 响应参数
+
+
+        完成态视频地址位于顶层 `url` 和 `video_url`，两者值相同。
+
+
+        | 参数名 | 类型 | 说明 |
+
+        |--------|------|------|
+
+        | id | string | 任务 ID |
+
+        | object | string | 固定值 `video` |
+
+        | model | string | 实际使用的模型名称 |
+
+        | status | string | `queued`、`in_progress`、`completed`、`failed` |
+
+        | progress | number | 任务进度，0～100 |
+
+        | created_at | number | 创建时间戳（秒） |
+
+        | completed_at | number | 完成时间戳（秒，仅完成态） |
+
+        | url | string | 视频直链（仅完成态） |
+
+        | video_url | string | 与 `url` 同值（仅完成态） |
+
+        | error | object | 失败信息，通常包含 `code`、`message` |
+
+
+        ### 提交成功
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "seedance-2.5-15s",
+          "status": "queued",
+          "progress": 0,
+          "created_at": 1791320000
+        }
+
+        ```
+
+
+        ### 任务完成
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "seedance-2.5-15s",
+          "status": "completed",
+          "progress": 100,
+          "created_at": 1791320000,
+          "completed_at": 1791320060,
+          "url": "https://example.com/output.mp4",
+          "video_url": "https://example.com/output.mp4"
+        }
+
+        ```
+
+
+        ### 任务失败
+
+
+        ```json
+
+        {
+          "id": "task_xxxxxxxxxxxxx",
+          "object": "video",
+          "model": "seedance-2.5-15s",
+          "status": "failed",
+          "progress": 0,
+          "created_at": 1791320000,
+          "error": {
+            "code": "invalid_request",
+            "message": "请求参数不符合模型能力限制"
+          }
+        }
+
+        ```
+
+
+        ---
+
+
+        ## 查询任务状态
+
+
+        `GET /v1/videos/{task_id}`
+
+
+        ```bash
+
+        curl -X GET "https://xxxxx.com/v1/videos/task_xxxxxxxxxxxxx" \
+          -H "Authorization: Bearer YOUR_API_KEY"
+        ```
+
+
+        `queued` / `in_progress` 时继续轮询；`completed` 时读取顶层 `url` 或
+        `video_url`；`failed` 时读取 `error.message`。
+
+
+        ---
+
+
+        ## 注意事项
+
+
+        1. `seconds` 必须使用字符串。`seedance-2.0`、`seedance-2.0-mini` 支持
+        `"4"`～`"15"`；`seedance-2.5-10s`、`seedance-2.5-15s`、`seedance-2.5-30s`
+        分别只能使用 `"10"`、`"15"`、`"30"`。
+
+        2. 首尾帧模式下，`images[0]` 是首帧，`images[1]` 是尾帧；只有 1 张时表示仅指定首帧。
+
+        3. 参考模式不传 `first_last_frame` 或传 `false`。建议在提示词中明确每个参考素材的用途。
+
+        4. JSON 图片使用 `images`；Seedance 2.0 系列的视频、音频分别使用
+        `videos`、`audios`。表单只有可重复的 `input_reference`。
+
+        5. JSON 数组中只能填写文件直链或受支持的 data URI，不能填写 Markdown 链接表达式。
+
+        6. Seedance 2.0 系列组合参考素材合计最多 9 项；Seedance 2.5
+        固定时长模型只支持图片参考。文件越多、越大，提交和处理时间越长。
+
+        7. 所有 URL 都必须是无需登录、可直接返回文件内容的公网直链。
+
+        8. 接口为异步接口，提交成功后需轮询任务状态。
+      tags:
+        - 视频生成（Videos）
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: true
+          example: Bearer {{YOUR_API_KEY}}
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: ''
+          required: false
+          example: application/json
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                prompt:
+                  type: string
+                size:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - model
+                - prompt
+                - size
+                - images
+              x-apifox-orders:
+                - model
+                - prompt
+                - size
+                - images
+            example:
+              model: seedance-2.0
+              prompt: 使用图片 1 的产品；参考视频 1 的第一视角运镜；全程使用音频 1 作为背景音乐
+              images:
+                - https://example.com/ref.png
+              videos:
+                - https://example.com/ref.mp4
+              audios:
+                - https://example.com/ref.mp3
+              aspect_ratio: '16:9'
+              seconds: '11'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  object:
+                    type: string
+                  model:
+                    type: string
+                  status:
+                    type: string
+                  progress:
+                    type: integer
+                  created_at:
+                    type: integer
+                  completed_at:
+                    type: integer
+                  size:
+                    type: string
+                required:
+                  - id
+                  - object
+                  - model
+                  - status
+                  - progress
+                  - created_at
+                  - completed_at
+                  - size
+                x-apifox-orders:
+                  - id
+                  - object
+                  - model
+                  - status
+                  - progress
+                  - created_at
+                  - completed_at
+                  - size
+              example:
+                id: task_xxxxxxxxxxxxx
+                object: video
+                model: veo_3_1-fast
+                status: completed
+                progress: 100
+                created_at: 1709876543
+                completed_at: 1709876600
+                size: 1920x1080
+          headers: {}
+          x-apifox-name: 成功
+      security: []
+      x-apifox-folder: 视频生成（Videos）
+      x-apifox-status: developing
+      x-run-in-apifox: https://app.apifox.com/web/project/7902379/apis/api-521606855-run
+components:
+  schemas: {}
+  securitySchemes: {}
+servers: []
+security: []
+
+```

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/QuantumNous/new-api/types"
@@ -26,6 +28,41 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
+
+func TestVideoResolutionPriceSubmissionAndSettlement(t *testing.T) {
+	source, err := os.ReadFile(filepath.Join("..", "plugin-sources", "media-providers", "six-v2", "dist", "lxmone_media.plugin.js"))
+	require.NoError(t, err)
+	plugin, err := jsplugin.CompilePlugin(string(source), jsplugin.Options{Key: "lxmone_media"})
+	require.NoError(t, err)
+	expression := `u("resolution") == "480p" ? tier("480p", 0 * u("seconds")) : u("resolution") == "720p" ? tier("720p", 0.2 * u("seconds")) : u("resolution") == "1080p" ? tier("1080p", 0.3 * u("seconds")) : tier("base", 0.5 * u("seconds"))`
+	require.NoError(t, modelconfig.ValidateBilling(&modelconfig.Billing{Expression: expression, Currency: "USD", Confirmed: true}))
+	for _, tc := range []struct {
+		resolution string
+		unitPrice  float64
+	}{{"480p", 0}, {"720p", 0.2}, {"1080p", 0.3}, {"", 0.5}} {
+		t.Run(tc.resolution, func(t *testing.T) {
+			input := map[string]any{"model": "fresh-video", "prompt": "fixture", "seconds": 6}
+			if tc.resolution != "" {
+				input["resolution"] = tc.resolution
+			}
+			ctx := map[string]any{"model": "fresh-video", "upstreamModel": "fresh-video", "requestBody": map[string]any{"operation": "video_generate", "input": input, "protocolTemplate": "interface:d5712463006900d8"}}
+			var facts map[string]any
+			require.NoError(t, plugin.Engine.CallInto(t.Context(), &facts, "extractUsage", ctx))
+			cost, _, err := billingexpr.RunExprWithRequest(expression, billingexpr.TokenParams{}, billingexpr.RequestInput{Usage: facts})
+			require.NoError(t, err)
+			assert.InDelta(t, tc.unitPrice*6, cost, 1e-9)
+			snapshot := billingexpr.BillingSnapshot{ExprString: expression, ExprVersion: 1, TaskUsageBilling: true, UsageFacts: facts, GroupRatio: 1, QuotaPerUnit: common.QuotaPerUnit}
+			encoded, err := common.Marshal(snapshot)
+			require.NoError(t, err)
+			var frozen billingexpr.BillingSnapshot
+			require.NoError(t, common.Unmarshal(encoded, &frozen))
+			result, actual, err := EvaluateTaskCompletionUsage(&frozen, map[string]any{"seconds": float64(4)})
+			require.NoError(t, err)
+			assert.Equal(t, facts["resolution"], actual["resolution"])
+			assert.Equal(t, common.QuotaRound(tc.unitPrice*4*common.QuotaPerUnit), result.ActualQuotaAfterGroup)
+		})
+	}
+}
 
 func TestMain(m *testing.M) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})

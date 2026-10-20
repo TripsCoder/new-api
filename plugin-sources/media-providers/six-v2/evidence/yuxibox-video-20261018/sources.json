@@ -1,0 +1,23 @@
+[
+  {
+    "file": "index.js",
+    "url": "https://yuxibox.cn/static/js/index.5e0ee50a5d.js",
+    "sha256": "5ce0598df27aa1f34370936cb579eb9465892315f3503be3062df7c395e572b1",
+    "readAt": "2026-10-18",
+    "usage": "public documentation only; never execute"
+  },
+  {
+    "file": "59316.js",
+    "url": "https://yuxibox.cn/static/js/async/59316.12ab0fcc48.js",
+    "sha256": "b13eac9fc4af51ab66b94d9ba849c0e400f2a791bc6815606a5aecbd7109e987",
+    "readAt": "2026-10-18",
+    "usage": "public documentation only; never execute"
+  },
+  {
+    "file": "pricing.json",
+    "url": "https://yuxibox.cn/api/pricing",
+    "sha256": "c98c8edcf7b8e48a84ae5ad252ae299a7392d8bf5e4c6b29541b8d1b6fe3c77c",
+    "readAt": "2026-10-18",
+    "usage": "public documentation only; never execute"
+  }
+]

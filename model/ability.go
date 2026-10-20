@@ -111,11 +111,22 @@ func GetChannel(
 	filters []dto.ChannelFilter,
 ) (*Channel, error) {
 	var abilities []Ability
-	err := DB.Where(commonGroupCol+" = ? and model = ? and enabled = ?", group, model, true).Order("priority DESC, weight DESC").Find(&abilities).Error
+	err := DB.Where(clause.Eq{Column: clause.Column{Name: "group"}, Value: group}).Where("model IN ? AND enabled = ?", taskRoutingModelNames(model, filters), true).Order("priority DESC, weight DESC").Find(&abilities).Error
 	if err != nil {
 		return nil, err
 	}
 	abilities = filterAbilitiesByConstraints(abilities, model, filters)
+	if len(taskRoutingModelNames(model, filters)) > 1 {
+		distinct := make([]Ability, 0, len(abilities))
+		seenIDs := map[int]bool{}
+		for _, ability := range abilities {
+			if !seenIDs[ability.ChannelId] {
+				seenIDs[ability.ChannelId] = true
+				distinct = append(distinct, ability)
+			}
+		}
+		abilities = distinct
+	}
 	if len(abilities) > 0 {
 		priorities := make([]int64, 0)
 		seen := make(map[int64]bool)

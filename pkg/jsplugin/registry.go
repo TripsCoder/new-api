@@ -2,6 +2,8 @@ package jsplugin
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"maps"
@@ -84,35 +86,39 @@ func (t *LocalizedText) UnmarshalJSON(data []byte) error {
 }
 
 type Meta struct {
-	RequiredCapabilities []string                    `json:"requiredCapabilities,omitempty"`
-	SubmitResponseTypes  []string                    `json:"submitResponseTypes,omitempty"`
-	SortPriority         int                         `json:"sortPriority,omitempty"`
-	Website              string                      `json:"website,omitempty"`
-	APIVersion           int                         `json:"apiVersion"`
-	Key                  string                      `json:"key"`
-	Name                 string                      `json:"name"`
-	Icon                 string                      `json:"icon,omitempty"`
-	Description          LocalizedText               `json:"description,omitempty"`
-	Version              string                      `json:"version"`
-	Author               AuthorMeta                  `json:"author"`
-	BaseURL              string                      `json:"baseUrl,omitempty"`
-	ChannelTypes         []int                       `json:"channelTypes,omitempty"`
-	Models               []string                    `json:"models"`
-	ModelDiscovery       *ModelDiscovery             `json:"modelDiscovery,omitempty"`
-	FetchMode            string                      `json:"fetchMode"`
-	AllowedHosts         []string                    `json:"allowedHosts"`
-	Upstreams            []string                    `json:"upstreams,omitempty"`
-	Routes               []Route                     `json:"routes"`
-	Protocols            []ProtocolClaim             `json:"protocols"`
-	UsageSchema          map[string]UsageFieldSchema `json:"usageSchema,omitempty"`
-	UsageExamples        []UsageExample              `json:"usageExamples,omitempty"`
-	UsageProfiles        []UsageProfile              `json:"usageProfiles,omitempty"`
-	Auth                 AuthMeta                    `json:"auth"`
+	RequiredCapabilities []string        `json:"requiredCapabilities,omitempty"`
+	SubmitResponseTypes  []string        `json:"submitResponseTypes,omitempty"`
+	SortPriority         int             `json:"sortPriority,omitempty"`
+	Website              string          `json:"website,omitempty"`
+	APIVersion           int             `json:"apiVersion"`
+	Key                  string          `json:"key"`
+	Name                 string          `json:"name"`
+	Icon                 string          `json:"icon,omitempty"`
+	Description          LocalizedText   `json:"description,omitempty"`
+	Version              string          `json:"version"`
+	Author               AuthorMeta      `json:"author"`
+	BaseURL              string          `json:"baseUrl,omitempty"`
+	ChannelTypes         []int           `json:"channelTypes,omitempty"`
+	Models               []string        `json:"models"`
+	ModelDiscovery       *ModelDiscovery `json:"modelDiscovery,omitempty"`
+	// ParameterInterfaces are documentation contracts keyed by stable interface
+	// ID. They are neither an account model list nor automatic route claims.
+	ParameterInterfaces map[string]any              `json:"parameterInterfaces,omitempty"`
+	FetchMode           string                      `json:"fetchMode"`
+	AllowedHosts        []string                    `json:"allowedHosts"`
+	Upstreams           []string                    `json:"upstreams,omitempty"`
+	Routes              []Route                     `json:"routes"`
+	Protocols           []ProtocolClaim             `json:"protocols"`
+	UsageSchema         map[string]UsageFieldSchema `json:"usageSchema,omitempty"`
+	UsageExamples       []UsageExample              `json:"usageExamples,omitempty"`
+	UsageProfiles       []UsageProfile              `json:"usageProfiles,omitempty"`
+	Auth                AuthMeta                    `json:"auth"`
 }
 
 // ModelDiscovery is a read-only, same-origin model-list contract, not a task hook.
 // The documentation digest pins the evidence reviewed by the plugin author.
 type ModelDiscovery struct {
+	SourceStatus string `json:"sourceStatus,omitempty"`
 	Path         string `json:"path"`
 	Format       string `json:"format"`
 	SourceURL    string `json:"sourceUrl"`
@@ -232,8 +238,9 @@ type UsageFieldSchema struct {
 }
 
 type LoadedPlugin struct {
-	Meta   Meta
-	Engine *Engine
+	SourceSHA256 string
+	Meta         Meta
+	Engine       *Engine
 }
 
 // UsesSubmitEventDelta reports whether SSE submissions go through
@@ -542,7 +549,8 @@ func CompilePlugin(source string, options Options) (*LoadedPlugin, error) {
 			return nil, fmt.Errorf("plugin %s export %q is no longer supported", meta.Key, removed)
 		}
 	}
-	return &LoadedPlugin{Meta: meta, Engine: engine}, nil
+	digest := sha256.Sum256([]byte(source))
+	return &LoadedPlugin{Meta: meta, Engine: engine, SourceSHA256: hex.EncodeToString(digest[:])}, nil
 }
 
 func (r *Registry) Get(platform string) (*LoadedPlugin, bool) {
@@ -893,6 +901,12 @@ func (r *Registry) Snapshot() RegistrySnapshot {
 }
 
 func cloneMeta(meta Meta) Meta {
+	if meta.ParameterInterfaces != nil {
+		raw, _ := common.Marshal(meta.ParameterInterfaces)
+		var cloned map[string]any
+		_ = common.Unmarshal(raw, &cloned)
+		meta.ParameterInterfaces = cloned
+	}
 	if meta.ModelDiscovery != nil {
 		discovery := *meta.ModelDiscovery
 		meta.ModelDiscovery = &discovery
@@ -1044,7 +1058,7 @@ func decodeMeta(value any) (Meta, error) {
 	}
 	for field := range object {
 		switch field {
-		case "requiredCapabilities", "submitResponseTypes", "sortPriority", "website", "apiVersion", "key", "name", "icon", "description", "version", "author", "baseUrl", "channelTypes", "channelType", "compatibleChannelTypes", "models", "modelDiscovery", "fetchMode", "allowedHosts", "upstreams", "routes", "protocols", "usageSchema", "usageExamples", "usageProfiles", "auth", "endpoints", "submitPaths", "actions":
+		case "requiredCapabilities", "submitResponseTypes", "sortPriority", "website", "apiVersion", "key", "name", "icon", "description", "version", "author", "baseUrl", "channelTypes", "channelType", "compatibleChannelTypes", "models", "modelDiscovery", "parameterInterfaces", "fetchMode", "allowedHosts", "upstreams", "routes", "protocols", "usageSchema", "usageExamples", "usageProfiles", "auth", "endpoints", "submitPaths", "actions":
 		default:
 			return Meta{}, &UnknownMetaFieldError{Field: field}
 		}
@@ -1156,11 +1170,32 @@ func decodeMeta(value any) (Meta, error) {
 				discovery.SourceURL = text
 			case "sourceSha256":
 				discovery.SourceSHA256 = text
+			case "sourceStatus":
+				discovery.SourceStatus = text
 			default:
 				return Meta{}, fmt.Errorf("plugin modelDiscovery has unknown field %q", name)
 			}
 		}
 		meta.ModelDiscovery = discovery
+	}
+	if value, exists := object["parameterInterfaces"]; exists {
+		interfaces, ok := value.(map[string]any)
+		if !ok || len(interfaces) > 64 {
+			return Meta{}, fmt.Errorf("invalid parameterInterfaces")
+		}
+		for id, value := range interfaces {
+			entry, ok := value.(map[string]any)
+			if !ok || !strings.HasPrefix(id, "interface:") || entry["id"] != id || (entry["kind"] != "image" && entry["kind"] != "video") {
+				return Meta{}, fmt.Errorf("invalid parameter interface %q", id)
+			}
+			if _, ok := entry["parameters"].(map[string]any); !ok {
+				return Meta{}, fmt.Errorf("parameter interface %q has no parameters", id)
+			}
+			if _, ok := entry["modes"].(map[string]any); !ok {
+				return Meta{}, fmt.Errorf("parameter interface %q has no modes", id)
+			}
+		}
+		meta.ParameterInterfaces = interfaces
 	}
 	meta.AllowedHosts, err = strictStringSlice(object, "allowedHosts")
 	if err != nil {
@@ -1252,9 +1287,20 @@ func normalizeV1Meta(meta *Meta) error {
 		if discovery.Format != "openai" || !regexp.MustCompile(`^/[A-Za-z0-9_/-]{1,255}$`).MatchString(discovery.Path) || strings.Contains(discovery.Path, "//") {
 			return fmt.Errorf("plugin modelDiscovery requires openai format and a same-origin absolute path without query or fragment")
 		}
-		u, err := url.Parse(discovery.SourceURL)
-		if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || strings.ContainsAny(discovery.SourceURL, "\\\r\n\t ") || !regexp.MustCompile(`^[a-f0-9]{64}$`).MatchString(discovery.SourceSHA256) {
-			return fmt.Errorf("plugin modelDiscovery requires an HTTPS documentation URL and lowercase SHA256")
+		switch discovery.SourceStatus {
+		case "", "historical_declaration", "endpoint_snapshot", "standard_unverified":
+		default:
+			return fmt.Errorf("invalid model discovery source status")
+		}
+		if discovery.SourceStatus == "standard_unverified" {
+			if discovery.Path != "/v1/models" || discovery.SourceURL != "" || discovery.SourceSHA256 != "" {
+				return fmt.Errorf("unverified standard discovery must not claim source proof")
+			}
+		} else {
+			u, err := url.Parse(discovery.SourceURL)
+			if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || strings.ContainsAny(discovery.SourceURL, "\\\r\n\t ") || !regexp.MustCompile(`^[a-f0-9]{64}$`).MatchString(discovery.SourceSHA256) {
+				return fmt.Errorf("plugin modelDiscovery requires an HTTPS documentation URL and lowercase SHA256")
+			}
 		}
 		if meta.Auth.Type != "" && meta.Auth.Type != "api_key" {
 			return fmt.Errorf("plugin modelDiscovery openai format requires API key authentication")

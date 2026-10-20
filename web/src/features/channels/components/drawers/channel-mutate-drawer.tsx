@@ -826,7 +826,7 @@ export function ChannelMutateDrawer({
         if (!isEditing && !providerTarget && !form.getValues('name').trim()) {
           form.setValue('name', plugin.name)
         }
-        if (plugin.models.length) {
+        if (!plugin.requiresModelDiscovery && plugin.models.length) {
           form.setValue('models', formatModelsArray(plugin.models), {
             shouldDirty: true,
           })
@@ -982,7 +982,7 @@ export function ChannelMutateDrawer({
       modelMappingGuardrail.entries.map((entry) => [entry.source, entry.target])
     )
     const allModels = new Set([
-      ...allModelsList,
+      ...(boundTaskPlugin?.requiresModelDiscovery ? [] : allModelsList),
       ...currentModelsArray,
       ...pluginExtensions.flatMap((plugin) => plugin.models),
     ])
@@ -998,6 +998,7 @@ export function ChannelMutateDrawer({
     })
   }, [
     allModelsList,
+    boundTaskPlugin?.requiresModelDiscovery,
     currentModelsArray,
     pluginExtensions,
     modelMappingGuardrail.entries,
@@ -1296,6 +1297,7 @@ export function ChannelMutateDrawer({
 
   // Handle model operations
   const handleFillRelatedModels = useCallback(() => {
+    if (boundTaskPlugin?.requiresModelDiscovery) return
     if (!basicModels.length) {
       toast.info(t('No related models available for this channel type'))
       return
@@ -1304,7 +1306,7 @@ export function ChannelMutateDrawer({
     toast.success(
       t('Filled {{count}} related model(s)', { count: basicModels.length })
     )
-  }, [basicModels, updateModels, t])
+  }, [basicModels, boundTaskPlugin?.requiresModelDiscovery, updateModels, t])
 
   const handleClearModels = useCallback(() => {
     form.setValue('models', '')
@@ -3471,7 +3473,10 @@ export function ChannelMutateDrawer({
                   variant='outline'
                   size='sm'
                   onClick={handleFillRelatedModels}
-                  disabled={!basicModels.length}
+                  disabled={
+                    boundTaskPlugin?.requiresModelDiscovery ||
+                    !basicModels.length
+                  }
                 >
                   <FileText className='mr-2 h-4 w-4' aria-hidden='true' />
                   {t('Fill Related Models')}

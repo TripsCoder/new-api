@@ -26,6 +26,9 @@ func ComputeTieredQuota(snap *BillingSnapshot, params TokenParams) (TieredResult
 }
 
 func ComputeTieredQuotaWithRequest(snap *BillingSnapshot, params TokenParams, request RequestInput) (TieredResult, error) {
+	if snap != nil && snap.PricingTimestamp > 0 {
+		request.PricingTimestamp = snap.PricingTimestamp
+	}
 	if snap.TaskUsageBilling && UsesFixedPricingByHash(snap.ExprString, snap.ExprHash) {
 		return TieredResult{}, fmt.Errorf("fixed pricing is not supported for task usage expressions")
 	}

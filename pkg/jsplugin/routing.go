@@ -207,10 +207,12 @@ type RouteBinding struct {
 }
 
 type ProtocolBinding struct {
-	Plugin    *LoadedPlugin
-	Protocol  string
-	Operation HostProtocolOperation
-	Model     string
+	// Set only by the host after resolving an explicit saved channel binding.
+	ConfigurationBound bool
+	Plugin             *LoadedPlugin
+	Protocol           string
+	Operation          HostProtocolOperation
+	Model              string
 }
 
 const (
@@ -379,6 +381,8 @@ type RoutingGeneration struct {
 	byModel              map[string]*LoadedPlugin
 	modelPlugins         map[string][]*LoadedPlugin
 	canonicalModelByFold map[string]string
+	ambiguousModelFolds  map[string]bool
+	routingModelsByFold  map[string][]string
 	byChannelType        map[int]*LoadedPlugin
 	routeIndex           map[string]RouteBinding
 	protocolIndex        map[string][]ProtocolBinding
@@ -473,13 +477,24 @@ func (g *RoutingGeneration) PluginsByModel(model string) []*LoadedPlugin {
 	if g == nil {
 		return nil
 	}
-	return slices.Clone(g.modelPlugins[model])
+	plugins := []*LoadedPlugin{}
+	seen := map[string]bool{}
+	for _, spelling := range g.routingModelsByFold[asciiFold(model)] {
+		for _, plugin := range g.modelPlugins[spelling] {
+			if !seen[plugin.Meta.Key] {
+				seen[plugin.Meta.Key] = true
+				plugins = append(plugins, plugin)
+			}
+		}
+	}
+	sort.Slice(plugins, func(i, j int) bool { return plugins[i].Meta.Key < plugins[j].Meta.Key })
+	return plugins
 }
 
 // SharedModel reports whether multiple plugins declare a model without copying
 // its provider list on the relay hot path.
 func (g *RoutingGeneration) SharedModel(model string) bool {
-	return g != nil && len(g.modelPlugins[model]) >= 2
+	return g != nil && len(g.PluginsByModel(model)) >= 2
 }
 
 // CanonicalModel returns the declared spelling for model. An exact byModel
@@ -491,6 +506,9 @@ func (g *RoutingGeneration) CanonicalModel(model string) (string, bool) {
 	}
 	if _, ok := g.byModel[model]; ok {
 		return model, true
+	}
+	if g.ambiguousModelFolds[asciiFold(model)] {
+		return "", false
 	}
 	declared, ok := g.canonicalModelByFold[asciiFold(model)]
 	return declared, ok
@@ -527,6 +545,33 @@ func (g *RoutingGeneration) LookupEndpoint(method, path, model string) (Protocol
 		return ProtocolBinding{}, false
 	}
 	return bindings[0], true
+}
+
+// LookupConfiguredInterface is used only after the host has checked a saved,
+// confirmed channel binding. Documentation IDs never enter the model index.
+func (g *RoutingGeneration) LookupConfiguredInterface(key, id, mode, method, path, model string) (ProtocolBinding, bool) {
+	plugin, ok := g.Get(key)
+	if !ok {
+		return ProtocolBinding{}, false
+	}
+	entry, ok := plugin.Meta.ParameterInterfaces[id].(map[string]any)
+	if !ok {
+		return ProtocolBinding{}, false
+	}
+	modes, _ := entry["modes"].(map[string]any)
+	if _, ok := modes[mode]; !ok {
+		return ProtocolBinding{}, false
+	}
+	protocol, operation, ok := LookupHostProtocolOperation(method, path)
+	if !ok || protocol != "openai_"+fmt.Sprint(entry["kind"]) {
+		return ProtocolBinding{}, false
+	}
+	for _, claim := range plugin.Meta.Protocols {
+		if claim.Name == protocol {
+			return ProtocolBinding{Plugin: plugin, Protocol: protocol, Operation: operation, Model: model, ConfigurationBound: true}, true
+		}
+	}
+	return ProtocolBinding{}, false
 }
 
 // LookupEndpointCandidates returns every plugin that can serve a shared model
@@ -705,7 +750,7 @@ func routePathShape(routePath string) (string, error) {
 }
 
 func endpointIndexKey(method, path, model string) string {
-	return method + "\x00" + path + "\x00" + model
+	return method + "\x00" + path + "\x00" + asciiFold(model)
 }
 
 func intersectingReservedNamespace(routePath string) (string, bool) {
@@ -929,6 +974,8 @@ func buildRoutingGenerationFromPlugins(effective map[string]*LoadedPlugin, numbe
 		byModel:              make(map[string]*LoadedPlugin),
 		modelPlugins:         make(map[string][]*LoadedPlugin),
 		canonicalModelByFold: make(map[string]string),
+		ambiguousModelFolds:  make(map[string]bool),
+		routingModelsByFold:  make(map[string][]string),
 		byChannelType:        make(map[int]*LoadedPlugin),
 		routeIndex:           make(map[string]RouteBinding),
 		protocolIndex:        make(map[string][]ProtocolBinding),
@@ -944,17 +991,17 @@ func buildRoutingGenerationFromPlugins(effective map[string]*LoadedPlugin, numbe
 				generation.byModel[model] = plugin
 			}
 			folded := asciiFold(model)
+			if !slices.Contains(generation.routingModelsByFold[folded], model) {
+				generation.routingModelsByFold[folded] = append(generation.routingModelsByFold[folded], model)
+			}
 			if existing, exists := generation.canonicalModelByFold[folded]; exists {
 				if existing != model {
-					otherKey := plugin.Meta.Key
-					if other, ok := generation.byModel[existing]; ok {
-						otherKey = other.Meta.Key
-					}
-					return nil, fmt.Errorf("plugin %s model %q conflicts with plugin %s model %q", plugin.Meta.Key, model, otherKey, existing)
+					generation.ambiguousModelFolds[folded] = true
 				}
-				continue
+			} else {
+				generation.canonicalModelByFold[folded] = model
 			}
-			generation.canonicalModelByFold[folded] = model
+
 		}
 
 		for _, channelType := range plugin.Meta.ChannelTypes {
@@ -1029,4 +1076,29 @@ func PreflightRoutingConflict(current *RoutingGeneration, candidate *LoadedPlugi
 	effective[candidate.Meta.Key] = candidate
 	_, err := buildRoutingGenerationFromPlugins(effective, number)
 	return err
+}
+
+// RoutingModelNames enumerates declared spellings for one semantic task model.
+// Each ProtocolBinding still holds its provider's exact declared spelling.
+func (g *RoutingGeneration) RoutingModelNames(name string) []string {
+	if g == nil {
+		return nil
+	}
+	return append([]string(nil), g.routingModelsByFold[asciiFold(name)]...)
+}
+
+// CanonicalModel is provider-scoped. A shared host endpoint must not rename a
+// different supplier's declaration before channel selection has completed.
+func (m Meta) CanonicalModel(name string) (string, bool) {
+	for _, declared := range m.Models {
+		if declared == name {
+			return declared, true
+		}
+	}
+	for _, declared := range m.Models {
+		if asciiFold(declared) == asciiFold(name) {
+			return declared, true
+		}
+	}
+	return "", false
 }

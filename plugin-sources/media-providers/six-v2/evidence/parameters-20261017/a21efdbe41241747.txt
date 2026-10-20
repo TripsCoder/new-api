@@ -1,0 +1,499 @@
+export const FAMILY_LABELS = Object.freeze({
+  'omni-flash': 'Omni Flash 视频',
+  seedance: 'Seedance 系列',
+  wan: 'Wan 系列',
+  'minimax-h3': 'MiniMax H3 系列',
+  'grok-video': 'Grok 视频',
+  kling: 'Kling 系列',
+  'gpt-image': 'GPT Image 系列',
+  'nano-banana': 'Nano Banana 系列',
+  gpt: 'GPT 系列',
+  other: '其他模型'
+})
+
+const PURPOSES = new Set(['video', 'image', 'language'])
+const PROTOCOLS = new Set([
+  'async-video-videos',
+  'async-video-generations',
+  'openai-images',
+  'openai-chat',
+  'contract-pending'
+])
+
+export function resolveCatalogURL(baseURL, documentOrigin) {
+  const fallback = safeHTTPOrigin(documentOrigin) || 'http://localhost'
+  const origin = safeHTTPOrigin(baseURL) || fallback
+  return `${origin}/api/v1/docs/model-catalog`
+}
+
+function safeHTTPOrigin(value) {
+  try {
+    const parsed = new URL(String(value || ''))
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.origin : ''
+  } catch {
+    return ''
+  }
+}
+
+export function normalizeCatalog(payload) {
+  const source = payload && typeof payload === 'object' ? payload : {}
+  const models = Array.isArray(source.models) ? source.models : []
+  const byName = new Map()
+
+  for (const raw of models) {
+    if (!raw || typeof raw !== 'object') continue
+    const name = typeof raw.name === 'string' ? raw.name.trim() : ''
+    if (!name) continue
+    const key = name.toLowerCase()
+    const family = Object.hasOwn(FAMILY_LABELS, raw.family) ? raw.family : 'other'
+    const purpose = PURPOSES.has(raw.purpose) ? raw.purpose : 'language'
+    const protocolID = PROTOCOLS.has(raw.protocol_id) ? raw.protocol_id : 'contract-pending'
+    const next = {
+      name,
+      description: typeof raw.description === 'string' ? raw.description.trim() : '',
+      family,
+      purpose,
+      billingMode: typeof raw.billing_mode === 'string' ? raw.billing_mode : '',
+      available: raw.available === true,
+      protocolID,
+      capabilities: raw.capabilities && typeof raw.capabilities === 'object'
+        ? normalizeCapabilities(raw.capabilities)
+        : {}
+    }
+    const current = byName.get(key)
+    if (!current) byName.set(key, next)
+    else {
+      current.available = current.available || next.available
+      if (current.protocolID === 'contract-pending' && next.protocolID !== 'contract-pending') {
+        current.family = next.family
+        current.purpose = next.purpose
+        current.protocolID = next.protocolID
+        current.capabilities = next.capabilities
+      }
+      if (!current.description && next.description) current.description = next.description
+    }
+  }
+
+  return {
+    generatedAt: typeof source.generated_at === 'string' ? source.generated_at : '',
+    refreshAfterSeconds: Math.max(15, Number(source.refresh_after_seconds) || 15),
+    models: [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+  }
+}
+
+function normalizeCapabilities(raw) {
+  const capabilities = structuredCloneSafe(raw)
+  for (const key of ['max_reference_images', 'max_reference_videos', 'max_reference_audios', 'max_reference_total']) {
+    const value = Number(capabilities[key])
+    capabilities[key] = Number.isFinite(value) && value > 0 ? Math.floor(value) : 0
+  }
+  for (const key of ['resolutions', 'fixed_seconds', 'aspect_ratios']) {
+    capabilities[key] = Array.isArray(capabilities[key]) ? capabilities[key].filter(Boolean) : []
+  }
+  for (const key of ['reference_images', 'reference_videos', 'reference_audios', 'audio_output']) {
+    capabilities[key] = capabilities[key] === true
+  }
+  return capabilities
+}
+
+const VIDEO_EXAMPLE_KINDS = Object.freeze(['text', 'image', 'image-base64', 'video', 'audio', 'all'])
+
+// A 64x64 placeholder so the base64 example runs as-is; customers replace it with
+// their own image (the reference section shows how to encode one). Inline references
+// are the documented way to reach relays that cannot fetch a customer's image host.
+const REFERENCE_IMAGE_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEPSURBVHhe7ZK7CcNQEARdmktxaerURoGySe7dz7C7MMmAdY/Br/fn+irjACSVcACSSjgASSUcgKQSDkBSCQcgqYQDkFTCAUgqMRogMvp9ByMBMqPvVdIaoHL0/QraAnSM7mRpCdA5upehPMDE6O4ppQEmR/dPcACSJ2yM3hHFAUhG2Ry9J4IDkIyyOXpPBAcgGWVz9J4I6QDbozdF8D+AZJTN0XsiOADJKJuj90RwAJInbIzeEcUBSJ4yObp/ggOQzDAxuntKeYCbztG9DC0BbjpGd7K0BbipHH2/gtYAD5nR9yoZCfAQGf2+g9EA/4gDkFTCAUgq4QAklXAAkko4AEklHICkEg5AUgnxANf3B3vdVpqiwOLAAAAAAElFTkSuQmCC'
+
+const NATIVE_ASSETS_MODELS = new Set(['seedance2.5-480', 'seedance2.5-480s', 'seedance2.5-720', 'seedance2.5-720s'])
+const URL_ONLY_SEEDANCE_MODELS = new Set(['sd2.0-fast', 'seedance2.0-fast', 'seedance2.0-933'])
+const SNUMOM_GROK_VIDEO_MODELS = new Set(['grok-imagine-video-1.5-fast', 'grok-imagine-video-1.5（按次）', 'grok-imagine-video-1.5-lite'])
+const SNUMOM_SEEDANCE_VIDEO_MODELS = new Set(['seedance-933', 'seedance2.0-933-v', 'seedance2.5'])
+
+function buildSnumomSeedanceVideoExample(model, kind, baseURL) {
+  const supportsVideo = model.name.toLowerCase() !== 'seedance-933'
+  if (!['text', 'image', 'image-base64', 'audio', 'all', 'video'].includes(kind) || (kind === 'video' && !supportsVideo)) {
+    return { supported: false, kind, summary: '该模型不支持此参考素材类型', curl: '', javascript: '', python: '', payload: null }
+  }
+  const payload = { model: model.name, prompt: kind === 'text' ? '海边日落，镜头缓慢推进' : '保持参考素材中的主体一致，动作自然连续', seconds: 5, resolution: '720p', aspect_ratio: '16:9' }
+  if (['image', 'all'].includes(kind)) payload.reference_images = ['https://example.com/reference-image.jpg']
+  if (kind === 'image-base64') payload.reference_images = [REFERENCE_IMAGE_DATA_URL]
+  if (kind === 'video' || (kind === 'all' && supportsVideo)) payload.reference_videos = ['https://example.com/reference-video.mp4']
+  if (kind === 'audio' || kind === 'all') payload.reference_audios = ['https://example.com/reference-audio.mp3']
+  const url = `${String(baseURL || '').replace(/\/+$/, '')}/videos`
+  const pretty = JSON.stringify(payload, null, 2)
+  const curl = `curl ${url} \\\n  -H "Authorization: Bearer sk-你的API密钥" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(payload)}'`
+  const javascript = `const response = await fetch('${url}', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer sk-你的API密钥', 'Content-Type': 'application/json' },\n  body: JSON.stringify(${pretty})\n})`
+  const python = `import requests\n\nresponse = requests.post('${url}', headers={\n  'Authorization': 'Bearer sk-你的API密钥',\n  'Content-Type': 'application/json'\n}, json=${pretty})`
+  return { supported: true, kind, summary: kind === 'text' ? '文生视频' : '参考素材生成视频（图片可用 URL 或 base64；音视频仅 URL）', curl, javascript, python, payload }
+}
+
+function buildURLOnlySeedanceVideoExample(model, kind, baseURL) {
+  const qsWan = model.name.toLowerCase() === 'wan3-720'
+  const capabilities = model?.capabilities || {}
+  const supported = kind === 'text' ||
+    (kind === 'image' && capabilities.reference_images === true) ||
+    (kind === 'video' && capabilities.reference_videos === true) ||
+    (kind === 'audio' && capabilities.reference_audios === true) ||
+    (kind === 'all' && capabilities.reference_images === true && capabilities.reference_videos === true && capabilities.reference_audios === true)
+  if (!supported) {
+    return { supported: false, kind, summary: '该模型只接受文档列出的公网 URL 参考素材', curl: '', javascript: '', python: '', payload: null }
+  }
+  const seconds = capabilities.fixed_seconds?.[0] || capabilities.min_seconds || 5
+  const payload = {
+    model: model.name,
+    prompt: kind === 'text' ? '固定镜头，主体自然运动' : '参考素材保持主体一致，自然生成视频',
+    seconds,
+    ...(qsWan ? { aspect_ratio: '16:9' } : { ratio: '16:9' })
+  }
+  if (model.name !== 'seedance2.0-933') payload.resolution = '720p'
+  if (kind === 'image' || kind === 'all') payload[qsWan ? 'reference_image_urls' : 'image_urls'] = ['https://example.com/reference-image.jpg']
+  if (kind === 'video' || kind === 'all') payload[qsWan ? 'reference_video_urls' : 'video_urls'] = ['https://example.com/reference-video.mp4']
+  if (kind === 'audio' || kind === 'all') payload[qsWan ? 'reference_audio_urls' : 'audio_urls'] = ['https://example.com/reference-audio.mp3']
+  const url = `${String(baseURL || '').replace(/\/+$/, '')}/videos`
+  const prettyJSON = JSON.stringify(payload, null, 2)
+  const curl = `curl ${url} \\\n  -H "Authorization: Bearer sk-你的API密钥" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(payload)}'`
+  const javascript = `const response = await fetch('${url}', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer sk-你的API密钥', 'Content-Type': 'application/json' },\n  body: JSON.stringify(${prettyJSON})\n})`
+  const python = `import requests\n\nresponse = requests.post('${url}', headers={\n  'Authorization': 'Bearer sk-你的API密钥',\n  'Content-Type': 'application/json'\n}, json=${prettyJSON})`
+  const labels = { text: '文生视频', image: '图生视频', video: '参考视频', audio: '参考音频', all: '图片 + 视频 + 音频参考' }
+  return { supported: true, kind, summary: labels[kind], curl, javascript, python, payload }
+}
+
+function buildSnumomGrokVideoExample(model, kind, baseURL) {
+  if (kind !== 'text' && kind !== 'image') {
+    return { supported: false, kind, summary: '该模型仅支持公网 URL 参考图片，不支持参考音频、视频或 base64', curl: '', javascript: '', python: '', payload: null }
+  }
+  const payload = {
+    model: model.name,
+    prompt: kind === 'image' ? '保持参考图中人物身份一致，动作自然连续' : '海边日落，镜头缓慢推进，电影级画质',
+    seconds: 6,
+    size: '1280x720',
+    aspect_ratio: '16:9'
+  }
+  if (kind === 'image') payload.reference_images = [{ url: 'https://example.com/reference-image.jpg', role: model.name === 'grok-imagine-video-1.5-lite' ? 'first_frame' : 'reference_image' }]
+  const url = `${String(baseURL || '').replace(/\/+$/, '')}/videos/generations`
+  const curl = `curl ${url} \\\n  -H "Authorization: Bearer sk-你的API密钥" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(payload)}'`
+  const javascript = `const response = await fetch('${url}', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer sk-你的API密钥', 'Content-Type': 'application/json' },\n  body: JSON.stringify(${JSON.stringify(payload, null, 2)})\n})`
+  const python = `import requests\n\nresponse = requests.post('${url}', headers={\n  'Authorization': 'Bearer sk-你的API密钥',\n  'Content-Type': 'application/json'\n}, json=${JSON.stringify(payload, null, 2)})`
+  return { supported: true, kind, summary: kind === 'image' ? '图生视频' : '文生视频', curl, javascript, python, payload }
+}
+
+function buildNativeAssetsVideoExample(model, kind, baseURL) {
+  if (!['text', 'image', 'image-base64', 'audio', 'all'].includes(kind)) {
+    return { supported: false, kind, summary: '该模型不支持参考视频；可传图片和音频', curl: '', javascript: '', python: '', payload: null }
+  }
+  const prompts = {
+    text: '固定镜头，主体自然运动',
+    image: '以 @image1 为参考，保持主体外观一致并自然运动',
+    'image-base64': '以 @image1 为参考，保持主体外观一致并自然运动',
+    audio: '参考 @audio1 的节奏，让画面自然运动',
+    all: '以 @image1 为主体，参考 @audio1 的节奏生成视频'
+  }
+  const payload = { model: model.name, prompt: prompts[kind], duration: 8, size: '16:9' }
+  if (kind === 'image') payload.assets = [{ category: 'image', url: 'https://example.com/reference-image.jpg' }]
+  if (kind === 'image-base64') payload.assets = [{ category: 'image', data_base64: REFERENCE_IMAGE_DATA_URL.split(',')[1] }]
+  if (kind === 'audio') payload.assets = [{ category: 'audio', url: 'https://example.com/reference-audio.mp3' }]
+  if (kind === 'all') payload.assets = [{ category: 'image', url: 'https://example.com/reference-image.jpg' }, { category: 'audio', url: 'https://example.com/reference-audio.mp3' }]
+  const url = `${String(baseURL || '').replace(/\/+$/, '')}/videos`
+  const curl = `curl ${url} \\\n  -H "Authorization: Bearer sk-你的API密钥" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(payload)}'`
+  let javascript = `const response = await fetch('${url}', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer sk-你的API密钥', 'Content-Type': 'application/json' },\n  body: JSON.stringify(${JSON.stringify(payload, null, 2)})\n})`
+  let python = `import requests\n\nresponse = requests.post('${url}', headers={\n  'Authorization': 'Bearer sk-你的API密钥',\n  'Content-Type': 'application/json'\n}, json=${JSON.stringify(payload, null, 2)})`
+  if (kind === 'image-base64') {
+    javascript = `import { readFileSync } from 'node:fs'\n\nconst payload = ${JSON.stringify({ ...payload, assets: [] }, null, 2)}\npayload.assets = [{ category: 'image', data_base64: readFileSync('reference.jpg').toString('base64') }]\nconst response = await fetch('${url}', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer sk-你的API密钥', 'Content-Type': 'application/json' },\n  body: JSON.stringify(payload)\n})`
+    python = `import base64, requests\n\nwith open('reference.jpg', 'rb') as file:\n    image_base64 = base64.b64encode(file.read()).decode()\npayload = ${JSON.stringify({ ...payload, assets: [] }, null, 2)}\npayload['assets'] = [{'category': 'image', 'data_base64': image_base64}]\nresponse = requests.post('${url}', headers={\n  'Authorization': 'Bearer sk-你的API密钥',\n  'Content-Type': 'application/json'\n}, json=payload)`
+  }
+  const labels = { text: '文生视频', image: '图生视频', 'image-base64': '图生视频（base64）', audio: '参考音频', all: '图片 + 音频参考' }
+  return { supported: true, kind, summary: labels[kind], curl, javascript, python, payload }
+}
+
+export function buildVideoExample(model, kind = 'text', baseURL = '') {
+  const capabilities = model?.capabilities || {}
+  const modelName = String(model?.name || '').trim().toLowerCase()
+  if (SNUMOM_SEEDANCE_VIDEO_MODELS.has(modelName)) return buildSnumomSeedanceVideoExample(model, kind, baseURL)
+  if (URL_ONLY_SEEDANCE_MODELS.has(modelName) || modelName === 'wan3-720') return buildURLOnlySeedanceVideoExample(model, kind, baseURL)
+  if (NATIVE_ASSETS_MODELS.has(modelName)) return buildNativeAssetsVideoExample(model, kind, baseURL)
+  if (SNUMOM_GROK_VIDEO_MODELS.has(modelName)) return buildSnumomGrokVideoExample(model, kind, baseURL)
+  const officialH3 = modelName.startsWith('官方h3-')
+  const omniFlash = modelName === 'omni-flash-720p'
+  const seedanceV = ['seedance2.5-480v', 'seedance2.5-720v'].includes(modelName)
+  const klingV4 = modelName === 'kling-video-v4'
+  const wanP = ['wan3.0-video-p', 'wan3.0-video-prime-p'].includes(modelName)
+  const megaBy = modelName === 'seedance2.5d'
+  const wanImageOnly = modelName === 'wan3.0-image' || modelName === 'wan3.0-image-prime'
+  const wan30 = modelName === 'wan30-720p'
+  const protocol = model?.protocolID === 'async-video-generations' ? 'async-video-generations' : 'async-video-videos'
+  const endpoint = protocol === 'async-video-generations' ? '/videos/generations' : '/videos'
+  const durationKey = wanImageOnly || wan30 || omniFlash || seedanceV ? 'seconds' : protocol === 'async-video-generations' ? 'duration_seconds' : 'duration'
+  const resolution = capabilities.resolutions?.[0] || '720p'
+  const fixedSeconds = Array.isArray(capabilities.fixed_seconds) && capabilities.fixed_seconds.length > 0
+    ? capabilities.fixed_seconds[0]
+    : null
+  const duration = fixedSeconds || capabilities.min_seconds || 5
+  // Seedance 2.5 HC's copy-ready contract is most useful as the documented
+  // 30-second 480p audio example, while the capability summary still exposes
+  // the complete 1-30 second / 480p-720p range.
+  const exampleDuration = klingV4 ? 10 : modelName === 'seedance-2-5-hc' ? 30 : duration
+  const exampleResolution = modelName === 'seedance-2-5-hc' ? '480p' : resolution
+  const supportedKinds = {
+    text: !officialH3 && !wanImageOnly,
+    image: capabilities.reference_images === true,
+    'image-base64': capabilities.reference_images === true && !officialH3 && !wanImageOnly && !wan30 && !omniFlash && !seedanceV && !klingV4 && !wanP && !megaBy,
+    video: capabilities.reference_videos === true && !wanImageOnly,
+    audio: capabilities.reference_audios === true,
+    all: capabilities.reference_images === true && capabilities.reference_videos === true && capabilities.reference_audios === true && !wanImageOnly
+  }
+  if (!VIDEO_EXAMPLE_KINDS.includes(kind) || !supportedKinds[kind]) {
+    return { supported: false, kind, summary: '该模型不支持此类参考素材', curl: '', javascript: '', python: '', payload: null }
+  }
+  const payload = {
+    model: model?.name || '请选择模型',
+    prompt: kind === 'text' ? '固定镜头，主体自然运动' : kind === 'audio' && (wanImageOnly || wan30) ? '参考图片中的主体，并参考音频节奏自然运动' : '保持主体外观一致并自然运动',
+    [durationKey]: exampleDuration,
+    ...(officialH3
+      ? { size: modelName === '官方h3-2k' ? '2K' : modelName === '官方h3-1080p' ? '1920x1080' : '1280x720' }
+      : wanImageOnly ? { size: exampleResolution.toUpperCase() } : { resolution: exampleResolution, aspect_ratio: '16:9' })
+  }
+  if (kind === 'image' || kind === 'all' || (kind === 'audio' && (wanImageOnly || wan30))) {
+    payload[seedanceV ? 'images' : 'reference_images'] = wanImageOnly
+      ? [{ url: 'https://example.com/reference-image.jpg' }]
+      : ['https://example.com/reference-image.jpg']
+  }
+  if (kind === 'image-base64') payload.reference_images = [REFERENCE_IMAGE_DATA_URL]
+  if ((kind === 'video' || kind === 'all') && capabilities.reference_videos === true) payload[seedanceV ? 'videos' : 'reference_videos'] = ['https://example.com/reference-video.mp4']
+  if ((kind === 'audio' || kind === 'all') && capabilities.reference_audios === true) {
+    payload[seedanceV ? 'audios' : 'reference_audios'] = wanImageOnly
+      ? [{ url: 'https://example.com/reference-audio.mp3' }]
+      : ['https://example.com/reference-audio.mp3']
+  }
+  if (capabilities.audio_output === true) payload.generate_audio = true
+  if (wanP) {
+    const media = []
+    for (const [field, type] of [['reference_images', 'image'], ['reference_videos', 'video'], ['reference_audios', 'audio']]) {
+      for (const url of payload[field] || []) media.push({ type, url })
+      delete payload[field]
+    }
+    payload.input = { prompt: payload.prompt, ...(media.length ? { media } : {}) }
+    payload.resolution = payload.resolution.toUpperCase()
+    payload.parameters = { duration: payload.duration, resolution: payload.resolution, ratio: 'adaptive' }
+    delete payload.prompt
+    delete payload.aspect_ratio
+  }
+  if (megaBy) {
+    payload.ratio = payload.aspect_ratio
+    delete payload.aspect_ratio
+    for (const [alias, native] of [['reference_images', 'referenceImages'], ['reference_videos', 'referenceVideos'], ['reference_audios', 'referenceAudios']]) {
+      if (payload[alias]) payload[native] = payload[alias]
+      delete payload[alias]
+    }
+  }
+  const base = String(baseURL || '').replace(/\/+$/, '')
+  const url = `${base}${endpoint}`
+  const json = JSON.stringify(payload)
+  const prettyJSON = JSON.stringify(payload, null, 2)
+  let curl = `curl ${url} \\\n  -H "Authorization: Bearer sk-你的API密钥" \\\n  -H "Content-Type: application/json" \\\n  -d '${json}'`
+  let javascript = `const response = await fetch('${url}', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer sk-你的API密钥', 'Content-Type': 'application/json' },\n  body: JSON.stringify(${prettyJSON})\n})`
+  let python = `response = requests.post('${url}', headers={\n  'Authorization': 'Bearer sk-你的API密钥',\n  'Content-Type': 'application/json'\n}, json=${prettyJSON})`
+  if (kind === 'image-base64') {
+    // The reference travels inside the body, so each language example has to show the
+    // encoding step; the curl example keeps the request body in a file because a shell
+    // cannot base64-encode a JSON string cleanly. The placeholder image above runs as-is.
+    const body = { ...payload, reference_images: ['<把 reference.jpg 编码后的 data URL 填到这里>'] }
+    const bodyJSON = JSON.stringify(body, null, 2)
+    curl = `# 参考图以 base64 直传（示例里的 data:image/png 是一张 64x64 占位图，替换成你自己的即可）\n# 也可以先按下面的 Python/JavaScript 片段生成 payload.json，再执行本行。\ncurl ${url} \\\n  -H "Authorization: Bearer sk-你的API密钥" \\\n  -H "Content-Type: application/json" \\\n  -d '${json}'`
+    javascript = `import { readFileSync } from 'node:fs'\n\nconst mediaType = 'image/jpeg' // 按实际图片类型填写：image/jpeg、image/png、image/webp\nconst dataURL = \`data:\${mediaType};base64,\${readFileSync('reference.jpg').toString('base64')}\`\n\nconst payload = ${bodyJSON}\npayload.reference_images = [dataURL]\n\nconst response = await fetch('${url}', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer sk-你的API密钥', 'Content-Type': 'application/json' },\n  body: JSON.stringify(payload)\n})`
+    python = `import base64, requests\n\nmedia_type = 'image/jpeg'  # 按实际图片类型填写：image/jpeg、image/png、image/webp\nwith open('reference.jpg', 'rb') as file:\n    data_url = f'data:{media_type};base64,' + base64.b64encode(file.read()).decode()\n\npayload = ${bodyJSON}\npayload['reference_images'] = [data_url]\n\nresponse = requests.post('${url}', headers={\n  'Authorization': 'Bearer sk-你的API密钥',\n  'Content-Type': 'application/json'\n}, json=payload)`
+  }
+  const labels = { text: '文生视频', image: '图生视频', 'image-base64': '图生视频（base64）', video: '参考视频', audio: wanImageOnly || wan30 ? '图片 + 音频参考' : '参考音频', all: '图片 + 视频 + 音频参考' }
+  return { supported: true, kind, summary: labels[kind], curl, javascript, python, payload }
+}
+
+export function selectVideoExampleKind(model, preferredKind = 'text') {
+  if (buildVideoExample(model, preferredKind).supported) return preferredKind
+  return VIDEO_EXAMPLE_KINDS.find(kind => buildVideoExample(model, kind).supported) || ''
+}
+
+function structuredCloneSafe(value) {
+  try {
+    return JSON.parse(JSON.stringify(value))
+  } catch {
+    return {}
+  }
+}
+
+export function groupCatalogByPurposeAndFamily(models) {
+  const grouped = { video: {}, image: {}, language: {} }
+  for (const model of Array.isArray(models) ? models : []) {
+    const purpose = PURPOSES.has(model.purpose) ? model.purpose : 'language'
+    const family = Object.hasOwn(FAMILY_LABELS, model.family) ? model.family : 'other'
+    if (!grouped[purpose][family]) grouped[purpose][family] = []
+    grouped[purpose][family].push(model)
+  }
+  for (const purpose of Object.values(grouped)) {
+    for (const family of Object.values(purpose)) {
+      family.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+    }
+  }
+  return grouped
+}
+
+export function renderCatalog(documentRef, catalog) {
+  const root = documentRef.querySelector('[data-docs-catalog]')
+  if (!root) return
+  // A live status refresh must not reset the reader's accordion choices.
+  // Families such as "other" can appear under more than one purpose.
+  const expandedFamilies = new Set([...root.querySelectorAll('details[data-family][open]')]
+    .map(details => `${details.dataset.purpose}:${details.dataset.family}`))
+  catalog = { ...catalog, models: catalog.models.filter(model => model.available === true) }
+  const grouped = groupCatalogByPurposeAndFamily(catalog.models)
+  const fragment = documentRef.createDocumentFragment()
+  for (const purpose of ['video', 'image', 'language']) {
+    for (const familyName of Object.keys(grouped[purpose])) {
+      const details = documentRef.createElement('details')
+      details.dataset.family = familyName
+      details.dataset.purpose = purpose
+      details.open = expandedFamilies.has(`${purpose}:${familyName}`)
+      details.id = `family-${familyName}`
+      const summary = documentRef.createElement('summary')
+      const label = documentRef.createElement('span')
+      label.textContent = FAMILY_LABELS[familyName] || FAMILY_LABELS.other
+      const count = documentRef.createElement('span')
+      count.className = 'family-count'
+      count.textContent = `${grouped[purpose][familyName].length} 个模型`
+      summary.append(label, count)
+      details.append(summary)
+
+      const list = documentRef.createElement('div')
+      list.className = 'model-list'
+      for (const model of grouped[purpose][familyName]) {
+        const row = documentRef.createElement('div')
+        row.className = 'model-row'
+        row.dataset.model = model.name
+        const identity = documentRef.createElement('div')
+        const name = documentRef.createElement('code')
+        name.textContent = model.name
+        const meta = documentRef.createElement('span')
+        meta.className = 'model-meta'
+        meta.textContent = protocolLabel(model.protocolID)
+        identity.append(name, meta)
+        const status = documentRef.createElement('span')
+        status.className = model.available ? 'status status-available' : 'status status-disabled'
+        status.textContent = model.available ? '可用' : '已禁用 · 当前暂不可调用'
+        row.append(identity, status)
+        list.append(row)
+      }
+      details.append(list)
+      fragment.append(details)
+    }
+  }
+  root.replaceChildren(fragment)
+
+  for (const select of documentRef.querySelectorAll('[data-protocol-models]')) {
+    const protocol = select.dataset.protocolModels
+    const matching = catalog.models.filter(model => model.available && model.protocolID === protocol && protocol !== 'contract-pending')
+    const options = matching.map(model => {
+      const option = documentRef.createElement('option')
+      option.value = model.name
+      option.textContent = model.name
+      return option
+    })
+    select.replaceChildren(...options)
+    select.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+  documentRef.dispatchEvent(new CustomEvent('docs-catalog-updated', { detail: catalog }))
+}
+
+function protocolLabel(protocol) {
+  return ({
+    'async-video-videos': '异步视频 A',
+    'async-video-generations': '异步视频 B',
+    'openai-images': '图片接口',
+    'openai-chat': '文本接口',
+    'contract-pending': '接入说明待补充'
+  })[protocol] || '接入说明待补充'
+}
+
+export function bindExclusiveDetails(documentRef, windowRef, selector = 'details[data-family], details[data-family-nav]', { openInitialHash = true } = {}) {
+  const details = [...documentRef.querySelectorAll(selector)]
+  const onToggle = event => {
+    const opened = event.currentTarget
+    if (!opened.open) return
+    for (const sibling of details) {
+      if (sibling !== opened) sibling.open = false
+    }
+  }
+  for (const item of details) item.addEventListener('toggle', onToggle)
+
+  const openHash = () => {
+    let id = ''
+    try { id = decodeURIComponent(windowRef.location.hash.slice(1)) } catch { return }
+    if (!id) return
+    const target = documentRef.getElementById(id)
+    const owner = target?.closest(selector)
+    if (owner) owner.open = true
+  }
+  windowRef.addEventListener('hashchange', openHash)
+  if (openInitialHash) openHash()
+  return () => {
+    for (const item of details) item.removeEventListener('toggle', onToggle)
+    windowRef.removeEventListener('hashchange', openHash)
+  }
+}
+
+export function startCatalogRefresh(options = {}) {
+  const documentRef = options.document || document
+  const windowRef = options.window || window
+  const fetcher = options.fetcher || windowRef.fetch.bind(windowRef)
+  const setTimer = options.setTimer || windowRef.setTimeout.bind(windowRef)
+  const clearTimer = options.clearTimer || windowRef.clearTimeout.bind(windowRef)
+  const url = resolveCatalogURL(options.baseURL, windowRef.location.origin)
+  let timer = null
+  let stopped = false
+  let hasSnapshot = false
+  let unbindDetails = null
+
+  const state = message => {
+    const node = documentRef.querySelector('[data-catalog-state]')
+    if (node) node.textContent = message
+  }
+  const schedule = seconds => {
+    if (stopped || documentRef.hidden) return
+    if (timer !== null) clearTimer(timer)
+    timer = setTimer(load, Math.max(15, seconds || 15) * 1000)
+  }
+  const load = async () => {
+    timer = null
+    if (stopped || documentRef.hidden) return
+    try {
+      state('正在同步模型状态…')
+      const response = await fetcher(url, { cache: 'no-store' })
+      if (!response.ok) throw new Error(`HTTP ${response.status || 0}`)
+      const body = await response.json()
+      const payload = body && typeof body === 'object' && body.data ? body.data : body
+      const catalog = normalizeCatalog(payload)
+      if (stopped) return
+      unbindDetails?.()
+      renderCatalog(documentRef, catalog)
+      unbindDetails = bindExclusiveDetails(documentRef, windowRef, 'details[data-family]', { openInitialHash: !hasSnapshot })
+      hasSnapshot = true
+      state(catalog.generatedAt ? `已同步 · ${catalog.generatedAt}` : '模型状态已同步')
+      schedule(catalog.refreshAfterSeconds)
+    } catch {
+      state(hasSnapshot ? '状态可能已过期，稍后自动重试' : '状态暂不可用，请稍后刷新')
+      schedule(15)
+    }
+  }
+  const onVisibility = () => {
+    if (documentRef.hidden) {
+      if (timer !== null) clearTimer(timer)
+      timer = null
+    } else {
+      load()
+    }
+  }
+  documentRef.addEventListener('visibilitychange', onVisibility)
+  timer = setTimer(load, 0)
+  return () => {
+    stopped = true
+    if (timer !== null) clearTimer(timer)
+    unbindDetails?.()
+    documentRef.removeEventListener('visibilitychange', onVisibility)
+  }
+}

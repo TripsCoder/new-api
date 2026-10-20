@@ -176,7 +176,7 @@ func projectTaskArtifacts(task *model.Task) ([]relaychannel.TaskArtifact, error)
 	if task == nil || task.Status != model.TaskStatusSuccess || !taskHasPluginExecution(task) || !task.ResultRetrievable() {
 		return []relaychannel.TaskArtifact{}, nil
 	}
-	adaptor := relay.GetTaskAdaptor(task.Platform)
+	adaptor := relay.GetTaskAdaptorForTask(task)
 	if adaptor == nil {
 		return nil, errTaskArtifactPluginUnavailable
 	}
@@ -228,7 +228,7 @@ func initTaskArtifactAdaptor(task *model.Task) (relaychannel.TaskAdaptor, error)
 	if err != nil {
 		return nil, fmt.Errorf("%w: channel unavailable", errTaskArtifactPluginUnavailable)
 	}
-	adaptor := relay.GetTaskAdaptor(task.Platform)
+	adaptor := relay.GetTaskAdaptorForTask(task)
 	if adaptor == nil {
 		return nil, errTaskArtifactPluginUnavailable
 	}

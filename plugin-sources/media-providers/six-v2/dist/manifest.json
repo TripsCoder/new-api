@@ -1,0 +1,64 @@
+{
+  "format": "six-provider-plugin-build/v2",
+  "version": "2.1.5",
+  "status": "candidate-not-installed",
+  "preserveKeys": true,
+  "inputs": {
+    "profiles.json": "8252037756fed75042d06da489559464445ba9995a879174d37ba2186b2641ab",
+    "runtime.js": "13ea6815e846c39c1fa7004be0a523321284734cc4002ec53ad9aac05771c4d5",
+    "interface-runtime.js": "628efc6ee6ac76cc7c5c3a31d8bf38a5701511420faf9f517a8a23268b794289",
+    "interface_contracts.py": "7387d96557590e9ee56379a06d5dcc823d9bfa31d25575c98df6826b9ee61784",
+    "sources.lock.json": "946315be858753895b56b0a18202ec512300ef144a15a18b6274dced8b349a00",
+    "build.mjs": "ded9457d6a316303a1c4f536b0a460e397929a43413d72917c433f2edb1ac5e3"
+  },
+  "plugins": [
+    {
+      "key": "paisio_media",
+      "version": "2.1.5",
+      "file": "paisio_media.plugin.js",
+      "models": 50,
+      "pendingModels": 0,
+      "sha256": "96898cbce0cdb40407ee5860f75db896db5b2ce0b294f40c2bb3aee2ee27ffc1"
+    },
+    {
+      "key": "yuxibox_media",
+      "version": "2.1.5",
+      "file": "yuxibox_media.plugin.js",
+      "models": 16,
+      "pendingModels": 0,
+      "sha256": "2f98eb92300cfe69a319b7e8ceb7b13922628772f8ba1f821ef81bb1566e66d1"
+    },
+    {
+      "key": "xcmapi_media",
+      "version": "2.1.5",
+      "file": "xcmapi_media.plugin.js",
+      "models": 14,
+      "pendingModels": 17,
+      "sha256": "73494c6ee0c6168c694fe49c16425993714d4d73bd0dd059f7d33113d1c1609a"
+    },
+    {
+      "key": "artbox_media",
+      "version": "2.1.5",
+      "file": "artbox_media.plugin.js",
+      "models": 8,
+      "pendingModels": 9,
+      "sha256": "f79b6e03291a32e1ef90fca3ae13bf578a876fd6f71a15acfd3cf5be0485c65e"
+    },
+    {
+      "key": "lxmone_media",
+      "version": "2.1.5",
+      "file": "lxmone_media.plugin.js",
+      "models": 84,
+      "pendingModels": 4,
+      "sha256": "5d52871547f1f95d582a7db5deb34029226447f1c0f888368feff87158886b7c"
+    },
+    {
+      "key": "zhangyuge_media",
+      "version": "2.1.5",
+      "file": "zhangyuge_media.plugin.js",
+      "models": 45,
+      "pendingModels": 10,
+      "sha256": "d76e97b024a2303a811ad6bde8991c84017006db22929b4bf2f15ba8869c2de2"
+    }
+  ]
+}

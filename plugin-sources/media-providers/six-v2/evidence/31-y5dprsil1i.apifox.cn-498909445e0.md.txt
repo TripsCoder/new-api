@@ -1,0 +1,163 @@
+# 查询异步图片任务状态
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/images/generations/{task_id}:
+    get:
+      summary: 查询异步图片任务状态
+      deprecated: false
+      description: |-
+        查询异步图片生成任务的状态。建议轮询间隔 3-5 秒。
+
+        Gemini 系列通常 20-60 秒完成，GPT-Image2 系列通常 30-90 秒完成。
+      tags:
+        - 图片生成
+        - 图片生成
+      parameters:
+        - name: task_id
+          in: path
+          description: 异步提交时返回的任务ID（格式：img_xxx）
+          required: true
+          example: ''
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 任务状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncTaskResponse'
+              examples:
+                pending:
+                  summary: 等待中
+                  value:
+                    status: in_progress
+                    progress: 10
+                processing:
+                  summary: 生成中
+                  value:
+                    status: in_progress
+                    progress: 50
+                completed:
+                  summary: 已完成
+                  value:
+                    status: completed
+                    data:
+                      - url: https://cdn.paisio.online/pv/img_a1b2c3d4e5f6.png
+                    model: gemini-3-pro-image-preview3
+                    created: 1789729831
+                failed:
+                  summary: 失败（已自动退款）
+                  value:
+                    status: failed
+                    error:
+                      message: 生成失败，已自动退款
+          headers: {}
+          x-apifox-name: ''
+      security:
+        - bearerAuth: []
+          x-apifox:
+            schemeGroups:
+              - id: 9JmJHbXdFwClzHPB9WJdH
+                schemeIds:
+                  - bearerAuth
+            required: true
+            use:
+              id: 9JmJHbXdFwClzHPB9WJdH
+            scopes:
+              9JmJHbXdFwClzHPB9WJdH:
+                bearerAuth: []
+      x-apifox-folder: 图片生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-498909445-run
+components:
+  schemas:
+    AsyncTaskResponse:
+      type: object
+      description: 异步图片任务状态
+      properties:
+        status:
+          type: string
+          enum:
+            - in_progress
+            - completed
+            - failed
+          description: 任务状态
+        progress:
+          type: integer
+          description: 进度百分比 0-100（仅 in_progress 时返回）
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageDataItem'
+          description: 图片结果列表（仅 completed 时返回）
+        model:
+          type: string
+          description: 模型名称（仅 completed 时返回）
+        created:
+          type: integer
+          description: 任务创建时间戳（秒）
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+          description: 错误信息（仅 failed 时返回，已自动退款）
+          x-apifox-orders:
+            - message
+          x-apifox-ignore-properties: []
+      x-apifox-orders:
+        - status
+        - progress
+        - data
+        - model
+        - created
+        - error
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    ImageDataItem:
+      type: object
+      description: 单张图片结果
+      properties:
+        url:
+          type: string
+          format: uri
+          description: 图片下载地址（CDN），有效期约 2 小时，请及时下载保存。Gemini 系列始终返回此字段。
+        b64_json:
+          type: string
+          description: 图片 Base64 编码数据。GPT-Image2 系列可能同时返回 url 和 b64_json。
+        revised_prompt:
+          type: string
+          description: 模型优化后的提示词（部分模型返回）
+      x-apifox-orders:
+        - url
+        - b64_json
+        - revised_prompt
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```

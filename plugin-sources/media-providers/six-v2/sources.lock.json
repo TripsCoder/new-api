@@ -1,0 +1,490 @@
+{
+  "format": "six-provider-source-lock/v2",
+  "status": "candidate-not-installed",
+  "sources": [
+    {
+      "url": "https://yuxibox.cn/api/pricing",
+      "file": "01-yuxibox.cn-pricing.txt",
+      "status": 200,
+      "bytes": 17639,
+      "sha256": "dbe881b713a3a1021d7f3bc72dc89ae16af9a86229e83bbd9748afa5e92a1c44",
+      "readAt": "2026-10-15T18:34:39.704Z"
+    },
+    {
+      "url": "https://yuxibox.cn/docs",
+      "file": "02-yuxibox.cn-docs.txt",
+      "status": 200,
+      "bytes": 1023,
+      "sha256": "55de7d62a3e84f5c22718b070b9b9daa82ef45b20dcd270ef66d4915c91474a6",
+      "readAt": "2026-10-15T18:34:39.710Z"
+    },
+    {
+      "url": "https://yuxibox.cn/static/js/async/63071.726163226f.js",
+      "file": "03-yuxibox.cn-63071.726163226f.js.txt",
+      "status": 200,
+      "bytes": 38632,
+      "sha256": "4b4a0c3447d869b34a0777997d682fc4c993defcf0773740c818343e0db3f73a",
+      "readAt": "2026-10-15T18:34:39.751Z"
+    },
+    {
+      "url": "https://xcmapi.org/docs/video-contract.json",
+      "file": "07-xcmapi.org-video-contract.json.txt",
+      "status": 200,
+      "bytes": 31867,
+      "sha256": "6032578057a0492b75679ac59b12d77c5ed970a5f6a254608595e4ea49182475",
+      "readAt": "2026-10-15T18:34:40.323Z"
+    },
+    {
+      "url": "https://www.xcmapi.org/docs/openapi.json",
+      "file": "06-www.xcmapi.org-openapi.json.txt",
+      "status": 200,
+      "bytes": 94439,
+      "sha256": "67a4c21f9cab5c6c93d20f1ab3be433eb85e4095ca78b17510e0521e460b79dd",
+      "readAt": "2026-10-15T18:34:40.332Z"
+    },
+    {
+      "url": "https://www.xcmapi.org/docs/ai-reference.md",
+      "file": "05-www.xcmapi.org-ai-reference.md.txt",
+      "status": 200,
+      "bytes": 133452,
+      "sha256": "633df950bc83bdd01fbdb2df80b6735318c57068045e312c0e5cf9f8b70f5072",
+      "readAt": "2026-10-15T18:34:40.580Z"
+    },
+    {
+      "url": "https://artbox.top/docs",
+      "file": "09-artbox.top-docs.txt",
+      "status": 200,
+      "bytes": 21494,
+      "sha256": "d9281d77da383f6c9a0318590631dd0d559e21834f26b77dc54eac131d803477",
+      "readAt": "2026-10-15T18:34:40.786Z"
+    },
+    {
+      "url": "https://www.xcmapi.org/api/public/prices",
+      "file": "08-www.xcmapi.org-prices.txt",
+      "status": 200,
+      "bytes": 482065,
+      "sha256": "0de956120b92183addcd67c8ef7e918854c62ffaac4457bf33b999e5fe2a921b",
+      "readAt": "2026-10-15T18:34:41.158Z"
+    },
+    {
+      "url": "https://artbox.top/storefront/app.js?v=9",
+      "file": "11-artbox.top-app.js.txt",
+      "status": 200,
+      "bytes": 19024,
+      "sha256": "1c57a07fa078bbb26aa5ecdd1c8b22f74fae1e773482169fb791babffa817cda",
+      "readAt": "2026-10-15T18:34:41.402Z"
+    },
+    {
+      "url": "https://lxmone.xyz/api/v1/docs/model-catalog",
+      "file": "12-lxmone.xyz-model-catalog.txt",
+      "status": 200,
+      "bytes": 48210,
+      "sha256": "f6e4349401bed98cd3af663431d3c7736be500fe7a4167a5618acc3ec222a736",
+      "readAt": "2026-10-15T18:34:41.814Z"
+    },
+    {
+      "url": "https://lxmone.xyz/docs/assets/catalog.js?v=20261011-task-tabs",
+      "file": "13-lxmone.xyz-catalog.js.txt",
+      "status": 200,
+      "bytes": 28716,
+      "sha256": "a5dfa9602e291dfc50d9114d947bb8f32c50d713c49b7844ec418f71af2395b6",
+      "readAt": "2026-10-15T18:34:42.006Z"
+    },
+    {
+      "url": "https://lxmone.xyz/docs/model-catalog.md",
+      "file": "14-lxmone.xyz-model-catalog.md.txt",
+      "status": 200,
+      "bytes": 5113,
+      "sha256": "470d9b528f34a7e0682520ad2787a5a515cddacfb64782151629ed74841659e4",
+      "readAt": "2026-10-15T18:34:42.031Z"
+    },
+    {
+      "url": "https://artbox.top/api/pricing",
+      "file": "10-artbox.top-pricing.txt",
+      "status": 200,
+      "bytes": 6776,
+      "sha256": "b291447be87bd0de1b3e0f5f5bc14341fcc293ee295ef53ad3954688b7848f85",
+      "readAt": "2026-10-15T18:34:42.053Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/462450037e0.md",
+      "file": "17-6l0ket291i.apifox.cn-462450037e0.md.txt",
+      "status": 200,
+      "bytes": 18608,
+      "sha256": "cdfefe39704736dd9840120720ecdd4f5d8cccf0e4c634bc3d08fbc6b84ae93e",
+      "readAt": "2026-10-15T18:34:42.155Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/424653897e0.md",
+      "file": "16-6l0ket291i.apifox.cn-424653897e0.md.txt",
+      "status": 200,
+      "bytes": 20583,
+      "sha256": "d2cdd5d889228665d052ca32ce94ac6a49d0304e64053da6e984d25ba9922e74",
+      "readAt": "2026-10-15T18:34:42.157Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/521606507e0.md",
+      "file": "18-6l0ket291i.apifox.cn-521606507e0.md.txt",
+      "status": 200,
+      "bytes": 15659,
+      "sha256": "a5f57d0942c96c0114e315f08d322a552fc28251d0f8efe8e69881a6509c9d77",
+      "readAt": "2026-10-15T18:34:42.217Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/521606855e0.md",
+      "file": "19-6l0ket291i.apifox.cn-521606855e0.md.txt",
+      "status": 200,
+      "bytes": 17139,
+      "sha256": "6a3909d76cc8522585122cb90942a23a4e0f95858a8726a0e40afbfeef752802",
+      "readAt": "2026-10-15T18:34:42.219Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/521606932e0.md",
+      "file": "20-6l0ket291i.apifox.cn-521606932e0.md.txt",
+      "status": 200,
+      "bytes": 14980,
+      "sha256": "945dbac208cd96718486ba635c3324430b74afcc2ea8183bc13147d59efb4a52",
+      "readAt": "2026-10-15T18:34:42.270Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/424659184e0.md",
+      "file": "21-6l0ket291i.apifox.cn-424659184e0.md.txt",
+      "status": 200,
+      "bytes": 6502,
+      "sha256": "8c70a21384701d55bc85c758d4a067888efb63eb27d4d57ff5dcc3d3d1a8ee22",
+      "readAt": "2026-10-15T18:34:42.272Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/424561006e0.md",
+      "file": "22-6l0ket291i.apifox.cn-424561006e0.md.txt",
+      "status": 200,
+      "bytes": 12592,
+      "sha256": "84d968f7c9390aaa8edea7c70f2aedd02b792aae32a41b611564b3f7c4ab4806",
+      "readAt": "2026-10-15T18:34:42.323Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/447634846e0.md",
+      "file": "23-6l0ket291i.apifox.cn-447634846e0.md.txt",
+      "status": 200,
+      "bytes": 17468,
+      "sha256": "9ee97202cc2ccd17d998079a642f9a4d50fc50a86e32bb5538cb84e8866f7e0c",
+      "readAt": "2026-10-15T18:34:42.327Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/447357296e0.md",
+      "file": "24-6l0ket291i.apifox.cn-447357296e0.md.txt",
+      "status": 200,
+      "bytes": 22579,
+      "sha256": "7e7c1e5588f133a025f290609789e38db4d93d1f397416a694f9c98b055e1023",
+      "readAt": "2026-10-15T18:34:42.377Z"
+    },
+    {
+      "url": "https://6l0ket291i.apifox.cn/466136668e0.md",
+      "file": "25-6l0ket291i.apifox.cn-466136668e0.md.txt",
+      "status": 200,
+      "bytes": 18884,
+      "sha256": "d3b1a68056414453a344ee6125d27584fd6c0bd0fe268c7bbd8a47f26cf68808",
+      "readAt": "2026-10-15T18:34:42.385Z"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784235e0.md",
+      "file": "26-y5dprsil1i.apifox.cn-475784235e0.md.txt",
+      "status": 200,
+      "bytes": 12971,
+      "sha256": "403b6554c9d38e7271bcc484725d2e8088387abef9eba6c0fc4b61872022a59d",
+      "readAt": "2026-10-15T18:34:42.503Z"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784236e0.md",
+      "file": "27-y5dprsil1i.apifox.cn-475784236e0.md.txt",
+      "status": 200,
+      "bytes": 3947,
+      "sha256": "ecb5ca641d45002033355be98f315b6c79d6c55c3bde73234b4379bff8c85566",
+      "readAt": "2026-10-15T18:34:42.504Z"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/489902738e0.md",
+      "file": "28-y5dprsil1i.apifox.cn-489902738e0.md.txt",
+      "status": 200,
+      "bytes": 1568,
+      "sha256": "c0377cf324c3126190e0c3d69a0967928f812cd01f9f659390c4ebd2ab5fd02c",
+      "readAt": "2026-10-15T18:34:42.560Z"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784237e0.md",
+      "file": "29-y5dprsil1i.apifox.cn-475784237e0.md.txt",
+      "status": 200,
+      "bytes": 5965,
+      "sha256": "4e14c401ac223f15bde50d6181501d3318c540a22b0846330d792f9aea39cad5",
+      "readAt": "2026-10-15T18:34:42.606Z"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784238e0.md",
+      "file": "30-y5dprsil1i.apifox.cn-475784238e0.md.txt",
+      "status": 200,
+      "bytes": 8817,
+      "sha256": "a7e2f172692369b6ab374b6de768a807b69318c678adc91e57f1916fbc9ace82",
+      "readAt": "2026-10-15T18:34:42.615Z"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/498909445e0.md",
+      "file": "31-y5dprsil1i.apifox.cn-498909445e0.md.txt",
+      "status": 200,
+      "bytes": 4835,
+      "sha256": "9cf30f2d3d5419c7b1dc874832b047d78d66df76787898af2a97802b41580e21",
+      "readAt": "2026-10-15T18:34:42.661Z"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784240e0.md",
+      "file": "32-y5dprsil1i.apifox.cn-475784240e0.md.txt",
+      "status": 200,
+      "bytes": 1340,
+      "sha256": "7c5af6dd07a271e4121350c8e9d9046f14c84719028f4049c55e103ee86b6d6c",
+      "readAt": "2026-10-15T18:34:42.669Z"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784241e0.md",
+      "file": "33-y5dprsil1i.apifox.cn-475784241e0.md.txt",
+      "status": 200,
+      "bytes": 3185,
+      "sha256": "93d2da843143c9b1c0a1945b2879551321b040acd4926ae20f7f46e187dc102b",
+      "readAt": "2026-10-15T18:34:42.720Z"
+    },
+    {
+      "url": "https://zexapi.com/api/pricing",
+      "file": "15-zexapi.com-pricing.txt",
+      "status": 200,
+      "bytes": 23381,
+      "sha256": "f4f9ba2cc69aeabf31b7f91286910c9ddf0263a6ada97a2960426f23de67f7d5",
+      "readAt": "2026-10-15T18:34:43.079Z"
+    },
+    {
+      "url": "https://yuxibox.cn/static/js/index.9dcc16b150.js",
+      "file": "04-yuxibox.cn-index.9dcc16b150.js.txt",
+      "status": 200,
+      "bytes": 4880593,
+      "sha256": "90efb9ef363648814af2e4830fd8ac355880559646f85130d44402257ac1ce0c",
+      "readAt": "2026-10-15T18:34:48.227Z"
+    },
+    {
+      "name": "paisio-submit",
+      "url": "https://y5dprsil1i.apifox.cn/475784235e0.md",
+      "readAt": "2026-10-15T22:04:42.942933+00:00",
+      "status": 200,
+      "sha256": "403b6554c9d38e7271bcc484725d2e8088387abef9eba6c0fc4b61872022a59d",
+      "bytes": 12971,
+      "file": "compat-paisio-submit.txt"
+    },
+    {
+      "name": "paisio-query",
+      "url": "https://y5dprsil1i.apifox.cn/475784236e0.md",
+      "readAt": "2026-10-15T22:04:42.945900+00:00",
+      "status": 200,
+      "sha256": "ecb5ca641d45002033355be98f315b6c79d6c55c3bde73234b4379bff8c85566",
+      "bytes": 3947,
+      "file": "compat-paisio-query.txt"
+    },
+    {
+      "name": "xcm-contract",
+      "url": "https://xcmapi.org/docs/video-contract.json",
+      "readAt": "2026-10-15T22:04:42.947901+00:00",
+      "status": 200,
+      "sha256": "6032578057a0492b75679ac59b12d77c5ed970a5f6a254608595e4ea49182475",
+      "bytes": 31867,
+      "file": "compat-xcm-contract.txt"
+    },
+    {
+      "name": "zex-pricing",
+      "url": "https://zexapi.com/api/pricing",
+      "readAt": "2026-10-15T22:04:43.196856+00:00",
+      "status": 200,
+      "sha256": "6476989a8a6269dcd5c3ee66df9110de55947c28616b8a400c725e83e7f5336a",
+      "bytes": 23381,
+      "file": "compat-zex-pricing.txt"
+    },
+    {
+      "name": "zex-h3",
+      "url": "https://6l0ket291i.apifox.cn/521606932e0.md",
+      "readAt": "2026-10-15T22:04:43.860857+00:00",
+      "status": 200,
+      "sha256": "945dbac208cd96718486ba635c3324430b74afcc2ea8183bc13147d59efb4a52",
+      "bytes": 14980,
+      "file": "compat-zex-h3.txt"
+    },
+    {
+      "name": "zex-image",
+      "url": "https://6l0ket291i.apifox.cn/447357296e0.md",
+      "readAt": "2026-10-15T22:04:44.160664+00:00",
+      "status": 200,
+      "sha256": "7e7c1e5588f133a025f290609789e38db4d93d1f397416a694f9c98b055e1023",
+      "bytes": 22579,
+      "file": "compat-zex-image.txt"
+    },
+    {
+      "name": "art-docs",
+      "url": "https://artbox.top/docs",
+      "readAt": "2026-10-15T22:04:44.582133+00:00",
+      "status": 200,
+      "sha256": "d9281d77da383f6c9a0318590631dd0d559e21834f26b77dc54eac131d803477",
+      "bytes": 21494,
+      "file": "compat-art-docs.txt"
+    },
+    {
+      "name": "art-app",
+      "url": "https://artbox.top/storefront/app.js?v=9",
+      "readAt": "2026-10-15T22:04:44.739939+00:00",
+      "status": 200,
+      "sha256": "1c57a07fa078bbb26aa5ecdd1c8b22f74fae1e773482169fb791babffa817cda",
+      "bytes": 19024,
+      "file": "compat-art-app.txt"
+    },
+    {
+      "name": "art-prices",
+      "url": "https://artbox.top/api/pricing",
+      "readAt": "2026-10-15T22:04:45.115936+00:00",
+      "status": 200,
+      "sha256": "b291447be87bd0de1b3e0f5f5bc14341fcc293ee295ef53ad3954688b7848f85",
+      "bytes": 6776,
+      "file": "compat-art-prices.txt"
+    },
+    {
+      "name": "xcm-canonical-prices",
+      "url": "https://xcmapi.org/api/public/prices",
+      "readAt": "2026-10-15T22:07:09.553908+00:00",
+      "status": 200,
+      "file": "compat-xcm-canonical-prices.txt",
+      "bytes": 481969,
+      "sha256": "b9956fca1dd924477871685228513b55458f8a1eaa8c55d713edacbdaa845063"
+    },
+    {
+      "name": "xcm-canonical-quickstart",
+      "url": "https://xcmapi.org/docs/QuickStart.html",
+      "readAt": "2026-10-15T22:07:09.555947+00:00",
+      "status": 200,
+      "file": "compat-xcm-canonical-quickstart.txt",
+      "bytes": 247111,
+      "sha256": "2be5b475fb32ce6068c5884437d69bcf8f400c89164af5c914dd83346060ba1e"
+    },
+    {
+      "name": "xcm-canonical-openapi",
+      "url": "https://xcmapi.org/docs/openapi.json",
+      "readAt": "2026-10-15T22:07:09.556947+00:00",
+      "status": 200,
+      "file": "compat-xcm-canonical-openapi.txt",
+      "bytes": 94439,
+      "sha256": "67a4c21f9cab5c6c93d20f1ab3be433eb85e4095ca78b17510e0521e460b79dd"
+    },
+    {
+      "name": "zex-gpt",
+      "url": "https://6l0ket291i.apifox.cn/447634846e0.md",
+      "readAt": "2026-10-15T22:07:09.556947+00:00",
+      "status": 200,
+      "file": "compat-zex-gpt.txt",
+      "bytes": 17468,
+      "sha256": "9ee97202cc2ccd17d998079a642f9a4d50fc50a86e32bb5538cb84e8866f7e0c"
+    },
+    {
+      "file": "legacy-zex-explicit-mapping.json",
+      "sha256": "44e377361eb8ed1795f66ac0245fe9e1bdd6e88d35dc409b1c7f9fa343c05ba3",
+      "scope": "Local existing gateway mapping only; no vendor alias assertion"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/483061436e0.md",
+      "readAt": "2026-10-15T22:31:38.297658+00:00",
+      "file": "compat-paisio-extra-483061436.txt",
+      "status": 200,
+      "bytes": 5995,
+      "sha256": "073e9eb952a67081d329a5ef21df81be3d0a7bb7daea076339f35fd92fd02973"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/483061437e0.md",
+      "readAt": "2026-10-15T22:31:38.299657+00:00",
+      "file": "compat-paisio-extra-483061437.txt",
+      "status": 200,
+      "bytes": 2837,
+      "sha256": "554d668a4ad84fb14d2e5bea8a915ccbac351d3da713db7068627534fc1c2f57"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/491861720e0.md",
+      "readAt": "2026-10-15T22:31:38.301165+00:00",
+      "file": "compat-paisio-extra-491861720.txt",
+      "status": 200,
+      "bytes": 7658,
+      "sha256": "03e6cd5393c77d7a47a44ff05547e76831f1e66096f7c1d63865c193a638ce42"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/492390895e0.md",
+      "readAt": "2026-10-15T22:31:38.301165+00:00",
+      "file": "compat-paisio-extra-492390895.txt",
+      "status": 200,
+      "bytes": 7619,
+      "sha256": "25a67f5e529525df6fa5ca46f1c35ec4e718a1559ecf62acf9e694815d34f769"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784240e0.md",
+      "readAt": "2026-10-15T22:31:38.302204+00:00",
+      "file": "compat-paisio-extra-475784240.txt",
+      "status": 200,
+      "bytes": 1340,
+      "sha256": "7c5af6dd07a271e4121350c8e9d9046f14c84719028f4049c55e103ee86b6d6c"
+    },
+    {
+      "url": "https://y5dprsil1i.apifox.cn/475784241e0.md",
+      "readAt": "2026-10-15T22:31:38.304172+00:00",
+      "file": "compat-paisio-extra-475784241.txt",
+      "status": 200,
+      "bytes": 3185,
+      "sha256": "93d2da843143c9b1c0a1945b2879551321b040acd4926ae20f7f46e187dc102b"
+    }
+  ],
+  "inputs": {
+    "catalogSHA256": "f56acf9cfe8f87cf5414f7fd94bdcef06090ba9d369568f372dd347eaa1f8594",
+    "paisioCompatibilityOpenAPISHA256": "b3e4f04be0b65f89419b9ac02a196fb67fcc02abc8bb5a4bbd7b62f76b027767",
+    "compatibilityReviewSHA256": "3778f1b0fe8926aa76e23b85880676c3d412a1e7db6cd83669cec3ce5fb593d2",
+    "nativeH3SchemaSHA256": "89068499893663f594372e8db192ef6ecea7481bc65d7ac023023267bec67f68",
+    "legacyMappingSHA256": "44e377361eb8ed1795f66ac0245fe9e1bdd6e88d35dc409b1c7f9fa343c05ba3"
+  },
+  "preserveKeys": true,
+  "actualGenerationVerified": false,
+  "parameterWorkflow": {
+    "generatorSHA256": "3e93ecbed3ffa9f6b88e59fd36cd7fe330d86f30728533cfd4e2398a1065268f",
+    "documentIndexSHA256": "3ae4d533ca7c75b18308c757e1578b17d124cd83e61951fc3e140b1cea6eeddd",
+    "openAPISHA256": "29d256d9b931e68affabe35e3ca046571ee00e9305b8e87511456ec91cbdba0a"
+  },
+  "interfaceParameters": {
+    "format": "plugin-interface-contract/v1",
+    "legacyExecutionSHA256": "5d886ba687a54c3032ee88830b177968888287d3f59ed2f9e6aa0ec1bc862a11",
+    "builderSHA256": "7387d96557590e9ee56379a06d5dcc823d9bfa31d25575c98df6826b9ee61784",
+    "documentIndexSHA256": "a3df215546999e6ded3ba129be2ac4435a947e1746a22562d137f72b02a74cfe",
+    "modelExamplesCreateBindings": false
+  },
+  "yuxiboxVideoParameters": {
+    "extractorSHA256": "71aca8dc36e84fe42117d6821407a9cca8267eb1a9d4778a1c66b77edbc258d5",
+    "sources": [
+      {
+        "file": "index.js",
+        "url": "https://yuxibox.cn/static/js/index.5e0ee50a5d.js",
+        "sha256": "5ce0598df27aa1f34370936cb579eb9465892315f3503be3062df7c395e572b1",
+        "readAt": "2026-10-18",
+        "usage": "public documentation only; never execute"
+      },
+      {
+        "file": "59316.js",
+        "url": "https://yuxibox.cn/static/js/async/59316.12ab0fcc48.js",
+        "sha256": "b13eac9fc4af51ab66b94d9ba849c0e400f2a791bc6815606a5aecbd7109e987",
+        "readAt": "2026-10-18",
+        "usage": "public documentation only; never execute"
+      },
+      {
+        "file": "pricing.json",
+        "url": "https://yuxibox.cn/api/pricing",
+        "sha256": "c98c8edcf7b8e48a84ae5ad252ae299a7392d8bf5e4c6b29541b8d1b6fe3c77c",
+        "readAt": "2026-10-18",
+        "usage": "public documentation only; never execute"
+      }
+    ],
+    "conflictsSHA256": "44eedeb06757a484fa6de6163818cd512b032ce96547db010b2a7c8fc0c96072",
+    "modelsCreateBindings": false,
+    "pricesChanged": false
+  }
+}

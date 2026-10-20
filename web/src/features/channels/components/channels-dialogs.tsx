@@ -17,6 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { CHANNEL_TYPE_VLLM, CHANNEL_TYPE_SGLANG } from '../constants'
+import { ModelConfigurationDialog } from '../model-configuration/model-configuration-dialog'
+import { SavedModelPricesDialog } from '../model-configuration/saved-model-prices-dialog'
 import { useChannels } from './channels-provider'
 import { BalanceQueryDialog } from './dialogs/balance-query-dialog'
 import { ChannelTestDialog } from './dialogs/channel-test-dialog'
@@ -35,6 +37,21 @@ export function ChannelsDialogs() {
 
   return (
     <>
+      {open === 'saved-model-prices' && currentRow && (
+        <SavedModelPricesDialog
+          key={currentRow.id}
+          channel={currentRow}
+          onClose={() => setOpen(null)}
+        />
+      )}
+      {currentRow && (
+        <ModelConfigurationDialog
+          key={currentRow.id}
+          channel={currentRow}
+          open={open === 'model-configuration'}
+          onOpenChange={(value) => !value && setOpen(null)}
+        />
+      )}
       {open === 'inference-status' &&
         currentRow &&
         [CHANNEL_TYPE_VLLM, CHANNEL_TYPE_SGLANG].includes(currentRow.type) && (

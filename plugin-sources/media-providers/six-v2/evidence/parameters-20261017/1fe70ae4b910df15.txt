@@ -1,0 +1,230 @@
+// Use a .js extension so the static docs server serves the ES module with a
+// JavaScript MIME type. Some nginx installations fall back to
+// application/octet-stream for .mjs, which makes browsers reject the module
+// before the live model catalog can be rendered.
+import { bindExclusiveDetails, buildVideoExample, selectVideoExampleKind, startCatalogRefresh } from './catalog.js?v=20261011-task-tabs'
+
+const root = document.documentElement
+const params = new URLSearchParams(window.location.search)
+const configuredBase = normalizeBaseURL(params.get('base_url')) || normalizeBaseURL(localStorage.getItem('sub2api-docs-base-url')) || `${window.location.origin}/v1`
+
+function normalizeBaseURL(value) {
+  try {
+    const url = new URL(String(value || ''))
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return ''
+    return url.href.replace(/\/+$/, '')
+  } catch {
+    return ''
+  }
+}
+
+function updateText(selector, value) {
+  document.querySelectorAll(selector).forEach(node => { node.textContent = value })
+}
+
+function updateSelectedModel(select) {
+  const section = select.closest('[data-protocol]')
+  if (!section) return
+  updateTextIn(section, '[data-selected-model]', select.value || '暂无可用模型')
+}
+
+let activeCatalog = { models: [] }
+const selectedExampleKinds = new WeakMap()
+
+function modelForSelect(select) {
+  const name = String(select?.value || '').toLowerCase()
+  return activeCatalog.models.find(model => model.name.toLowerCase() === name) || {
+    name: select?.value || '请选择模型',
+    protocolID: select?.dataset.protocolModels || 'async-video-videos',
+    capabilities: {}
+  }
+}
+
+function capabilitySummary(model) {
+  const capabilities = model?.capabilities || {}
+  const snumomGrokVideo = ['grok-imagine-video-1.5-fast', 'grok-imagine-video-1.5（按次）'].includes(String(model?.name || '').toLowerCase())
+  const references = []
+  if (capabilities.reference_images) references.push(`参考图${capabilities.max_reference_images ? `最多 ${capabilities.max_reference_images} 张` : '可用'}`)
+  if (capabilities.reference_videos) references.push(`参考视频${capabilities.max_reference_videos ? `最多 ${capabilities.max_reference_videos} 个` : '可用'}`)
+  if (capabilities.reference_audios) references.push(`参考音频${capabilities.max_reference_audios ? `最多 ${capabilities.max_reference_audios} 个` : '可用'}`)
+  if (capabilities.audio_output) references.push('生成音频：请求中传 "generate_audio": true')
+  const unsupported = []
+  if (!capabilities.reference_images) unsupported.push('不支持参考图')
+  if (!capabilities.reference_videos) unsupported.push('不支持参考视频')
+  if (!capabilities.reference_audios) unsupported.push('不支持参考音频')
+  const limits = []
+  if (capabilities.resolutions?.length) limits.push(`分辨率：${capabilities.resolutions.join(' / ')}`)
+  if (capabilities.fixed_seconds?.length) limits.push(`固定时长：${capabilities.fixed_seconds.join(' / ')} 秒`)
+  else if (capabilities.min_seconds || capabilities.max_seconds) limits.push(`时长：${snumomGrokVideo ? 4 : capabilities.min_seconds || 1}-${capabilities.max_seconds || 30} 秒`)
+  const structured = [...references, ...unsupported, ...limits].join('；')
+  return [model?.description, structured].filter(Boolean).join('；') || '该模型的参考素材能力待确认，请以模型广场介绍为准。'
+}
+
+function updateVideoExamples(section, model) {
+  if (!section || !model) return
+  const selectedKind = selectedExampleKinds.get(section) || 'text'
+  const kind = selectVideoExampleKind(model, selectedKind)
+  const buttons = [...section.querySelectorAll('[data-example-kind]')]
+  for (const button of buttons) {
+    const example = buildVideoExample(model, button.dataset.exampleKind, configuredBase)
+    button.disabled = !example.supported
+    button.hidden = !example.supported
+    button.setAttribute('aria-selected', String(button.dataset.exampleKind === kind && example.supported))
+  }
+  const example = buildVideoExample(model, kind, configuredBase)
+  selectedExampleKinds.set(section, kind)
+  const summary = section.querySelector('[data-model-capability]')
+  if (summary) summary.textContent = `${model.name}：${capabilitySummary(model)}`
+  for (const code of ['curl', 'javascript', 'python']) {
+    const node = section.querySelector(`[data-example-code="${code}"]`)
+    if (node) node.textContent = example[code] || '该示例暂不可用。'
+  }
+}
+
+function refreshVideoExamples() {
+  for (const section of document.querySelectorAll('[data-protocol="async-video-videos"], [data-protocol="async-video-generations"]')) {
+    updateVideoExamples(section, modelForSelect(section.querySelector('[data-protocol-models]')))
+  }
+}
+
+function updateTextIn(rootNode, selector, value) {
+  rootNode.querySelectorAll(selector).forEach(node => { node.textContent = value })
+}
+
+updateText('[data-api-base]', configuredBase)
+updateText('[data-anthropic-base]', configuredBase.replace(/\/v1$/, ''))
+document.querySelectorAll('[data-key-link]').forEach(link => { link.href = `${new URL(configuredBase).origin}/keys` })
+
+document.addEventListener('change', event => {
+  if (event.target instanceof HTMLSelectElement && event.target.matches('[data-protocol-models]')) {
+    updateSelectedModel(event.target)
+    updateVideoExamples(event.target.closest('[data-protocol]'), modelForSelect(event.target))
+  }
+})
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-example-kind]')
+  if (!(button instanceof HTMLButtonElement)) return
+  const section = button.closest('[data-protocol]')
+  if (!section) return
+  selectedExampleKinds.set(section, button.dataset.exampleKind || 'text')
+  updateVideoExamples(section, modelForSelect(section.querySelector('[data-protocol-models]')))
+})
+
+document.addEventListener('docs-catalog-updated', event => {
+  activeCatalog = event.detail || { models: [] }
+  refreshVideoExamples()
+})
+
+for (const tabs of document.querySelectorAll('[data-code-tabs]')) {
+  const buttons = [...tabs.querySelectorAll('[data-language]')]
+  const panels = [...tabs.querySelectorAll('[data-code]')]
+  for (const button of buttons) {
+    button.addEventListener('click', () => {
+      for (const candidate of buttons) candidate.setAttribute('aria-selected', String(candidate === button))
+      for (const panel of panels) panel.hidden = panel.dataset.code !== button.dataset.language
+    })
+  }
+}
+
+async function copyValue(value, button) {
+  if (!value) return
+  try {
+    await navigator.clipboard.writeText(value)
+  } catch {
+    const textarea = document.createElement('textarea')
+    textarea.value = value
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.append(textarea)
+    textarea.select()
+    document.execCommand('copy')
+    textarea.remove()
+  }
+  const original = button.textContent
+  button.textContent = '已复制'
+  window.setTimeout(() => { button.textContent = original }, 1200)
+}
+
+/** Serialize the rendered guide (including the live model catalog) into a
+ * copy-ready Markdown document for handing to an AI/client integrator. */
+export function buildMarkdownDocument(rootNode) {
+  const root = rootNode?.querySelector?.('main') || rootNode
+  if (!root) return ''
+  const ignored = new Set(['BUTTON', 'SCRIPT', 'STYLE', 'NAV', 'ASIDE', 'SELECT', 'INPUT'])
+  const block = new Set(['ADDRESS', 'ARTICLE', 'DETAILS', 'DIV', 'P', 'SECTION'])
+  const escape = value => value.replace(/([\\`*_[\]<>])/g, '\\$1')
+  const children = node => [...node.childNodes].map(render).join('')
+  const cell = node => children(node).trim().replace(/\|/g, '\\|').replace(/\n/g, '<br>')
+  function render(node) {
+    if (!node) return ''
+    if (node.nodeType === Node.TEXT_NODE) return escape((node.nodeValue || '').replace(/\s+/g, ' '))
+    if (node.nodeType !== Node.ELEMENT_NODE || ignored.has(node.tagName)) return ''
+    const tag = node.tagName
+    if (tag === 'PRE') {
+      const content = node.querySelector('code')?.textContent || node.textContent || ''
+      const language = node.dataset.code || node.closest('[data-language]')?.dataset.language || node.closest('[data-panel]')?.dataset.panel || ''
+      const lang = ({ curl: 'bash', javascript: 'javascript', python: 'python' })[language] || ''
+      const fence = '`'.repeat(Math.max(3, ...[...content.matchAll(/`+/g)].map(m => m[0].length + 1)))
+      return `\n\n${fence}${lang}\n${content.trimEnd()}\n${fence}\n\n`
+    }
+    if (/^H[1-6]$/.test(tag)) return `\n\n${'#'.repeat(Number(tag[1]))} ${children(node).trim()}\n\n`
+    if (tag === 'SUMMARY') return `\n\n### ${children(node).trim()}\n\n`
+    if (tag === 'TABLE') {
+      const rows = [...node.querySelectorAll('tr')].map(row => [...row.children].map(cell))
+      if (!rows.length) return ''
+      const width = Math.max(...rows.map(row => row.length))
+      const line = row => '| ' + Array.from({ length: width }, (_, i) => row[i] || '').join(' | ') + ' |'
+      return '\n\n' + [line(rows[0]), line(Array(width).fill('---')), ...rows.slice(1).map(line)].join('\n') + '\n\n'
+    }
+    if (tag === 'UL' || tag === 'OL') {
+      const start = Number(node.getAttribute('start')) || 1
+      return '\n\n' + [...node.children].filter(n => n.tagName === 'LI').map((li, i) => {
+        const body = children(li).trim().replace(/\n/g, '\n    ')
+        return (tag === 'OL' ? `${start + i}. ` : '- ') + body
+      }).join('\n') + '\n\n'
+    }
+    if (tag === 'CODE') {
+      const content = node.textContent.trim()
+      const fence = '`'.repeat(Math.max(1, ...[...content.matchAll(/`+/g)].map(m => m[0].length + 1)))
+      return fence + (content.includes('`') ? ' ' + content + ' ' : content) + fence
+    }
+    if (tag === 'A') {
+      const href = node.getAttribute('href') || ''
+      return /^(https?:|\/|#)/.test(href) ? `[${children(node).trim()}](${href.replace(/[()]/g, c => encodeURIComponent(c))})` : children(node)
+    }
+    if (tag === 'STRONG' || tag === 'B') return '**' + children(node).trim() + '**'
+    if (tag === 'EM' || tag === 'I') return '*' + children(node).trim() + '*'
+    if (tag === 'BR') return '  \n'
+    if (node.classList.contains('model-row')) return '\n- ' + [...node.children].map(n => children(n).trim()).join(' · ') + '\n'
+    const content = children(node)
+    return block.has(tag) ? '\n\n' + content.trim() + '\n\n' : content
+  }
+  return render(root).replace(/\n{3,}/g, '\n\n').trim() + '\n'
+}
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-copy-markdown]')
+  if (!(button instanceof HTMLButtonElement)) return
+  void copyValue(buildMarkdownDocument(document), button)
+})
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-copy-target], [data-copy-code]')
+  if (!(button instanceof HTMLButtonElement)) return
+  const target = button.dataset.copyTarget ? document.querySelector(button.dataset.copyTarget) : button.closest('pre')?.querySelector('code')
+  void copyValue(target?.textContent?.trim() || '', button)
+})
+
+const themeButton = document.querySelector('[data-theme]')
+function applyTheme(theme) {
+  const dark = theme === 'dark'
+  root.dataset.theme = dark ? 'dark' : 'light'
+  if (themeButton) themeButton.textContent = dark ? '浅色模式' : '深色模式'
+  localStorage.setItem('sub2api-docs-theme', root.dataset.theme)
+}
+applyTheme(localStorage.getItem('sub2api-docs-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
+themeButton?.addEventListener('click', () => applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'))
+
+bindExclusiveDetails(document, window)
+startCatalogRefresh({ document, window, baseURL: configuredBase })

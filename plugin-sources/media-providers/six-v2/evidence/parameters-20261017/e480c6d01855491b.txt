@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="视频、图片与文本模型统一 API 接入文档">
+  <title>开发者文档 · 万有引力</title>
+  <link rel="icon" type="image/svg+xml" href="/wan-you-yin-li.svg">
+  <link rel="stylesheet" href="/docs/assets/docs.css?v=20261010-read">
+  <script type="module" src="/docs/assets/docs.js?v=20261014-language-models"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="返回文档顶部">
+      <img src="/wan-you-yin-li.svg" alt="" width="34" height="34">
+      <span><strong>万有引力</strong><small>开发者文档</small></span>
+    </a>
+    <nav aria-label="顶部导航">
+      <a href="#models">模型状态</a><a href="#protocol-video-a">视频接口</a><a href="#status-download">查询下载</a>
+    </nav>
+    <div class="top-actions"><a class="button ghost" data-key-link href="/keys">API 密钥</a><button class="button ghost" type="button" data-theme>深色模式</button></div>
+  </header>
+
+  <div id="top" class="page-shell">
+    <aside class="sidebar" aria-label="文档目录">
+      <p class="sidebar-title">目录</p>
+      <a href="#overview">概览</a>
+      <a href="#models">可用模型</a>
+      <a href="#model-catalog">模型与价格同步</a>
+      <details data-family-nav>
+        <summary>Seedance 系列</summary>
+        <div><a href="#models">模型与状态</a><a href="#protocol-video-a">视频协议 A</a><a href="#protocol-video-b">视频协议 B</a></div>
+      </details>
+      <details data-family-nav>
+        <summary>其他视频系列</summary>
+        <div><a href="#models">模型与状态</a><a href="#status-download">查询与下载</a></div>
+      </details>
+      <details data-family-nav>
+        <summary>图片与文本</summary>
+        <div><a href="#protocol-images">图片接口</a><a href="#protocol-chat">文本接口</a><a href="#language-models">国产与 Claude 模型</a></div>
+      </details>
+      <a href="#errors">错误处理</a>
+    </aside>
+
+    <main id="main">
+      <section class="hero" id="overview">
+          <h1>更少重复，更快完成接入</h1>
+        <p>模型状态与模型广场同步；相同创建、查询和下载方式只说明一次。模型标记“已禁用”时不可调用，恢复启用后标记会自动消失。</p>
+        <div class="base-url">
+          <span>API Base URL</span>
+          <code data-api-base>https://lxmone.xyz/v1</code>
+          <button class="copy-button" type="button" data-copy-target="[data-api-base]">复制</button>
+        </div>
+        <div class="docs-copy-all"><button class="button" type="button" data-copy-markdown>复制全部 Markdown</button><span class="hint">将完整接入文档（模型、参数、示例和错误处理）复制给 AI。</span></div>
+        <p class="hint">不要填写 https://api.openai.com。API 密钥仅保存在服务端。</p>
+      </section>
+
+      <section class="section" id="models">
+        <div class="section-heading">
+          <div><h2>可用模型</h2><p>展开系列查看完整模型 ID、协议归属与实时状态。</p></div>
+          <span class="sync-state" data-catalog-state aria-live="polite">正在同步模型状态…</span>
+        </div>
+        <div class="catalog" data-docs-catalog aria-live="polite"></div>
+        <noscript><p class="state-message">启用 JavaScript 后可查看实时模型状态。</p></noscript>
+      </section>
+
+      <section class="section" id="model-catalog">
+        <h2>模型与价格同步（只读目录接口）</h2>
+        <p>用户工作台使用自己的 API Key，即可同步模型广场的模型名称、人民币售价和模型介绍。目录查询不扣费，原有生成权限保持不变。</p>
+        <div class="endpoint"><span>GET</span><code>GET /v1/sub2api/model-catalog</code></div>
+        <pre><code>GET https://lxmone.xyz/v1/sub2api/model-catalog
+Authorization: Bearer YOUR_API_KEY</code></pre>
+        <p>返回公开且已启用的模型，价格范围为公开默认售价（CNY），不代表专属折扣或该 Key 的全部可调用权限。需要筛选可调用模型时，可与 <code>GET /v1/models</code> 的结果取交集。</p>
+        <p>建议每 30 秒同步一次。保存响应中的 <code>ETag</code>，后续发送 <code>If-None-Match</code>；未变化时返回 <code>304</code> 且无响应正文，继续使用本地缓存。接口变更不会影响原有生图、视频或语言模型调用。</p>
+        <p><a href="/docs/model-catalog.html">查看完整接入说明、响应字段与调用示例</a> · <a href="/docs/model-catalog.md">Markdown 文档</a></p>
+      </section>
+
+      <section class="section protocol" id="protocol-video-a" data-protocol="async-video-videos">
+        <div class="protocol-heading"><div><h2>异步视频协议 A</h2><p>适用于下拉列表中的模型。</p></div><label>示例模型<select data-protocol-models="async-video-videos" aria-label="协议 A 示例模型"></select></label></div>
+        <div class="endpoint"><span>POST</span><code>POST /v1/videos</code></div>
+        <div class="example-switcher" data-example-kinds aria-label="视频示例类型"><button type="button" data-example-kind="text" aria-selected="true">文生视频</button><button type="button" data-example-kind="image">图生视频</button><button type="button" data-example-kind="image-base64">图生视频（base64）</button><button type="button" data-example-kind="video">参考视频</button><button type="button" data-example-kind="audio">参考音频</button><button type="button" data-example-kind="all">全能参考</button></div>
+        <div class="model-capability" data-model-capability>选择模型后显示该模型支持的参考素材和限制。</div>
+        <div class="code-tabs" data-code-tabs data-generated-examples>
+          <div role="tablist" aria-label="代码语言"><button role="tab" aria-selected="true" data-language="curl">cURL</button><button role="tab" aria-selected="false" data-language="javascript">JavaScript</button><button role="tab" aria-selected="false" data-language="python">Python</button></div>
+          <pre data-code="curl"><button class="copy-button" type="button" data-copy-code>复制</button><code data-example-code="curl">选择模型后生成正确的请求示例。</code></pre>
+          <pre data-code="javascript" hidden><button class="copy-button" type="button" data-copy-code>复制</button><code data-example-code="javascript"></code></pre>
+          <pre data-code="python" hidden><button class="copy-button" type="button" data-copy-code>复制</button><code data-example-code="python"></code></pre>
+        </div>
+        <div class="callout"><strong>参考素材</strong><p>图片参考可以用公网可访问的直接 URL，也可以用 base64 直传（见上方「图生视频（base64）」标签）；视频和音频参考使用公网可访问的直接 URL。如果 URL 报错提示获取不到图片，请改用 base64 直传。不支持的类型会被隐藏，避免无效调用。</p></div>
+        <div class="callout"><strong>Seedance 2.5 A 组 · 按秒</strong><p><code>seedance2.5-480a</code> 固定 480p，¥0.40/输出秒；<code>seedance2.5-720a</code> 固定 720p，¥0.53/输出秒。5–30 秒，未传时长默认 5 秒；15 秒分别 ¥6.00、¥7.95。支持图片及音频参考，不支持参考视频；参考素材不额外按时长收费。使用 <code>POST /v1/videos</code> 提交，<code>GET /v1/videos/{id}</code> 查询，<code>GET /v1/videos/{id}/content</code> 下载。请求示例使用 <code>seconds: 5</code> 及对应 <code>resolution</code>；这些带 a 的模型与旧按次模型是独立名称，请勿混用。</p></div>
+        <div class="callout"><strong>万相 wan3-720</strong><p><code>wan3-720</code> ¥0.16/输出秒，仅 720p，15–30 秒；未传时长时固定提交 15 秒（¥2.40），30 秒 ¥4.80。支持最多 10 张参考图、5 个参考视频、5 段参考音频，仅接收公网 HTTP(S) URL，不支持 base64。使用 <code>POST /v1/videos</code> 提交，<code>GET /v1/videos/{id}</code> 查询，<code>GET /v1/videos/{id}/content</code> 下载。参考字段为 <code>reference_image_urls</code>、<code>reference_video_urls</code>、<code>reference_audio_urls</code>；可选 <code>audio_durations</code> 与音频数组逐项对应；画幅可选 16:9、9:16、1:1，默认 16:9。仅输出时长计费，不额外计算参考素材时长。</p></div>
+        <div class="callout"><strong>A 组新增模型</strong><p><code>seedance-933</code> ¥3.50/次，4–15 秒，最多 9 图/3 音频，不支持参考视频；<code>seedance2.0-933-V</code> ¥0.25/秒，5–15 秒，最多 9 图/3 视频/3 音频；<code>seedance2.5</code> ¥0.55/秒，4–30 秒，最多 30 图/10 视频/10 音频。均使用 JSON，默认 5 秒、720p、16:9，可选 480p；仅输出时长计费。带 V 的新模型与已有 <code>seedance2.0-933</code> 独立，不替换旧模型；点号 <code>seedance2.5</code> 不等同其他短横线模型。</p></div>
+      </section>
+
+      <section class="section protocol" id="protocol-video-b" data-protocol="async-video-generations">
+        <div class="protocol-heading"><div><h2>异步视频协议 B</h2><p>创建路径不同，任务查询和下载方式保持一致。</p></div><label>示例模型<select data-protocol-models="async-video-generations" aria-label="协议 B 示例模型"></select></label></div>
+        <div class="endpoint"><span>POST</span><code>POST /v1/videos/generations</code></div>
+        <div class="example-switcher" data-example-kinds aria-label="视频示例类型"><button type="button" data-example-kind="text" aria-selected="true">文生视频</button><button type="button" data-example-kind="image">图生视频</button><button type="button" data-example-kind="image-base64">图生视频（base64）</button><button type="button" data-example-kind="video">参考视频</button><button type="button" data-example-kind="audio">参考音频</button><button type="button" data-example-kind="all">全能参考</button></div>
+        <div class="model-capability" data-model-capability>选择模型后显示该模型支持的参考素材和限制。</div>
+        <div class="code-tabs" data-code-tabs data-generated-examples>
+          <div role="tablist" aria-label="代码语言"><button role="tab" aria-selected="true" data-language="curl">cURL</button><button role="tab" aria-selected="false" data-language="javascript">JavaScript</button><button role="tab" aria-selected="false" data-language="python">Python</button></div>
+          <pre data-code="curl"><button class="copy-button" type="button" data-copy-code>复制</button><code data-example-code="curl">选择模型后生成正确的请求示例。</code></pre>
+          <pre data-code="javascript" hidden><button class="copy-button" type="button" data-copy-code>复制</button><code data-example-code="javascript"></code></pre>
+          <pre data-code="python" hidden><button class="copy-button" type="button" data-copy-code>复制</button><code data-example-code="python"></code></pre>
+        </div>
+        <div class="callout"><strong>不要混用创建路径</strong><p>模型选择器只列出当前启用且属于此协议的模型。示例会按当前模型的参考图、参考视频、参考音频和生成音频能力自动切换；支持音频生成的 Seedance HC 模型会自动带上 <code>"generate_audio": true</code>。选择 <code>seedance-2-5-hc</code> 时，示例直接采用 30 秒、480p、生成声音的推荐请求：<code>"duration_seconds": 30</code>、<code>"resolution": "480p"</code>、<code>"generate_audio": true</code>。参考音频是输入素材，不等于开启输出音频；不传此字段时默认不会生成声音。</p></div>
+      </section>
+
+      <section class="section protocol" id="protocol-images" data-protocol="openai-images">
+        <div class="protocol-heading"><div><h2>图片接口</h2><p>生成与编辑使用 OpenAI 兼容请求结构。</p></div><label>示例模型<select data-protocol-models="openai-images" aria-label="图片示例模型"></select></label></div>
+        <div class="endpoint"><span>POST</span><code>POST /v1/images/generations</code><code>POST /v1/images/edits</code></div>
+        <div class="callout"><strong>gpt-image-2a 专用说明</strong><p>按成功生成的图片张数计费：1K（1024x1024）¥0.10/张，2K（2048x2048）¥0.15/张，原生 4K（3840x2160）¥0.20/张。不传 size 时明确请求 1024x1024 并按 1K 计费；不要使用 4096x4096。此模型图生图使用下面的 multipart image 文件字段，不使用后面的通用 JSON URL 编辑示例。</p><pre><button class="copy-button" type="button" data-copy-code>复制</button><code>curl <span data-api-base>https://lxmone.xyz/v1</span>/images/edits \
+  -H "Authorization: Bearer sk-你的API密钥" \
+  -F "model=gpt-image-2a" \
+  -F "prompt=保持参考主体，改为电影感光影" \
+  -F "image=@source.png;type=image/png" \
+  -F "size=1024x1024" -F "n=1"</code></pre></div>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code>curl <span data-api-base>https://lxmone.xyz/v1</span>/images/generations \
+  -H "Authorization: Bearer sk-你的API密钥" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"<span data-selected-model>请选择模型</span>","prompt":"木桌上的红苹果，柔和棚拍光线","size":"1024x1024","n":1,"response_format":"url"}'</code></pre>
+        <div class="callout"><strong>先区分两种操作</strong><p><code>/v1/images/generations</code> 是文生图；图生图、局部编辑和多图融合必须请求 <code>/v1/images/edits</code>。下面的 <code>images</code> 数组按顺序传入源图，最多 3 张；每张必须是公网可访问的图片直链（不是网页地址、登录页或临时预览页）。</p></div>
+        <h3>图生图 / 多图编辑（JSON 公网 URL）</h3>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code>curl <span data-api-base>https://lxmone.xyz/v1</span>/images/edits \
+  -H "Authorization: Bearer sk-你的API密钥" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"<span data-selected-model>gpt-image-2</span>","prompt":"保留第一张图的主体，将第二张图的配色和背景融合进去","images":["https://example.com/source-1.png","https://example.com/source-2.png"],"size":"1024x1024","n":1,"response_format":"url"}'</code></pre>
+        <p class="hint">也可以把数组元素写成 <code>{"url":"https://example.com/source-1.png"}</code>；不要把多张图拼成一个字符串。若使用 Base64，请传完整的 <code>data:image/png;base64,...</code> Data URL。</p>
+        <h3>图生图 / 本地多图上传（multipart）</h3>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code>curl <span data-api-base>https://lxmone.xyz/v1</span>/images/edits \
+  -H "Authorization: Bearer sk-你的API密钥" \
+  -F "model=gpt-image-2" \
+  -F "prompt=把两张参考图融合成一张统一风格的海报" \
+  -F "image[]=@source-1.png;type=image/png" \
+  -F "image[]=@source-2.png;type=image/png" \
+  -F "n=1" \
+  -F "size=1024x1024"</code></pre>
+        <div class="callout"><strong>多图上传注意事项</strong><p>同一个字段名 <code>image[]</code> 重复上传即可保持图片顺序；也兼容重复的 <code>image</code> 字段。当前图生图最多 3 张源图，单张图片需使用 PNG、JPEG 或 WebP 等常见图片格式，并控制在接口允许的大小内。</p></div>
+        <p class="hint">图生图请求不要发送到 <code>/v1/images/generations</code>；如果把本地文件路径写进 JSON，服务端无法读取，需改用上面的 multipart 上传。</p>
+        <div class="callout"><strong>新增生图模型</strong><p><code>gpt-image-2.5-flare</code> ¥0.02/张；<code>gpt-image-2.5-sunburst</code> ¥0.03/张；<code>gpt-image-2.5-flare-官</code> 和 <code>gpt-image-2.5-sunburst-官</code> 均为 ¥0.30/张。带“官”的模型使用独立官渠，支持原生 1K、2K、4K 及全参；不带“官”的模型保持普通线路。按实际返回图片张数计费，支持文生图和参考图编辑；价格以模型广场当前配置为准。</p></div>
+        <div class="callout"><strong>香蕉生图 2.1</strong><p>模型 ID：<code>nana-banana-2.1</code>，¥0.15/张，按实际返回图片张数计费。创建使用 <code>POST /v1/images/generations</code>；参考图编辑使用 <code>POST /v1/images/edits</code>（multipart/form-data）。在生图用途下选择“香蕉生图”查看模型；1K、2K、4K 均为相同单张价格，参数支持范围以模型说明为准。</p></div>
+      
+        <h3 id="async-images">异步生图（可选，普通同步接口不变）</h3>
+        <p>异步接口使用相同的模型、参数、价格和本网站 API Key。提交请求返回任务 ID，再查询任务结果。编辑请求体与对应同步编辑接口保持一致：模型要求 multipart 时必须上传文件，不能改为 JSON。</p>
+        <pre><code>POST /v1/images/generations/async   # JSON 参数与 /v1/images/generations 相同
+POST /v1/images/edits/async         # 参数与 /v1/images/edits 相同
+GET  /v1/images/tasks/{task_id}     # 使用提交任务的同一个 API Key</code></pre>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code>curl https://lxmone.xyz/v1/images/generations/async \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-image-2a","prompt":"一只小猫","size":"1024x1024","n":1}'
+# HTTP 202: {"task_id":"imgtask_...","status":"processing","poll_url":"/v1/images/tasks/imgtask_..."}
+curl https://lxmone.xyz/v1/images/tasks/imgtask_... \
+  -H "Authorization: Bearer $OPENAI_API_KEY"</code></pre>
+        <p>任务状态为 <code>processing</code>（处理中）、<code>completed</code>（完成）或 <code>failed</code>（失败）。建议每 3 秒查询一次；失败后停止轮询并读取 <code>error</code>。完成时 <code>image_url</code> 是第一张图，全部图片在 <code>result.data[].url</code>，不再返回 <code>b64_json</code>。</p>
+        <p><strong>本地异步结果保留 12 小时：</strong>从结果保存时开始计时，返回本站签名临时链接，无需把 API Key 放进下载 URL。请在有效期内下载保存；到期链接失效，图片自动清理（每分钟检查），任务缓存也会过期。默认同步接口仍可使用，不会强制改为异步。</p>
+      </section>
+
+      <section class="section protocol" id="protocol-chat" data-protocol="openai-chat">
+        <div class="protocol-heading"><div><h2>文本接口</h2><p>标准 Chat Completions 请求。</p></div><label>示例模型<select data-protocol-models="openai-chat" aria-label="文本示例模型"></select></label></div>
+        <div class="endpoint"><span>POST</span><code>POST /v1/chat/completions</code></div>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code>curl <span data-api-base>https://lxmone.xyz/v1</span>/chat/completions \
+  -H "Authorization: Bearer sk-你的API密钥" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"<span data-selected-model>请选择模型</span>","messages":[{"role":"user","content":"你好"}]}'</code></pre>
+      </section>
+
+      <section class="section" id="language-models">
+        <h2>国产及 Claude 文本模型</h2>
+        <p>使用本网站 API Key 调用，模型 ID 须完整填写。国产模型使用 OpenAI Chat Completions；Claude 可使用原生 Anthropic Messages。以下为基础文本示例，工具调用、图片输入及长上下文能力请按具体模型说明配置。</p>
+        <div class="callout" id="language-test-status"><strong>基础调用验收 · 2026-10-14</strong><p><code>deepseek-v4.1-flash</code>、<code>glm-5.3</code>、<code>qwen3.7-max</code>、<code>qwen3.8-max</code>、<code>claude-fable-5.1a</code> 已通过一次基础非流式文本测试，Token 与使用记录、费用一致。</p><p>暂不可用的模型已停用并从公开接入说明中隐藏。请勿把目录列出模型等同于已经验证所有调用能力。<code>kimi-k3</code> 另以 <code>max_tokens=512</code> 完成基础直连与本站调用验收。以上测试未验证流式、工具调用或缓存命中；思考用量也可能计入输出 Token。</p></div>
+        <h3>模型与参考售价</h3>
+        <p>单位：人民币 / 百万 Token。以下为 2026-10-14 配置的公开售价；以模型广场和只读模型目录的当前价格为准，专属折扣另算。</p>
+        <div class="table-wrap"><table><thead><tr><th>模型 ID</th><th>厂商</th><th>输入</th><th>输出</th><th>缓存读取</th><th>缓存写入</th></tr></thead><tbody>
+          <tr><td><code>deepseek-v4.1-flash</code></td><td>DeepSeek</td><td>¥0.2</td><td>¥0.8</td><td>¥0.004</td><td>¥0</td></tr>
+          <tr><td><code>glm-5.3</code></td><td>智谱 GLM</td><td>¥1.6</td><td>¥5.6</td><td>¥0.4</td><td>¥0</td></tr>
+          <tr><td><code>kimi-k3</code></td><td>月之暗面 Kimi</td><td>¥4</td><td>¥20</td><td>¥0.4</td><td>¥0</td></tr>
+          <tr><td><code>qwen3.7-max</code></td><td>通义千问 Qwen</td><td>¥2.4</td><td>¥7.2</td><td>¥0.48</td><td>¥3.0</td></tr>
+          <tr><td><code>qwen3.8-max</code></td><td>通义千问 Qwen</td><td>¥2.4</td><td>¥7.2</td><td>¥0.48</td><td>¥3.0</td></tr>
+          <tr><td><code>claude-fable-5.1a</code></td><td>Anthropic</td><td>¥3.6</td><td>¥18</td><td>¥0.090</td><td>¥4.50</td></tr>
+        </tbody></table></div>
+        <p><code>claude-fable-5.1a</code> 是新增模型的独立名称，不是旧模型 <code>claude-fable-5-1</code>，请勿混用。价格按使用记录中的实际 Token 用量结算；缓存读取、缓存写入以实际返回的用量为准，未命中缓存时为 0。未单独列出 1 小时缓存创建价格。</p>
+        <h3>国产模型：OpenAI 兼容接口</h3>
+        <div class="endpoint"><span>POST</span><code>POST /v1/chat/completions</code></div>
+        <pre data-code="curl"><button class="copy-button" type="button" data-copy-code>复制</button><code>curl <span data-api-base>https://lxmone.xyz/v1</span>/chat/completions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"deepseek-v4.1-flash","messages":[{"role":"user","content":"你好，请只回复 OK"}],"max_tokens":512,"stream":false}'</code></pre>
+        <pre data-code="python"><button class="copy-button" type="button" data-copy-code>复制</button><code>import os
+from openai import OpenAI
+client = OpenAI(base_url="<span data-api-base>https://lxmone.xyz/v1</span>", api_key=os.environ["OPENAI_API_KEY"])
+response = client.chat.completions.create(
+    model="deepseek-v4.1-flash",
+    messages=[{"role": "user", "content": "你好，请只回复 OK"}],
+    max_tokens=512,
+    stream=False,
+)
+print(response.choices[0].message.content)
+print(response.usage)</code></pre>
+        <p>可将 <code>model</code> 换为 <code>glm-5.3</code>、<code>kimi-k3</code>、<code>qwen3.7-max</code> 或 <code>qwen3.8-max</code>。OpenAI SDK 的 Base URL 包含 <code>/v1</code>；不要再重复追加 <code>/v1</code>。</p>
+        <p><code>kimi-k3</code> 的输出预算包含思考用量，预算过小可能没有可见正文。基础示例使用 <code>max_tokens=512</code>，已验证最小提示词能正常返回；复杂请求可按需要调整预算。不要把思考内容当作最终答复。</p>
+        <h3>Claude：原生 Anthropic Messages</h3>
+        <div class="endpoint"><span>POST</span><code>POST /v1/messages</code></div>
+        <pre data-code="curl"><button class="copy-button" type="button" data-copy-code>复制</button><code>curl <span data-api-base>https://lxmone.xyz/v1</span>/messages \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-fable-5.1a","max_tokens":32,"stream":false,"messages":[{"role":"user","content":"你好，请只回复 OK"}]}'</code></pre>
+        <pre data-code="python"><button class="copy-button" type="button" data-copy-code>复制</button><code>import os
+from anthropic import Anthropic
+client = Anthropic(base_url="<span data-anthropic-base>https://lxmone.xyz</span>", api_key=os.environ["ANTHROPIC_API_KEY"])
+response = client.messages.create(
+    model="claude-fable-5.1a",
+    max_tokens=32,
+    stream=False,
+    messages=[{"role": "user", "content": "你好，请只回复 OK"}],
+)
+print(response.content)
+print(response.usage)</code></pre>
+        <p>Anthropic SDK 的 Base URL <strong>不带 /v1</strong>，SDK 会自动追加 <code>/v1/messages</code>；<code>max_tokens</code> 为必填。最小测试无需设置 <code>thinking</code>，不要把其他模型的思考参数照搬过来。</p>
+        <p>查看消耗时，请打开“使用记录”核对请求模型、输入、输出、缓存读取、缓存写入、费用和状态。不要根据输出字数推算费用；请求失败后先检查响应及使用记录，不要无限自动重试。</p>
+        <p><a href="/docs/language-models.md">下载本节 Markdown 接入说明</a>；页面顶部“复制全部 Markdown”会包含本节模型、售价和两种协议示例。</p>
+      </section>
+
+      <section class="section" id="status-download">
+        <h2>查询与下载</h2>
+        <p>创建成功后保存 <code>request_id</code>，每 10–15 秒查询一次。任务完成后再下载，避免重复创建。</p>
+        <div class="flow" aria-label="异步任务流程"><span>创建任务</span><b>→</b><span>保存 ID</span><b>→</b><span>轮询状态</span><b>→</b><span>下载 MP4</span></div>
+        <div class="endpoint"><span>GET</span><code>GET /v1/videos/{request_id}</code></div>
+        <div class="endpoint"><span>GET</span><code>GET /v1/videos/{request_id}/content</code></div>
+        <p>完成的视频默认在 VPS 保留 48 小时。大文件或网络中断时使用 Range 断点续传；服务支持 HTTP 206。</p>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code>curl --continue-at - \
+  -H "Authorization: Bearer sk-你的API密钥" \
+  -o result.mp4 "<span data-api-base>https://lxmone.xyz/v1</span>/videos/{request_id}/content"</code></pre>
+      </section>      <section class="section" id="billing-policy">
+        <h2>计费与失败处理</h2>
+        <p>异步视频按次计费：提交时按该模型当前价格预扣，任务失败立即全额退回。</p>
+        <div class="table-wrap"><table><thead><tr><th>结果</th><th>费用</th><th>说明</th></tr></thead><tbody>
+          <tr><td>出片成功</td><td>按当前价格结算</td><td>任务状态变为 completed，可直接播放或下载。</td></tr>
+          <tr><td>服务方失败</td><td>全额退回，不计消费</td><td>包含出片超时、服务方额度不足、内容被拒等；修正后可重试。</td></tr>
+          <tr><td>服务方补回成片</td><td>照常计费（补扣）</td><td>部分服务方在超时退款后仍会延迟出片；平台在补回时按该模型正常价格补扣并交付视频。</td></tr>
+        </tbody></table></div>
+        <p>补回的任务在结算前保持失败状态并提示“暂不扣费”；补扣完成后任务转为 completed，余额与消费记录同步更新。若任务状态响应包含 <code>metadata.direct_url</code>（免密钥、有时效），可直接访问；未包含时请使用带密钥的 <code>/content</code> 接口。</p>
+      </section>
+      <section class="section" id="inline-reference">
+        <h2>参考图与 base64 直传</h2>
+        <p>参考图有两种写法：公网可访问的图片 URL，或把图片转成 base64 data URL 直接放进请求体（推荐）。如果请求报错提示<strong>获取不到图片</strong>，说明服务器拉不到你的图片地址（国内图床对海外服务器有限制），这时请改用 base64 直传：平台会把 base64 原样转发，不再依赖任何外部可访问地址。上面的协议示例里已经内置「<strong>图生视频（base64）</strong>」标签，选中即可复制可运行示例。</p>
+        <div class="endpoint"><span>POST</span><code>POST /v1/videos</code></div>
+        <p>用下面任意一种方式把本地图片编码成 data URL，再填进示例的参考图数组即可。</p>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code># Linux
+openssl base64 -A -in reference.jpg | sed 's|^|data:image/jpeg;base64,|'
+# macOS
+base64 -i reference.jpg | tr -d '\n' | sed 's|^|data:image/jpeg;base64,|'
+# Windows PowerShell
+"data:image/jpeg;base64," + [Convert]::ToBase64String([IO.File]::ReadAllBytes("reference.jpg"))</code></pre>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code># Python：自动识别图片类型、检查体积，并写入 payload.json
+python3 - &lt;&lt;'PY'
+import base64, json, mimetypes, pathlib
+
+path = pathlib.Path("reference.jpg")                              # 换成你的图片
+media_type = mimetypes.guess_type(path.name)[0] or "image/jpeg"    # image/jpeg、image/png、image/webp
+data_url = f"data:{media_type};base64,{base64.b64encode(path.read_bytes()).decode()}"
+
+body_path = pathlib.Path("payload.json")
+payload = json.loads(body_path.read_text(encoding="utf-8")) if body_path.exists() else {
+    "model": "&lt;span data-selected-model&gt;请选择模型&lt;/span&gt;",
+    "prompt": "镜头缓慢推进，人物回头看向镜头",
+}
+payload.setdefault("reference_images", []).append(data_url)       # 多张参考图就多次 append
+
+print("data URL 长度：", len(data_url), "（单张上限 32MB）")
+if len(data_url) &gt; 32 * 1024 * 1024:
+    raise SystemExit("图片过大，请压缩后再试")
+body_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+PY</code></pre>
+        <pre><button class="copy-button" type="button" data-copy-code>复制</button><code>curl -X POST "<span data-api-base>https://lxmone.xyz/v1</span>/videos" \
+  -H "Authorization: Bearer sk-你的API密钥" \
+  -H "Content-Type: application/json" \
+  --data-binary @payload.json</code></pre>
+        <p>字段名与 URL 方式完全一致：以协议 A/B 示例里的 <code>reference_images</code> 为准，<code>images</code>、<code>first_frame_image</code>、<code>last_frame_image</code> 同样接受，URL 与 data URL 可以在同一数组里混用。可运行的完整示例见上方两个协议里的「<strong>图生视频（base64）</strong>」标签。</p>
+        <p><strong>Seedance 2.5 A 组四个模型例外：</strong><code>seedance2.5-480</code>、<code>seedance2.5-480s</code>、<code>seedance2.5-720</code>、<code>seedance2.5-720s</code> 使用 <code>assets</code> 数组；每项写 <code>{"category":"image","url":"https://…"}</code> 或 <code>{"category":"audio","url":"https://…"}</code>。本地文件则用 <code>data_base64</code> 传纯 base64 字符串，<strong>不要添加 <code>data:…;base64,</code> 前缀</strong>；不支持参考视频。传入参考图时，提示词须按顺序写 <code>@image1</code>、<code>@image2</code> 等；传入参考音频时须写 <code>@audio1</code> 等，否则请求会被拒绝。请求时长字段为 <code>duration</code>（4–25 秒），画幅字段为 <code>size</code>（例如 <code>16:9</code>），不传 <code>resolution</code>。请在上方选择对应模型后复制专属示例。</p>
+        <p><strong>Grok 1.5-fast / 1.5（按次）例外：</strong>时长使用 <code>seconds</code>（4–15 秒），尺寸使用 <code>size</code>（例如 <code>1280x720</code>）；参考图须为公网 URL，格式为 <code>"reference_images":[{"url":"https://…","role":"reference_image"}]</code>，最多 7 张。不要照搬通用的 <code>duration_seconds</code>、<code>resolution</code> 或 base64 示例；请在协议 B 中选择具体 Grok 模型复制专属示例。</p>
+        <div class="table-wrap"><table><thead><tr><th>项目</th><th>要求</th></tr></thead><tbody>
+          <tr><td>格式</td><td>必须是 base64 data URL：<code>data:image/jpeg;base64,&lt;编码内容&gt;</code>；视频、音频参考同理（<code>data:video/mp4;base64,…</code>、<code>data:audio/mpeg;base64,…</code>）。</td></tr>
+          <tr><td>不接受的写法</td><td>非 base64 的 data URL（如 <code>data:image/svg+xml,&lt;svg…&gt;</code>）、空内容、<code>data:text/plain;base64,…</code>。</td></tr>
+          <tr><td>体积建议</td><td>单张 base64 不超过 32MB（约等于 24MB 原图），整体请求不超过 256MB；建议 JPEG/PNG、单张原图 ≤ 6MB。</td></tr>
+        </tbody></table></div>
+        <p>若参考图既不是公网 URL 也不是合规 base64，接口会直接返回 400 并说明原因，不会触发扣费。</p>
+      </section>
+
+
+      <section class="section" id="errors">
+        <h2>错误处理</h2>
+        <div class="table-wrap"><table><thead><tr><th>状态码</th><th>含义</th><th>处理方式</th></tr></thead><tbody>
+          <tr><td>400</td><td>参数不符合模型要求</td><td>检查模型 ID、提示词、时长、分辨率和参考素材。</td></tr>
+          <tr><td>401 / 403</td><td>认证或权限失败</td><td>检查 Bearer 密钥、密钥状态和模型是否启用。</td></tr>
+          <tr><td>404</td><td>资源不存在</td><td>检查 Base URL、任务 ID 和路径。</td></tr>
+          <tr><td>409</td><td>任务尚未完成</td><td>保持原任务 ID，稍后继续轮询。</td></tr>
+          <tr><td>429</td><td>请求过快</td><td>降低并发并指数退避。</td></tr>
+          <tr><td>502 / 503 / 504</td><td>服务暂时不可用</td><td>保留 request_id；创建未返回 ID 时再谨慎重试。</td></tr>
+        </tbody></table></div>
+      </section>
+    </main>
+  </div>
+  <footer><span>Developer Docs</span><span>模型与价格以模型广场当前配置为准</span></footer>
+</body>
+</html>

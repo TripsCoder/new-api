@@ -2,8 +2,12 @@ package jsplugin
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -19,6 +23,90 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestReviewedMediaBearerHeadersReachLocalReceiver(t *testing.T) {
+	const key = "fixture-key-not-a-real-credential"
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer "+key {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(server.Close)
+	for _, tc := range []struct{ key, model string }{
+		{"artbox_media", "Artdance 2 Mini-720p"},
+		{"lxmone_media", "grok-imagine-video"},
+		{"paisio_media", "gpt-image2-low"},
+		{"xcmapi_media", "dola-seedance-2.0-900"},
+		{"yuxibox_media", "seedance-2.0（YX）"},
+		{"zhangyuge_media", "veo_3_1"},
+	} {
+		t.Run(tc.key, func(t *testing.T) {
+			source, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "plugin-sources", "media-providers", "six-v2", "dist", tc.key+".plugin.js"))
+			require.NoError(t, err)
+			plugin, err := pluginruntime.NewRegistry().Register(string(source), pluginruntime.Options{Key: tc.key})
+			require.NoError(t, err)
+			a := New(plugin)
+			info := &relaycommon.RelayInfo{OriginModelName: tc.model, ChannelMeta: &relaycommon.ChannelMeta{ChannelType: constant.ChannelTypeTaskPlugin, ChannelBaseUrl: server.URL, ApiKey: key, UpstreamModelName: tc.model}, TaskRelayInfo: &relaycommon.TaskRelayInfo{}}
+			a.Init(info)
+			task := &model.Task{Properties: model.Properties{OriginModelName: tc.model, UpstreamModelName: tc.model}, PrivateData: model.TaskPrivateData{UpstreamTaskID: "fixture_task_12345678"}}
+			ctx, err := a.queryContext(task, key, server.URL, "")
+			require.NoError(t, err)
+			descriptor, err := a.requestDescriptor(t.Context(), "buildQueryRequest", ctx)
+			require.NoError(t, err)
+			request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, descriptor.URL, nil)
+			require.NoError(t, err)
+			for name, value := range descriptor.Headers {
+				request.Header.Set(name, value)
+			}
+			response, err := server.Client().Do(request)
+			require.NoError(t, err)
+			response.Body.Close()
+			assert.Equal(t, http.StatusNoContent, response.StatusCode)
+			if tc.key != "lxmone_media" {
+				return
+			}
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodPost, "/v1/videos", nil)
+			info.OriginModelName, info.UpstreamModelName = "minimax-h3-a", "minimax-h3-a"
+			c.Set("task_request", map[string]any{"operation": "video_generate", "protocolTemplate": "interface:d5712463006900d8", "input": map[string]any{"model": "minimax-h3-a", "prompt": "local receiver fixture", "seconds": 5, "resolution": "720p"}})
+			body, err := a.BuildRequestBody(c, info)
+			require.NoError(t, err)
+			url, err := a.BuildRequestURL(info)
+			require.NoError(t, err)
+			request, err = http.NewRequestWithContext(t.Context(), http.MethodPost, url, body)
+			require.NoError(t, err)
+			require.NoError(t, a.BuildRequestHeader(c, request, info))
+			response, err = server.Client().Do(request)
+			require.NoError(t, err)
+			_, err = io.Copy(io.Discard, response.Body)
+			require.NoError(t, err)
+			response.Body.Close()
+			assert.Equal(t, http.StatusNoContent, response.StatusCode)
+		})
+	}
+}
+
+func TestReviewedMediaBearerScopeAndInvalidKeys(t *testing.T) {
+	for _, pluginKey := range []string{"artbox_media", "cangyuan_media", "lxmone_media", "newapi_video_generations", "paisio_media", "xcmapi_media", "yuxibox_media", "zhangyuge_media"} {
+		t.Run(pluginKey, func(t *testing.T) {
+			a := New(&pluginruntime.LoadedPlugin{Meta: pluginruntime.Meta{Key: pluginKey}})
+			for _, key := range []string{"fixture-key", "Bearer fixture-key"} {
+				ctx := map[string]any{}
+				require.NoError(t, a.applyUpstreamCredentials(ctx, constant.ChannelTypeTaskPlugin, key, ""))
+				assert.Equal(t, "Bearer fixture-key", ctx["authHeader"])
+				assert.Equal(t, ctx["authHeader"], ctx["auth"].(map[string]any)["authHeader"])
+				assert.Equal(t, key, ctx["apiKey"])
+			}
+			for _, key := range []string{"", "  ", "key\r\nInjected: value"} {
+				err := a.applyUpstreamCredentials(map[string]any{}, constant.ChannelTypeTaskPlugin, key, "")
+				require.Error(t, err)
+				assert.False(t, strings.Contains(err.Error(), "Injected"))
+			}
+		})
+	}
+}
 
 func TestOAuth2JWTAuthCachesAndRefreshes(t *testing.T) {
 	pluginAuthCache = sync.Map{}

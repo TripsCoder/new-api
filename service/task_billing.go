@@ -224,6 +224,9 @@ func appendTaskLogInfo(task *model.Task, other *model.LogOther) {
 		// persisted, so no artifact can be retrieved for this task.
 		other.SetPublic("result_discarded", true)
 	}
+	if bc := task.PrivateData.BillingContext; bc != nil && bc.UpstreamCost != nil {
+		other.SetRoot("upstream_cost", bc.UpstreamCost)
+	}
 	if task.PrivateData.Execution != nil {
 		AppendTaskPluginAuditInfo(other, task.PrivateData.Execution.TaskPlugin)
 	}

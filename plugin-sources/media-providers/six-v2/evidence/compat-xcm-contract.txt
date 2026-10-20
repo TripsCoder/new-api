@@ -1,0 +1,1134 @@
+{
+  "version": 1,
+  "schema_version": 2,
+  "status": "ready",
+  "surface": "documentation",
+  "observed_at": "2026-10-14",
+  "entry_enabled": true,
+  "origin": "https://xcmapi.org",
+  "scope": {
+    "group_id": 94,
+    "description": "仅描述当前视频综合区适配协议；实际可见模型须按调用者Key查询"
+  },
+  "authentication": "Authorization: Bearer YOUR_API_KEY",
+  "create": {
+    "method": "POST",
+    "path": "/v1/videos/generations",
+    "aliases": [
+      "/v1/videos"
+    ],
+    "content_type": "application/json"
+  },
+  "poll": {
+    "method": "GET",
+    "path": "/v1/videos/{task_id}"
+  },
+  "download": {
+    "method": "GET",
+    "path": "/v1/videos/{task_id}/content"
+  },
+  "create_auto_retry": false,
+  "create_idempotency_header_supported": false,
+  "client_request_id": {
+    "required": true,
+    "pattern": "^[A-Za-z0-9_.:-]{16,128}$",
+    "retry": "同一业务单复用原值；重复或冲突提交会拒绝，不保证再次返回原任务ID"
+  },
+  "asset_upload": {
+    "dedicated_video_asset_upload_endpoint_available": false,
+    "input_mode": "public_https_url_references",
+    "local_files": "先通过应用自己的存储获取公网HTTPS URL；不把本地路径、data URL或blob URL传入视频JSON",
+    "image_edit_is_not_asset_storage": true
+  },
+  "url_rules": {
+    "scheme": "https",
+    "ports": [
+      443
+    ],
+    "max_length": 8192,
+    "no_userinfo": true,
+    "no_fragment": true,
+    "no_local_or_private_addresses": true,
+    "signed_query_allowed": true,
+    "format_size_limits": "当前适配层未声明完整的源文件MIME/尺寸/大小上限，不从备注推断；必须满足实际上游限制"
+  },
+  "media_item_schema": {
+    "images": "URL字符串或{url,name?,type?:first_frame|end_frame,duration_seconds?}",
+    "videos": "URL字符串或{url,name?,duration_seconds?}；minimax-h3必须是含duration_seconds的对象",
+    "audios": "URL字符串或{url,name?,duration_seconds?}",
+    "materials": "{type:image|video|audio,url,name?,duration_seconds?}对象数组",
+    "duration_seconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 120,
+      "description": "素材时长，不是生成视频时长；H3视频必填，音频可选"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "additional_properties": false
+  },
+  "mutual_exclusion_rules": [
+    "非空materials与非空images/videos/audios不能混用",
+    "首尾帧模式不能混普通参考图或视频/音频",
+    "首帧、尾帧各最多一个；尾帧必须同时有首帧",
+    "不支持素材的模型必须明确报错，不能删除字段后改为文生"
+  ],
+  "current_models_billing_unit": "mixed",
+  "published_model_count": 13,
+  "current_key_model_count": null,
+  "pending_model_count": null,
+  "models": [
+    {
+      "id": "dola-seedance-2.0-900",
+      "available_at_snapshot": true,
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "dola-seedance-2.0-900",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "dola-seedance-2.0-933",
+      "available_at_snapshot": true,
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "dola-seedance-2.0-933",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "dola-seedance-2.5-301010",
+      "available_at_snapshot": true,
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "5-30",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 5,
+      "duration_max": 30,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "dola-seedance-2.5-301010",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "dola-seedance-2.5-900",
+      "available_at_snapshot": true,
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "5-30",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9"
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 9"
+        }
+      ],
+      "media_fields": [
+        "images",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 5,
+      "duration_max": 30,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "dola-seedance-2.5-900",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference-1.jpg"
+        ]
+      }
+    },
+    {
+      "id": "grok-1.5",
+      "available_at_snapshot": true,
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "3-15",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 7"
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 7"
+        }
+      ],
+      "media_fields": [
+        "images",
+        "materials"
+      ],
+      "max_reference_images": 7,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 3,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "grok-1.5",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference-1.jpg"
+        ]
+      }
+    },
+    {
+      "id": "minimax-h3",
+      "available_at_snapshot": true,
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "15"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "2k",
+          "default": "2k"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9"
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 3"
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3"
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 15"
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": true,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 15,
+      "resolutions": [
+        "2k"
+      ],
+      "example": {
+        "model": "minimax-h3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "2k",
+        "images": [
+          "https://your-cdn.example.com/reference-1.jpg"
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.0-G1",
+      "available_at_snapshot": true,
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "15",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p, 720p",
+          "default": "720p",
+          "required": true
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 15,
+      "resolutions": [
+        "480p",
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.0-G1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "seedance-2.0-G2",
+      "available_at_snapshot": true,
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p",
+          "required": true
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.0-G2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "seedance-2.0-G6",
+      "available_at_snapshot": true,
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.0-G6",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "seedance-2.0-G6-x",
+      "available_at_snapshot": true,
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p",
+          "required": true
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.0-G6-x",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "seedance-2.5-G1",
+      "available_at_snapshot": true,
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "5-15",
+          "default": "15",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p, 720p, 1080p",
+          "default": "720p",
+          "required": true
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 5,
+      "duration_max": 15,
+      "duration_default": 15,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "example": {
+        "model": "seedance-2.5-G1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "seedance-2.5-G2",
+      "available_at_snapshot": true,
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "5-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p, 720p",
+          "default": "720p",
+          "required": true
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 5,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "480p",
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.5-G2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": "seedance2.5-满血",
+      "available_at_snapshot": true,
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p, 720p, 1080p",
+          "default": "720p",
+          "required": true
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "example": {
+        "model": "seedance2.5-满血",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    }
+  ],
+  "examples": {
+    "h3_reference_image": {
+      "summary": "minimax-h3：单张参考图",
+      "verification": "adapter_and_mock_transport_only",
+      "body": {
+        "model": "minimax-h3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "2k",
+        "images": [
+          {
+            "url": "https://your-cdn.example.com/reference-1.jpg",
+            "name": "人物参考"
+          }
+        ]
+      }
+    },
+    "h3_mixed_arrays": {
+      "summary": "minimax-h3：图片、视频、音频分别传入",
+      "verification": "adapter_and_mock_transport_only",
+      "body": {
+        "model": "minimax-h3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "2k",
+        "images": [
+          {
+            "url": "https://your-cdn.example.com/reference-1.jpg",
+            "name": "人物参考"
+          }
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/motion-reference.mp4",
+            "name": "动作参考",
+            "duration_seconds": 8
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/voice-reference.mp3",
+            "name": "声音参考"
+          }
+        ]
+      }
+    },
+    "h3_materials": {
+      "summary": "minimax-h3：统一materials数组（另一种写法）",
+      "verification": "adapter_and_mock_transport_only",
+      "body": {
+        "model": "minimax-h3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "2k",
+        "materials": [
+          {
+            "type": "image",
+            "url": "https://your-cdn.example.com/reference-1.jpg",
+            "name": "人物参考"
+          },
+          {
+            "type": "video",
+            "url": "https://your-cdn.example.com/motion-reference.mp4",
+            "name": "动作参考",
+            "duration_seconds": 8
+          },
+          {
+            "type": "audio",
+            "url": "https://your-cdn.example.com/voice-reference.mp3",
+            "name": "声音参考"
+          }
+        ]
+      }
+    },
+    "h3_frames": {
+      "summary": "minimax-h3：首尾帧结构（未验证上游帧语义）",
+      "verification": "adapter_and_mock_transport_only_not_output_semantics",
+      "body": {
+        "model": "minimax-h3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "2k",
+        "images": [
+          {
+            "type": "first_frame",
+            "url": "https://your-cdn.example.com/first-frame.jpg"
+          },
+          {
+            "type": "end_frame",
+            "url": "https://your-cdn.example.com/last-frame.jpg"
+          }
+        ]
+      }
+    },
+    "dola_reference_image": {
+      "summary": "dola-seedance-2.5-900：参考图片",
+      "verification": "adapter_and_mock_transport_only",
+      "body": {
+        "model": "dola-seedance-2.5-900",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference-1.jpg"
+        ]
+      }
+    },
+    "grok_reference_image": {
+      "summary": "grok-1.5：参考图片",
+      "verification": "adapter_and_mock_transport_only",
+      "body": {
+        "model": "grok-1.5",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "按参考素材保持主体外观，完成连贯自然的镜头运动。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference-1.jpg"
+        ]
+      }
+    },
+    "text_only": {
+      "summary": "dola-seedance-2.0-933：仅文生，不接受参考素材",
+      "verification": "adapter_and_mock_transport_only",
+      "body": {
+        "model": "dola-seedance-2.0-933",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "一只蓝色纸船在平静水面缓慢漂浮，镜头固定，画面清晰。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p"
+      }
+    }
+  },
+  "native_models_not_in_group": [
+    {
+      "id": "h3",
+      "protocol": "独立原生h3协议，使用reference_images/reference_audios/aspect_ratio；不能替换为minimax-h3",
+      "requires_separate_key_visibility": true,
+      "reference": "QuickStart.html#h3-video"
+    }
+  ],
+  "verification": {
+    "method": "production_profile_and_source_review_plus_local_mock_transport",
+    "paid_generation_performed": false,
+    "upstream_media_fetch_or_output_not_verified": true,
+    "placeholder_urls_must_be_replaced": true,
+    "upstream_resolution_wire_not_normalized": true
+  },
+  "provenance": {
+    "adapter_sha256": "da20302cddd0b48c811f21ae0382f6f0d8242c40155e07340d242f6064ac842c",
+    "managed_adapter_sha256": "38e2ff85cab5c173f48ce10f221fb6a04198fe7c3a4e01da5020092bcf0e919f",
+    "live_parameters_url": "/api/public/prices",
+    "key_catalog_url": "/v1/catalog"
+  },
+  "verified_end_to_end_models": [],
+  "historical_verification": {
+    "deprecated": true,
+    "observed_at": "2026-10-01T09:47:31+08:00",
+    "verified_end_to_end_models": [
+      {
+        "id": "seedance-2.0-900-特惠",
+        "duration": 5,
+        "resolution": "720p",
+        "actual_billing": 0.8,
+        "billing_records": 1,
+        "repeat_gets_did_not_add_billing": true
+      }
+    ],
+    "warning": "历史型号与任务记录，仅保留审计意义，不能据此调用当前模型或推断素材支持"
+  },
+  "validation_gaps": [
+    {
+      "field": "videos[].duration_seconds",
+      "model": "minimax-h3",
+      "required_by_provider_contract": true,
+      "enforced_by_current_adapter": false,
+      "risk": "省略时可能仍会转发上游；不能承诺本地拒绝或免费失败"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+[
+  {
+    "model": "seedance-2.5（YX）",
+    "field": "seconds.minimum",
+    "document": 4,
+    "publicCatalogDescription": 5,
+    "action": "preview both; do not apply an inferred minimum"
+  },
+  {
+    "model": "seedance2.5-yx-count",
+    "field": "seconds.minimum",
+    "document": 4,
+    "publicCatalogDescription": 5,
+    "action": "preview both; do not apply an inferred minimum"
+  },
+  {
+    "model": "seedance2.5-yx-count",
+    "field": "document price vs public base expression",
+    "document": "4.5 CNY/video",
+    "publicBillingExpression": "4 CNY/video",
+    "rawExpression": "tier(\"base\", u(\"video_count\") * 4)",
+    "action": "do not change any price; public expression is not proof of an authenticated account charge"
+  },
+  {
+    "model": "wan3.0-video",
+    "field": "document price vs public base expression",
+    "document": "480P: 0.15 CNY/second",
+    "publicBillingExpression": "480P: 0.21 CNY/second",
+    "rawExpression": "u(\"resolution\") == \"480P\" ? tier(\"480P\", u(\"seconds\") * 0.21) : u(\"resolution\") == \"720P\" ? tier(\"720P\", u(\"seconds\") * 0.23) : tier(\"1080P\", u(\"seconds\") * 0.27)",
+    "action": "do not change any price; public expression is not proof of an authenticated account charge"
+  },
+  {
+    "model": "wan3.0-video-prime",
+    "field": "document price vs public base expression",
+    "document": "480P: 0.21 CNY/second",
+    "publicBillingExpression": "480P: 0.22 CNY/second",
+    "rawExpression": "u(\"resolution\") == \"480P\" ? tier(\"480P\", u(\"seconds\") * 0.22) : u(\"resolution\") == \"720P\" ? tier(\"720P\", u(\"seconds\") * 0.25) : tier(\"1080P\", u(\"seconds\") * 0.3)",
+    "action": "do not change any price; public expression is not proof of an authenticated account charge"
+  }
+]

@@ -1,0 +1,546 @@
+const SAMPLES = {
+  create: `curl https://artbox.top/v1/video/generations \\
+  -H "Authorization: Bearer sk-your-key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "Artdance 2.5-720p",
+    "prompt": "一只猫在阳光街道上走路，电影感运镜",
+    "seconds": "5"
+  }'`,
+  query: `curl https://artbox.top/v1/video/generations/{task_id} \\
+  -H "Authorization: Bearer sk-your-key"`,
+  python: `import time, requests
+
+BASE = "https://artbox.top/v1"
+headers = {
+    "Authorization": "Bearer sk-your-key",
+    "Content-Type": "application/json",
+}
+
+created = requests.post(
+    f"{BASE}/video/generations",
+    headers=headers,
+    json={
+        "model": "Artdance 2.5-720p",
+        "prompt": "一只猫在阳光街道上走路，电影感运镜",
+        "seconds": "5",
+    },
+    timeout=60,
+)
+task_id = created.json().get("id") or created.json().get("task_id")
+
+while True:
+    data = requests.get(
+        f"{BASE}/video/generations/{task_id}",
+        headers=headers,
+        timeout=60,
+    ).json()
+    status = (data.get("status") or "").lower()
+    if status in {"completed", "success", "failed", "error"}:
+        print(data)
+        break
+    time.sleep(5)`,
+}
+
+function currentTheme() {
+  return document.documentElement.classList.contains("dark") ? "dark" : "light"
+}
+
+function applyTheme(theme) {
+  document.documentElement.classList.toggle("dark", theme === "dark")
+  localStorage.setItem("artbox-preview-theme", theme)
+  document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
+    btn.title = theme === "dark" ? "切换到浅色模式" : "切换到深色模式"
+    btn.textContent = theme === "dark" ? "☀" : "☾"
+  })
+}
+
+const LOCAL = location.port === "4177"
+const HOME = LOCAL ? "./index.html" : "/"
+const PRICING = LOCAL ? "./pricing.html" : "/pricing"
+const DOCS = LOCAL ? "./docs.html" : "/docs"
+const LOGO = LOCAL ? "./logo.png" : "/storefront/logo.png"
+const SIGNUP = LOCAL ? "https://artbox.top/sign-up" : "/sign-up"
+
+function injectChrome() {
+  const page = document.body.dataset.page || "home"
+  const header = document.getElementById("site-header")
+  const footer = document.getElementById("site-footer")
+  if (header) {
+    header.innerHTML = `
+      <div class="header-inner">
+        <a class="brand" href="${HOME}">
+          <img src="${LOGO}" alt="ArtBox" />
+          <span class="brand-name">ArtBox</span>
+          <span class="brand-split"></span>
+          <span class="brand-sub">Video API</span>
+          ${LOCAL ? '<span class="preview-flag">PREVIEW</span>' : ""}
+        </a>
+        <nav class="nav">
+          <a href="${HOME}#capabilities" class="${page === "home" ? "active" : ""}">核心能力</a>
+          <a href="${PRICING}" class="${page === "pricing" ? "active" : ""}">模型价格</a>
+          <a href="${HOME}#contact-us">联系我们</a>
+          <a href="${DOCS}" class="${page === "docs" ? "active" : ""}">接入文档</a>
+          <a href="${HOME}#faq">常见问题</a>
+        </nav>
+        <div class="header-actions">
+          <button class="ghost-btn" type="button">CN ZH</button>
+          <button class="icon-btn" type="button" data-theme-toggle>☾</button>
+          <a class="primary-btn" href="${SIGNUP}">获取 API Key</a>
+          <button class="icon-btn menu-btn" type="button">☰</button>
+        </div>
+      </div>`
+  }
+  if (!LOCAL) {
+    document.querySelectorAll('a[href^="./"]').forEach((a) => {
+      const href = a.getAttribute("href") || ""
+      a.setAttribute(
+        "href",
+        href
+          .replace("./index.html", "/")
+          .replace("./pricing.html", "/pricing")
+          .replace("./docs.html", "/docs")
+      )
+    })
+    document.querySelectorAll('a[href="https://artbox.top/sign-up"]').forEach((a) => {
+      a.setAttribute("href", "/sign-up")
+    })
+  }
+  if (footer) {
+    footer.innerHTML = `
+      <div class="footer-inner">
+        <div>© 2026 ArtBox. 保留所有权利。</div>
+        <nav>
+          <a href="${PRICING}">模型价格</a>
+          <a href="${DOCS}">文档</a>
+          <a href="https://t.me/luosishou" target="_blank" rel="noreferrer">Telegram</a>
+        </nav>
+      </div>`
+  }
+}
+
+function bindTheme() {
+  applyTheme(localStorage.getItem("artbox-preview-theme") || "light")
+  document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      applyTheme(currentTheme() === "dark" ? "light" : "dark")
+    })
+  })
+}
+
+function bindCodeTabs() {
+  const pre = document.querySelector("[data-code]")
+  if (!pre) return
+  const buttons = document.querySelectorAll("[data-code-tab]")
+  const setTab = (key) => {
+    pre.textContent = SAMPLES[key]
+    buttons.forEach((b) => b.classList.toggle("active", b.dataset.codeTab === key))
+  }
+  buttons.forEach((b) => b.addEventListener("click", () => setTab(b.dataset.codeTab)))
+  setTab("create")
+  const copyBtn = document.querySelector("[data-copy-code]")
+  if (copyBtn) {
+    copyBtn.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(pre.textContent)
+      copyBtn.textContent = "已复制"
+      setTimeout(() => (copyBtn.textContent = "复制代码"), 1200)
+    })
+  }
+}
+
+function flashCopyLabel(btn, old) {
+  const label = btn.querySelector("[data-copy-label]")
+  if (label) {
+    const prev = label.textContent
+    label.textContent = "已复制"
+    setTimeout(() => (label.textContent = prev), 1000)
+    return
+  }
+  btn.textContent = "已复制"
+  setTimeout(() => (btn.textContent = old), 1000)
+}
+
+function bindCopyNames() {
+  if (document.documentElement.dataset.copyBound) return
+  document.documentElement.dataset.copyBound = "1"
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-copy]")
+    if (btn) {
+      await navigator.clipboard.writeText(btn.dataset.copy)
+      flashCopyLabel(btn, btn.textContent)
+      return
+    }
+    const preBtn = e.target.closest("[data-copy-pre]")
+    if (!preBtn) return
+    const pre = preBtn.closest(".code-panel")?.querySelector("pre")
+    if (!pre) return
+    await navigator.clipboard.writeText(pre.innerText)
+    flashCopyLabel(preBtn, preBtn.textContent)
+  })
+}
+
+function bindRatePick() {
+  document.querySelectorAll("[data-rate-pick]").forEach((pick) => {
+    const toggle = pick.querySelector("[data-rate-toggle]")
+    if (!toggle || toggle.dataset.bound) return
+    toggle.dataset.bound = "1"
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation()
+      pick.classList.toggle("open")
+    })
+  })
+  if (document.documentElement.dataset.rateBound) return
+  document.documentElement.dataset.rateBound = "1"
+  document.addEventListener("click", () => {
+    document.querySelectorAll("[data-rate-pick].open").forEach((pick) => {
+      pick.classList.remove("open")
+    })
+  })
+}
+
+function bindTabs() {
+  const buttons = document.querySelectorAll("[data-tab]")
+  const panels = document.querySelectorAll("[data-panel]")
+  if (!buttons.length) return
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab
+      buttons.forEach((b) => b.classList.toggle("active", b === btn))
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tab
+      })
+    })
+  })
+}
+
+function bindSearch() {
+  const input = document.querySelector("[data-model-search]")
+  if (!input || input.dataset.bound) return
+  input.dataset.bound = "1"
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase()
+    const panel = document.querySelector("[data-panel]:not([hidden])")
+    const scope = panel || document
+    scope.querySelectorAll("[data-model-row]").forEach((row) => {
+      row.style.display = !q || row.dataset.modelRow.toLowerCase().includes(q) ? "" : "none"
+    })
+    scope.querySelectorAll(".group").forEach((group) => {
+      const rows = [...group.querySelectorAll("[data-model-row]")]
+      if (!q || rows.length === 0) {
+        group.style.display = ""
+        return
+      }
+      group.style.display = rows.some((row) => row.style.display !== "none") ? "" : "none"
+    })
+  })
+}
+
+function pinDocsNav() {
+  const aside = document.querySelector(".docs-aside")
+  const nav = document.querySelector(".docs-side")
+  if (!aside || !nav || window.innerWidth < 901) {
+    if (nav) {
+      nav.style.position = ""
+      nav.style.left = ""
+      nav.style.top = ""
+      nav.style.width = ""
+    }
+    return
+  }
+  const r = aside.getBoundingClientRect()
+  nav.style.position = "fixed"
+  nav.style.top = "96px"
+  nav.style.left = `${Math.round(r.left)}px`
+  nav.style.width = `${Math.round(r.width)}px`
+}
+
+function bindDocsNav() {
+  const nav = document.querySelector(".docs-side")
+  if (!nav) return
+  const links = [...nav.querySelectorAll("a[href^='#']")]
+  const sections = links
+    .map((a) => document.getElementById(a.getAttribute("href").slice(1)))
+    .filter(Boolean)
+  const sync = () => {
+    pinDocsNav()
+    let current = sections[0]
+    const y = 120
+    for (const sec of sections) {
+      if (sec.getBoundingClientRect().top <= y) current = sec
+    }
+    links.forEach((a) => {
+      a.classList.toggle("active", current && a.getAttribute("href") === `#${current.id}`)
+    })
+  }
+  window.addEventListener("scroll", sync, { passive: true })
+  window.addEventListener("resize", pinDocsNav)
+  sync()
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
+function formatYen(n) {
+  const v = Number(n) || 0
+  return "¥" + v.toFixed(4).replace(/0+$/, "").replace(/\.$/, "")
+}
+
+const RES_RANK = { "480p": 1, "540p": 2, "720p": 3, "1080p": 4, "2K": 5, "4K": 6 }
+
+function parseSku(name) {
+  const raw = String(name || "").trim()
+  const m = raw.match(/^(.*?)[\s\-_]+((?:\d{3,4}p)|(?:[24]k))$/i)
+  if (!m) return { series: raw, res: "" }
+  const token = m[2]
+  const res = /^[24]k$/i.test(token) ? token.toUpperCase() : token.toLowerCase()
+  return { series: m[1].trim(), res }
+}
+
+function resRank(res) {
+  return RES_RANK[res] || 80
+}
+
+function canMatrix(models) {
+  return models.some((m) => parseSku(m.model_name).res)
+}
+
+function isVideoModel(m) {
+  const eps = m.supported_endpoint_types || []
+  const tags = String(m.tags || "").toLowerCase()
+  return eps.includes("openai-video") || tags.includes("video")
+}
+
+function isOfficialModel(m) {
+  const tags = String(m.tags || "").toLowerCase()
+  const name = String(m.model_name || "").toLowerCase()
+  const groups = m.enable_groups || []
+  return (
+    tags.includes("official") ||
+    tags.includes("官渠") ||
+    name.includes("官渠") ||
+    groups.some((g) => /官渠|official|seedance-官方|seedance官方/.test(String(g)))
+  )
+}
+
+function isImageModel(m) {
+  const eps = m.supported_endpoint_types || []
+  const tags = String(m.tags || "").toLowerCase()
+  return eps.some((e) => String(e).includes("image")) || tags.includes("image")
+}
+
+function billingLabel(m) {
+  if (isVideoModel(m)) return "按秒计费"
+  if (m.quota_type === 0) return "Token 计费"
+  return "按次计费"
+}
+
+function renderListTable(models, yenFn) {
+  const rows = models
+    .map((m) => {
+      const yen = yenFn(m)
+      const detail = isVideoModel(m)
+        ? `<dt>每秒</dt><dd>${formatYen(yen)} / 秒</dd>`
+        : `<dt>每次请求</dt><dd>${formatYen(yen)}</dd>`
+      return `<tr data-model-row="${escapeHtml(m.model_name)}">
+        <td>
+          <div class="model-cell">
+            <div class="model-mark">▷</div>
+            <div>
+              <div class="model-name">${escapeHtml(m.model_name)}</div>
+              <button class="copy-name" data-copy="${escapeHtml(m.model_name)}" type="button">复制名称</button>
+            </div>
+          </div>
+        </td>
+        <td><span class="chip">${billingLabel(m)}</span></td>
+        <td><dl class="dl-price"><div>${detail}</div></dl></td>
+        <td class="muted-cell">无阶梯价</td>
+      </tr>`
+    })
+    .join("")
+  return `<table class="rate-table">
+      <colgroup><col class="col-model" /><col class="col-mode" /><col class="col-detail" /><col class="col-tier" /></colgroup>
+      <thead><tr><th>模型</th><th>计费方式</th><th>价格明细</th><th>阶梯价格</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`
+}
+
+function renderMatrixTable(models, yenFn) {
+  const parsed = models.map((m) => ({ m, ...parseSku(m.model_name) }))
+  const cols = [...new Set(parsed.map((p) => p.res).filter(Boolean))].sort((a, b) => resRank(a) - resRank(b))
+  const hasBare = parsed.some((p) => !p.res)
+  const headers = hasBare ? [...cols, "标准"] : cols
+  const seriesOrder = []
+  const bySeries = new Map()
+  for (const p of parsed) {
+    if (!bySeries.has(p.series)) {
+      bySeries.set(p.series, new Map())
+      seriesOrder.push(p.series)
+    }
+    bySeries.get(p.series).set(p.res || "标准", p)
+  }
+  const head = `<tr><th>系列</th>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr>`
+  const rows = seriesOrder
+    .map((series) => {
+      const bag = bySeries.get(series)
+      const searchBits = [series]
+      const cells = headers
+        .map((col) => {
+          const hit = bag.get(col)
+          if (!hit) return `<td class="mx-cell is-empty"><span>—</span></td>`
+          searchBits.push(hit.m.model_name)
+          return `<td class="mx-cell">
+            <button class="mx-price" type="button" data-copy="${escapeHtml(hit.m.model_name)}" title="复制 ${escapeHtml(hit.m.model_name)}">
+              <b>${formatYen(yenFn(hit.m))}</b>
+              <em>/秒</em>
+              <span data-copy-label>复制名称</span>
+            </button>
+          </td>`
+        })
+        .join("")
+      return `<tr data-model-row="${escapeHtml(searchBits.join(" "))}">
+        <th>
+          <div class="model-name">${escapeHtml(series)}</div>
+          <div class="mx-meta">${bag.size} 个档位 · 按秒</div>
+        </th>
+        ${cells}
+      </tr>`
+    })
+    .join("")
+  return `<div class="mx-scroll"><table class="rate-table mx-table">
+      <thead>${head}</thead>
+      <tbody>${rows}</tbody>
+    </table></div>`
+}
+
+function renderGroup(title, desc, groupName, ratio, models, yenFn) {
+  const menu = `<button type="button" class="active">${escapeHtml(groupName)} <span>${ratio}x</span></button>`
+  const hint = canMatrix(models) ? "点击价格复制完整模型名" : "选择分组后查看对应分组价格"
+  const table = !models.length
+    ? `<div class="empty-card" style="border:0;border-radius:0">暂无模型</div>`
+    : canMatrix(models)
+      ? renderMatrixTable(models, yenFn)
+      : renderListTable(models, yenFn)
+  return `<section class="pg group">
+    <div class="pg-head">
+      <div>
+        <h2>${escapeHtml(title)}</h2>
+        <p>${escapeHtml(desc)}</p>
+      </div>
+      <div class="pg-count">${models.length} 个模型</div>
+    </div>
+    <div class="pg-card">
+      <div class="pg-card-head">
+        <div class="pg-ident">
+          <div class="pg-icon">▷</div>
+          <div>
+            <strong>${escapeHtml(title)}</strong>
+            <span>${hint}</span>
+          </div>
+        </div>
+        <div class="rate-pick" data-rate-pick>
+          <button class="rate-btn" type="button" data-rate-toggle>
+            ${escapeHtml(groupName)} <em>${ratio}x</em> <span class="chev">▾</span>
+          </button>
+          <div class="rate-menu">${menu}</div>
+        </div>
+      </div>
+      ${table}
+    </div>
+  </section>`
+}
+
+async function loadPublicPricing() {
+  const videoMount = document.getElementById("panel-video")
+  if (!videoMount) return
+  const statusUrl = LOCAL ? "https://artbox.top/api/status" : "/api/status"
+  const priceUrl = LOCAL ? "https://artbox.top/api/pricing" : "/api/pricing"
+  let status = {}
+  let payload = {}
+  try {
+    const [s, p] = await Promise.all([
+      fetch(statusUrl, { credentials: "omit" }).then((r) => r.json()),
+      fetch(priceUrl, { credentials: "omit" }).then((r) => r.json()),
+    ])
+    status = s.data || s
+    payload = p
+  } catch (err) {
+    videoMount.innerHTML = `<div class="empty-card">价格加载失败，请刷新重试。</div>`
+    return
+  }
+  const models = Array.isArray(payload.data) ? payload.data : []
+  const groupRatio = payload.group_ratio || {}
+  const rate = Number(status.usd_exchange_rate || 7.3)
+  const publicGroup = "default"
+  const ratio = Number(groupRatio[publicGroup] ?? 1) || 1
+  const inGroup = models.filter((m) => (m.enable_groups || []).includes(publicGroup))
+  const official = inGroup.filter(isOfficialModel)
+  const video = inGroup.filter((m) => isVideoModel(m) && !isOfficialModel(m))
+  const image = inGroup.filter(isImageModel)
+  const chat = inGroup.filter((m) => !isVideoModel(m) && !isImageModel(m) && !isOfficialModel(m))
+  const yenFn = (m) => Number(m.model_price || 0) * ratio * rate
+
+  const setCount = (tab, n) => {
+    const el = document.querySelector(`[data-tab="${tab}"] .count`)
+    if (el) el.textContent = String(n)
+  }
+  setCount("chat", chat.length)
+  setCount("image", image.length)
+  setCount("video", video.length)
+  setCount("official", official.length)
+
+  const metrics = document.getElementById("price-metrics")
+  if (metrics) {
+    metrics.innerHTML = `
+      <div class="metric"><b>1</b><span>可用渠道</span></div>
+      <div class="metric"><b>${inGroup.length}</b><span>模型数量</span></div>
+      <div class="metric"><b>1</b><span>价格分组</span></div>`
+  }
+
+  const chatMount = document.getElementById("panel-chat")
+  const imageMount = document.getElementById("panel-image")
+  const officialMount = document.getElementById("panel-official")
+  if (chatMount) {
+    chatMount.innerHTML = chat.length
+      ? renderGroup("default", "当前公开价格分组。", "default", ratio, chat, yenFn)
+      : `<div class="empty-card"><strong>没有普通模型</strong><p>当前 default 分组未上架 Chat / Completions 模型。</p></div>`
+  }
+  if (imageMount) {
+    imageMount.innerHTML = image.length
+      ? renderGroup("default", "当前公开价格分组。", "default", ratio, image, yenFn)
+      : `<div class="empty-card"><strong>没有图片模型</strong><p>当前 default 分组未上架图片模型。</p></div>`
+  }
+  videoMount.innerHTML = renderGroup(
+    "default",
+    "当前公开价格分组。倍率已计入下方展示价格。",
+    "default",
+    ratio,
+    video,
+    yenFn
+  )
+  if (officialMount) {
+    officialMount.innerHTML = official.length
+      ? renderGroup("官渠", "官方渠道视频。", "官渠", ratio, official, yenFn)
+      : renderGroup("官渠", "官方渠道视频。模型稍后接入。", "官渠", 1, [], yenFn) +
+        renderGroup("官渠 2", "官方渠道视频第二分组。模型稍后接入。", "官渠 2", 1, [], yenFn)
+  }
+
+  bindCopyNames()
+  bindRatePick()
+  bindSearch()
+}
+
+injectChrome()
+bindTheme()
+bindCodeTabs()
+bindCopyNames()
+bindSearch()
+bindRatePick()
+bindTabs()
+bindDocsNav()
+document.querySelector(".icon-refresh")?.addEventListener("click", () => loadPublicPricing())
+loadPublicPricing()

@@ -1,0 +1,107 @@
+{
+  "scope": "Reviewed subset of explicit canonical QuickStart native h3 tables/examples; no extra aspect ratios, voice ids, custom audio files or 1080p references inferred",
+  "schema": {
+    "type": "object",
+    "required": [
+      "model"
+    ],
+    "properties": {
+      "model": {
+        "type": "string",
+        "enum": [
+          "h3"
+        ]
+      },
+      "prompt": {
+        "type": "string",
+        "minLength": 1
+      },
+      "duration": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 15,
+        "default": 8
+      },
+      "aspect_ratio": {
+        "type": "string",
+        "enum": [
+          "16:9",
+          "9:16",
+          "1:1"
+        ]
+      },
+      "resolution": {
+        "type": "string",
+        "enum": [
+          "480p",
+          "720p",
+          "1080p"
+        ]
+      },
+      "image": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "additionalProperties": false
+      },
+      "last_frame": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "additionalProperties": false
+      },
+      "reference_images": {
+        "type": "array",
+        "maxItems": 7,
+        "items": {
+          "type": "object",
+          "required": [
+            "url"
+          ],
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "reference_audios": {
+        "type": "array",
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "required": [
+            "voice_id"
+          ],
+          "properties": {
+            "voice_id": {
+              "type": "string",
+              "enum": [
+                "eve",
+                "leo"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+  }
+}

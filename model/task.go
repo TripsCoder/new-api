@@ -10,6 +10,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	commonRelay "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/relaykit/dto"
 )
@@ -139,20 +140,24 @@ type TaskPrivateData struct {
 }
 
 type TaskExecutionSnapshot struct {
-	RequestID   string              `json:"request_id,omitempty"`
-	RequestPath string              `json:"request_path,omitempty"`
-	TaskPlugin  *TaskPluginSnapshot `json:"task_plugin,omitempty"`
+	// ChannelModelConfigurationRevision is submit-time provenance only. Polling
+	// never reloads current channel defaults or rewrites historical task input.
+	ChannelModelConfigurationRevision int64               `json:"channel_model_configuration_revision,omitempty"`
+	RequestID                         string              `json:"request_id,omitempty"`
+	RequestPath                       string              `json:"request_path,omitempty"`
+	TaskPlugin                        *TaskPluginSnapshot `json:"task_plugin,omitempty"`
 }
 
 // TaskPluginSnapshot contains credential-free identity only. Plugin source,
 // request/response payloads, and channel secrets must never be added here.
 type TaskPluginSnapshot struct {
-	Key        string                    `json:"key"`
-	Name       string                    `json:"name"`
-	Version    string                    `json:"version"`
-	Author     *TaskPluginAuthorSnapshot `json:"author,omitempty"`
-	APIVersion int                       `json:"api_version"`
-	Generation uint64                    `json:"generation"`
+	SourceSHA256 string                    `json:"source_sha256,omitempty"`
+	Key          string                    `json:"key"`
+	Name         string                    `json:"name"`
+	Version      string                    `json:"version"`
+	Author       *TaskPluginAuthorSnapshot `json:"author,omitempty"`
+	APIVersion   int                       `json:"api_version"`
+	Generation   uint64                    `json:"generation"`
 }
 
 type TaskPluginAuthorSnapshot struct {
@@ -162,6 +167,7 @@ type TaskPluginAuthorSnapshot struct {
 
 // TaskBillingContext 记录任务提交时的计费参数，以便轮询阶段可以重新计算额度。
 type TaskBillingContext struct {
+	UpstreamCost    *modelconfig.CostSnapshot    `json:"upstream_cost,omitempty"`
 	ModelPrice      float64                      `json:"model_price,omitempty"`       // 模型单价
 	GroupRatio      float64                      `json:"group_ratio,omitempty"`       // 分组倍率
 	ModelRatio      float64                      `json:"model_ratio,omitempty"`       // 模型倍率

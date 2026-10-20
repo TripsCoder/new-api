@@ -1,0 +1,137 @@
+# 查询视频任务状态
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /v1/videos/{task_id}:
+    get:
+      summary: 查询视频任务状态
+      deprecated: false
+      description: |-
+        轮询视频生成任务状态。建议间隔 3-5 秒。
+
+        ## 状态流转
+
+        `pending` → `processing` → `completed` / `failed`
+
+        ## 结果说明
+
+        - **completed**: `video_url` 为 CDN 地址，无需鉴权可直接下载，有效期约 6 小时，一定要及时下载。
+        - **failed**: 已自动全额退款，`error.message` 包含失败原因
+      operationId: getVideoStatus
+      tags:
+        - 视频生成
+        - 视频生成
+      parameters:
+        - name: task_id
+          in: path
+          description: 任务ID（提交接口返回的 task_id）
+          required: true
+          example: task_NZXe8pFWLT3YKHSHB7pZJTcHZQIfgDte
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoStatusResponse'
+              examples:
+                processing:
+                  summary: 生成中
+                  value:
+                    task_id: task_xxx
+                    status: processing
+                    progress: 45
+                completed:
+                  summary: 生成完成
+                  value:
+                    task_id: task_xxx
+                    status: completed
+                    progress: 100
+                    video_url: https://cdn.paisio.online/videos/result.mp4
+                failed:
+                  summary: 生成失败（已自动退款）
+                  value:
+                    task_id: task_xxx
+                    status: failed
+                    error:
+                      message: 生成失败，已自动退款
+          headers: {}
+          x-apifox-name: ''
+      security: []
+      x-apifox-folder: 视频生成
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/8358720/apis/api-475784236-run
+components:
+  schemas:
+    VideoStatusResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - processing
+            - completed
+            - failed
+          description: pending→processing→completed/failed
+        progress:
+          type: integer
+          description: 进度百分比 0-100
+          minimum: 0
+          maximum: 100
+        video_url:
+          type: string
+          format: uri
+          description: 视频下载URL（仅 completed 时存在），CDN地址无需鉴权，有效期约24小时
+        cost:
+          type: number
+          description: 实际扣费金额（¥），仅 completed 时返回
+          examples:
+            - 2.9
+        error:
+          type: object
+          description: 错误信息（仅 failed 时存在），失败已自动全额退款
+          properties:
+            message:
+              type: string
+          x-apifox-orders:
+            - message
+          x-apifox-ignore-properties: []
+      x-apifox-orders:
+        - task_id
+        - status
+        - progress
+        - video_url
+        - cost
+        - error
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    bearerAuth:
+      type: bearer
+      scheme: bearer
+      description: API Key，格式为 sk-xxxxxxxx，在控制台令牌页面创建
+    QueryKeyAuth:
+      type: apikey
+      in: query
+      name: key
+      description: 也可以通过 query 参数 ?key=sk-xxx 传入 API Key
+servers: []
+security: []
+
+```
