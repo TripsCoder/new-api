@@ -37,10 +37,36 @@ export async function saveModelConfiguration(
   removeModels: string[] = [],
   expectedModels = ''
 ): Promise<Configuration> {
+  let requestConfiguration = configuration
+  if (removeModels.length > 0) {
+    const removed = new Set(removeModels)
+    const bindings = Object.fromEntries(
+      Object.entries(configuration.bindings).filter(
+        ([name]) => !removed.has(name)
+      )
+    )
+    // Count all retained bindings, including disabled modes and unrouted models.
+    // Prune before serialization so obsolete schemas do not consume the request
+    // limit. Keep the editor draft intact if validation or saving fails.
+    const referencedGroups = new Set(
+      Object.values(bindings).flatMap((modes) =>
+        Object.values(modes).map((binding) => binding.groupId)
+      )
+    )
+    requestConfiguration = {
+      ...configuration,
+      bindings,
+      groups: Object.fromEntries(
+        Object.entries(configuration.groups).filter(([id]) =>
+          referencedGroups.has(id)
+        )
+      ),
+    }
+  }
   const response = await api.put<{ success: boolean; data: Configuration }>(
     `/api/channel/${channelId}/model-configuration`,
     {
-      configuration,
+      configuration: requestConfiguration,
       expectedRevision: configuration.revision,
       addModels,
       removeModels,
