@@ -28,7 +28,11 @@ func TestSixProviderV2FinalSourcesCompileAndBuild(t *testing.T) {
 			require.NoError(t, err)
 			plugin, err := jsplugin.CompilePlugin(string(source), jsplugin.Options{Key: test.key})
 			require.NoError(t, err)
-			require.Equal(t, "2.1.5", plugin.Meta.Version)
+			version := "2.1.5"
+			if test.key == "paisio_media" {
+				version = "2.1.6"
+			}
+			require.Equal(t, version, plugin.Meta.Version)
 			require.NotEmpty(t, plugin.SourceSHA256)
 			input := test.input
 			input["prompt"] = "Isolated fixture"
@@ -76,7 +80,11 @@ func TestSixProviderUpdatesCoexistWithFactoryAndLegacyProviders(t *testing.T) {
 		require.NoError(t, err)
 		published, ok := registry.Get(key)
 		require.True(t, ok)
-		require.Equal(t, "2.1.5", published.Meta.Version)
+		version := "2.1.5"
+		if key == "paisio_media" {
+			version = "2.1.6"
+		}
+		require.Equal(t, version, published.Meta.Version)
 		require.Empty(t, registry.RoutingErrors())
 	}
 	untouched, ok = registry.Get("cangyuan_media")
