@@ -18,5 +18,5 @@ func CanonicalReviewedModelName(provider, model string) string {
 
 // Explicit compatibility window; retained v2.0.0 snapshots remain executable.
 func ReviewedPluginVersion(version string) bool {
-	return version == "2.0.0" || version == "2.0.1" || version == "2.0.2" || version == "2.1.0" || version == "2.1.1" || version == "2.1.2" || version == "2.1.3" || version == "2.1.4" || version == "2.1.5"
+	return version == "2.0.0" || version == "2.0.1" || version == "2.0.2" || version == "2.1.0" || version == "2.1.1" || version == "2.1.2" || version == "2.1.3" || version == "2.1.4" || version == "2.1.5" || version == "2.1.6"
 }
