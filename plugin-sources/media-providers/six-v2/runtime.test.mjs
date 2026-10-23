@@ -34,7 +34,7 @@ test('reviewed parameter gaps use the exact supplier definitions without network
  assert.equal(yuxi.buildSubmitRequest(context('minimax-h3-fast',{seconds:5,seed:0,images:['https://media.example/ref.png']})).body.seed,0);
  assert.throws(()=>paisio.buildSubmitRequest(context('sd2-720p',{seconds:5,seed:0})),/unsupported field/);
 });
-test('exactly six final artifacts match their build manifest',()=>{const manifest=JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url),'utf8'));assert.equal(manifest.plugins.length,6);for(const item of manifest.plugins){const source=fs.readFileSync(new URL('./dist/'+item.file,import.meta.url));assert.equal(crypto.createHash('sha256').update(source).digest('hex'),item.sha256);assert.equal(load(item.key).meta.version,'2.1.5');assert.equal(item.version,'2.1.5')}});
+test('exactly six final artifacts match their build manifest',()=>{const manifest=JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url),'utf8'));assert.equal(manifest.plugins.length,6);for(const item of manifest.plugins){const source=fs.readFileSync(new URL('./dist/'+item.file,import.meta.url));assert.equal(crypto.createHash('sha256').update(source).digest('hex'),item.sha256);assert.equal(load(item.key).meta.version,item.key==='paisio_media'?'2.1.6':'2.1.5');assert.equal(item.version,item.key==='paisio_media'?'2.1.6':'2.1.5')}});
 test('every final artifact model builds declared usage facts without network',()=>{let count=0;for(const [key,provider]of Object.entries(profiles)){const plugin=load(key);for(const [model,p]of Object.entries(provider.models)){const input={};if(p.secondsField||p.fixedSeconds)input.seconds=p.defaultSeconds??p.secondsChoices?.[0]??p.minSeconds;if(p.minImages||p.firstLastOnly)input.images=Array(p.minImages||1).fill('https://media.example.com/ref.png');if(p.minAudios)input.audios=Array(p.minAudios).fill('https://media.example.com/ref.mp3');if(p.anyImageOrAudio&&!input.images&&!input.audios)input.images=['https://media.example.com/ref.png'];const ctx=context(model,input,p.kind==='image'?'image_generate':'video_generate');let request;try{request=plugin.buildSubmitRequest(ctx)}catch(error){throw new Error(key+' '+model+': '+error.message)}assert.ok(request.url.startsWith('https://provider.invalid/'));assert.equal(request.method,'POST');const facts=plugin.extractUsage(ctx);const schema=plugin.meta.usageProfiles.find(profile=>profile.models.some(name=>name.toLowerCase()===(p.canonicalModel||model).toLowerCase())).schema;for(const name of Object.keys(facts))assert.ok(Object.hasOwn(schema,name),key+' '+model+' '+name);count++}}assert.ok(count>190)});
 test('Paisio image explicit async false is not forced to async true',()=>{const plugin=load('paisio_media');const ctx=context('gpt-image2-high',{n:1,async:false},'image_generate');assert.equal(plugin.buildSubmitRequest(ctx).body.async,false);ctx.requestBody.input.async=true;assert.equal(plugin.buildSubmitRequest(ctx).body.async,true)});
 
@@ -266,4 +266,17 @@ test('YuxiBox uploads satisfy conditional images and retain per-kind multipart f
   assert.throws(()=>plugin.buildSubmitRequest(make(model,{videos:Array(5).fill('https://media.example/a.mp4')},[files[1]])),/combined.*limit/);
  }
  assert.throws(()=>plugin.buildSubmitRequest(make('seedance-2.0（官渠）',{},[image])),/absent/);
+});
+
+// Result download regression: no submission and no credentials sent to the CDN.
+test('Paisio prefers saved public video URL and preserves authenticated fallback',()=>{
+ const plugin=load('paisio_media');
+ const ctx={artifactKey:'video',upstreamTaskId:'original',baseUrl:'https://provider.invalid',apiKey:'private',authHeader:'Bearer private',clientRequest:{method:'GET'},data:{video_url:'https://cdn.example/video.mp4'}};
+ const direct=plugin.buildContentRequest(ctx);
+ assert.deepEqual(plain(direct),{url:'https://cdn.example/video.mp4',method:'GET',credentialless:true});
+ assert.equal(plugin.buildContentRequest({...ctx,clientRequest:{method:'HEAD'}}).method,'HEAD');
+ const fallback=plugin.buildContentRequest({...ctx,data:{}});
+ assert.ok(fallback.url.startsWith('https://provider.invalid/'));
+ assert.equal(fallback.credentialless,undefined);
+ assert.ok(fallback.headers.Authorization);
 });

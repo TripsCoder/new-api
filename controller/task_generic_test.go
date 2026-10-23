@@ -643,7 +643,7 @@ func TestWriteVideoDataURLRejectsOversizedPayloadBeforeDecode(t *testing.T) {
 	assert.Empty(t, recorder.Header().Get("Content-Type"))
 }
 
-func TestProxyTaskMediaAllowsOnlyCredentiallessCrossOriginRedirect(t *testing.T) {
+func TestProxyTaskMediaStripsCredentialsOnCrossOriginDownloadRedirect(t *testing.T) {
 	task := setupGenericTaskTest(t)
 	var destinationAuthorization, destinationRange string
 	destination := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -673,17 +673,18 @@ func TestProxyTaskMediaAllowsOnlyCredentiallessCrossOriginRedirect(t *testing.T)
 	assert.Equal(t, "bytes=0-3", destinationRange)
 
 	destinationRange = ""
-	rejectedRecorder := httptest.NewRecorder()
-	rejectedContext, _ := gin.CreateTestContext(rejectedRecorder)
-	rejectedContext.Request = httptest.NewRequest(http.MethodGet, "/content", nil)
-	err = proxyTaskMedia(rejectedContext, task, &relaychannel.TaskContentRequest{
+	credentialedRecorder := httptest.NewRecorder()
+	credentialedContext, _ := gin.CreateTestContext(credentialedRecorder)
+	credentialedContext.Request = httptest.NewRequest(http.MethodGet, "/content", nil)
+	credentialedContext.Request.Header.Set("Range", "bytes=0-3")
+	err = proxyTaskMedia(credentialedContext, task, &relaychannel.TaskContentRequest{
 		URL: source.URL, Method: http.MethodGet,
 		Headers: map[string]string{"Authorization": "Bearer provider-secret"},
 	})
-	var proxyErr *taskMediaProxyError
-	require.ErrorAs(t, err, &proxyErr)
-	assert.Equal(t, "artifact_request_rejected", proxyErr.code)
-	assert.Empty(t, destinationRange)
+	require.NoError(t, err)
+	assert.Equal(t, "redirected", credentialedRecorder.Body.String())
+	assert.Empty(t, destinationAuthorization)
+	assert.Equal(t, "bytes=0-3", destinationRange)
 }
 
 func TestTaskMediaRequestHeaderPolicy(t *testing.T) {

@@ -638,6 +638,12 @@ export function listArtifacts(task) {
 }
 export function buildContentRequest(ctx) {
   const method = ctx.clientRequest && ctx.clientRequest.method === 'HEAD' ? 'HEAD' : 'GET';
+  // Prefer Paisio's public result URL without forwarding channel credentials.
+  // Its authenticated content endpoint redirects to a different CDN origin.
+  if (PROVIDER.key === 'paisio_media' && ctx.artifactKey === 'video') {
+    const url = videoURL(ctx.data);
+    if (safeMediaURL(url)) return {url,method,credentialless:true};
+  }
   if (ctx.artifactKey === 'video' && PROVIDER.content) {
     const descriptor = request(ctx, PROVIDER.content + encodeURIComponent(taskID(ctx.upstreamTaskId)) + '/content');
     descriptor.method = method;

@@ -4,29 +4,21 @@
   "status": "candidate-not-installed",
   "preserveKeys": true,
   "inputs": {
-    "profiles.json": "8252037756fed75042d06da489559464445ba9995a879174d37ba2186b2641ab",
-    "runtime.js": "13ea6815e846c39c1fa7004be0a523321284734cc4002ec53ad9aac05771c4d5",
-    "interface-runtime.js": "628efc6ee6ac76cc7c5c3a31d8bf38a5701511420faf9f517a8a23268b794289",
-    "interface_contracts.py": "7387d96557590e9ee56379a06d5dcc823d9bfa31d25575c98df6826b9ee61784",
-    "sources.lock.json": "946315be858753895b56b0a18202ec512300ef144a15a18b6274dced8b349a00",
-    "build.mjs": "ded9457d6a316303a1c4f536b0a460e397929a43413d72917c433f2edb1ac5e3"
+    "profiles.json": "a272b9611f352f2a0dceafe7cecbab359c63b1cbd56b9bc6f97c5edc874ce04f",
+    "runtime.js": "3926ad7621f5130171ef546db22017757183190bb9532803652016d2fbe0e517",
+    "interface-runtime.js": "b813bce026d81606157bf6ff9b5ab5cc01fe8cbd7f8705154dc712189b6cb328",
+    "interface_contracts.py": "ea9e1d41e605c45b6f418edacdd415f9a67b5dc11f9c5a63e5a5bd1ee87e69f6",
+    "sources.lock.json": "55eb07e6739e0a546f35e746ae1bbb2218b753ade5bcefcac8f1ed53b084c515",
+    "build.mjs": "7323f65d7a7fbd4b1ab9ca0773b5d2bbc2de3ab5aeb2a86d23b2196a7d488f4b"
   },
   "plugins": [
-    {
-      "key": "paisio_media",
-      "version": "2.1.5",
-      "file": "paisio_media.plugin.js",
-      "models": 50,
-      "pendingModels": 0,
-      "sha256": "96898cbce0cdb40407ee5860f75db896db5b2ce0b294f40c2bb3aee2ee27ffc1"
-    },
     {
       "key": "yuxibox_media",
       "version": "2.1.5",
       "file": "yuxibox_media.plugin.js",
       "models": 16,
       "pendingModels": 0,
-      "sha256": "2f98eb92300cfe69a319b7e8ceb7b13922628772f8ba1f821ef81bb1566e66d1"
+      "sha256": "800ccbdef6ae0313fe0b4f29ca50c6dc41151b40266985cf252de04bc0b7f84c"
     },
     {
       "key": "xcmapi_media",
@@ -34,7 +26,7 @@
       "file": "xcmapi_media.plugin.js",
       "models": 14,
       "pendingModels": 17,
-      "sha256": "73494c6ee0c6168c694fe49c16425993714d4d73bd0dd059f7d33113d1c1609a"
+      "sha256": "c19d21cba3d757eccfb4b34eb262d8a98a3d5c7f9540ced5ed55fcfca8bce4b2"
     },
     {
       "key": "artbox_media",
@@ -42,7 +34,7 @@
       "file": "artbox_media.plugin.js",
       "models": 8,
       "pendingModels": 9,
-      "sha256": "f79b6e03291a32e1ef90fca3ae13bf578a876fd6f71a15acfd3cf5be0485c65e"
+      "sha256": "77e495f20cbf872292730790844146f40c52dfe72958c350260c2631a092cb90"
     },
     {
       "key": "lxmone_media",
@@ -50,7 +42,7 @@
       "file": "lxmone_media.plugin.js",
       "models": 84,
       "pendingModels": 4,
-      "sha256": "5d52871547f1f95d582a7db5deb34029226447f1c0f888368feff87158886b7c"
+      "sha256": "7960737784a090e51f6dce36d4bac4a6ead9f7d7c672223fc79ce23ed5a00a98"
     },
     {
       "key": "zhangyuge_media",
@@ -58,7 +50,15 @@
       "file": "zhangyuge_media.plugin.js",
       "models": 45,
       "pendingModels": 10,
-      "sha256": "d76e97b024a2303a811ad6bde8991c84017006db22929b4bf2f15ba8869c2de2"
+      "sha256": "c9a98501e7b27bd9f4a51e8ac7b8ef8113f4a376cd291b8acd5af4f2b53ffeac"
+    },
+    {
+      "key": "paisio_media",
+      "version": "2.1.6",
+      "file": "paisio_media.plugin.js",
+      "models": 50,
+      "pendingModels": 0,
+      "sha256": "a8ffcd4918bf040fa0e2021f1dae95c489ca8fc0e85d0e93d637a2e61416bd6a"
     }
   ]
 }

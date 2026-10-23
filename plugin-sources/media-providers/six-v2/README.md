@@ -135,3 +135,8 @@ node --test plugin-sources/media-providers/six-v2/runtime.test.mjs
 
 
 同日后续用户授权安装：本地宿主new-api已保留r33功能升级r34，六家2.1.5经管理后台安装并激活。后台源码编辑器统一CRLF为LF，安装hash与原生成字节hash分别记录，后续同版本以实际已装LF产物核对，不能用不同hash覆盖不可变版本。实际安装源码及保存PI42配置的免费隔离Handler检查、最新请求字段无网络回放和浏览器注册状态通过；未调用收费生成或部署正式环境。完整状态、历史来源保留及回退只续写juhefuwu原任务 `docs/migration/new-api-channel-sync-20261011.md#newapi-215-local-install-r34-20261020`。
+
+
+## 2026-10-23 Paisio artifact download candidate 2.1.6
+
+Paisio prefers its saved public video URL without credentials; absent URLs retain the authenticated content endpoint. Only Paisio is regenerated; selective manifests verify retained file hashes without changing other plugin bytes. The separately authorized generic proxy fix strips credentials/body on GET/HEAD cross-origin redirects and retains SSRF, loop and HTTPS-downgrade checks. Existing tasks keep their original plugin identity. Scope, evidence, validation, deployment state and rollback remain in the [original host task](../../../../juhefuwu/docs/delivery/video-poll-fix-20261012/README.md#assistant-video-download-redirect-20261023). Candidate only; no activation or paid generation.
