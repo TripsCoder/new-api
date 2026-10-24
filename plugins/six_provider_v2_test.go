@@ -31,6 +31,8 @@ func TestSixProviderV2FinalSourcesCompileAndBuild(t *testing.T) {
 			version := "2.1.5"
 			if test.key == "paisio_media" {
 				version = "2.1.6"
+			} else if test.key == "xcmapi_media" {
+				version = "2.1.7"
 			}
 			require.Equal(t, version, plugin.Meta.Version)
 			require.NotEmpty(t, plugin.SourceSHA256)
@@ -83,6 +85,8 @@ func TestSixProviderUpdatesCoexistWithFactoryAndLegacyProviders(t *testing.T) {
 		version := "2.1.5"
 		if key == "paisio_media" {
 			version = "2.1.6"
+		} else if key == "xcmapi_media" {
+			version = "2.1.7"
 		}
 		require.Equal(t, version, published.Meta.Version)
 		require.Empty(t, registry.RoutingErrors())
