@@ -1284,8 +1284,8 @@ func ValidateV1Meta(meta Meta) error {
 
 func normalizeV1Meta(meta *Meta) error {
 	if discovery := meta.ModelDiscovery; discovery != nil {
-		if discovery.Format != "openai" || !regexp.MustCompile(`^/[A-Za-z0-9_/-]{1,255}$`).MatchString(discovery.Path) || strings.Contains(discovery.Path, "//") {
-			return fmt.Errorf("plugin modelDiscovery requires openai format and a same-origin absolute path without query or fragment")
+		if !slices.Contains([]string{"openai", "fenglang_pricing"}, discovery.Format) || !regexp.MustCompile(`^/[A-Za-z0-9_/-]{1,255}$`).MatchString(discovery.Path) || strings.Contains(discovery.Path, "//") {
+			return fmt.Errorf("plugin modelDiscovery requires a supported format and a same-origin absolute path without query or fragment")
 		}
 		switch discovery.SourceStatus {
 		case "", "historical_declaration", "endpoint_snapshot", "standard_unverified":
@@ -1293,7 +1293,7 @@ func normalizeV1Meta(meta *Meta) error {
 			return fmt.Errorf("invalid model discovery source status")
 		}
 		if discovery.SourceStatus == "standard_unverified" {
-			if discovery.Path != "/v1/models" || discovery.SourceURL != "" || discovery.SourceSHA256 != "" {
+			if discovery.Format != "openai" || discovery.Path != "/v1/models" || discovery.SourceURL != "" || discovery.SourceSHA256 != "" {
 				return fmt.Errorf("unverified standard discovery must not claim source proof")
 			}
 		} else {

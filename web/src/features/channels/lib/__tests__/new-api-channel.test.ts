@@ -53,6 +53,31 @@ function newAPIForm(baseUrl: string) {
 }
 
 describe('New API channel', () => {
+  test.each(['aotian_video', 'fenglang_video'])(
+    'disabled %s drafts can save replacement credentials before model discovery',
+    (provider) => {
+      const draft = {
+        ...newAPIForm('https://aotianzz.xyz'),
+        type: 61,
+        task_plugin_key: provider,
+        status: 2,
+        models: '',
+      }
+      expect(channelFormSchema.safeParse(draft).success).toBe(true)
+      expect(channelFormSchema.safeParse({ ...draft, status: 1 }).success).toBe(
+        false
+      )
+      expect(
+        channelFormSchema.safeParse({
+          ...draft,
+          task_plugin_key: 'paisio_media',
+        }).success
+      ).toBe(false)
+      expect(channelFormSchema.safeParse({ ...draft, type: 1 }).success).toBe(
+        false
+      )
+    }
+  )
   test('registers selection, ordering, model discovery, and icon metadata', () => {
     const option = CHANNEL_TYPE_OPTIONS.find(
       (item) => item.value === CHANNEL_TYPE_NEW_API

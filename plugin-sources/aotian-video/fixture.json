@@ -1,0 +1,1373 @@
+{
+  "cases": [
+    {
+      "name": "no invented duration resolution ratio or media defaults",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture"
+        }
+      }
+    },
+    {
+      "name": "ratio stays size and resolution stays independent",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5,
+              "aspect_ratio": "16:9",
+              "resolution": "1080p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture",
+          "seconds": "5",
+          "size": "16:9",
+          "resolution": "1080p"
+        }
+      }
+    },
+    {
+      "name": "duration numeric alias is sent as string seconds",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "duration": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture",
+          "seconds": "6"
+        }
+      }
+    },
+    {
+      "name": "equal duration aliases deduplicate",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": "6",
+              "duration": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture",
+          "seconds": "6"
+        }
+      }
+    },
+    {
+      "name": "conflicting duration aliases fail",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5,
+              "duration": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "别名值冲突"
+    },
+    {
+      "name": "unsafe duration 0",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 0
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration -1",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": -1
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration 3601",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 3601
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration 5.5",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5.5
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration 5s",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": "5s"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration false",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": false
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration 9007199254740992",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 9007199254740992
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "upper duration boundary",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 3600
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture",
+          "seconds": "3600"
+        }
+      }
+    },
+    {
+      "name": "single image alias",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "input_reference": "https://media.example/a.png"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture",
+          "images": [
+            "https://media.example/a.png"
+          ]
+        }
+      }
+    },
+    {
+      "name": "all reference types preserve URL order and signatures",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "https://media.example/a.png?signature=a%2Fb%2Bz&expires=99999",
+                "https://media.example/b.png"
+              ],
+              "videos": [
+                "https://media.example/c.mp4"
+              ],
+              "audios": [
+                "https://media.example/d.wav"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture",
+          "images": [
+            "https://media.example/a.png?signature=a%2Fb%2Bz&expires=99999",
+            "https://media.example/b.png"
+          ],
+          "reference_videos": [
+            "https://media.example/c.mp4"
+          ],
+          "reference_audios": [
+            "https://media.example/d.wav"
+          ]
+        }
+      }
+    },
+    {
+      "name": "stringified media arrays are not arrays",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "images": "[\"https://media.example/a.png\"]"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "URL 数组"
+    },
+    {
+      "name": "conflicting image aliases fail",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "https://media.example/a.png"
+              ],
+              "image": "https://media.example/b.png"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "别名值冲突"
+    },
+    {
+      "name": "data URL not accepted",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "data:image/png;base64,AAAA"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "HTTPS"
+    },
+    {
+      "name": "unsupported and unknown optional fields cannot return to wire or usage",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seed": 0,
+              "n": 50,
+              "generate_audio": false,
+              "metadata": {
+                "seconds": 3601
+              },
+              "start_image_url": "https://media.example/frame.png",
+              "resolution_name": "4k",
+              "unknown": "x"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture"
+        }
+      }
+    },
+    {
+      "name": "blank prompt fails",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "  "
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "prompt"
+    },
+    {
+      "name": "unconfirmed interface fails",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "input": {
+              "prompt": "Fixture"
+            }
+          }
+        }
+      ],
+      "expectedError": "确认"
+    },
+    {
+      "name": "unknown ratio fails",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "aspect_ratio": "2:7"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "size"
+    },
+    {
+      "name": "saved unrestricted ratio policy preserves mapping",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "aspect_ratio": "2:7"
+            },
+            "uploads": [],
+            "unrestrictedValueFields": [
+              "aspect_ratio"
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture",
+          "size": "2:7"
+        }
+      }
+    },
+    {
+      "name": "multipart forwards the original opaque file reference",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [
+            {
+              "ref": "request_file:input_reference",
+              "field": "input_reference",
+              "filename": "reference.png",
+              "mimeType": "image/png",
+              "size": 100
+            }
+          ],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5,
+              "size": "9:16"
+            },
+            "uploads": [
+              {
+                "ref": "request_file:input_reference",
+                "field": "input_reference",
+                "filename": "reference.png",
+                "mimeType": "image/png",
+                "size": 100
+              }
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json"
+        },
+        "bodyType": "multipart",
+        "parts": [
+          {
+            "name": "model",
+            "value": "new-account-video-id"
+          },
+          {
+            "name": "prompt",
+            "value": "Fixture"
+          },
+          {
+            "name": "seconds",
+            "value": "5"
+          },
+          {
+            "name": "size",
+            "value": "9:16"
+          },
+          {
+            "name": "input_reference",
+            "fileRef": "request_file:input_reference",
+            "filename": "reference.png"
+          }
+        ]
+      }
+    },
+    {
+      "name": "multiple uploads fail",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [
+            {
+              "ref": "request_file:input_reference",
+              "field": "input_reference",
+              "filename": "reference.png",
+              "mimeType": "image/png",
+              "size": 100
+            }
+          ],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5,
+              "size": "9:16"
+            },
+            "uploads": [
+              {
+                "ref": "request_file:input_reference",
+                "field": "input_reference",
+                "filename": "reference.png",
+                "mimeType": "image/png",
+                "size": 100
+              },
+              {
+                "ref": "request_file:input_reference",
+                "field": "input_reference",
+                "filename": "reference.png",
+                "mimeType": "image/png",
+                "size": 100
+              }
+            ]
+          }
+        }
+      ],
+      "expectedError": "一个"
+    },
+    {
+      "name": "URL and file mixing fails",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [
+            {
+              "ref": "request_file:input_reference",
+              "field": "input_reference",
+              "filename": "reference.png",
+              "mimeType": "image/png",
+              "size": 100
+            }
+          ],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5,
+              "size": "9:16",
+              "images": [
+                "https://media.example/a.png"
+              ]
+            },
+            "uploads": [
+              {
+                "ref": "request_file:input_reference",
+                "field": "input_reference",
+                "filename": "reference.png",
+                "mimeType": "image/png",
+                "size": 100
+              }
+            ]
+          }
+        }
+      ],
+      "expectedError": "混用"
+    },
+    {
+      "name": "decoder preserves unsupported malformed fields for host filtering",
+      "hook": "protocols",
+      "args": [
+        {
+          "model": "dynamic",
+          "body": {
+            "kind": "json",
+            "value": {
+              "model": "dynamic",
+              "prompt": "Fixture",
+              "images": false,
+              "seconds": {
+                "invalid": true
+              },
+              "generate_audio": 0,
+              "protocolTemplate": "client-spoof"
+            }
+          }
+        }
+      ],
+      "path": [
+        "openai_video",
+        "decodeRequest"
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "dynamic",
+        "action": "video_generate",
+        "requestBody": {
+          "operation": "video_generate",
+          "input": {
+            "model": "dynamic",
+            "prompt": "Fixture",
+            "images": false,
+            "seconds": {
+              "invalid": true
+            },
+            "generate_audio": 0,
+            "protocolTemplate": "client-spoof"
+          },
+          "uploads": []
+        }
+      }
+    },
+    {
+      "name": "multipart duplicate text fields fail",
+      "hook": "protocols",
+      "args": [
+        {
+          "model": "dynamic",
+          "body": {
+            "kind": "multipart",
+            "fields": {
+              "prompt": [
+                "a",
+                "b"
+              ]
+            },
+            "files": []
+          }
+        }
+      ],
+      "path": [
+        "openai_video",
+        "decodeRequest"
+      ],
+      "expectedError": "一次"
+    },
+    {
+      "name": "task ID is preserved and escaped once",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "baseUrl": "https://supplier.example",
+          "apiKey": "fixture-only",
+          "taskId": "task_A/B"
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos/task_A%2FB",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "accepted creation retains upstream ID",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 202,
+          "body": {
+            "id": "task_upstream",
+            "status": "queued"
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "task_upstream",
+        "taskData": {
+          "id": "task_upstream",
+          "status": "queued"
+        },
+        "state": {
+          "protocolTemplate": "interface:ac205b7903df54b7"
+        }
+      }
+    },
+    {
+      "name": "failure inside HTTP 200 is terminal and not a retryable parse error",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "invalid duration"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "task_public",
+        "taskData": {
+          "success": false,
+          "error": {
+            "message": "invalid duration"
+          }
+        },
+        "immediate": {
+          "status": "FAILURE",
+          "progress": "100%",
+          "reason": "invalid duration"
+        }
+      }
+    },
+    {
+      "name": "no invented ID after accepted response without ID",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "status": "queued"
+          }
+        }
+      ],
+      "expectedError": "任务 ID"
+    },
+    {
+      "name": "poll queued",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "queued",
+          "progress": 100
+        }
+      ],
+      "expected": {
+        "status": "QUEUED",
+        "progress": "0%"
+      }
+    },
+    {
+      "name": "poll in_progress",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "in_progress",
+          "progress": 100
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "99%"
+      }
+    },
+    {
+      "name": "poll processing",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "processing",
+          "progress": 100
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "99%"
+      }
+    },
+    {
+      "name": "terminal success completed",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "completed",
+          "url": "https://video.aotianzz.xyz/result.mp4"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://video.aotianzz.xyz/result.mp4"
+      }
+    },
+    {
+      "name": "terminal success success",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "success",
+          "url": "https://video.aotianzz.xyz/result.mp4"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://video.aotianzz.xyz/result.mp4"
+      }
+    },
+    {
+      "name": "terminal success succeeded",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "succeeded",
+          "url": "https://video.aotianzz.xyz/result.mp4"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://video.aotianzz.xyz/result.mp4"
+      }
+    },
+    {
+      "name": "terminal failure failed",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "failed",
+          "error": {
+            "message": "素材不支持"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "素材不支持"
+      }
+    },
+    {
+      "name": "terminal failure failure",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "failure",
+          "error": {
+            "message": "素材不支持"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "素材不支持"
+      }
+    },
+    {
+      "name": "terminal failure cancelled",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "cancelled",
+          "error": {
+            "message": "素材不支持"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "素材不支持"
+      }
+    },
+    {
+      "name": "terminal failure canceled",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "canceled",
+          "error": {
+            "message": "素材不支持"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "素材不支持"
+      }
+    },
+    {
+      "name": "unknown is not running or successful",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "new_status"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "未识别上游任务状态"
+      }
+    },
+    {
+      "name": "completed without URL is not successful",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "status": "completed"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "完成响应缺少有效视频 URL"
+      }
+    },
+    {
+      "name": "measured duration is not invented",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "seconds": 5,
+          "cost": 0.1
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "request count excludes ignored billing multipliers",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 6,
+              "n": 20
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1
+      }
+    },
+    {
+      "name": "legacy billing requires explicit expression",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "usagePurpose": "billing_ratios"
+        }
+      ],
+      "expectedError": "计费表达式"
+    },
+    {
+      "name": "download HEAD uses URL without credentials or content suffix",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "url": "https://video.aotianzz.xyz/result.mp4"
+          },
+          "clientRequest": {
+            "method": "HEAD"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://video.aotianzz.xyz/result.mp4",
+        "method": "HEAD",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "renderer returns URL without upstream private ID",
+      "hook": "protocols",
+      "args": [
+        {},
+        {
+          "status": "SUCCESS",
+          "data": {
+            "id": "task_private",
+            "url": "https://video.aotianzz.xyz/result.mp4"
+          }
+        }
+      ],
+      "path": [
+        "openai_video",
+        "render"
+      ],
+      "expected": {
+        "url": "https://video.aotianzz.xyz/result.mp4"
+      }
+    }
+  ]
+}

@@ -10,6 +10,15 @@ import (
 
 //go:embed catalog.json
 var catalogJSON []byte
+
+// AoTian is projected by its own plugin build; the six-provider generator
+// continues to own catalog.json and its existing initialization artifacts.
+//
+//go:embed aotian_video.catalog.json
+var aotianCatalogJSON []byte
+
+//go:embed fenglang_video.catalog.json
+var fenglangCatalogJSON []byte
 var catalogOnce sync.Once
 var catalogs map[string]any
 var catalogError error
@@ -23,6 +32,22 @@ func ProviderCatalog(key string) (any, error) {
 		}
 		catalogError = common.Unmarshal(catalogJSON, &root)
 		catalogs = root.Providers
+		if catalogError != nil {
+			return
+		}
+		var aotian map[string]any
+		catalogError = common.Unmarshal(aotianCatalogJSON, &aotian)
+		if catalogError == nil {
+			catalogs["aotian_video"] = aotian
+		}
+		if catalogError != nil {
+			return
+		}
+		var fenglang map[string]any
+		catalogError = common.Unmarshal(fenglangCatalogJSON, &fenglang)
+		if catalogError == nil {
+			catalogs["fenglang_video"] = fenglang
+		}
 	})
 	if catalogError != nil {
 		return nil, catalogError

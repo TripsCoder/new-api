@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AoTian New API 视频接口：创建任务、图片及音视频参考、异步轮询、结果下载与错误处理。">
+  <title>视频生成 API · 文档中心</title>
+  <style>
+    :root{--blue:#1859cf;--ink:#17253e;--muted:#586b86;--line:#dce5f1;--paper:#fff;--bg:#f6f9fe;--side:252px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:26px}body{margin:0;color:var(--ink);background:var(--bg);font:15px/1.8 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+    a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}a:focus-visible,button:focus-visible{outline:3px solid #65a6ff;outline-offset:4px}
+    .skip{position:fixed;top:-60px;left:16px;background:white;padding:8px;z-index:9}.skip:focus{top:8px}
+    aside{width:var(--side);position:fixed;inset:0 auto 0 0;background:#f1f6fc;border-right:1px solid var(--line);padding:26px 18px;overflow-y:auto}
+    .brand{font-size:19px;font-weight:750;display:block;margin:0 10px 22px}.eyebrow{letter-spacing:2px;font-size:11px;font-weight:750;color:var(--muted);text-transform:uppercase}
+    nav .eyebrow{padding:14px 12px 6px}nav a{display:block;padding:8px 12px;margin:3px 0;border-radius:8px;color:#354966}nav a.active{background:#e0ebfd;color:#164cb3;font-weight:650}
+    main{margin-left:var(--side);padding:32px 5vw 64px;max-width:1450px}header{margin-bottom:24px;display:flex;justify-content:space-between;gap:12px;align-items:center;color:var(--muted);font-size:13px}
+    .hero{border:1px solid #ccddfa;background:linear-gradient(120deg,#e7f0ff,#fff 85%);border-radius:18px;padding:32px;margin-bottom:28px}.hero h1{font-size:36px;line-height:1.25;letter-spacing:-1px;margin:10px 0 14px}.hero p{max-width:720px;color:var(--muted)}.tags{display:flex;flex-wrap:wrap;gap:8px}.tag{font-size:12px;border:1px solid #ccdafa;border-radius:99px;background:#fff;padding:3px 10px;color:#27569b}
+    section{margin:36px 0}h2{font-size:23px;border-bottom:1px solid var(--line);padding-bottom:10px;margin:0 0 18px}h2 span{font-size:13px;color:var(--blue);margin-right:12px}h3{font-size:17px;margin:24px 0 10px}p{margin:10px 0 14px}li{margin:5px 0}.note{background:#eef5ff;border-left:3px solid #6797e9;padding:13px 17px;margin:18px 0;border-radius:0 8px 8px 0}.warn{background:#fff8e9;border-color:#dea837}.small{font-size:13px;color:var(--muted)}
+    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:white;margin:16px 0}table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}th,td{text-align:left;vertical-align:top;padding:12px 15px;border-bottom:1px solid var(--line)}th{background:#eef4fc;font-weight:650}tr:last-child td{border-bottom:0}td:first-child{white-space:nowrap}
+    code{font:13px/1.65 Consolas,Menlo,monospace;background:#eaf0f8;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{margin:0;padding:18px 20px;overflow:auto;background:#14233b;color:#e5eefb;tab-size:2}pre code{background:none;color:inherit;padding:0;white-space:pre;overflow-wrap:normal}.codebox{border-radius:10px;overflow:hidden;margin:14px 0;border:1px solid #2d405c}.codehead{display:flex;justify-content:space-between;align-items:center;background:#21334e;color:#c4d6f4;padding:8px 16px;font-size:12px}.copy{color:#e2ecfc;background:transparent;border:1px solid #6882a5;border-radius:5px;padding:3px 10px;cursor:pointer;font:inherit}.method{display:inline-block;font:700 11px/1.5 Consolas,monospace;color:#087c64;background:#e0f5ee;border-radius:4px;padding:3px 7px}.get{color:#1859cf;background:#e7f0ff}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:16px 0}.flow b{border:1px solid var(--line);background:#fff;padding:9px 14px;border-radius:8px;font-weight:550}.flow i{font-style:normal;color:#8194b0}footer{border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
+    @media(max-width:850px){aside{position:relative;width:auto;padding:18px;border-right:0;border-bottom:1px solid var(--line)}.brand{margin:0 0 10px}nav{display:flex;gap:5px;overflow:auto;white-space:nowrap}nav .eyebrow{display:none}nav a{padding:6px 10px}main{margin:0;padding:22px 18px 45px}.hero{padding:24px}.hero h1{font-size:29px}header{flex-wrap:wrap}.flow{gap:7px}.flow b{padding:7px 10px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+    @media print{aside,.copy,header{display:none}main{margin:0;padding:0}.hero{background:white}pre{white-space:pre-wrap}pre code{white-space:pre-wrap}.table-wrap{overflow:visible}table{min-width:0}}
+    /* Aotian editorial polish: clear hierarchy, quiet depth, and a technical blue accent. */
+    :root{--blue:#1558c9;--ink:#14233b;--muted:#60728d;--line:#d7e2f0;--paper:#fff;--bg:#f3f7fc;--side:260px}
+    body{background:radial-gradient(circle at 88% -8%,#dceaff 0,transparent 32%),var(--bg);font-family:"Avenir Next","PingFang SC","Microsoft YaHei",sans-serif}
+    h1,h2,h3{font-family:Georgia,"Songti SC","Noto Serif SC",serif}
+    aside{background:rgba(241,246,252,.88);box-shadow:8px 0 28px rgba(29,62,108,.06);backdrop-filter:blur(12px)}
+    .brand{letter-spacing:.2px;color:var(--ink)}
+    nav a{transition:background .18s ease,color .18s ease,transform .18s ease}nav a:hover{background:#e7f0ff;color:#164cb3;transform:translateX(2px)}nav a.active{box-shadow:inset 3px 0 0 var(--blue)}
+    main{max-width:1480px}
+    .hero{position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(30,73,130,.08)}.hero:after{content:"";position:absolute;inset:auto -80px -100px auto;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#8db9ff55 0,transparent 70%);pointer-events:none}.hero h1{font-size:40px}
+    section{background:rgba(255,255,255,.82);border:1px solid rgba(215,226,240,.9);border-radius:16px;padding:26px 28px;box-shadow:0 10px 28px rgba(30,73,130,.045)}
+    section h2{margin-top:0} .table-wrap{box-shadow:0 4px 14px rgba(30,73,130,.04)}
+    .codebox{box-shadow:0 8px 20px rgba(13,34,66,.12)}
+    @media(max-width:850px){section{padding:20px 18px}.hero h1{font-size:32px}}
+    /* Keep the onboarding block immediately after the authentication overview. */
+    main{display:flex;flex-direction:column}
+    main>header{order:0}main>.hero{order:1}main>section{order:4}main>#overview{order:2}main>#skill{order:3}
+  </style>
+</head>
+<body>
+<a class="skip" href="#overview">跳到正文</a>
+<aside>
+  <a class="brand" href="https://aotianzz.xyz/docs">Aotian API</a>
+  <nav aria-label="视频接口文档目录">
+    <div class="eyebrow">Video API</div>
+    <a href="#overview" class="active">概述与鉴权</a><a href="#skill">Skill 接入</a><a href="#endpoints">接口一览</a><a href="#parameters">请求参数</a><a href="#create">创建任务</a><a href="#media">参考图与音视频</a><a href="#models">模型差异</a><a href="#polling">查询与轮询</a><a href="#download">获取视频</a><a href="#python">Python 完整示例</a><a href="#errors">错误与重试</a><a href="#compatibility">兼容边界</a>
+  </nav>
+</aside>
+<main>
+  <header><a href="https://aotianzz.xyz/docs">Aotian API / 视频接口</a><span>部署核对：2026-09-11</span></header>
+  <div class="hero">
+    <div class="eyebrow">Asynchronous video generation</div>
+    <h1>视频生成 API</h1>
+    <p>通过 New API 创建视频任务，传入提示词和参考素材，再轮询获取结果。只需使用本站令牌和模型名即可完成接入。</p>
+    <div class="tags"><span class="tag">JSON / HTTPS URL</span><span class="tag">单图与多图（按模型）</span><span class="tag">异步轮询</span><span class="tag">文件上传</span></div>
+    <p><a href="#skill">使用 SKILL.md，让 AI 协助完成视频 API 接入</a></p>
+  </div>
+  <section id="skill">
+    <h2><span>SKILL</span>把接入说明交给 AI</h2>
+    <p>下载 AoTian 视频 API 的技能文件，让 AI 编程工具按统一接口编写任务创建、参考素材上传、状态轮询和视频下载代码。支持读取 Markdown 的工具可直接使用文件内容；具备技能功能的工具可将其作为项目技能加载。</p>
+    <p><a class="tag" href="https://video.aotianzz.xyz/Aotian-SKILL.md" target="_blank" rel="noopener noreferrer">查看 / 下载 Aotian-SKILL.md</a></p>
+    <div class="codebox"><div class="codehead">技能文件地址</div><pre><code>https://video.aotianzz.xyz/Aotian-SKILL.md</code></pre></div>
+    <h3>1. 下载文件并交给 AI</h3>
+    <p>打开上面的链接并保存 Markdown 文件，或使用以下命令下载。将文件作为附件交给 AI；需要安装为技能时，将文件命名为 <code>SKILL.md</code>，放入所用工具支持的项目技能目录中的 <code>aotian-video-api</code> 文件夹。</p>
+    <div class="codebox"><div class="codehead">终端 · 下载文件</div><pre><code>curl --fail --location 'https://video.aotianzz.xyz/Aotian-SKILL.md' \
+  --output Aotian-SKILL.md</code></pre></div>
+    <div class="codebox"><div class="codehead">复制给 AI · 加载技能</div><pre><code>请读取附件 Aotian-SKILL.md，这是 AoTian 视频 API 的接入技能。
+如果当前工具支持项目技能，请按照本项目已有的技能目录约定，
+将文件原样保存为 aotian-video-api/SKILL.md，并告诉我实际路径。
+如果不支持技能目录，就将附件作为本次接入的接口说明。
+暂时不要创建视频任务。</code></pre></div>
+    <h3>2. 在项目本地配置令牌</h3>
+    <p>在服务端运行环境或本地 <code>.env</code> 中设置以下变量，将占位值替换为自己的 API Key。保留已有配置，并将 <code>.env</code> 排除在版本控制之外。不要把真实 Key 放进公开代码、网页或聊天示例。</p>
+    <div class="codebox"><div class="codehead">.env · 连接配置</div><pre><code>NEW_API_BASE_URL=https://aotianzz.xyz
+NEW_API_TOKEN=sk-YOUR_NEW_API_TOKEN</code></pre></div>
+    <p class="small">环境变量需要由应用实际加载。<code>NEW_API_BASE_URL</code> 不包含 <code>/v1</code>；拼接本文路径时只保留一个 <code>/v1</code>。</p>
+    <h3>3. 先验证模型列表，再编写接入代码</h3>
+    <div class="codebox"><div class="codehead">复制给 AI · 验证连接</div><pre><code>请读取 AoTian 的 SKILL.md，从项目运行环境加载
+NEW_API_BASE_URL 和 NEW_API_TOKEN，调用 GET /v1/models 验证连接。
+列出返回的模型 ID，不要输出令牌，也不要猜测模型价格、
+支持时长或参考素材数量。模型列表没有提供的能力信息不要自行补全。
+先完成配置验证和接入代码，不要为了测试自动创建付费视频任务。</code></pre></div>
+    <h3>可直接使用的完整接入需求</h3>
+    <div class="codebox"><div class="codehead">复制给 AI · 完成开发并测试</div><pre><code>请根据 AoTian 的 SKILL.md，为我的项目完成视频 API 的完整接入并测试：
+先从项目运行环境加载 NEW_API_BASE_URL 和 NEW_API_TOKEN，调用 GET /v1/models 验证连接，
+然后实现任务创建、任务 ID 保存、状态轮询、失败处理和视频预览/下载。
+画面比例通过 size 直接传入（例如 "16:9"），清晰度通过独立的 resolution 传入（例如 "720p"），不要将比例换算成像素尺寸。
+使用令牌可见且符合需求的视频模型, 调用 POST /v1/videos 并保存返回的完整 id，开发完成后用同一个任务流程进行一次完整测试。
+每 5–10 秒查询 GET /v1/videos/{id}；处理中继续等待，
+成功后保存响应结果里的 url 用于预览/下载。不要再 GET /content 拉文件。
+失败时保留任务 ID 和错误信息；本地等待超时后允许继续查询原任务，
+不要自动重复创建任务；令牌仅在服务端使用。测试产生的任务、费用和素材由我确认后执行。</code></pre></div>
+    <h3>已有任务排查</h3>
+    <div class="codebox"><div class="codehead">复制给 AI · 查询已有任务</div><pre><code>请读取 AoTian 的 SKILL.md，查询已有视频任务：TASK_ID。
+使用本地配置的令牌调用 GET /v1/videos/{id}。
+完成后给出可播放的视频地址；如需保存视频，使用文档中的下载方式。
+如果仍在处理中，请保留原任务 ID；不要创建新任务。</code></pre></div>
+    <div class="note">SKILL.md 提供接入流程，API Key 提供访问权限。加载技能文件不会自动获得账号权限，也不会自动生成视频。完整参数和状态说明见下方章节。</div>
+  </section>
+  <section id="overview">
+    <h2><span>01</span>概述与鉴权</h2>
+    <p>API 基础地址：<code>https://aotianzz.xyz</code>。以下路径已包含 <code>/v1</code>，请勿重复拼接。创建和查询请求使用 New API 令牌，不能用登录会话 Cookie 代替。</p>
+    <div class="codebox"><div class="codehead">HTTP 请求头</div><pre><code>Authorization: Bearer sk-YOUR_NEW_API_TOKEN
+Content-Type: application/json</code></pre></div>
+    <p>先调用 <code>GET /v1/models</code> 获取当前令牌可用的模型，再使用返回的模型名提交请求。</p>
+    <div class="flow" aria-label="任务流程"><b>准备参考素材 URL</b><i>→</i><b>创建任务</b><i>→</i><b>保存 id 并轮询</b><i>→</i><b>使用结果 URL</b></div>
+    <div class="note">视频接口是异步任务，不是聊天接口或 SSE 流式接口。创建成功只表示任务已受理，不表示视频已经生成。</div>
+  </section>
+  <section id="endpoints">
+    <h2><span>02</span>接口一览</h2>
+    <div class="table-wrap"><table><thead><tr><th>方法</th><th>路径</th><th>用途</th></tr></thead><tbody>
+      <tr><td><span class="method">POST</span></td><td><code>/v1/videos</code></td><td>创建视频任务；支持 JSON 或 multipart</td></tr>
+      <tr><td><span class="method get">GET</span></td><td><code>/v1/videos/{id}</code></td><td>查询状态及结果 URL</td></tr>
+      <tr><td><span class="method">POST</span> / <span class="method get">GET</span></td><td><code>/v1/video/generations</code><br><code>/v1/video/generations/{task_id}</code></td><td>兼容旧版视频任务接口</td></tr>
+    </tbody></table></div>
+    <p>将创建响应中的 <code>id</code> 原样用于查询。任务 ID 通常以 <code>task_</code> 开头，请勿自行拼接或截断。</p>
+  </section>
+  <section id="parameters">
+    <h2><span>03</span>请求参数</h2>
+    <p>下面是当前接入约定，并非所有模型都支持全部可选字段。时长使用 <code>seconds</code>，画面比例使用 <code>size</code>，清晰度独立使用 <code>resolution</code>；参考素材按需填写。参数取值需符合所选模型能力。</p>
+    <div class="table-wrap"><table><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody>
+      <tr><td><code>model</code></td><td>string · 必填</td><td>本站公开视频模型名，按令牌权限可用</td></tr>
+      <tr><td><code>prompt</code></td><td>string · 必填</td><td>非空提示词；长度、语言及内容限制以模型为准</td></tr>
+      <tr><td><code>seconds</code></td><td>string</td><td>秒数，例如 <code>"5"</code>；必须符合模型时长范围</td></tr>
+      <tr><td><code>duration</code></td><td>integer</td><td>时长字段别名，例如 <code>5</code>；不要与 seconds 同时设置冲突值</td></tr>
+      <tr><td><code>size</code></td><td>string</td><td>画面宽高比，例如 <code>16:9</code>。可选比例包括 <code>16:9</code>、<code>9:16</code>、<code>1:1</code>、<code>4:3</code>、<code>3:4</code>、<code>21:9</code>；具体支持范围以所选模型为准</td></tr>
+      <tr><td><code>images</code></td><td>string[]</td><td>支持多图的模型可使用图片 URL 数组；一张图也可用数组；数量与是否真正使用由模型决定</td></tr>
+      <tr><td><code>image</code> / <code>input_reference</code></td><td>string</td><td>单图 URL 兼容字段；不要与 images 混用以免产生覆盖或去重差异</td></tr>
+      <tr><td><code>reference_image_urls</code></td><td>string[]</td><td>参考图片 URL 数组别名；新接入优先使用 images</td></tr>
+      <tr><td><code>reference_videos</code></td><td>string[]</td><td>参考视频 HTTPS URL 数组；仅限支持参考视频的模型</td></tr>
+      <tr><td><code>reference_audios</code></td><td>string[]</td><td>参考音频 HTTPS URL 数组；仅限支持参考音频的模型</td></tr>
+      <tr><td><code>resolution</code></td><td>string</td><td>独立的清晰度档位，例如 <code>480p</code> / <code>720p</code> / <code>1080p</code>；选择模型支持的值，不放入 size，不从比例推断清晰度</td></tr>
+      <tr><td><code>metadata</code></td><td>object</td><td>结果附加信息容器；提交时不要依赖任意自定义键</td></tr>
+    </tbody></table></div>
+    <div class="note"><code>size: "16:9"</code> 只指定画面比例，不等于固定的 <code>1280x720</code>。同一比例可搭配模型支持的不同清晰度；最终像素尺寸以生成文件为准。新接入直接传比例，不需要在客户端换算像素，也不要改用 ratio 字段。既有像素尺寸请求保留兼容；新示例统一使用 size + resolution。JSON 和 multipart 使用相同字段名。</div>
+    <div class="note warn"><code>seed</code>、<code>fps</code>、<code>n</code>、<code>generate_audio</code>、<code>camera_movement</code> 等字段只在模型支持时使用。</div>
+  </section>
+  <section id="create">
+    <h2><span>04</span>创建任务</h2>
+    <p>示例使用 Bash 环境变量。令牌和请求应保存在你的服务端，不要把长期 API Key 写进公开网页。</p>
+    <div class="codebox"><div class="codehead">cURL · 文生视频</div><pre><code>export NEW_API_TOKEN='sk-YOUR_NEW_API_TOKEN'
+curl --fail-with-body -sS 'https://aotianzz.xyz/v1/videos' \
+  -H "Authorization: Bearer $NEW_API_TOKEN" \
+  -H 'Content-Type: application/json' \
+  --data '{
+    "model": "YOUR_VIDEO_MODEL",
+    "prompt": "海边日落，镜头缓慢推进，写实电影风格",
+    "seconds": "5",
+    "size": "16:9",
+    "resolution": "720p"
+  }'</code></pre></div>
+    <p>创建成功返回任务对象。以下仅是结构示例，字段是否出现由模型能力决定；不要依赖示例的固定进度或时间值。</p>
+    <div class="codebox"><div class="codehead">JSON · 创建响应示例</div><pre><code class="language-json">{
+  "id": "task_EXAMPLE",
+  "object": "video",
+  "model": "YOUR_VIDEO_MODEL",
+  "status": "queued",
+  "progress": 0
+}</code></pre></div>
+    <p>立即保存 <code>id</code>。一次请求超时不等于创建失败：在后台任务记录中确认是否已受理，再决定是否重试，避免重复生成与扣费。</p>
+  </section>
+  <section id="media">
+    <h2><span>05</span>参考图与音视频</h2>
+    <h3>单图、多图：推荐 JSON URL 数组</h3>
+    <p>只有一张图时，<code>images</code> 数组保留一个元素即可。多图时保持数组顺序，不要使用重复的 JSON 键，也不要传 JSON 字符串形式的数组。</p>
+    <div class="codebox"><div class="codehead">JSON · 多参考图</div><pre><code class="language-json">{
+  "model": "YOUR_MULTI_IMAGE_VIDEO_MODEL",
+  "prompt": "参考两张图片的场景和主体，生成自然连贯的镜头",
+  "seconds": "5",
+  "size": "16:9",
+  "resolution": "720p",
+  "images": [
+    "https://your-media.example/first.jpg",
+    "https://your-media.example/second.png"
+  ]
+}</code></pre></div>
+    <h3>参考视频、参考音频：仅用于具备该能力的模型</h3>
+    <div class="codebox"><div class="codehead">JSON · 多模态参考</div><pre><code class="language-json">{
+  "model": "YOUR_MULTIMODAL_VIDEO_MODEL",
+  "prompt": "根据参考图片、视频动作和音频节奏生成短片",
+  "seconds": "5",
+  "size": "16:9",
+  "resolution": "720p",
+  "images": ["https://your-media.example/subject.jpg"],
+  "reference_videos": ["https://your-media.example/motion.mp4"],
+  "reference_audios": ["https://your-media.example/rhythm.mp3"]
+}</code></pre></div>
+    <p><code>reference_videos</code> 和 <code>reference_audios</code> 是参考素材，不表示一定生成带声音的视频。<code>input_video</code> / <code>input_audio</code> 是兼容字段，请按模型说明使用。</p>
+    <h3>本地文件与对象存储</h3>
+    <ol><li>由你的应用将本地素材上传到对象存储，取得可匿名读取的 HTTPS 对象 URL。</li><li>把 URL 放到对应的图片、视频、音频数组中，再提交视频任务。</li><li>URL 有效期应覆盖排队、下载和生成阶段；存储凭据只能放在服务端。</li></ol>
+    <p>可以使用任意可访问的对象存储。私有存储需要可用的签名 URL；不要传控制台链接、本地路径、浏览器 <code>blob:</code> 地址或需要 Cookie 的下载页。签名 URL 应原样传递。</p>
+    <h3>单参考图文件上传（兼容方式）</h3>
+    <div class="codebox"><div class="codehead">cURL · multipart/form-data</div><pre><code>curl --fail-with-body -sS 'https://aotianzz.xyz/v1/videos' \
+  -H "Authorization: Bearer $NEW_API_TOKEN" \
+  -F 'model=YOUR_FILE_UPLOAD_VIDEO_MODEL' \
+  -F 'prompt=让参考图中的主体自然运动' \
+  -F 'seconds=5' \
+  -F 'size=16:9' \
+  -F 'resolution=720p' \
+  -F 'input_reference=@./reference.png;type=image/png'</code></pre></div>
+    <div class="note warn">不要手动设置 multipart 的 Content-Type，交给 cURL / FormData 自动生成 boundary。每个模型对参考素材的数量和类型有自己的限制，请以 <code>GET /v1/models</code> 返回的信息和实际错误提示为准。</div>
+  </section>
+  <section id="models">
+    <h2><span>06</span>模型差异与限制</h2>
+    <p>下面描述本站当前参考媒体适配方式，不代表某个系列的每个模型都具备全部能力。公开模型名、可见性与价格以你的令牌和模型列表为准。</p>
+    <h3>可用模型</h3>
+    <p class="small">模型名称和可用状态会按账号权限动态返回。请先调用 <code>GET /v1/models</code>，直接使用响应中的模型名称。</p>
+    <div class="table-wrap"><table><thead><tr><th>模型类型</th><th>图片输入</th><th>时长及其他注意事项</th></tr></thead><tbody>
+      <tr><td>通用视频模型</td><td>支持 images URL 数组</td><td>图片数量、参考视频/音频和时长依模型而定</td></tr>
+      <tr><td>Seedance 系列</td><td>支持图片 URL；部分模型支持视频或音频参考</td><td>时长、分辨率和参考素材数量以模型实际能力为准。</td></tr>
+      <tr><td>其他视频模型</td><td>按模型支持的字段传入图片、视频或音频 URL</td><td>请以模型列表及请求错误提示为准，不要猜测未公开参数。</td></tr>
+      <tr><td>固定时长模型</td><td>支持图片 URL 或文件上传</td><td>部分模型有固定时长或文件大小限制，提交前请核对模型说明。</td></tr>
+    </tbody></table></div>
+    <p>常用画幅包括 <code>16:9</code>、<code>9:16</code>、<code>1:1</code>、<code>3:4</code>、<code>4:3</code> 和 <code>21:9</code>。参考图片必须有可访问的 HTTPS 地址和正确 MIME 类型。</p>
+  </section>
+  <section id="polling">
+    <h2><span>07</span>查询与轮询</h2>
+    <div class="codebox"><div class="codehead">cURL · 查询任务</div><pre><code>curl --fail-with-body -sS \
+  'https://aotianzz.xyz/v1/videos/task_EXAMPLE' \
+  -H "Authorization: Bearer $NEW_API_TOKEN"</code></pre></div>
+    <div class="table-wrap"><table><thead><tr><th>状态</th><th>含义</th><th>处理</th></tr></thead><tbody>
+      <tr><td><code>queued</code></td><td>排队中</td><td>保留任务 ID，继续轮询</td></tr><tr><td><code>in_progress</code></td><td>生成中</td><td>继续轮询，progress 仅作提示</td></tr><tr><td><code>processing</code></td><td>处理中</td><td>不是失败；等待结果 URL 就绪</td></tr><tr><td><code>completed</code></td><td>完成</td><td>保存响应中的 url 用于预览/下载</td></tr><tr><td><code>failed</code></td><td>失败</td><td>读取 error.message 或 fail_reason，停止该任务轮询</td></tr>
+    </tbody></table></div>
+    <p>建议每 5–10 秒查询一次，总等待上限可设为 30 分钟或更长。客户端可将 <code>success/succeeded</code> 视为成功、<code>failure/cancelled/canceled</code> 视为终态失败；未知状态不要误判为完成。客户端超时不会取消已经创建的任务。</p>
+    <div class="codebox"><div class="codehead">JSON · 完成响应示例（URL 仅为占位）</div><pre><code class="language-json">{
+  "id": "task_EXAMPLE",
+  "object": "video",
+  "status": "completed",
+  "progress": 100,
+  "url": "https://video.aotianzz.xyz/videos/YYYY/MM/DD/task_EXAMPLE.mp4"
+}</code></pre></div>
+  </section>
+  <section id="download">
+    <h2><span>08</span>获取视频</h2>
+    <p>保存完成响应中的 <code>url</code>，原样交给播放器或下载程序。客户端不要再调用 <code>/content</code> 拉取文件，也不要自行拼接文件路径。</p>
+    <div class="note">使用响应中的结果 URL 预览或下载时无需附带 New API 令牌。保存前检查最终状态码与 Content-Type，避免把 HTML/JSON 错误保存成视频。</div>
+  </section>
+  <section id="python">
+    <h2><span>09</span>Python 完整示例</h2>
+    <p>依赖 <code>pip install requests</code>。在环境变量中设置 <code>NEW_API_TOKEN</code> 与 <code>NEW_API_VIDEO_MODEL</code>，并按模型调整秒数和画幅。此示例真正执行时会创建计费任务。</p>
+    <div class="codebox"><div class="codehead">Python · 创建一次，轮询结果</div><pre><code class="language-python">import os
+import time
+import requests
+
+BASE = "https://aotianzz.xyz"
+HEADERS = {"Authorization": "Bearer " + os.environ["NEW_API_TOKEN"]}
+payload = {
+    "model": os.environ["NEW_API_VIDEO_MODEL"],
+    "prompt": "海边日落，镜头缓慢推进",
+    "seconds": "5",  # 按模型支持的时长填写
+    "size": "16:9",  # 画面比例，不换算像素尺寸
+    "resolution": "720p",  # 独立清晰度，按模型能力选择
+    # "images": ["https://your-media.example/reference.jpg"],
+}
+
+# 创建只发一次；超时/5xx 时先核对后台任务，避免重复创建。
+response = requests.post(BASE + "/v1/videos", headers=HEADERS,
+                         json=payload, timeout=(15, 180))
+response.raise_for_status()
+task = response.json()
+task_id = task.get("id")
+if not task_id:
+    raise RuntimeError("创建响应缺少 id: " + str(task))
+print("保存任务 ID:", task_id)
+
+deadline = time.monotonic() + 30 * 60
+while time.monotonic() &lt; deadline:
+    time.sleep(5)
+    try:
+        response = requests.get(BASE + "/v1/videos/" + task_id,
+                                headers=HEADERS, timeout=(15, 60))
+    except (requests.Timeout, requests.ConnectionError):
+        continue  # 只重试查询，不重新创建
+    if response.status_code in (429, 500, 502, 503, 504):
+        time.sleep(10)
+        continue
+    response.raise_for_status()
+    state = response.json()
+    status = str(state.get("status", "")).lower()
+    if status in ("failed", "failure", "cancelled", "canceled"):
+        raise RuntimeError(str(state.get("error") or
+                               state.get("fail_reason") or state))
+    if status in ("completed", "success", "succeeded"):
+        url = state.get("url")
+        if url:
+            print("视频 URL:", url)  # 原样交给播放器；不要打印令牌
+            break
+else:
+    raise TimeoutError("本地等待超时；稍后继续查询 " + task_id)</code></pre></div>
+  </section>
+  <section id="errors">
+    <h2><span>10</span>错误与重试</h2>
+    <div class="codebox"><div class="codehead">JSON · 鉴权错误示例</div><pre><code class="language-json">{
+  "error": {
+    "code": "",
+    "message": "Invalid token (request id: EXAMPLE_REQUEST_ID)",
+    "type": "new_api_error"
+  }
+}</code></pre></div>
+    <div class="table-wrap"><table><thead><tr><th>HTTP</th><th>常见原因</th><th>建议</th></tr></thead><tbody>
+      <tr><td>400</td><td>模型参数、提示词、图片数量或时长不正确</td><td>读取错误并修改参数，不重复同一无效请求</td></tr><tr><td>401 / 403</td><td>令牌、权限、账户限制或访问被拒绝</td><td>检查令牌、分组和素材访问权限</td></tr><tr><td>404</td><td>任务 ID 不存在、格式不正确或路径不匹配</td><td>使用创建时返回的完整 id；不要删掉 task_ 前缀</td></tr><tr><td>409</td><td>视频暂未准备好</td><td>继续查询状态，不重新生成</td></tr><tr><td>413 / 415</td><td>文件过大或格式/MIME 不支持</td><td>压缩或转换素材，核对 Content-Type</td></tr><tr><td>429</td><td>请求频率或并发受限</td><td>如有 Retry-After 则遵守；降低并发并退避</td></tr><tr><td>500 / 502 / 503 / 504</td><td>服务或网络暂时异常</td><td>查询可重试；创建失败先确认是否已受理，避免重复费用</td></tr>
+    </tbody></table></div>
+    <p>错误响应通常为 JSON，但客户端仍应按状态码处理异常。余额与失败退款以平台用量记录和模型计费规则为准。排查时保留任务 ID、时间、HTTP 状态及 <code>X-Oneapi-Request-Id</code>，不要公开 API Key 或签名素材 URL。</p>
+  </section>
+  <section id="compatibility">
+    <h2><span>11</span>兼容边界与核对说明</h2>
+    <ul><li>请只使用本文列出的公共视频接口和字段。</li><li>模型不支持的参数会返回 400，请根据错误信息调整请求。</li><li>视频生成是异步流程，创建成功后必须保存任务 ID 并轮询状态。</li></ul>
+    <div class="note small">本文覆盖鉴权、任务创建、参考素材、状态查询、结果下载和常见错误处理。</div>
+  </section>
+  <span id="copy-status" role="status" aria-live="polite"></span>
+</main>
+<script>
+  document.querySelectorAll('.codebox').forEach(box => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'copy'; button.textContent = '复制';
+    button.setAttribute('aria-label', '复制 ' + box.querySelector('.codehead').textContent);
+    box.querySelector('.codehead').appendChild(button);
+    button.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(box.querySelector('code').textContent); button.textContent = '已复制'; document.getElementById('copy-status').textContent = '代码已复制'; }
+      catch { button.textContent = '请手动复制'; }
+      setTimeout(() => { button.textContent = '复制'; }, 2000);
+    });
+  });
+  const links = [...document.querySelectorAll('nav a')];
+  const observer = new IntersectionObserver(entries => {
+    const entry = entries.find(item => item.isIntersecting);
+    if (!entry) return;
+    links.forEach(link => { const active = link.hash === '#' + entry.target.id; link.classList.toggle('active', active); if (active) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current'); });
+  }, {rootMargin:'-5% 0px -70% 0px', threshold:0});
+  document.querySelectorAll('section[id]').forEach(section => observer.observe(section));
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"fc123c7785a943e881881158035ab913","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>

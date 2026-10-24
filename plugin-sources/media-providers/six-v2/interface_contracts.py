@@ -297,36 +297,15 @@ def attach_interfaces(providers):
         base['codec']['yuxibox']['minimumImages']=0
         base['codec']['modelRules']=rules
         yuxi['interfaces'][key]={**previous, **base, 'modelRules':rules, 'sourceConflicts':[c for c in conflicts if c['model'] in rules]}
-    # XCM's contract has genuinely documented model-specific constraints. Keep
-    # them as overrides, while unknown real IDs receive only the common schema.
-    url = 'https://xcmapi.org/docs/video-contract.json'
-    raw, source = evidence(url); data = json.loads(raw)
-    common = {'model': {'type': 'string', 'required': True}, 'prompt': {'type': 'string', 'required': True}, 'client_request_id': {'type': 'string', 'required': True, 'pattern': data['client_request_id']['pattern']}}
-    for field, typ in [('duration', 'integer'), ('ratio', 'string'), ('resolution', 'string'), ('images', 'array'), ('videos', 'array'), ('audios', 'array'), ('materials', 'array')]: common[field] = {'type': typ, 'required': False}
-    frame_encoding={'roleField':'type','firstRole':'first_frame','lastRole':'end_frame','requiresFirstForLast':True}
-    entry = add('xcmapi_media', '视频综合区 JSON 接口', 'video', data['create']['path'], '/v1/videos/', common, source, clientRequestId='publicTaskId', publicReferences=True, referenceMetadata=True, frameEncoding=frame_encoding)
-    entry['modelRules'] = {}
-    for model in data['models']:
-        fields = {}
-        for raw in model['parameters']:
-            rule = {k: copy.deepcopy(v) for k, v in raw.items() if k not in ['name', 'range', 'default']}
-            if rule.get('type') == 'enum':
-                rule['type'] = 'string'; rule['enum'] = [v.strip() for v in raw['range'].split(',')]
-            elif rule.get('type') == 'integer' and re.fullmatch(r'\d+-\d+', raw.get('range', '')):
-                a, b = raw['range'].split('-'); rule.update(minimum=int(a), maximum=int(b))
-            if 'default' in raw: rule['default'] = int(raw['default']) if rule.get('type') == 'integer' else raw['default']
-            if raw['name'] in ['images', 'videos', 'audios']:
-                rule['maxItems'] = model['max_reference_'+{'images':'images','videos':'videos','audios':'audios'}[raw['name']]]
-                rule['items'] = {'anyOf': [{'type': 'string'}, {'type': 'object', 'properties': {'url': {'type': 'string'}, 'duration_seconds': {'type': 'number', 'exclusiveMinimum': 0, 'maximum': 120}}, 'required': ['url'] + (['duration_seconds'] if raw['name']=='videos' and model.get('require_video_duration_seconds') else [])}]}
-                if raw['name']=='videos' and model.get('require_video_duration_seconds'): rule['items']=rule['items']['anyOf'][1]
-            fields[raw['name']] = rule
-        _, rule = contract(entry['title'], 'video', entry['path'], '/v1/videos/', fields, source, clientRequestId='publicTaskId', publicReferences=True, referenceMetadata=True, frameEncoding=frame_encoding)
-        entry['modelRules'][model['id']] = {k: rule[k] for k in ['parameters', 'mapping', 'modes', 'capabilities', 'codec']}
-    entry['codec']['modelRules'] = entry['modelRules']
+    from xcm_contracts import documented_xcm_video
+    xcm = documented_xcm_video(providers['xcmapi_media'], contract)
     _, source = evidence('https://xcmapi.org/docs/QuickStart.html')
     schema = json.loads((ROOT / 'evidence/native-h3-reviewed-schema.json').read_text(encoding='utf8'))['schema']
     fields = {k: {**v, 'required': k in schema['required']} for k, v in schema['properties'].items()}
-    add('xcmapi_media', '原生视频 JSON 接口（QuickStart）', 'video', '/v1/videos/generations', '/v1/videos/', fields, source, nativeH3=True, voicePresets=True, voiceChoices=['eve', 'leo'])
+    native = add('xcmapi_media', '原生视频 JSON 接口（QuickStart）', 'video', '/v1/videos/generations', '/v1/videos/', fields, source, nativeH3=True, voicePresets=True, voiceChoices=['eve', 'leo'])
+    # Same endpoint, documented model-specific wire shape; preserve saved IDs.
+    native['modelRules'] = copy.deepcopy(xcm['modelRules'])
+    native['sourceConflicts'] = copy.deepcopy(xcm['sourceConflicts'])
     # ArtBox prose, including the text/video/audio reference section, is the
     # source. Recommendations are not promoted to absolute request ceilings.
     raw, source = evidence('https://artbox.top/docs')

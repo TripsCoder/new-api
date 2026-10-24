@@ -200,7 +200,10 @@ export function PricingEditor(props: {
                   fields.resolutions = Object.fromEntries(
                     resolutions.map((resolution) => [
                       resolution,
-                      storedFields.resolutions?.[resolution] ?? '',
+                      Object.entries(storedFields.resolutions ?? {}).find(
+                        ([key]) =>
+                          key.toLowerCase() === resolution.toLowerCase()
+                      )?.[1] ?? '',
                     ])
                   )
                 } else {
@@ -270,6 +273,11 @@ export function PricingEditor(props: {
                     {name}
                   </TableCell>
                   <TableCell>
+                    {!fields.resolutions && resolutions.length === 1 && (
+                      <span className='text-muted-foreground text-sm'>
+                        {resolutions[0]}
+                      </span>
+                    )}
                     <Select
                       value={fields.unit || '__keep__'}
                       onValueChange={(unit) => {

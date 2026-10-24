@@ -500,7 +500,10 @@ func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) (
 	if err := jsplugin.ValidateV1Meta(meta); err != nil {
 		return nil, errors.New("The plugin model discovery declaration is invalid")
 	}
-	base := strings.TrimSuffix(strings.TrimRight(channel.GetBaseURL(), "/"), "/v1")
+	base := strings.TrimRight(channel.GetBaseURL(), "/")
+	if meta.ModelDiscovery == nil || meta.ModelDiscovery.Format == "openai" {
+		base = strings.TrimSuffix(base, "/v1")
+	}
 	u, err := url.Parse(base)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		return nil, errors.New("The channel model discovery address is invalid")
@@ -546,7 +549,31 @@ func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) (
 	var result struct {
 		Data *[]OpenAIModel `json:"data"`
 	}
-	if common.Unmarshal(body, &result) != nil || result.Data == nil {
+	if meta.ModelDiscovery != nil && meta.ModelDiscovery.Format == "fenglang_pricing" {
+		// Read model IDs only. Public rates are neither account cost nor retail
+		// prices. An undocumented response shape fails closed without a fallback.
+		var pricing struct {
+			Success bool `json:"success"`
+			Models  struct {
+				Video *[]any `json:"video"`
+			} `json:"models"`
+		}
+		if common.Unmarshal(body, &pricing) != nil || !pricing.Success || pricing.Models.Video == nil {
+			return nil, errors.New("Upstream model discovery returned an invalid model list")
+		}
+		items := make([]OpenAIModel, 0, len(*pricing.Models.Video))
+		for _, entry := range *pricing.Models.Video {
+			var id string
+			switch value := entry.(type) {
+			case string:
+				id = value
+			case map[string]any:
+				id, _ = value["id"].(string)
+			}
+			items = append(items, OpenAIModel{ID: id})
+		}
+		result.Data = &items
+	} else if common.Unmarshal(body, &result) != nil || result.Data == nil {
 		return nil, errors.New("Upstream model discovery returned an invalid model list")
 	}
 	ids := make([]string, 0, len(*result.Data))

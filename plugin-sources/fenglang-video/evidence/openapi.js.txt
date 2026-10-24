@@ -1,0 +1,953 @@
+/**
+ * API 接入页面：用户自建 Key + 接入文档。
+ *
+ * 两块内容：
+ *   1. 「我的密钥」—— 新建 / 编辑（有效期、额度、模型白名单、IP 白名单）/ 复制 / 停用 / 删除；
+ *   2. 「接入文档」—— Base URL 与示例代码按当前站点地址现算，复制即可用。
+ *
+ * 四个限制项**默认全部留空 = 不设限**，与后端的口径一致（见 server/openKeys.js）。
+ */
+import { api } from './api.js';
+import { toast, openModal, confirmDialog, escapeHtml, fmtClockFull, fmtRelative, icon, copyText } from './ui.js';
+import {
+  credits,
+  toCredits,
+  visibleVideoModels,
+  IMAGE_MODELS,
+  DEFAULT_MODEL_ID,
+} from './models.js';
+
+const $ = (id) => document.getElementById(id);
+
+let keys = [];
+let maxKeys = 10;
+/** 可选模型（从站内价目表拿，与真正能调的那份同源） */
+let modelOptions = { video: [], image: [] };
+
+/** 站点自己的根地址：接口文档里的 Base URL 就靠它，部署到哪就显示哪 */
+function baseUrl() {
+  return `${location.origin}/open/v1`;
+}
+
+/* 复制走 ui.js 的全站共用实现（copyText），这里不再自己维护一份 */
+
+function toLocalInput(ms) {
+  const d = new Date(ms);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(
+    d.getMinutes(),
+  )}`;
+}
+
+/* 额度显示统一算力（1元 = 10算力；服务端仍以元存储，这里折算显示） */
+const money = (n) => credits(n);
+
+/**
+ * 列表里的密钥一律掩码：只露前 10 位，后面用星号盖住。
+ * 完整值不在页面上平铺，点「复制」才取（数据本来就只在本人手里，这里是防肩窥与误截图）。
+ */
+function maskKey(key) {
+  const v = String(key || '');
+  if (!v) return '';
+  return `${v.slice(0, 10)}${'*'.repeat(8)}`;
+}
+
+/** 状态标签：启用 = 绿框，停用 / 已过期 = 红框（用全站同一套 success / danger 色） */
+function stateChip(text, tone) {
+  return (
+    `<span style="display:inline-block;padding:2px 10px;border-radius:999px;white-space:nowrap;` +
+    `font-size:14.5px;line-height:1.7;color:var(--${tone});border:1px solid var(--${tone});` +
+    `background:var(--${tone}-soft)">${text}</span>`
+  );
+}
+
+/** 短时间：同年省掉年份，够看就行（限制列不需要秒级精度） */
+function shortTime(ms) {
+  const d = new Date(ms);
+  const p = (n) => String(n).padStart(2, '0');
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return `${sameYear ? '' : `${d.getFullYear()}-`}${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(
+    d.getHours(),
+  )}:${p(d.getMinutes())}`;
+}
+
+/** 长清单收成一句：最多列两项，其余折成「等 N 项」，完整值放 title 里 */
+function briefList(list) {
+  if (list.length <= 2) return list.join('、');
+  return `${list.slice(0, 2).join('、')} 等 ${list.length} 项`;
+}
+
+/**
+ * 限制列的呈现：**没设的项不占地方**。
+ * 四项全空 → 一个灰字「无限制」；设了哪项才出哪个小标签，横排、自动换行。
+ * 这样默认那行行高正常，一眼也能看出哪些 Key 被卡住了限制。
+ */
+function limitsHtml(k) {
+  const tags = [];
+
+  if (k.quota != null) {
+    const full = k.spent >= k.quota;
+    tags.push({
+      text: `额度 ${money(k.spent)}／${money(k.quota)}`,
+      color: full ? 'var(--danger)' : '',
+      title: full ? '额度已用满' : '',
+    });
+  }
+  if (k.expiresAt) {
+    tags.push({
+      text: k.expired ? `已过期 ${shortTime(k.expiresAt)}` : `至 ${shortTime(k.expiresAt)}`,
+      color: k.expired ? 'var(--danger)' : '',
+    });
+  }
+  if (k.models.length) tags.push({ text: `模型 ${briefList(k.models)}`, title: k.models.join('、') });
+  if (k.ipWhitelist.length) {
+    tags.push({ text: `IP ${briefList(k.ipWhitelist)}`, title: k.ipWhitelist.join('、') });
+  }
+
+  if (!tags.length) {
+    return '<span style="color:var(--text-mute);font-size:14.5px">无限制</span>';
+  }
+
+  return `<div style="display:flex;flex-wrap:wrap;gap:4px 6px">${tags
+    .map(
+      (t) =>
+        `<span${t.title ? ` title="${escapeHtml(t.title)}"` : ''} style="display:inline-block;max-width:100%;` +
+        `padding:1px 8px;border-radius:6px;font-size:13.5px;line-height:1.8;white-space:nowrap;overflow:hidden;` +
+        `text-overflow:ellipsis;border:1px solid var(--border);${
+          t.color ? `color:${t.color};border-color:${t.color}` : 'color:var(--text-mute)'
+        }">${escapeHtml(t.text)}</span>`,
+    )
+    .join('')}</div>`;
+}
+
+/* ============================== 密钥列表 ============================== */
+
+function renderKeys() {
+  const box = $('openApiKeys');
+  if (!keys.length) {
+    box.innerHTML = `
+      <div class="notice notice-info">还没有密钥。点右上角「新建密钥」生成第一把，把它填进你的脚本即可开始调用。
+      有效期、额度、可用模型与 IP 白名单都可以留空 —— 留空就是不限制。</div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <table class="spend-table" style="table-layout:fixed">
+      <colgroup>
+        <col style="width:150px" />
+        <col style="width:196px" />
+        <col />
+        <col style="width:96px" />
+        <col style="width:96px" />
+        <col style="width:130px" />
+        <col style="width:272px" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>名称</th><th>密钥</th><th>限制</th><th>状态</th><th>调用次数</th><th>最后使用</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${keys
+          .map(
+            (k) => `
+        <tr>
+          <td>${escapeHtml(k.name || '未命名密钥')}</td>
+          <td class="mono" ${
+            k.key ? `style="cursor:pointer" title="点击复制完整密钥" data-act="copy" data-id="${k.id}"` : ''
+          }>${
+            k.key ? escapeHtml(maskKey(k.key)) : `${escapeHtml(k.prefix)}（早期记录，已无明文，请重建）`
+          }</td>
+          <td>${limitsHtml(k)}</td>
+          <td>${
+            !k.enabled
+              ? stateChip('已停用', 'danger')
+              : k.expired
+                ? stateChip('已过期', 'danger')
+                : stateChip('启用', 'success')
+          }</td>
+          <td>${Number(k.callCount) || 0}</td>
+          <td>${k.lastUsedAt ? escapeHtml(fmtRelative(k.lastUsedAt)) : '—'}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-sm" type="button" data-act="copy" data-id="${k.id}" ${k.key ? '' : 'disabled'}>复制</button>
+            <button class="btn btn-sm btn-ghost" type="button" data-act="edit" data-id="${k.id}">编辑</button>
+            <button class="btn btn-sm btn-ghost" type="button" data-act="toggle" data-id="${k.id}">${
+              k.enabled ? '停用' : '启用'
+            }</button>
+            <button class="btn btn-sm btn-danger" type="button" data-act="delete" data-id="${k.id}">删除</button>
+          </td>
+        </tr>`,
+          )
+          .join('')}
+      </tbody>
+    </table>`;
+}
+
+async function refresh() {
+  try {
+    const data = await api.listOpenKeys();
+    keys = data.keys || [];
+    maxKeys = Number(data.maxKeys) || 10;
+    $('openApiHint').textContent = keys.length ? `${keys.length} / ${maxKeys} 把` : '';
+    renderKeys();
+  } catch (err) {
+    $('openApiKeys').innerHTML = `<div class="notice notice-danger">读取密钥失败：${escapeHtml(err.message)}</div>`;
+  }
+}
+
+/** 模型候选：先拿一次站内价目表，缓存住（同一页面里不会再变） */
+async function ensureModelOptions() {
+  if (modelOptions.video.length || modelOptions.image.length) {
+    return modelOptions;
+  }
+  try {
+    const data = await api.getPricing();
+    modelOptions = {
+      /*
+       * 视频：只列对外上架的型号（2026-10-20 起是**五张卡，全部按秒**：`seedance-2.5`、
+       * `seedance-2.0`、`seedance-2.0-fast`、`seedance-2.0-mini`、`minimax-video-h3`；
+       * 2026-10-20 下架的 `minimax-h3-ch1`、`wan3.0-video`、`wan3.0-video-prime`、
+       * `kling-omni-4.0`，以及按条的 grok / 2.0 coke / `seedance-2.5-Muse` /
+       * `seedance-2.5-Ultra` / `seedance2.5 Burger` / `seedance2.5 chovy` 与 OV 卡
+       * 都不再列出）
+       * —— 与生成页的卡片同一份；档位由提交时的 resolution 决定。
+       * 每个模型 / 档位背后可以有多条线路（有优先级），失败后台自动换，调用方无感，
+       * 对外仍只认这一个 model。
+       * 老标识 `seedance2.5满血版` / `seedance2.5-ch1` / `seedance2.0-ch1` /
+       * `ov-seedance2.5-ch1` / `ov-seedance-2.5` 作兼容别名保留，提交时仍认。
+       *
+       * 这里必须用 `m.id`（接口标识）而**不是** `m.name`（界面显示名 `Seedance 2.5`）：
+       * 调用方照抄的就是白名单里这一行，显示名一改、调用方就得跟着改代码 ——
+       * 所以模型显示名怎么调都不许影响这里（用户 2026-10-16 明确要求）。
+       *
+       * 价目表里的真实上游型号名不列：白名单是给调用方看的清单，摆出十几条线路只会更迷惑。
+       */
+      // visibleVideoModels：只给管理员看的测试卡（seedance-2.5-test）不进白名单候选
+      video: visibleVideoModels().map((m) => m.id),
+      /*
+       * 图片：2026-10-17 起上架的 12 个（见 public/js/models.js 的 IMAGE_MODELS，
+       * 与生成页的卡片同一份）。
+       * 别再拿价目表的键当清单：表里还留着老的云上七张与 sunburst
+       * （只为老任务重算），照搬进来等于把已撤下的型号又摆回候选里。
+       */
+      image: IMAGE_MODELS.map((m) => m.id),
+    };
+  } catch {
+    /* 拿不到就当成没有候选，用户仍可手动输入 */
+  }
+  return modelOptions;
+}
+
+/* ============================== 新建 / 编辑 ============================== */
+
+/**
+ * 新建与编辑共用一套表单：不填的限制一律表示"不设限"。
+ * existing 为 null 时是新建。
+ */
+async function openKeyForm(existing) {
+  await ensureModelOptions();
+  const isEdit = Boolean(existing);
+  /** 有到期时间 = 直接展开时间控件；没有 = 落在「永不过期」 */
+  const hasExpiry = Boolean(existing?.expiresAt);
+  /** 额度默认「无限额度」开启，关掉才填数字 */
+  const unlimited = existing?.quota == null;
+
+  /** 项可以是字符串（模型名）或 { id, label }（渠道那种需要额外说明的） */
+  const modelBox = (list, group, emptyText) =>
+    list.length
+      ? list
+          .map((item) => {
+            const id = typeof item === 'string' ? item : item.id;
+            const note = typeof item === 'string' ? group : item.label;
+            return `
+        <label class="switch-row" style="display:flex;align-items:center;gap:8px;font-size:15.5px">
+          <input type="checkbox" name="ofModel" value="${escapeHtml(id)}" ${
+            existing?.models?.includes(id) ? 'checked' : ''
+          } />
+          <span class="mono">${escapeHtml(id)}</span>
+          <span style="color:var(--text-mute)">${escapeHtml(note)}</span>
+        </label>`;
+          })
+          .join('')
+      : `<div style="color:var(--text-mute)">${escapeHtml(
+          emptyText || '（读取不到模型列表，可先留空表示全部模型）',
+        )}</div>`;
+
+  /*
+   * 老 Key 里可能存着**已下架**的型号（图片的 `gpt-image-2.5` / gemini 系，视频的老真实型号名）。
+   * 只列在售清单的话，这些勾选在编辑弹窗里会凭空消失，用户一保存就把白名单改窄了，
+   * 老客户下次调用直接回 403 MODEL_NOT_ALLOWED（与短剧项目里 modelOptionsHtml 同一个坑）。
+   * 所以把它们单独摆一组：原样保留、默认仍然是勾上的。
+   */
+  const listedIds = [...modelOptions.video, ...modelOptions.image];
+  const legacyModels = (existing?.models || []).filter((id) => !listedIds.includes(id));
+
+  const modal = openModal({
+    title: isEdit ? '编辑密钥' : '新建密钥',
+    wide: true,
+    bodyHtml: `
+      <div class="field">
+        <label class="label">名称</label>
+        <input class="input" id="ofName" maxlength="64" placeholder="例如：剪辑脚本 / 自动化工作流"
+               value="${escapeHtml(existing?.name || '')}" />
+      </div>
+
+      <div class="field">
+        <label class="label">有效期</label>
+        <div class="segmented" id="ofExpireQuick" style="max-width:560px">
+          <button type="button" data-exp="never" class="${hasExpiry ? '' : 'active'}">永不过期</button>
+          <button type="button" data-exp="1h">1 小时</button>
+          <button type="button" data-exp="1d">1 天</button>
+          <button type="button" data-exp="1m">1 个月</button>
+          <button type="button" data-exp="custom" class="${hasExpiry ? 'active' : ''}">自定义</button>
+        </div>
+        <div id="ofExpireCustom" class="${hasExpiry ? '' : 'hidden'}" style="margin-top:8px">
+          <input class="input" type="datetime-local" id="ofExpires"
+                 value="${hasExpiry ? toLocalInput(existing.expiresAt) : ''}" />
+        </div>
+        <div class="field-foot" id="ofExpireHint">${
+          hasExpiry ? `将于 ${fmtClockFull(existing.expiresAt)} 过期（可微调）` : '永不过期'
+        }</div>
+      </div>
+
+      <div class="field">
+        <div class="label-row">
+          <label class="label">额度（算力）</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15.5px">
+            <input type="checkbox" id="ofUnlimited" ${unlimited ? 'checked' : ''} />
+            <span>无限额度</span>
+          </label>
+        </div>
+        <div id="ofQuotaWrap" class="${unlimited ? 'hidden' : ''}">
+          <input class="input" type="number" min="0" step="0.1" id="ofQuota" placeholder="例如 ⚡500（= 50 元）"
+                 value="${existing?.quota == null ? '' : toCredits(existing.quota)}" />
+          <div class="field-foot">${
+            isEdit && !unlimited
+              ? `该 Key 已用 ${money(existing.spent)} · <button class="btn btn-sm btn-ghost" type="button" data-act="reset-spent">清零已用</button>`
+              : '只统计这把 Key 的累计消费；与账号余额是两道独立的闸门'
+          }</div>
+        </div>
+      </div>
+
+      <details style="border-top:1px solid var(--line,#2a3040);padding-top:4px">
+        <summary style="cursor:pointer;font-size:16px;padding:4px 0">高级设定（模型白名单 / IP 白名单）</summary>
+        <div class="field" style="margin-top:8px">
+          <div class="field-foot" style="margin:0 0 6px">不选、不填即为不限制（默认）。</div>
+          <div class="field-foot" style="margin:0 0 4px">允许访问的模型（不勾选 = 全部模型）</div>
+          <div style="max-height:190px;overflow:auto;border:1px solid var(--line,#2a3040);border-radius:10px;padding:8px 10px">
+            <div style="color:var(--text-mute);font-size:14.5px;margin-bottom:4px">视频</div>
+            ${modelBox(modelOptions.video, '视频')}
+            <div style="color:var(--text-mute);font-size:14.5px;margin:8px 0 4px">图片</div>
+            ${modelBox(modelOptions.image, '图片')}
+            ${
+              legacyModels.length
+                ? `<div style="color:var(--text-mute);font-size:14.5px;margin:8px 0 4px">历史型号（已下架，仍可调用）</div>
+                   ${modelBox(legacyModels, '已下架')}`
+                : ''
+            }
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">IP 白名单</label>
+          <textarea class="textarea" id="ofIps" rows="3"
+            placeholder="留空 = 不限来源；一行一个，或用逗号分隔，例如：&#10;1.2.3.4&#10;10.0.0.0/8">${escapeHtml(
+              (existing?.ipWhitelist || []).join('\n'),
+            )}</textarea>
+          <div class="field-foot">只放行白名单里的来源 IP，支持单个地址与网段（1.2.3.0/24）。</div>
+        </div>
+      </details>`,
+    footHtml: `
+      <button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
+      <button class="btn btn-primary" type="button" data-act="ok">${isEdit ? '保存' : '创建'}</button>`,
+  });
+
+  /* ---------- 有效期：默认「永不过期」，选快捷项或自定义才展开时间控件 ---------- */
+
+  const expireInput = modal.$('#ofExpires');
+  const expireCustom = modal.$('#ofExpireCustom');
+  const expireHint = modal.$('#ofExpireHint');
+
+  const paintExpireHint = () => {
+    const value = expireInput?.value || '';
+    if (!value) {
+      expireHint.textContent = expireCustom.classList.contains('hidden') ? '永不过期' : '留空 = 永不过期';
+      return;
+    }
+    expireHint.textContent = `将于 ${fmtClockFull(new Date(value).getTime())} 过期（可微调）`;
+  };
+
+  const applyExpire = (mode) => {
+    for (const btn of modal.$('#ofExpireQuick').children) {
+      btn.classList.toggle('active', btn.dataset.exp === mode);
+    }
+    if (mode === 'never') {
+      expireInput.value = '';
+      expireCustom.classList.add('hidden');
+      paintExpireHint();
+      return;
+    }
+    // 快捷项：从现在起算，算完照样写进控件里，用户可以再微调
+    if (mode !== 'custom') {
+      const target = new Date();
+      if (mode === '1h') target.setHours(target.getHours() + 1);
+      if (mode === '1d') target.setDate(target.getDate() + 1);
+      if (mode === '1m') target.setMonth(target.getMonth() + 1);
+      expireInput.value = toLocalInput(target.getTime());
+    }
+    expireCustom.classList.remove('hidden');
+    paintExpireHint();
+  };
+
+  modal.$('#ofExpireQuick')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-exp]');
+    if (btn) applyExpire(btn.dataset.exp);
+  });
+  expireInput?.addEventListener('change', paintExpireHint);
+
+  /* ---------- 额度：默认「无限额度」，关掉开关才露出数字输入 ---------- */
+
+  modal.$('#ofUnlimited')?.addEventListener('change', (e) => {
+    modal.$('#ofQuotaWrap').classList.toggle('hidden', e.target.checked);
+  });
+
+  /** 收表单：空字符串一律归一成 null / []，也就是"不设限" */
+  const collect = () => {
+    const expiresRaw = modal.$('#ofExpires')?.value || '';
+    const quotaRaw = (modal.$('#ofQuota')?.value || '').trim();
+    const ipRaw = modal.$('#ofIps')?.value || '';
+    // 「无限额度」开着就是 null（后端按不限处理）；关掉才认填的数字，空着也按不限算
+    // 界面填的是算力，库里存元（1元=10算力），提交前除回去
+    const isUnlimited = modal.$('#ofUnlimited')?.checked !== false;
+    return {
+      name: modal.$('#ofName')?.value.trim() || '',
+      expiresAt: expiresRaw ? new Date(expiresRaw).getTime() : null,
+      quota:
+        isUnlimited || quotaRaw === ''
+          ? null
+          : Math.round((Number(quotaRaw) / 10) * 100) / 100,
+      models: [...modal.root.querySelectorAll('input[name="ofModel"]:checked')].map((i) => i.value),
+      ipWhitelist: ipRaw
+        .split(/[\s,;、]+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+    };
+  };
+
+  const save = async () => {
+    const payload = collect();
+    try {
+      if (isEdit) {
+        await api.updateOpenKey(existing.id, payload);
+        toast('已保存', 'success');
+        modal.close();
+        await refresh();
+      } else {
+        const data = await api.createOpenKey(payload);
+        modal.close();
+        await refresh();
+        showNewKey(data.key, data.record?.name || payload.name);
+      }
+    } catch (err) {
+      toast(`${isEdit ? '保存' : '创建'}失败：${err.message}`, 'error');
+    }
+  };
+
+  modal.root.addEventListener('click', async (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'ok') return save();
+    if (act === 'cancel') return modal.close();
+    if (act === 'reset-spent') {
+      const ok = await confirmDialog({
+        title: '清零已用额度？',
+        message: '只把「已用金额」归零，不影响账号余额与消费记录。清零后这把 Key 可以重新按额度消费。',
+        confirmText: '清零',
+      });
+      if (!ok) return;
+      try {
+        await api.updateOpenKey(existing.id, { spent: 0 });
+        toast('已清零', 'success');
+        modal.close();
+        await refresh();
+      } catch (err) {
+        toast(`清零失败：${err.message}`, 'error');
+      }
+    }
+  });
+}
+
+/** 新建成功后把明文摆出来（列表里之后照样能复制，这里只是省一步） */
+function showNewKey(key, name) {
+  const modal = openModal({
+    title: '密钥已创建',
+    bodyHtml: `
+      <div class="notice notice-success">${icon('success')} 已经可以用了。这段密钥之后随时能在列表里点「复制」取回，不必现在保存。</div>
+      <div class="field">
+        <label class="label">${escapeHtml(name || '未命名密钥')}</label>
+        <input class="input mono" id="newOpenKeyValue" readonly value="${escapeHtml(key)}" />
+      </div>
+      <div class="field">
+        <label class="label">Base URL</label>
+        <input class="input mono" readonly value="${escapeHtml(baseUrl())}" />
+      </div>`,
+    footHtml: `
+      <button class="btn btn-ghost" type="button" data-act="close">关闭</button>
+      <button class="btn btn-primary" type="button" data-act="copy">复制密钥</button>`,
+  });
+
+  modal.root.addEventListener('click', async (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'copy') await copyText(key);
+    if (act === 'close') modal.close();
+  });
+  modal.$('#newOpenKeyValue')?.select();
+}
+
+async function onKeysClick(e) {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  const item = keys.find((k) => k.id === id);
+  if (!item) return;
+
+  if (btn.dataset.act === 'copy') {
+    if (!item.key) {
+      toast('这把密钥是早期创建的、库里没留明文，请删掉重建一把', 'warn');
+      return;
+    }
+    await copyText(item.key);
+    return;
+  }
+
+  if (btn.dataset.act === 'edit') {
+    await openKeyForm(item);
+    return;
+  }
+
+  if (btn.dataset.act === 'toggle') {
+    btn.disabled = true;
+    try {
+      await api.updateOpenKey(id, { enabled: !item.enabled });
+      toast(item.enabled ? '已停用' : '已启用', 'success');
+      await refresh();
+    } catch (err) {
+      toast(`操作失败：${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
+
+  if (btn.dataset.act === 'delete') {
+    const ok = await confirmDialog({
+      title: '删除这把密钥？',
+      message: `「${item.name || '未命名密钥'}」删除后立刻失效，正在用它的脚本会收到 401。此操作不可撤销。`,
+      confirmText: '删除',
+      danger: true,
+    });
+    if (!ok) return;
+    btn.disabled = true;
+    try {
+      await api.deleteOpenKey(id);
+      toast('已删除', 'success');
+      await refresh();
+    } catch (err) {
+      toast(`删除失败：${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+}
+
+/* ============================== 接入文档 ============================== */
+
+function codeBlock(title, code) {
+  return `
+    <div class="field">
+      <div class="label-row">
+        <label class="label">${escapeHtml(title)}</label>
+        <button class="btn btn-sm btn-ghost" type="button" data-copy="${escapeHtml(code)}">复制</button>
+      </div>
+      <pre class="mono" style="white-space:pre-wrap;word-break:break-all;background:var(--bg-soft,#0f1320);padding:12px;border-radius:10px;font-size:14.5px;line-height:1.6;margin:0">${escapeHtml(
+        code,
+      )}</pre>
+    </div>`;
+}
+
+/*
+ * 文档数据：页面上的三张表与「复制整份文档」的纯文本都取自这里，改一处两边同步。
+ * 端点表里的 `<video>` 交给 escapeHtml 转义，写的时候按原文写就行。
+ */
+const ENDPOINTS = [
+  ['GET', '/ping', '连通性探针（不需要密钥）'],
+  ['GET', '/me', '当前账号、密钥名与余额'],
+  ['GET', '/balance', '余额查询'],
+  ['GET', '/pricing', '价目表与可用模型（提交前先看这个）'],
+  ['POST', '/videos', '视频生成，返回任务 id 后轮询'],
+  ['POST', '/images', '图片生成，返回任务 id 后轮询'],
+  ['GET', '/tasks', '任务列表（?kind=&status=&limit=）'],
+  ['GET', '/tasks/{id}', '任务详情'],
+  ['DELETE', '/tasks/{id}', '删除任务（连带云端文件）'],
+  ['GET', '/tasks/{id}/content', '成片：已归档 302 到直链，未归档由服务端代为转发（支持 Range，可直接放进 <video>）'],
+  ['GET', '/tasks/{id}/download', '成片下载（带文件名）'],
+  ['GET', '/tasks/{id}/images/{index}', '图片：302 到直链'],
+];
+
+const KEY_LIMITS = [
+  ['有效期至', '永久有效', '401 KEY_EXPIRED'],
+  ['额度（算力）', '不限额度', '402 QUOTA_EXCEEDED'],
+  ['允许的模型', '全部模型', '403 MODEL_NOT_ALLOWED'],
+  ['IP 白名单', '不限来源', '403 IP_NOT_ALLOWED'],
+];
+
+const ERROR_CODES = [
+  ['401', 'UNAUTHORIZED / INVALID_KEY / KEY_DISABLED / KEY_EXPIRED', '没带密钥、密钥无效、已停用或已过期'],
+  ['403', 'ACCOUNT_DISABLED / MODEL_NOT_ALLOWED / IP_NOT_ALLOWED', '账号停用，或命中密钥的模型 / IP 限制'],
+  ['402', 'INSUFFICIENT_BALANCE / QUOTA_EXCEEDED', '余额不足 / 密钥额度用尽'],
+  ['400', 'UNPRICED_MODEL / BAD_RATIO / MISSING_PROMPT …', '参数问题或模型不在价目表里'],
+  ['404', 'TASK_NOT_FOUND', '任务不存在（含别人的任务）'],
+  ['409', 'NOT_READY', '任务还没跑完'],
+  ['429', 'SUBMIT_RATE_LIMITED / TOO_MANY_ACTIVE_TASKS', '提交太快或并发任务已满'],
+  ['503', 'STORAGE_NOT_CONFIGURED / NO_UPSTREAM_KEY', '服务端未就绪，请联系管理员'],
+];
+
+/** 三列表格：首列等宽（方法 / 状态 / 设定名） */
+function docsTable(heads, rows) {
+  return `<table class="spend-table">
+      <thead><tr>${heads.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${rows
+          .map(
+            (r) =>
+              `<tr>${r
+                .map((c, i) => `<td${i === 0 ? ' class="mono"' : ''}>${escapeHtml(c)}</td>`)
+                .join('')}</tr>`,
+          )
+          .join('')}
+      </tbody>
+    </table>`;
+}
+
+const VIDEO_JSON = `{
+  "model": "${DEFAULT_MODEL_ID}",
+  "prompt": "一只橘猫坐在窗台上看雨，镜头缓慢推近",
+  "resolution": "720p",
+  "seconds": 5,
+  "aspect_ratio": "16:9"
+}`;
+
+/** 参考素材放在哪个字段（页面表格与纯文本文档共用同一份数据，不会两边打架） */
+const REF_FIELDS = [
+  ['参考图', 'reference_image_urls', '数组，顺序即语义：第 1 个就是提示词里的「图片1」，第 2 个是「图片2」（Seedance 2.5 最多 30 张、2.0 与 MiniMax H3 最多 9 张）。与首帧 / 尾帧两图**不能同一条请求混用**'],
+  ['首帧图', 'input_reference', '单张，作为视频开头那一帧。不再自动取参考图的第一张 —— 首尾帧与参考素材是两种互斥的模式'],
+  ['参考音频', 'reference_audio_urls', '数组，对应「音频1」…（音色 / 对白参考）。Seedance 2.5 最多 10 段，每段 ≥2 秒、**全部合计 ≤30 秒**；站内提交时转成上游的 reference_audios。它属于「参考素材」那一族'],
+  ['尾帧图', 'last_frame', '单张，与首帧图一起构成「首尾帧」方式（配 mode=firstlast）；与参考素材**不能同一条请求混用**'],
+  ['参考视频', 'reference_video_urls', '数组 —— Seedance 2.5 最多 10 个（每个 ≥2 秒、全部合计 ≤30 秒）；Seedance 2.0 最多 3 个；MiniMax H3 与按条型号不支持'],
+  ['生成方式', 'mode', 't2v / i2v / firstlast / reference —— 首尾帧与参考素材只能二选一时，靠它说明这次用哪一种'],
+  ['图片生成的参考图', 'image_urls', '/images 专用 —— 图片接口的参考图字段名与视频不同'],
+];
+
+const REFS_JSON = `{
+  "model": "${DEFAULT_MODEL_ID}",
+  "prompt": "图片1 里的女孩转头看向镜头，语气参考 音频1",
+  "reference_image_urls": ["https://cdn.example.com/girl.png"],
+  "reference_audio_urls": ["https://cdn.example.com/voice.mp3"],
+  "seconds": 5,
+  "resolution": "720p"
+}`;
+
+/** 「复制整份文档」用的纯文本：renderDocs 渲染时顺手算好，点按钮直接发 */
+let docTextCache = '';
+
+/**
+ * 整份接入文档的纯文本版。
+ *
+ * 给「一键复制发给 AI」用 —— AI 读这段比读 HTML 有用得多，粘过去就能照着接。
+ * 内容与页面上那几节一一对应，表格数据取自同一组常量，不会两边打架。
+ */
+function buildDocText(BASE, { curl, node, python }) {
+  return [
+    '# 妖火AI 接入文档',
+    '',
+    `Base URL：${BASE}`,
+    '鉴权：请求头 Authorization: Bearer <你的密钥>（也兼容 X-API-Key）',
+    '响应约定：成功 { "success": true, ... }；失败 { "success": false, "code": "...", "message": "..." }',
+    `模型标识：视频用 ${DEFAULT_MODEL_ID}（清单见 GET /pricing 的 models.video）。`,
+    '',
+    '## 接口一览',
+    ...ENDPOINTS.map(([method, path, desc]) => `- ${method} ${path} —— ${desc}`),
+    '',
+    '## 密钥限制（默认全不设限：有效期、额度、允许的模型、IP 白名单）',
+    ...KEY_LIMITS.map(([name, empty, code]) => `- ${name}：留空 = ${empty}；触发后返回 ${code}`),
+    '- 额度与账号余额是两道独立闸门：余额不够回 402 INSUFFICIENT_BALANCE，额度用满回 402 QUOTA_EXCEEDED，两者都要够才跑得起来；生成失败退回时额度一并返还',
+    '',
+    '## 调用流程',
+    '1. POST /videos 或 /images 提交，立刻拿到 task.id（不阻塞，扣费此时已发生）',
+    '2. 每 5 秒 GET /tasks/{id} 轮询，只看一个字段 done',
+    '   - done=false：还没好，继续轮询',
+    '   - done=true ：收手，按下面三选一处理',
+    '3. done=true 之后：',
+    '   - status=failed → 看 error，费用已自动原路退回，结束',
+    '   - videoUrl 有值 → 直接下载',
+    '   - 两者都没有 → 用 downloadUrl（或 contentUrl）取件：带 Key 请求一定能拿到成片，服务端代为取流，支持 Range',
+    '   - 图片任务结果看 images[]',
+    '任务状态机：queued → in_progress → completed / failed（失败会自动退回扣费，refunded 为 true）',
+    'videoState（配合 done 看）：ready 表示 videoUrl 已可用；retrieving 表示成片还没就绪，继续轮询即可；unavailable 表示 videoUrl 不会有，改用 downloadUrl 取件',
+    '',
+    '## 请求字段（/videos、/images）',
+    '与站内提交同构：可直接传顶层字段，也可写成 { "payload": {...}, "meta": {...} }。',
+    '- 必填：model、prompt',
+    '- 可选：resolution、seconds（Seedance 2.5 为 4–30、Wan 3.0 为 2–30，按秒计费、传多少秒就提交多少秒；Seedance 2.0 固定 15）、aspect_ratio',
+    '- 参考素材（可选，详见下一节）：reference_image_urls、reference_audio_urls、reference_video_urls、input_reference（首帧图）',
+    '- reference_video_urls：Seedance 2.5 支持（≤10 个，每个 ≥2 秒、全部合计 ≤30 秒）、Seedance 2.0 支持（≤3 个），Wan 3.0 Video Prime 也收；MiniMax H3 与按条型号不支持',
+    '- reference_audio_urls：Seedance 2.5 最多 10 段，每段 ≥2 秒、全部合计 ≤30 秒；它属于「参考素材」那一族，同样不能与首帧 / 尾帧混用',
+    '- 注意「合计」是**总时长之和**：例如 3 段各 12 秒的音频（36 秒）会在提交阶段被直接拒绝（报「参考音频总时长超限」、不扣费）。要驱动更长的视频，请把素材剪到合计 ≤30 秒，或拆成多次生成',
+    '- 首尾帧与参考素材**二选一**：input_reference / last_frame 不能与 reference_*_urls 写在同一条请求里；用 mode=firstlast（走首尾帧）或 mode=reference（走参考素材）说明这次用哪种。两族都给了又没写 mode，提交会被直接退回（不扣费）',
+    '- 图片另有：size（档位或像素）、n、quality，参考图用 image_urls',
+    '',
+    '## 参考素材：上传与在提示词里引用',
+    '上游只接受**公网可直接下载的 https 直链**：不接受文件上传，也不认带鉴权或防盗链的地址。',
+    '所以素材要先落到能给外网的存储上，再把地址填进对应字段。',
+    '',
+    '### 1）怎么得到可用的素材地址',
+    '- 自己的对象存储 / CDN / 图床：文件 PUT 上去并开放公网读，直接拿到 https 直链（推荐，最稳）',
+    '- 用站内控制台：在「创作台」（视频生成 / 图片生成页签）的素材面板拖拽或点选本地文件，或到「资产库」上传 —— 文件会存到站点的对象存储上，该素材的公网地址即可直接用于 API（前提是后台已配置对象存储）',
+    '- 必须是外网可访问的地址：上游服务器会主动来下载，localhost / 内网 IP 一定失败；不要用带过期签名的临时地址',
+    '- 地址要能长期访问：任务队列里可能几分钟后才真正去取文件',
+    '',
+    '### 2）地址放在哪个字段',
+    ...REF_FIELDS.map(([use, field, desc]) => `- ${use}：${field} —— ${desc}`),
+    '',
+    '### 3）提示词里怎么引用（顺序即语义）',
+    '- 数组第 1 个元素就是「图片1」，第 2 个是「图片2」；音频同理「音频1」',
+    '- 例：reference_image_urls = [A, B]，提示词写「图片1 里的女孩走进 图片2 的房间」——A 是女孩，B 是房间',
+    '- 首帧靠 input_reference 这个字段区分，提示词里不需要编号；尾帧是 last_frame',
+    '- 引用编号必须与数组一一对应：提示词写了「图片2」却没传第 2 张，模型只能自己猜，效果会跑偏',
+    '- 改数组顺序等于换了引用对象，所以提交后不要再调整顺序',
+    '',
+    '### 4）带参考素材的请求示例',
+    REFS_JSON,
+    '',
+    '## 错误码',
+    ...ERROR_CODES.map(([status, code, desc]) => `- ${status} ${code} —— ${desc}`),
+    '',
+    '## curl 示例',
+    curl,
+    '',
+    '## Node.js 示例',
+    node,
+    '',
+    '## Python 示例',
+    python,
+  ].join('\n');
+}
+
+function renderDocs() {
+  const BASE = baseUrl();
+  const curl = `# 1) 提交一个视频任务
+curl -X POST ${BASE}/videos \\
+  -H "Authorization: Bearer $YAOHUO_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '${VIDEO_JSON.replace(/\n\s*/g, '')}'
+
+# 2) 轮询任务状态：看 done —— false 继续轮，true 就收手
+curl ${BASE}/tasks/任务ID -H "Authorization: Bearer $YAOHUO_KEY"
+
+# 3) 余额
+curl ${BASE}/balance -H "Authorization: Bearer $YAOHUO_KEY"`;
+
+  const node = `const BASE = '${BASE}';
+const KEY = process.env.YAOHUO_KEY;
+
+async function call(path, init = {}) {
+  const res = await fetch(BASE + path, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', Authorization: \`Bearer \${KEY}\`, ...(init.headers || {}) },
+  });
+  const data = await res.json();
+  if (data.success === false) throw new Error(\`\${res.status} \${data.code}: \${data.message}\`);
+  return data;
+}
+
+// 提交
+const { task } = await call('/videos', {
+  method: 'POST',
+  body: JSON.stringify({
+    model: '${DEFAULT_MODEL_ID}',
+    prompt: '一只橘猫坐在窗台上看雨，镜头缓慢推近',
+    resolution: '720p',
+    seconds: 5,
+    aspect_ratio: '16:9',
+  }),
+});
+
+// 轮询：只看 done —— false 再等 5 秒，true 就该收手了
+let cur = task;
+while (!cur.done) {
+  await new Promise((r) => setTimeout(r, 5000));
+  cur = (await call('/tasks/' + cur.id)).task;
+}
+
+if (cur.status === 'failed') {
+  console.error('生成失败：', cur.error); // 费用已自动原路退回
+} else if (cur.videoUrl) {
+  console.log('成片直链：', cur.videoUrl);
+} else {
+  // videoUrl 为空：用取件口拿片子，一样支持 Range
+  console.warn('改用取件口：', cur.downloadUrl, cur.notice);
+}`;
+
+  const python = `import os, time, requests
+
+BASE = "${BASE}"
+KEY = os.environ["YAOHUO_KEY"]
+HEAD = {"Authorization": f"Bearer {KEY}"}
+
+# 视频生成
+r = requests.post(f"{BASE}/videos", headers=HEAD, json={
+    "model": "${DEFAULT_MODEL_ID}",
+    "prompt": "一只橘猫坐在窗台上看雨，镜头缓慢推近",
+    "resolution": "720p",
+    "seconds": 5,
+    "aspect_ratio": "16:9",
+}, timeout=60)
+r.raise_for_status()
+task = r.json()["task"]
+
+# 轮询：只看 done —— false 再等 5 秒，true 就该收手了
+while not task.get("done"):
+    time.sleep(5)
+    task = requests.get(f"{BASE}/tasks/{task['id']}", headers=HEAD, timeout=30).json()["task"]
+
+if task["status"] == "failed":
+    print("生成失败：", task.get("error"))          # 费用已自动原路退回
+elif task.get("videoUrl"):
+    print("成片直链：", task["videoUrl"])
+else:
+    print("改用取件口：", task.get("downloadUrl"), task.get("notice"))
+
+# 图片生成
+img = requests.post(f"{BASE}/images", headers=HEAD, json={
+    "model": "gpt-image-2.5",
+    "prompt": "国风仙侠，云雾缭绕的丹房",
+    "size": "1K",
+    "n": 1,
+}, timeout=60).json()
+print(img["task"]["id"])`;
+
+  // 纯文本版先算好缓存住：页面上那颗「复制整份文档」直接吐这段
+  docTextCache = buildDocText(BASE, { curl, node, python });
+
+  $('openApiDocs').innerHTML = `
+    <div class="field">
+      <div class="label-row">
+        <label class="label">Base URL</label>
+        <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="color:var(--text-mute);font-size:14.5px">一键复制发给 AI 即可快速接入</span>
+          <button class="btn btn-sm btn-primary" type="button" data-copy-doc="1">复制整份文档</button>
+          <button class="btn btn-sm btn-ghost" type="button" data-copy="${escapeHtml(BASE)}">复制</button>
+        </span>
+      </div>
+      <input class="input mono" readonly value="${escapeHtml(BASE)}" />
+    </div>
+    <div class="field">
+      <label class="label">鉴权</label>
+      <div>请求头带 <code class="mono">Authorization: Bearer &lt;你的密钥&gt;</code>，也兼容 <code class="mono">X-API-Key</code>。
+      密钥就是上面「我的密钥」里创建的那把，归属到你的账号，扣费走你的余额。</div>
+    </div>
+    <div class="field">
+      <label class="label">响应约定</label>
+      <div>成功一律 <code class="mono">{ "success": true, ... }</code>；
+      失败为 <code class="mono">{ "success": false, "code": "...", "message": "..." }</code>。</div>
+    </div>
+    <div class="field">
+      <label class="label">模型标识</label>
+      <div>视频用 <code class="mono">${escapeHtml(DEFAULT_MODEL_ID)}</code>
+      （清单见 <code class="mono">GET /pricing</code> 的 <code class="mono">models.video</code>）。</div>
+    </div>
+
+    <h3 style="margin:18px 0 8px">接口一览</h3>
+    ${docsTable(['方法', '路径', '说明'], ENDPOINTS)}
+
+    <h3 style="margin:18px 0 8px">密钥限制（默认全不设限）</h3>
+    ${docsTable(['设定', '留空时', '触发后返回'], KEY_LIMITS)}
+    <div style="color:var(--text-mute)">额度与账号余额是两道独立的闸门：余额不够会 402 INSUFFICIENT_BALANCE，
+    额度用满则 402 QUOTA_EXCEEDED；两者都要够才跑得起来。生成失败退回时，额度也一并返还。</div>
+
+    <h3 style="margin:18px 0 8px">状态与错误码</h3>
+    ${docsTable(['状态', 'code', '含义'], ERROR_CODES)}
+
+    <h3 style="margin:18px 0 8px">任务状态机与轮询</h3>
+    <div><code class="mono">queued</code> → <code class="mono">in_progress</code> → <code class="mono">completed</code> / <code class="mono">failed</code>。
+    生成是异步的：提交后拿到 <code class="mono">task.id</code>，建议每 5 秒查一次 <code class="mono">/tasks/{id}</code>，
+    <strong>只看一个字段 <code class="mono">done</code></strong>：<code class="mono">false</code> 就继续轮询；
+    <code class="mono">true</code> 就该收手。任务失败会自动原路退回扣费，<code class="mono">refunded</code> 为 true。</div>
+    <div style="margin-top:6px"><code class="mono">done</code> 为 <code class="mono">true</code> 之后三选一：
+    <code class="mono">status=failed</code> 看 <code class="mono">error</code>；
+    有 <code class="mono">videoUrl</code> 就直接下载；否则用 <code class="mono">downloadUrl</code>（或
+    <code class="mono">contentUrl</code>）取件 —— 带 Key 请求<strong>一定</strong>拿得到成片，服务端代为取流，支持 Range。
+    图片任务的结果看 <code class="mono">images[]</code>。</div>
+    <div style="color:var(--text-mute);margin-top:6px">
+    <code class="mono">videoState</code> 为 <code class="mono">retrieving</code> 表示成片还没就绪，继续轮询即可；
+    若一直是 <code class="mono">unavailable</code>，改用 <code class="mono">downloadUrl</code> 取件。</div>
+
+    <h3 style="margin:18px 0 8px">请求体字段（/videos、/images）</h3>
+    <div>与站内提交同构：可以直接传顶层字段，也可以写成 <code class="mono">{ "payload": {...}, "meta": {...} }</code>。
+    常用字段：<code class="mono">model</code>、<code class="mono">prompt</code>、<code class="mono">resolution</code>、
+    <code class="mono">seconds</code>、<code class="mono">aspect_ratio</code>、
+    <code class="mono">generate_audio</code>、<code class="mono">watermark</code>、<code class="mono">seed</code>、<code class="mono">output_format</code>。
+    参考素材字段见下一节；图片另有 <code class="mono">size</code>（档位或像素）、<code class="mono">n</code>、<code class="mono">quality</code>。</div>
+
+    <h3 style="margin:18px 0 8px">参考素材：上传与在提示词里引用</h3>
+    <div>上游只接受<strong>公网可直接下载的 https 直链</strong>：不接受文件上传，也不认带鉴权或防盗链的地址。
+    素材要先落到能给外网的存储上，再把地址填进对应字段。</div>
+
+    <h4 style="margin:14px 0 6px">1）怎么得到可用的素材地址</h4>
+    <div>
+      <div>· <strong>自己的对象存储 / CDN / 图床</strong>：文件 PUT 上去并开放公网读，拿到 https 直链（推荐，最稳）。</div>
+      <div>· <strong>用站内控制台上传</strong>：在「创作台」（视频生成 / 图片生成页签）的素材面板拖拽或点选本地文件，或到「资产库」上传 ——
+      文件会存到站点的对象存储上，该素材的公网地址即可直接用于 API（前提是后台已配置对象存储）。</div>
+      <div>· <strong>必须是外网可访问的地址</strong>：上游服务器会主动来下载，<code class="mono">localhost</code> / 内网 IP 一定失败；
+      也不要用带过期签名的临时地址（任务队列里可能几分钟后才真正去取文件）。</div>
+    </div>
+
+    <h4 style="margin:14px 0 6px">2）地址放在哪个字段</h4>
+    ${docsTable(['用途', '字段', '说明'], REF_FIELDS)}
+
+    <h4 style="margin:14px 0 6px">3）提示词里怎么引用（顺序即语义）</h4>
+    <div>
+      <div>· 数组第 1 个元素就是 <code class="mono">图片1</code>，第 2 个是 <code class="mono">图片2</code>；音频同理 <code class="mono">音频1</code>。</div>
+      <div>· 例：<code class="mono">reference_image_urls = [A, B]</code>，提示词写「<b>图片1</b> 里的女孩走进 <b>图片2</b> 的房间」—— A 是女孩，B 是房间。</div>
+      <div>· 首帧靠 <code class="mono">input_reference</code> 这个字段区分，提示词里不需要编号；尾帧是 <code class="mono">last_frame</code>。首尾帧这一族与参考素材不能混用（用 <code class="mono">mode</code> 说明二选一中的哪一种）。</div>
+      <div>· 提示词写了「图片2」却没传第 2 张，模型只能自己猜，效果会跑偏；改数组顺序等于换了引用对象，提交后别再调顺序。</div>
+    </div>
+    ${codeBlock('带参考素材的请求体（/videos）', REFS_JSON)}
+
+    <h3 style="margin:18px 0 8px">示例 <span style="color:var(--text-mute);font-size:15.5px;font-weight:400">（一键复制发给 AI 即可快速接入）</span></h3>
+    ${codeBlock('curl', curl)}
+    ${codeBlock('Node.js（fetch）', node)}
+    ${codeBlock('Python（requests）', python)}
+  `;
+
+  $('openApiDocs').addEventListener('click', async (e) => {
+    // 「复制整份文档」：整篇纯文本，粘给 AI 就能照着接
+    if (e.target.closest('[data-copy-doc]')) {
+      await copyText(docTextCache || buildDocText(BASE, { curl, node, python }));
+      return;
+    }
+    const btn = e.target.closest('[data-copy]');
+    if (btn) await copyText(btn.dataset.copy || '');
+  });
+}
+
+/* ============================== 挂载 ============================== */
+
+export function initOpenApi() {
+  $('openApiRefresh').addEventListener('click', () => refresh());
+  $('openApiNew').addEventListener('click', () => openKeyForm(null));
+  $('openApiKeys').addEventListener('click', onKeysClick);
+  renderDocs();
+}
+
+export function showOpenApi() {
+  refresh();
+}

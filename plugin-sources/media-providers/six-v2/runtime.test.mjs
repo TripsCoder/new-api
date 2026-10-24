@@ -34,7 +34,7 @@ test('reviewed parameter gaps use the exact supplier definitions without network
  assert.equal(yuxi.buildSubmitRequest(context('minimax-h3-fast',{seconds:5,seed:0,images:['https://media.example/ref.png']})).body.seed,0);
  assert.throws(()=>paisio.buildSubmitRequest(context('sd2-720p',{seconds:5,seed:0})),/unsupported field/);
 });
-test('exactly six final artifacts match their build manifest',()=>{const manifest=JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url),'utf8'));assert.equal(manifest.plugins.length,6);for(const item of manifest.plugins){const source=fs.readFileSync(new URL('./dist/'+item.file,import.meta.url));assert.equal(crypto.createHash('sha256').update(source).digest('hex'),item.sha256);assert.equal(load(item.key).meta.version,item.key==='paisio_media'?'2.1.6':'2.1.5');assert.equal(item.version,item.key==='paisio_media'?'2.1.6':'2.1.5')}});
+test('exactly six final artifacts match their build manifest',()=>{const manifest=JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url),'utf8'));assert.equal(manifest.plugins.length,6);for(const item of manifest.plugins){const source=fs.readFileSync(new URL('./dist/'+item.file,import.meta.url));assert.equal(crypto.createHash('sha256').update(source).digest('hex'),item.sha256);assert.equal(load(item.key).meta.version,['paisio_media','xcmapi_media'].includes(item.key)?'2.1.6':'2.1.5');assert.equal(item.version,['paisio_media','xcmapi_media'].includes(item.key)?'2.1.6':'2.1.5')}});
 test('every final artifact model builds declared usage facts without network',()=>{let count=0;for(const [key,provider]of Object.entries(profiles)){const plugin=load(key);for(const [model,p]of Object.entries(provider.models)){const input={};if(p.secondsField||p.fixedSeconds)input.seconds=p.defaultSeconds??p.secondsChoices?.[0]??p.minSeconds;if(p.minImages||p.firstLastOnly)input.images=Array(p.minImages||1).fill('https://media.example.com/ref.png');if(p.minAudios)input.audios=Array(p.minAudios).fill('https://media.example.com/ref.mp3');if(p.anyImageOrAudio&&!input.images&&!input.audios)input.images=['https://media.example.com/ref.png'];const ctx=context(model,input,p.kind==='image'?'image_generate':'video_generate');let request;try{request=plugin.buildSubmitRequest(ctx)}catch(error){throw new Error(key+' '+model+': '+error.message)}assert.ok(request.url.startsWith('https://provider.invalid/'));assert.equal(request.method,'POST');const facts=plugin.extractUsage(ctx);const schema=plugin.meta.usageProfiles.find(profile=>profile.models.some(name=>name.toLowerCase()===(p.canonicalModel||model).toLowerCase())).schema;for(const name of Object.keys(facts))assert.ok(Object.hasOwn(schema,name),key+' '+model+' '+name);count++}}assert.ok(count>190)});
 test('Paisio image explicit async false is not forced to async true',()=>{const plugin=load('paisio_media');const ctx=context('gpt-image2-high',{n:1,async:false},'image_generate');assert.equal(plugin.buildSubmitRequest(ctx).body.async,false);ctx.requestBody.input.async=true;assert.equal(plugin.buildSubmitRequest(ctx).body.async,true)});
 
@@ -108,7 +108,7 @@ test('native XCM h3 keeps its independent protocol, preset voices and terminal c
  const request=plugin.buildSubmitRequest(ctx);
  assert.equal(request.url,'https://provider.invalid/v1/videos/generations');assert.equal(request.body.model,'h3');assert.equal(request.body.duration,8);
  assert.deepEqual(plain(request.body.reference_images),[{url:'https://media.example.com/person.png'}]);assert.deepEqual(plain(request.body.reference_audios),[{voice_id:'eve'}]);
- assert.equal(request.body.images,undefined);assert.equal(request.body.client_request_id,undefined);
+ assert.equal(request.body.images,undefined);assert.equal(request.body.client_request_id,ctx.publicTaskId);
  const lastOnly=context('h3',{last_frame:{url:'https://media.example.com/end.png'},prompt:undefined});const lastRequest=plugin.buildSubmitRequest(lastOnly);assert.deepEqual(plain(lastRequest.body.last_frame),{url:'https://media.example.com/end.png'});assert.equal(lastRequest.body.prompt,undefined);
  assert.throws(()=>plugin.buildSubmitRequest(context('h3',{reference_audios:['https://media.example.com/custom.mp3']})),/voice_id/);
  assert.throws(()=>plugin.buildSubmitRequest(context('h3',{reference_audios:[{voice_id:'undocumented'}]})),/preset voice/);
@@ -279,4 +279,85 @@ test('Paisio prefers saved public video URL and preserves authenticated fallback
  assert.ok(fallback.url.startsWith('https://provider.invalid/'));
  assert.equal(fallback.credentialless,undefined);
  assert.ok(fallback.headers.Authorization);
+});
+
+
+test('XCM generates transport identity for both document interfaces and legacy video profiles',()=>{
+ const plugin=load('xcmapi_media');
+ const cases=[{model:'h3'}, {model:'minimax-h3'}, ...Object.keys(profiles.xcmapi_media.interfaces).map(protocolTemplate=>({model:'seedance-2.5-G3-D1',protocolTemplate}))];
+ for(const {model,protocolTemplate} of cases){
+  const ctx=context(model,{seconds:5,client_request_id:{caller:'cannot override'}});
+  if(protocolTemplate)ctx.requestBody.protocolTemplate=protocolTemplate;
+  const before=plain(ctx);
+  const request=plugin.buildSubmitRequest(ctx);
+  assert.equal(request.body.client_request_id,ctx.publicTaskId,model+' '+protocolTemplate);
+  assert.deepEqual(plain(ctx),before,'caller input remains unchanged');
+  assert.equal(plugin.buildSubmitRequest({...ctx,requestId:'a-new-http-log-id'}).body.client_request_id,ctx.publicTaskId,'rebuild reuses host task identity');
+  assert.equal(plugin.buildSubmitRequest({...ctx,publicTaskId:'task_another_order_0000001'}).body.client_request_id,'task_another_order_0000001');
+  for(const publicTaskId of [undefined,'short','x'.repeat(129),'task_invalid_request / 00001'])assert.throws(()=>plugin.buildSubmitRequest({...ctx,publicTaskId}),/stable gateway task id|missing: client_request_id/);
+  for(const publicTaskId of ['a'.repeat(16),'x'.repeat(128),'task_1234.5678:90-ab'])assert.equal(plugin.buildSubmitRequest({...ctx,publicTaskId}).body.client_request_id,publicTaskId);
+  const {client_request_id,...wire}=plain(request.body);assert.ok(wire.model);assert.equal(client_request_id,ctx.publicTaskId);
+  assert.equal(Object.hasOwn(plugin.extractUsage(ctx),'client_request_id'),false,'identity is never a billing field');
+ }
+});
+
+test('XCM request identity is not added to other suppliers or query/download requests',()=>{
+ for(const [key,provider] of Object.entries(profiles)){
+  if(key==='xcmapi_media')continue;
+  const [id]=Object.entries(provider.interfaces).find(([,entry])=>entry.kind==='video'&&entry.parameters.seconds);
+  const ctx=context('actual-selected-model',{seconds:6,client_request_id:'caller-owned-value'});ctx.requestBody.protocolTemplate=id;ctx.requestBody.unrestrictedValueFields=['seconds'];
+  const request=load(key).buildSubmitRequest(ctx);assert.equal(request.body.client_request_id,undefined,key);
+ }
+ const plugin=load('xcmapi_media');
+ const poll=plugin.buildQueryRequest({model:'h3',upstreamModel:'h3',taskId:'upstream_existing_task',baseUrl:'https://provider.invalid',apiKey:'fixture'});
+ assert.equal(poll.method,'GET');assert.equal(poll.body,undefined);
+});
+
+
+test('XCM current execution parameters cover 18 models on both saved interface identities',()=>{
+ const provider=profiles.xcmapi_media,plugin=load('xcmapi_media');
+ for(const [id,entry] of Object.entries(provider.interfaces)){
+  assert.equal(Object.keys(entry.modelRules).length,18);
+  assert.ok(!entry.modelRules.seedance2_5);
+  for(const [model,rule] of Object.entries(entry.modelRules)){
+   const fields=rule.parameters,min=fields.seconds.minimum,max=fields.seconds.maximum;
+   const resolution=fields.resolution.enum[0];
+   const ctx=context(model,{seconds:min,resolution,aspect_ratio:'16:9'});ctx.requestBody.protocolTemplate=id;
+   const request=plugin.buildSubmitRequest(ctx);assert.equal(request.body.model,model);assert.equal(request.body.duration,min);assert.equal(request.body.ratio,'16:9');assert.equal(request.body.client_request_id,ctx.publicTaskId);
+   assert.equal(request.body.aspect_ratio,undefined,'known Gway models use their documented wire shape even on the saved native-labelled entry');
+   for(const seconds of [min,max])assert.equal(plugin.buildSubmitRequest({...ctx,requestBody:{...ctx.requestBody,input:{...ctx.requestBody.input,seconds}}}).body.duration,seconds);
+   for(const seconds of [min-1,max+1])assert.throws(()=>plugin.buildSubmitRequest({...ctx,requestBody:{...ctx.requestBody,input:{...ctx.requestBody.input,seconds}}}),/range|documented/);
+   for(const override of [{resolution:'invalid-tier'},{aspect_ratio:'31:17'}])assert.throws(()=>plugin.buildSubmitRequest({...ctx,requestBody:{...ctx.requestBody,input:{...ctx.requestBody.input,...override}}}),/candidate/);
+   for(const key of ['images','videos','audios']){
+    if(!fields[key]){assert.equal(plugin.buildSubmitRequest({...ctx,requestBody:{...ctx.requestBody,input:{...ctx.requestBody.input,[key]:{ignored:true}}}}).body[key],undefined);continue;}
+    const count=fields[key].definition.maxItems;
+    const item={url:'https://media.example.com/ref.'+(key==='images'?'png':key==='videos'?'mp4':'mp3'),...(key==='images'?{}:{duration_seconds:1})};
+    assert.throws(()=>plugin.buildSubmitRequest({...ctx,requestBody:{...ctx.requestBody,input:{...ctx.requestBody.input,[key]:Array(count+1).fill(item)}}}),/limit/);
+   }
+  }
+ }
+ const entry=provider.interfaces['interface:1e862884de01a7c1'];
+ assert.deepEqual(plain(entry.modelRules['seedance-2.5-g2-c1'].parameters.resolution.enum),['720p']);
+ assert.equal(entry.modelRules['seedance-2.5-g2-c1'].parameters.videos,undefined);
+ assert.equal(entry.modelRules['seedance-2.5-G3-D1'].parameters.seconds.maximum,30);
+ assert.equal(entry.sourceConflicts[0].field,'resolution');assert.deepEqual(plain(entry.sourceConflicts[0].retained),['2k']);
+ assert.ok(entry.referenceOnlyModels.includes('seedance2.5'));
+});
+
+test('XCM documented media conditions retain durations, material metadata and reference limits',()=>{
+ const plugin=load('xcmapi_media'),id='interface:1e862884de01a7c1';
+ const ctx=context('minimax-h3',{seconds:5,resolution:'2k',videos:[{url:'https://media.example.com/video.mp4',duration_seconds:8}],audios:[{url:'https://media.example.com/audio.mp3',duration_seconds:7}]});ctx.requestBody.protocolTemplate=id;
+ const before=plain(ctx);assert.equal(plugin.buildSubmitRequest(ctx).body.audios[0].duration_seconds,7);assert.deepEqual(plain(ctx),before);
+ const change=input=>({...ctx,requestBody:{...ctx.requestBody,input:{...ctx.requestBody.input,...input}}});
+ assert.throws(()=>plugin.buildSubmitRequest(change({audios:[{url:'https://media.example.com/audio.mp3'}]})),/duration_seconds/);
+ assert.throws(()=>plugin.buildSubmitRequest(change({audios:[{url:'https://media.example.com/audio.mp3',duration_seconds:8}]})),/combined reference duration/);
+ const materials=change({videos:[],audios:[],materials:[{type:'video',url:'https://media.example.com/ref.mp4',duration_seconds:3,name:'reference'}]});
+ assert.equal(plugin.buildSubmitRequest(materials).body.materials[0].name,'reference');
+ assert.throws(()=>plugin.buildSubmitRequest(change({materials:[{type:'image',url:'https://media.example.com/ref.png'}]})),/cannot be combined/);
+ assert.throws(()=>plugin.buildSubmitRequest(change({videos:[],audios:[],materials:[{type:'image',url:'https://127.0.0.1/ref.png'}]})),/public HTTPS/);
+ const conditional=context('seedance-2.5-g2-1',{seconds:5,resolution:'480p',videos:[{url:'https://media.example.com/ref.mp4'}]});conditional.requestBody.protocolTemplate=id;
+ assert.equal(plugin.buildSubmitRequest(conditional).body.videos.length,1);
+ conditional.requestBody.input.resolution='720p';assert.throws(()=>plugin.buildSubmitRequest(conditional),/selected resolution/);
+ const frames=context('seedance-2.5-G3-D1',{seconds:5,resolution:'720p',images:[{url:'https://media.example.com/end.png',type:'end_frame'}]});frames.requestBody.protocolTemplate=id;
+ assert.throws(()=>plugin.buildSubmitRequest(frames),/frame combination/);
 });

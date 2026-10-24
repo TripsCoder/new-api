@@ -1,0 +1,15 @@
+{
+  "format": "aotian-video-build/v1",
+  "key": "aotian_video",
+  "version": "2.1.0",
+  "interface": "interface:ac205b7903df54b7",
+  "inputs": {
+    "build.mjs": "00b793fa0ae544e0847a00a14ab8973a9a49c705297edbcadff6cb878920a1a5",
+    "plugin.js": "b46a6b4544b6d6c0b0598f5bc5dd7a6459fba2f2197bdfcbb47a9f5662a084fb",
+    "evidence/docs.html": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+    "evidence/Aotian-SKILL.md": "3321d3491be077cef8f2ef248fff38ee793aaf357b81585c3106b02e952b23f0"
+  },
+  "file": "aotian_video.plugin.js",
+  "sha256": "fbc1d4d24f8d2c63cdb680b5e13d1cfb6b131832093322b046626f76197e782b",
+  "status": "account-models-and-pricing-not-configured"
+}

@@ -12,6 +12,69 @@ import type { Configuration, Mode } from './types'
 
 const mode = (cost: Mode['cost']): Mode => ({ enabled: true, input: {}, cost })
 describe('customer billing method and amount', () => {
+  it('keeps documented resolution names and round trips arbitrary selected tiers', () => {
+    const document: Configuration = {
+      format: 'channel-model-configuration/v1',
+      provider: 'fixture',
+      revision: 1,
+      groups: {
+        g: {
+          name: 'g',
+          modes: {
+            text_video: {
+              ...mode({ amount: null, confirmed: false }),
+              parameters: {
+                resolution: { enum: ['480p', '768px', '2K', '4K'] },
+              },
+            },
+          },
+        },
+      },
+      bindings: {
+        A: {
+          text_video: {
+            groupId: 'g',
+            parameters: {
+              resolution: { enum: ['768px', '2K', '4K'] },
+            },
+          },
+        },
+      },
+    }
+    const before = structuredClone(document)
+    expect(videoPriceResolutions(document, 'A', 'text_video')).toEqual([
+      '768px',
+      '2K',
+      '4K',
+    ])
+    const fields = {
+      unit: 'seconds',
+      value: '',
+      resolutions: { '768px': '0', '2K': '0.2', '4K': '0.4' },
+    }
+    expect(customerPriceError(fields)).toBeUndefined()
+    const saved = applyCustomerPrice(document, 'A', 'text_video', fields)
+    expect(readUniformCustomerPrice(saved, 'A').fields).toEqual(fields)
+    expect(saved.bindings.A.text_video.billing?.expression).toContain(
+      '== "2k" ? tier("2K", 0.2 * u("seconds"))'
+    )
+    expect(document).toEqual(before)
+    expect(saved.groups).toEqual(before.groups)
+    expect(
+      customerPriceError({ ...fields, resolutions: { '2K': '1', '2k': '2' } })
+    ).toBeTruthy()
+    const escaped = {
+      ...fields,
+      resolutions: { 'custom"tier': '1', '4K': '2' },
+    }
+    expect(
+      readCustomerPrice({
+        ...mode({ amount: null, confirmed: false }),
+        billing: applyCustomerPrice(document, 'A', 'text_video', escaped)
+          .bindings.A.text_video.billing,
+      })
+    ).toEqual(escaped)
+  })
   it('derives resolution tiers from enabled effective parameter choices and pixel sizes', () => {
     const document: Configuration = {
       format: 'channel-model-configuration/v1',
@@ -107,7 +170,7 @@ describe('customer billing method and amount', () => {
     }
     const next = applyCustomerPrice(document, 'A', 'text_video', fields)
     expect(next.bindings.A.text_video.billing?.expression).toBe(
-      'u("resolution") == "720p" ? tier("720p", 0 * u("seconds")) : u("resolution") == "1080p" ? tier("1080p", 0.3 * u("seconds")) : nil'
+      'lower(string(u("resolution"))) == "720p" ? tier("720p", 0 * u("seconds")) : lower(string(u("resolution"))) == "1080p" ? tier("1080p", 0.3 * u("seconds")) : nil'
     )
     expect(readUniformCustomerPrice(next, 'A').fields).toEqual({
       ...fields,
@@ -157,7 +220,7 @@ describe('customer billing method and amount', () => {
     }
     const next = applyCustomerPrice(document, 'A', 'text_video', fields)
     expect(next.bindings.A.text_video.billing?.expression).toBe(
-      'u("resolution") == "480p" ? tier("480p", 0 * u("seconds")) : u("resolution") == "720p" ? tier("720p", 0.2 * u("seconds")) : u("resolution") == "1080p" ? tier("1080p", 0.3 * u("seconds")) : nil'
+      'lower(string(u("resolution"))) == "480p" ? tier("480p", 0 * u("seconds")) : lower(string(u("resolution"))) == "720p" ? tier("720p", 0.2 * u("seconds")) : lower(string(u("resolution"))) == "1080p" ? tier("1080p", 0.3 * u("seconds")) : nil'
     )
     expect(readUniformCustomerPrice(next, 'A').fields).toEqual({
       ...fields,

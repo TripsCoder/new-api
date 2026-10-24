@@ -1,0 +1,3154 @@
+{
+  "key": "fenglang_video",
+  "name": "风浪云视频",
+  "baseURL": "https://fenglang.cloud/open/v1",
+  "docsURL": "https://fenglang.cloud/",
+  "models": {},
+  "interfaces": {
+    "interface:86f3f84ab8539ca5": {
+      "id": "interface:86f3f84ab8539ca5",
+      "title": "风浪云创建视频任务",
+      "kind": "video",
+      "method": "POST",
+      "path": "/open/v1/videos",
+      "status": "documented-interface-not-account-verification",
+      "source": {
+        "file": "evidence/openapi.js.txt",
+        "url": "https://fenglang.cloud/js/openapi.js",
+        "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+        "readAt": "2026-10-24",
+        "status": "public-documentation"
+      },
+      "parameters": {
+        "model": {
+          "type": "string",
+          "required": true,
+          "description": "账号实际可用模型",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "账号实际可用模型",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "model"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "prompt": {
+          "type": "string",
+          "required": true,
+          "description": "视频提示词",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "视频提示词",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "prompt"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minLength": 1
+          }
+        },
+        "mode": {
+          "type": "string",
+          "required": false,
+          "description": "上游生成模式",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "上游生成模式",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "mode"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "enum": [
+              "t2v",
+              "i2v",
+              "firstlast",
+              "reference"
+            ]
+          }
+        },
+        "seconds": {
+          "type": "integer",
+          "required": false,
+          "description": "视频时长",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "integer",
+            "description": "视频时长",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "seconds",
+                "duration"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minimum": 1,
+            "maximum": 3600
+          },
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "resolution": {
+          "type": "string",
+          "required": false,
+          "description": "分辨率，按模型文档确认",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "分辨率，按模型文档确认",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "resolution"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "aspect_ratio": {
+          "type": "string",
+          "required": false,
+          "description": "画面比例",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "画面比例",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "aspect_ratio"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "generate_audio": {
+          "type": "boolean",
+          "required": false,
+          "description": "生成音频",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "boolean",
+            "description": "生成音频",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "generate_audio"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "watermark": {
+          "type": "boolean",
+          "required": false,
+          "description": "添加水印",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "boolean",
+            "description": "添加水印",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "watermark"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "seed": {
+          "type": "integer",
+          "required": false,
+          "description": "随机种子",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "integer",
+            "description": "随机种子",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "seed"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minimum": -1,
+            "maximum": 9007199254740991
+          }
+        },
+        "output_format": {
+          "type": "string",
+          "required": false,
+          "description": "输出格式",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "输出格式",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "output_format"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "enum": [
+              "mp4",
+              "mov"
+            ]
+          }
+        },
+        "start_image_url": {
+          "type": "string",
+          "required": false,
+          "description": "首帧 HTTPS URL",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "首帧 HTTPS URL",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "input_reference"
+              ],
+              "capabilities": [
+                "image_video",
+                "frames"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "format": "uri"
+          }
+        },
+        "end_image_url": {
+          "type": "string",
+          "required": false,
+          "description": "尾帧 HTTPS URL",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "尾帧 HTTPS URL",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "last_frame"
+              ],
+              "capabilities": [
+                "frames"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "format": "uri"
+          }
+        },
+        "images": {
+          "type": "array",
+          "required": false,
+          "description": "公网 HTTPS 素材 URL 数组",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "array",
+            "description": "公网 HTTPS 素材 URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_image_urls"
+              ],
+              "capabilities": [
+                "image_video",
+                "mixed_ref",
+                "video_ref",
+                "audio_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "videos": {
+          "type": "array",
+          "required": false,
+          "description": "公网 HTTPS 素材 URL 数组",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "array",
+            "description": "公网 HTTPS 素材 URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_video_urls"
+              ],
+              "capabilities": [
+                "video_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "audios": {
+          "type": "array",
+          "required": false,
+          "description": "公网 HTTPS 素材 URL 数组",
+          "source": {
+            "file": "evidence/openapi.js.txt",
+            "url": "https://fenglang.cloud/js/openapi.js",
+            "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "array",
+            "description": "公网 HTTPS 素材 URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_audio_urls"
+              ],
+              "capabilities": [
+                "audio_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      },
+      "modelRules": {
+        "seedance-2.5": {
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "账号实际可用模型",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "账号实际可用模型",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "mode": {
+              "type": "string",
+              "required": false,
+              "description": "上游生成模式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "上游生成模式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mode"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "t2v",
+                  "i2v",
+                  "firstlast",
+                  "reference"
+                ]
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "视频时长",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seconds",
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 4,
+                "maximum": 30
+              },
+              "minimum": 4,
+              "maximum": 30
+            },
+            "resolution": {
+              "type": "string",
+              "required": false,
+              "description": "分辨率，按模型文档确认",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "分辨率，按模型文档确认",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "480p",
+                  "720p",
+                  "1080p"
+                ]
+              },
+              "enum": [
+                "480p",
+                "720p",
+                "1080p"
+              ]
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "watermark": {
+              "type": "boolean",
+              "required": false,
+              "description": "添加水印",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "添加水印",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "watermark"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "seed": {
+              "type": "integer",
+              "required": false,
+              "description": "随机种子",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "随机种子",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seed"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": -1,
+                "maximum": 9007199254740991
+              }
+            },
+            "output_format": {
+              "type": "string",
+              "required": false,
+              "description": "输出格式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出格式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_format"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "mp4",
+                  "mov"
+                ]
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_image_urls"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 30
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video_urls"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 10
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio_urls"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 10
+              }
+            }
+          },
+          "unsupportedFields": [],
+          "source": {
+            "file": "evidence/models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "620bea212f6f4faffb39a828dc3f080e308dbdf4bd687ad899d5bd445492b666",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "id": "interface:86f3f84ab8539ca5",
+          "title": "风浪云创建视频任务",
+          "kind": "video",
+          "path": "/open/v1/videos",
+          "method": "POST",
+          "status": "documented-interface-not-account-verification",
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "mode": "mode",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "aspect_ratio": "aspect_ratio",
+            "generate_audio": "generate_audio",
+            "watermark": "watermark",
+            "seed": "seed",
+            "output_format": "output_format",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            },
+            "video_ref": {
+              "required": []
+            },
+            "audio_ref": {
+              "required": []
+            },
+            "mixed_ref": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "multipleReferences": true
+          }
+        },
+        "seedance-2.0": {
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "账号实际可用模型",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "账号实际可用模型",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "mode": {
+              "type": "string",
+              "required": false,
+              "description": "上游生成模式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "上游生成模式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mode"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "t2v",
+                  "i2v",
+                  "firstlast",
+                  "reference"
+                ]
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "视频时长",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seconds",
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 4,
+                "maximum": 15
+              },
+              "minimum": 4,
+              "maximum": 15
+            },
+            "resolution": {
+              "type": "string",
+              "required": false,
+              "description": "分辨率，按模型文档确认",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "分辨率，按模型文档确认",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "480p",
+                  "720p",
+                  "1080p"
+                ]
+              },
+              "enum": [
+                "480p",
+                "720p",
+                "1080p"
+              ]
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "watermark": {
+              "type": "boolean",
+              "required": false,
+              "description": "添加水印",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "添加水印",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "watermark"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "seed": {
+              "type": "integer",
+              "required": false,
+              "description": "随机种子",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "随机种子",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seed"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": -1,
+                "maximum": 9007199254740991
+              }
+            },
+            "output_format": {
+              "type": "string",
+              "required": false,
+              "description": "输出格式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出格式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_format"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "mp4",
+                  "mov"
+                ]
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_image_urls"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 9
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video_urls"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio_urls"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            }
+          },
+          "unsupportedFields": [],
+          "source": {
+            "file": "evidence/models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "620bea212f6f4faffb39a828dc3f080e308dbdf4bd687ad899d5bd445492b666",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "id": "interface:86f3f84ab8539ca5",
+          "title": "风浪云创建视频任务",
+          "kind": "video",
+          "path": "/open/v1/videos",
+          "method": "POST",
+          "status": "documented-interface-not-account-verification",
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "mode": "mode",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "aspect_ratio": "aspect_ratio",
+            "generate_audio": "generate_audio",
+            "watermark": "watermark",
+            "seed": "seed",
+            "output_format": "output_format",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            },
+            "video_ref": {
+              "required": []
+            },
+            "audio_ref": {
+              "required": []
+            },
+            "mixed_ref": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "multipleReferences": true
+          }
+        },
+        "seedance-2.0-fast": {
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "账号实际可用模型",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "账号实际可用模型",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "mode": {
+              "type": "string",
+              "required": false,
+              "description": "上游生成模式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "上游生成模式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mode"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "t2v",
+                  "i2v",
+                  "firstlast",
+                  "reference"
+                ]
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "视频时长",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seconds",
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 4,
+                "maximum": 15
+              },
+              "minimum": 4,
+              "maximum": 15
+            },
+            "resolution": {
+              "type": "string",
+              "required": false,
+              "description": "分辨率，按模型文档确认",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "分辨率，按模型文档确认",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              },
+              "enum": [
+                "480p",
+                "720p"
+              ]
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "watermark": {
+              "type": "boolean",
+              "required": false,
+              "description": "添加水印",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "添加水印",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "watermark"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "seed": {
+              "type": "integer",
+              "required": false,
+              "description": "随机种子",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "随机种子",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seed"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": -1,
+                "maximum": 9007199254740991
+              }
+            },
+            "output_format": {
+              "type": "string",
+              "required": false,
+              "description": "输出格式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出格式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_format"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "mp4",
+                  "mov"
+                ]
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_image_urls"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 9
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video_urls"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio_urls"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            }
+          },
+          "unsupportedFields": [],
+          "source": {
+            "file": "evidence/models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "620bea212f6f4faffb39a828dc3f080e308dbdf4bd687ad899d5bd445492b666",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "id": "interface:86f3f84ab8539ca5",
+          "title": "风浪云创建视频任务",
+          "kind": "video",
+          "path": "/open/v1/videos",
+          "method": "POST",
+          "status": "documented-interface-not-account-verification",
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "mode": "mode",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "aspect_ratio": "aspect_ratio",
+            "generate_audio": "generate_audio",
+            "watermark": "watermark",
+            "seed": "seed",
+            "output_format": "output_format",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            },
+            "video_ref": {
+              "required": []
+            },
+            "audio_ref": {
+              "required": []
+            },
+            "mixed_ref": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "multipleReferences": true
+          }
+        },
+        "seedance-2.0-mini": {
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "账号实际可用模型",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "账号实际可用模型",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "mode": {
+              "type": "string",
+              "required": false,
+              "description": "上游生成模式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "上游生成模式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mode"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "t2v",
+                  "i2v",
+                  "firstlast",
+                  "reference"
+                ]
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "视频时长",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seconds",
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 4,
+                "maximum": 15
+              },
+              "minimum": 4,
+              "maximum": 15
+            },
+            "resolution": {
+              "type": "string",
+              "required": false,
+              "description": "分辨率，按模型文档确认",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "分辨率，按模型文档确认",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              },
+              "enum": [
+                "480p",
+                "720p"
+              ]
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "watermark": {
+              "type": "boolean",
+              "required": false,
+              "description": "添加水印",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "添加水印",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "watermark"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "seed": {
+              "type": "integer",
+              "required": false,
+              "description": "随机种子",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "随机种子",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seed"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": -1,
+                "maximum": 9007199254740991
+              }
+            },
+            "output_format": {
+              "type": "string",
+              "required": false,
+              "description": "输出格式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出格式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_format"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "mp4",
+                  "mov"
+                ]
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_image_urls"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 9
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video_urls"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio_urls"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            }
+          },
+          "unsupportedFields": [],
+          "source": {
+            "file": "evidence/models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "620bea212f6f4faffb39a828dc3f080e308dbdf4bd687ad899d5bd445492b666",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "id": "interface:86f3f84ab8539ca5",
+          "title": "风浪云创建视频任务",
+          "kind": "video",
+          "path": "/open/v1/videos",
+          "method": "POST",
+          "status": "documented-interface-not-account-verification",
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "mode": "mode",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "aspect_ratio": "aspect_ratio",
+            "generate_audio": "generate_audio",
+            "watermark": "watermark",
+            "seed": "seed",
+            "output_format": "output_format",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            },
+            "video_ref": {
+              "required": []
+            },
+            "audio_ref": {
+              "required": []
+            },
+            "mixed_ref": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "multipleReferences": true
+          }
+        },
+        "minimax-video-h3": {
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "账号实际可用模型",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "账号实际可用模型",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "mode": {
+              "type": "string",
+              "required": false,
+              "description": "上游生成模式",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "上游生成模式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mode"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "t2v",
+                  "i2v",
+                  "firstlast",
+                  "reference"
+                ]
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "视频时长",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seconds",
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 5,
+                "maximum": 15
+              },
+              "minimum": 5,
+              "maximum": 15
+            },
+            "resolution": {
+              "type": "string",
+              "required": false,
+              "description": "分辨率，按模型文档确认",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "分辨率，按模型文档确认",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "768p",
+                  "2k"
+                ]
+              },
+              "enum": [
+                "768p",
+                "2k"
+              ]
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧 HTTPS URL",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧 HTTPS URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_image_urls"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 9
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video_urls"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 0
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "公网 HTTPS 素材 URL 数组",
+              "source": {
+                "file": "evidence/openapi.js.txt",
+                "url": "https://fenglang.cloud/js/openapi.js",
+                "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+                "readAt": "2026-10-24",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "公网 HTTPS 素材 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio_urls"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 0
+              }
+            }
+          },
+          "unsupportedFields": [
+            "generate_audio",
+            "watermark",
+            "seed",
+            "output_format"
+          ],
+          "source": {
+            "file": "evidence/models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "620bea212f6f4faffb39a828dc3f080e308dbdf4bd687ad899d5bd445492b666",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "id": "interface:86f3f84ab8539ca5",
+          "title": "风浪云创建视频任务",
+          "kind": "video",
+          "path": "/open/v1/videos",
+          "method": "POST",
+          "status": "documented-interface-not-account-verification",
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "mode": "mode",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "aspect_ratio": "aspect_ratio",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "multipleReferences": true
+          }
+        }
+      },
+      "mapping": {
+        "model": "model",
+        "prompt": "prompt",
+        "mode": "mode",
+        "seconds": "seconds",
+        "resolution": "resolution",
+        "aspect_ratio": "aspect_ratio",
+        "generate_audio": "generate_audio",
+        "watermark": "watermark",
+        "seed": "seed",
+        "output_format": "output_format",
+        "start_image_url": "start_image_url",
+        "end_image_url": "end_image_url",
+        "images": "images",
+        "videos": "videos",
+        "audios": "audios"
+      },
+      "modes": {
+        "text_video": {
+          "required": []
+        },
+        "image_video": {
+          "required": []
+        },
+        "frames": {
+          "required": []
+        },
+        "video_ref": {
+          "required": []
+        },
+        "audio_ref": {
+          "required": []
+        },
+        "mixed_ref": {
+          "required": []
+        }
+      },
+      "capabilities": {
+        "multipleReferences": true
+      },
+      "pending": [
+        "Authenticated /pricing response shape and account-visible model IDs remain unverified; discovery fails closed on other shapes",
+        "Seedance 2.0 documentation says fixed 15 seconds while current public catalog and user specification say 4-15; no paid request verified",
+        "Reference clip minimum 2 seconds and per-media-class aggregate 30 seconds require supplier media inspection; URL/count checks are local",
+        "Aspect ratios, output formats and optional controls require actual model confirmation",
+        "Per-second reservation requires explicit seconds or an administrator-saved duration default; no provider default is fabricated",
+        "No actual output-duration usage is documented; completion retains reserved requested seconds"
+      ]
+    }
+  },
+  "documents": [
+    {
+      "id": "interface:86f3f84ab8539ca5",
+      "title": "风浪云创建视频任务",
+      "method": "POST",
+      "path": "/open/v1/videos",
+      "description": "Canonical channel parameters projected from the reviewed API document; the plugin driver owns upstream field encoding",
+      "source": {
+        "file": "evidence/openapi.js.txt",
+        "url": "https://fenglang.cloud/js/openapi.js",
+        "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+        "readAt": "2026-10-24",
+        "status": "public-documentation"
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "账号实际可用模型",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "model"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          },
+          "prompt": {
+            "type": "string",
+            "description": "视频提示词",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "prompt"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minLength": 1
+          },
+          "mode": {
+            "type": "string",
+            "description": "上游生成模式",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "mode"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "enum": [
+              "t2v",
+              "i2v",
+              "firstlast",
+              "reference"
+            ]
+          },
+          "seconds": {
+            "type": "integer",
+            "description": "视频时长",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "seconds",
+                "duration"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minimum": 1,
+            "maximum": 3600
+          },
+          "resolution": {
+            "type": "string",
+            "description": "分辨率，按模型文档确认",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "resolution"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "description": "画面比例",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "aspect_ratio"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          },
+          "generate_audio": {
+            "type": "boolean",
+            "description": "生成音频",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "generate_audio"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          },
+          "watermark": {
+            "type": "boolean",
+            "description": "添加水印",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "watermark"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          },
+          "seed": {
+            "type": "integer",
+            "description": "随机种子",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "seed"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minimum": -1,
+            "maximum": 9007199254740991
+          },
+          "output_format": {
+            "type": "string",
+            "description": "输出格式",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "output_format"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "enum": [
+              "mp4",
+              "mov"
+            ]
+          },
+          "start_image_url": {
+            "type": "string",
+            "description": "首帧 HTTPS URL",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "input_reference"
+              ],
+              "capabilities": [
+                "image_video",
+                "frames"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "format": "uri"
+          },
+          "end_image_url": {
+            "type": "string",
+            "description": "尾帧 HTTPS URL",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "last_frame"
+              ],
+              "capabilities": [
+                "frames"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "format": "uri"
+          },
+          "images": {
+            "type": "array",
+            "description": "公网 HTTPS 素材 URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_image_urls"
+              ],
+              "capabilities": [
+                "image_video",
+                "mixed_ref",
+                "video_ref",
+                "audio_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "videos": {
+            "type": "array",
+            "description": "公网 HTTPS 素材 URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_video_urls"
+              ],
+              "capabilities": [
+                "video_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "audios": {
+            "type": "array",
+            "description": "公网 HTTPS 素材 URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_audio_urls"
+              ],
+              "capabilities": [
+                "audio_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "required": [
+          "model",
+          "prompt"
+        ]
+      }
+    }
+  ],
+  "warnings": [
+    "Authenticated /pricing response shape and account-visible model IDs remain unverified; discovery fails closed on other shapes",
+    "Seedance 2.0 documentation says fixed 15 seconds while current public catalog and user specification say 4-15; no paid request verified",
+    "Reference clip minimum 2 seconds and per-media-class aggregate 30 seconds require supplier media inspection; URL/count checks are local",
+    "Aspect ratios, output formats and optional controls require actual model confirmation",
+    "Per-second reservation requires explicit seconds or an administrator-saved duration default; no provider default is fabricated",
+    "No actual output-duration usage is documented; completion retains reserved requested seconds"
+  ]
+}

@@ -91,6 +91,49 @@ func TestTaskPluginDiscoveryRejectsRedirectAndUnsafeDeclarations(t *testing.T) {
 	assert.Zero(t, targetCalls)
 }
 
+func TestFenglangPricingDiscovery(t *testing.T) {
+	meta := jsplugin.Meta{APIVersion: 1, Key: "fenglang_video", Name: "Fenglang", Version: "2.1.0", Author: jsplugin.AuthorMeta{Name: "Test"}, Models: []string{"seedance-2.5"}, FetchMode: "per_task", ModelDiscovery: &jsplugin.ModelDiscovery{Path: "/pricing", Format: "fenglang_pricing", SourceURL: "https://fenglang.cloud/js/openapi.js", SourceSHA256: strings.Repeat("a", 64)}}
+	for _, tc := range []struct {
+		name, body string
+		status     int
+		want       []string
+		fail       string
+	}{
+		{"objects exclude images and prices", `{"success":true,"models":{"video":[{"id":"actual","price":123},{"id":"actual"}],"image":[{"id":"image-only"}]}}`, 200, []string{"actual"}, ""},
+		{"strings", `{"success":true,"models":{"video":["actual-new"]}}`, 200, []string{"actual-new"}, ""},
+		{"empty", `{"success":true,"models":{"video":[]}}`, 200, []string{}, ""},
+		{"missing", `{"success":true,"data":[{"id":"wrong"}]}`, 200, nil, "invalid model list"},
+		{"null", `{"success":true,"models":{"video":null}}`, 200, nil, "invalid model list"},
+		{"failure", `{"success":false,"models":{"video":["unsafe"]},"message":"secret-fixture"}`, 200, nil, "invalid model list"},
+		{"unrecognized model field", `{"success":true,"models":{"video":[{"model":"guess"}]}}`, 200, nil, "invalid model list"},
+		{"blank ID", `{"success":true,"models":{"video":[" "]}}`, 200, nil, "invalid model list"},
+		{"unauthorized", `secret-fixture`, 401, nil, "HTTP 401"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				assert.Equal(t, "/open/v1/pricing", r.URL.Path)
+				assert.Equal(t, "Bearer secret-fixture", r.Header.Get("Authorization"))
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer server.Close()
+			base := server.URL + "/open/v1/"
+			ids, err := fetchTaskPluginUpstreamModels(&model.Channel{Type: constant.ChannelTypeTaskPlugin, Key: "secret-fixture", BaseURL: &base}, meta)
+			if tc.fail != "" {
+				require.ErrorContains(t, err, tc.fail)
+				assert.NotContains(t, err.Error(), "secret-fixture")
+				assert.Nil(t, ids)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.want, ids)
+			}
+			assert.Equal(t, 1, calls)
+		})
+	}
+}
+
 func setupTaskPluginDiscoveryTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	previousDB, previousLogDB := model.DB, model.LOG_DB

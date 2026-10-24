@@ -11,6 +11,7 @@ function documentValueSchema(schema, unrestricted) {
 function normalizeDocumentInterface(ctx, p, body) {
   if (p.yuxibox) body = prepareYuxiboxDocument(ctx, p, body);
   const input = copy(body.input), operation = body.operation;
+  if (PROVIDER.key === 'xcmapi_media' && p.kind === 'video') delete input.client_request_id;
   if (p.kind === 'video' ? operation !== 'video_generate' : !['image_generate', 'image_edit'].includes(operation)) fail('interface and operation do not match');
   if(p.submit.endsWith('/edits') && operation!=='image_edit')fail('the documented edit interface requires the edit operation');
   if(operation==='image_edit' && !array(input.images,'images').length && !(body.uploads || []).length)fail('image editing requires reference images');
@@ -27,6 +28,7 @@ function normalizeDocumentInterface(ctx, p, body) {
   // Unified callers may send another model's optional fields. Keep only this
   // interface's mapped fields before value validation and usage extraction.
   for (const field of Object.keys(input)) if (!known.has(field)) delete input[field];
+  if (PROVIDER.key==='xcmapi_media' && p.xcmReferenceRules) prepareXcmReferences(input,p);
   for(const [field,parameter]of Object.entries(p.parameterDefinitions || {})){
     if(input[field]!==undefined)validateDocumentValue(input[field],documentValueSchema({...parameter.definition,...(parameter.enum?{enum:parameter.enum}:{}),...(parameter.minimum!==undefined?{minimum:parameter.minimum}:{}),...(parameter.maximum!==undefined?{maximum:parameter.maximum}:{})},unrestricted.has(field)&&!parameter.required),field);
   }

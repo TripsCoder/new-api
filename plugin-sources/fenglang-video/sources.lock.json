@@ -1,0 +1,59 @@
+{
+  "format": "fenglang-video-sources/v1",
+  "policy": "../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#imported-parameter-policy",
+  "sources": [
+    {
+      "file": "evidence/openapi.js.txt",
+      "url": "https://fenglang.cloud/js/openapi.js",
+      "sha256": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
+      "readAt": "2026-10-24",
+      "status": "public-documentation"
+    },
+    {
+      "file": "evidence/models.js.txt",
+      "url": "https://fenglang.cloud/js/models.js",
+      "sha256": "620bea212f6f4faffb39a828dc3f080e308dbdf4bd687ad899d5bd445492b666",
+      "readAt": "2026-10-24",
+      "status": "public-documentation"
+    }
+  ],
+  "readOnlyProbes": {
+    "ping": 200,
+    "pricing": 401,
+    "apiKeyUsed": false
+  },
+  "modelDeclarations": {
+    "status": "documentation-only-not-account-discovery",
+    "static": [
+      "seedance-2.5"
+    ],
+    "exactPublicIDs": [
+      "seedance-2.5",
+      "seedance-2.0",
+      "seedance-2.0-fast",
+      "seedance-2.0-mini",
+      "minimax-video-h3"
+    ]
+  },
+  "pending": [
+    "Authenticated /pricing response shape and account-visible model IDs remain unverified; discovery fails closed on other shapes",
+    "Seedance 2.0 documentation says fixed 15 seconds while current public catalog and user specification say 4-15; no paid request verified",
+    "Reference clip minimum 2 seconds and per-media-class aggregate 30 seconds require supplier media inspection; URL/count checks are local",
+    "Aspect ratios, output formats and optional controls require actual model confirmation",
+    "Per-second reservation requires explicit seconds or an administrator-saved duration default; no provider default is fabricated",
+    "No actual output-duration usage is documented; completion retains reserved requested seconds"
+  ],
+  "securityReferences": [
+    "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",
+    "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+  ],
+  "securityControls": [
+    "TLS API credentials only on configured origin",
+    "Untrusted result URLs credentialless",
+    "Canonical authenticated fallback from host-pinned task ID",
+    "Host SSRF and cross-origin redirect stripping",
+    "No credentials in rendered response or failure text"
+  ],
+  "accountPricesImported": false,
+  "paidCalls": 0
+}

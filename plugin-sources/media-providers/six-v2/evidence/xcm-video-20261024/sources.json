@@ -1,0 +1,26 @@
+[
+  {
+    "file": "quickstart.html",
+    "url": "https://www.xcmapi.org/docs/QuickStart.html?video_model=seedance-2.5-g2-c1",
+    "finalURL": "https://www.xcmapi.org/docs/QuickStart.html?video_model=seedance-2.5-g2-c1",
+    "status": 200,
+    "sha256": "35c3b1a737236b9287fc84f84828afdf47daf25ea32edd363fa7303815e2dad9",
+    "bytes": 350787
+  },
+  {
+    "file": "video-contract.json",
+    "url": "https://xcmapi.org/docs/video-contract.json",
+    "finalURL": "https://xcmapi.org/docs/video-contract.json",
+    "status": 200,
+    "sha256": "c331d4689bd2527cc01e34d1b33eae672dbe919661f90a4c9629113328e75382",
+    "bytes": 161824
+  },
+  {
+    "file": "openapi.json",
+    "url": "https://www.xcmapi.org/docs/openapi.json",
+    "finalURL": "https://www.xcmapi.org/docs/openapi.json",
+    "status": 200,
+    "sha256": "597ee7129129589611d2c6fd0f6bf8899ba44f3f7735cc9cb5cddf15743f11da",
+    "bytes": 177804
+  }
+]

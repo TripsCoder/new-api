@@ -1,0 +1,2560 @@
+/* 主控制器：表单状态、校验、提交、任务轮询 */
+import { api, ApiError } from './api.js';
+import {
+  MODES,
+  ADAPTIVE_RATIO,
+  getModel,
+  getImageModel,
+  ratiosOf,
+  ADAPTIVE_MODELS,
+  materialPlan,
+  resolutionLabel,
+  setPricing,
+  setChannel,
+  channelModel,
+  videoModelCards,
+  setAdminView,
+  // 管理员临时下架的模型（2026-10-23）：随价目表下发，注入给 visibleVideoModels 过滤
+  setModelStates,
+  CHANNEL_MODEL_ID,
+  priceOfVideo,
+  priceOfVideoTask,
+  priceOfChannel,
+  DEFAULT_MODEL_ID,
+  credits,
+  perTaskCost,
+} from './models.js';
+import { MaterialPanel } from './materials.js';
+import { ImagePanel } from './images.js';
+/*
+ * 渠道视频的老面板：2026-10-16 起顶栏不再有它的入口（已合并进「视频生成」页的渠道卡），
+ * 面板与代码都留着没删 —— 想恢复独立入口，把 index.html 里那行按钮加回来即可。
+ * 这里的初始化与刷新照旧要做：面板虽然看不见，但它的规格与价格仍跟着服务端走。
+ */
+import {
+  initChannelPanel,
+  showChannelPanel,
+  refreshChannelPanel,
+} from './channel.js';
+import { AssetPanel, invalidateAssets, getCurrentSeries, seriesLabelOf } from './assets.js';
+import { attachMentionPicker } from './mentions.js';
+import { initSpendingPanel, showSpending } from './spending.js';
+import { checkLowBalanceReminder } from './balanceWarn.js';
+import { initCallsPanel, showCalls } from './calls.js';
+import { initAnnouncements, refreshBanner, showAnnouncements } from './announcements.js';
+import { initPlaza, showPlaza } from './plaza.js';
+// 宣传首页（home.js）2026-10-24 已停止引入：进站直接落创作台，见 currentKind 的说明
+import { initUsersPanel, showUsers } from './users.js';
+// 渠道管理（2026-10-22）：管理员专属菜单，开关线路 / 设第一优先级
+import { initChannelsPanel, showChannels } from './channels.js';
+import { initOpenApi, showOpenApi } from './openapi.js';
+import { initInspiration, showInspiration, refreshInspirationIfVisible } from './inspiration.js';
+import { initRecharges, showRecharges, hideRecharges } from './recharges.js';
+import { attachTokenHighlight, setPromptValue } from './promptHighlight.js';
+import { DramaPanel } from './dramas.js';
+import { TaskPanel } from './tasks.js';
+import {
+  toast,
+  openModal,
+  confirmDialog,
+  escapeHtml,
+  explainError,
+  icon,
+  isDuplicateSubmit,
+  markSubmitted,
+  persistTextareaHeight,
+  // 「联系客服」弹窗里点二维码看原图
+  previewImage,
+  // 「设置 → 账号」里要显示时间
+  fmtClockFull,
+} from './ui.js';
+import { loadSettings, saveSettings, loadDraft, saveDraft } from './settings.js';
+import { auth, renderUserPill } from './auth.js';
+
+const $ = (id) => document.getElementById(id);
+
+const state = {
+  model: DEFAULT_MODEL_ID,
+  // 默认生成方式：参考生视频（每个模型都支持这一种）
+  mode: 'reference',
+  seconds: 5,
+  aspectRatio: '16:9',
+  resolution: '720p',
+  generateAudio: true,
+  watermark: false,
+  seed: -1,
+  outputFormat: 'mp4',
+};
+
+let settings = loadSettings();
+let serverConfig = null;
+let submitting = false;
+let pollTimer = null;
+let polling = false;
+
+/*
+ * 任务轮询的节奏（2026-10-23 用户要求「不需要那么频繁的轮询，网站比较卡」）。
+ *
+ * 原来是死循环 3 秒拉一次 /api/tasks：任务表上千条，每轮都要把全量对象走一遍，
+ * 页面明明空着也在拉。现在按「有没有活干」分两档，标签页在后台时干脆不拉：
+ *   · 有排队中 / 生成中 → 4 秒，进度与出片要跟得上；
+ *   · 全部空闲         → 20 秒，只为让别处新提交的任务能出现；
+ *   · document.hidden  → 跳过这一轮，切回前台时立刻补一次（见 boot 里的监听）。
+ * 用 setTimeout 链而不是 setInterval：每一轮的间隔按当时的状态重新算。
+ */
+const TASK_POLL_ACTIVE_MS = 4000;
+const TASK_POLL_IDLE_MS = 20000;
+
+function hasLiveTasks() {
+  return (tasks.tasks || []).some((t) => t.status === 'queued' || t.status === 'in_progress');
+}
+
+function scheduleTaskPoll() {
+  clearTimeout(pollTimer);
+  const delay = hasLiveTasks() ? TASK_POLL_ACTIVE_MS : TASK_POLL_IDLE_MS;
+  pollTimer = setTimeout(async () => {
+    if (!document.hidden) await refreshTasks();
+    scheduleTaskPoll();
+  }, delay);
+}
+/**
+ * 当前视图。
+ *
+ * 默认是 create（创作台）：2026-10-24 用户要求「第一次进来直接是首页」，
+ * 原来那个宣传首页（「一句话拍出一部片」的海报页）已整块删除 ——
+ * 进站不再有任何过渡页面，画出来的第一屏就是工作台。
+ */
+let currentKind = 'create';
+
+/**
+ * 「消费记录」页当前页签：spending = 消费流水（钱包），calls = 调用记录（每次生成）。
+ * 两个列表 2026-10-17 起合并到同一个菜单里，各自保留自己的筛选与分页。
+ */
+let recordTab = 'spending';
+
+/**
+ * 「创作台」当前页签：video = 视频生成，image = 图片生成，assets = 资产库。
+ * 2026-10-17 起视频/图片两个菜单合并成一页；2026-10-23 用户要求把**资产库**
+ * 也从顶部导航并进来，当第三个页签（顶部不再有独立的「资产库」按钮）。
+ * 三个页签共用右栏（预览 + 任务列表）。
+ */
+let createTab = 'video';
+
+/*
+ * 功能开关。
+ *
+ * 短剧画布**暂时隐藏**：只藏入口、不许切进去，代码、后端接口与已有数据一律保留。
+ * 想恢复就把 dramaCanvas 改回 true —— 不需要动别的地方。
+ */
+const FEATURES = {
+  dramaCanvas: false,
+};
+
+const materials = new MaterialPanel($('materialsWrap'), { onChange: onFormChanged });
+
+// 提示词里可以 @ 引用资产库：挂上素材的同时，在光标处插入「图片1」这类序号引用
+attachMentionPicker({ input: $('prompt'), panel: materials });
+
+// 稿子长，高度让用户自己拖，拖过之后记住
+persistTextareaHeight($('prompt'), 'video-prompt');
+
+// 挂了参考素材后，提示词里对应的「图片1」这类字样标黄
+attachTokenHighlight({ input: $('prompt'), panel: materials });
+
+const images = new ImagePanel({
+  onChange: onFormChanged,
+  getSettings: () => settings,
+});
+
+/*
+ * 渠道视频：另一个上游渠道，规格固定（seedance 2.5 / 30 秒 / 720P / 最多 9 张参考图），
+ * 所以它自己一套面板与状态，不和上面的视频表单共享参数。
+ * 令牌在服务端，提交不需要用户自己的 Key。
+ */
+const channelPanel = initChannelPanel({ onSubmitted: afterSubmit });
+
+const assetPanel = new AssetPanel({
+  grid: $('assetGrid'),
+  toolbar: $('assetToolbar'),
+  // 剧集栏（当前剧集下拉 + 新建）：资产按剧集分类，这里是总开关
+  seriesBar: $('assetSeriesBar'),
+  hint: $('assetHint'),
+});
+
+/*
+ * 本次会话里已经发布到「灵感」的任务。
+ * 只用来把按钮显示成「已发布」—— 刷新页面就重置，那时按钮回到「发布」，
+ * 再点一次也没关系（服务端按任务去重，会把已有那条回给你）。
+ */
+const publishedTasks = new Set();
+
+const tasks = new TaskPanel({
+  listEl: $('tasksList'),
+  stageEl: $('previewStage'),
+  handlers: {
+    get autoPlay() {
+      return settings.autoRefreshPreview !== false;
+    },
+    onAction: handleTaskAction,
+    isPublished: (id) => publishedTasks.has(id),
+    onToAsset: convertTaskImageToAsset,
+    onCopied: () => toast('播放链接已复制到剪贴板', 'success'),
+  },
+});
+
+const dramas = new DramaPanel({
+  getApiKey: () => clientApiKey(),
+  // 密钥在服务端：这里只判断「当前账号有没有可用的 Key」
+  canSubmit: () => hasUsableKey(),
+});
+
+/*
+ * 功能开关在模块加载时就生效，不等登录完成 ——
+ * 否则未登录时导航栏里仍挂着已隐藏的入口（登录弹窗是盖不满整屏的，背后看得到这一排）。
+ * applyFeatureFlags 是函数声明，会提升，写在这里没问题。
+ */
+applyFeatureFlags();
+
+/* ======================================================================
+ * 初始化
+ * ====================================================================== */
+
+async function boot() {
+  // 会话失效（后端回 401）时，把登录弹窗重新拉起来。
+  // 账号是单会话的：最常见的失效原因就是「同一账号在别处登录了」。
+  api.onUnauthorized = () =>
+    auth.reopen('登录状态已失效：该账号可能在别的设备登录过，或会话已过期，请重新登录');
+
+  // 第一道门：没登录就停在这里，后面的请求一个都不会发出去
+  await auth.ensure();
+  /*
+   * 角色要在画模型卡之前定下来：`seedance-2.5-test` 那张测试卡只给管理员看
+   * （见 models.js 的 adminOnly / visibleVideoModels）。applyRoleFeatures 里还会再设一次，
+   * 覆盖登录、退出、被降权这几种变化。
+   */
+  setAdminView(auth.user?.role === 'admin');
+
+  /*
+   * 模型广场改了上下架（2026-10-23）：这边卡片列表要跟着变。
+   * 下架的卡不再摆出来、正选着它时由 ensureSelectedModel 退回默认模型 ——
+   * 不能让校验与提交按一张看不见的卡走。事件由 plaza.js 在下架/上架成功后派发。
+   */
+  document.addEventListener('ca:model-flags', () => {
+    buildModelGrid();
+    syncModelDependent();
+  });
+
+  bindStaticEvents();
+
+  // 价目表先拉回来再渲染：界面的「预计消耗」要和真正扣的费用同源
+  try {
+    const pricing = await api.getPricing();
+    setPricing(pricing.pricing);
+    // 渠道模型（一口价）与它同一次带回来：模型广场与 API 接入的模型白名单都要用
+    setChannel(pricing.channel);
+    /*
+     * 管理员在模型广场临时下架的模型（2026-10-23）：同一份响应带回来，
+     * 注入后 visibleVideoModels() 会把卡片收起来（管理员视角仍可见，带标记）。
+     */
+    setModelStates(pricing.retiredModels);
+  } catch {
+    /* 拉不到就用前端快照兜底，数字一致 */
+  }
+  // 渠道视频的「预计消耗」与视频走同一张价目表：价目表到位后重算一次
+  refreshChannelPanel();
+
+  buildModelGrid();
+  buildModeSegmented();
+  buildAspectOptions();
+  // 先按角色收放入口，再恢复草稿：草稿里可能记着停在一个已经没权限的视图
+  applyRoleFeatures();
+  restoreDraft();
+
+  // 进站直接落创作台（宣传首页 2026-10-24 已删除，不再有过渡页）
+  switchKind('create');
+  syncModelDependent();
+  updateUserPill();
+  updateBalancePill();
+
+  /*
+   * 每日上线领算力（含到账卡片）已于 2026-10-24 整块下线：
+   * 用户要求「不再赠送 10 算力，每日签到也去掉」，站点不再白送算力。
+   */
+
+  try {
+    serverConfig = await api.getConfig();
+    const s = serverConfig.storage;
+    materials.setStorage(Boolean(s?.configured));
+    images.setStorage(Boolean(s?.configured));
+  } catch (err) {
+    toast('无法读取服务端配置，请确认后端已启动', 'error', '连接失败');
+  }
+
+  refreshBalance();
+  handleRechargeReturn(); // 刚从支付宝收银台跳回来：提示结果并刷新余额
+  setInterval(refreshBalance, 120000);
+  refreshBanner(); // 登录后拉一次系统公告横幅
+  await refreshTasks();
+  // 首轮之后交给定时链：有活 4 秒、空闲 20 秒，见 scheduleTaskPoll 的说明
+  scheduleTaskPoll();
+  window.addEventListener('focus', () => {
+    refreshTasks();
+    scheduleTaskPoll();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    // 从后台切回来：马上补一次，并把下一轮重新排上
+    refreshTasks();
+    scheduleTaskPoll();
+  });
+}
+
+/* ======================================================================
+ * 顶部状态
+ * ====================================================================== */
+
+/*
+ * 密钥来源改版说明（重要）：
+ *
+ * 以前 Key 存在浏览器的 localStorage 里，多设备、清缓存都会丢，
+ * 一把失效的旧 Key 还会一直盖住服务端配置，极难排查。
+ * 现在 Key 存在服务端数据库的账号记录里，前端只保留一个掩码显示；
+ * 提交任务时只带会话 Cookie，服务端自己去库里取 Key。
+ * 因此下面这些函数不再从本地读 Key，clientApiKey() 恒为空串（保留只为兼容旧调用点）。
+ */
+function clientApiKey() {
+  return '';
+}
+
+/**
+ * 当前账号是否已经具备可用的 Key。
+ * 密钥由管理员在服务端后台维护，所以只看服务端给的状态：有可用密钥才放行。
+ */
+function hasUsableKey() {
+  return Boolean(auth.key?.hasKey);
+}
+
+/** 没有可用密钥时统一提示（界面上已无密钥管理入口，只能找管理员） */
+function warnNoKey() {
+  toast(
+    '没有可用的 API Key：请联系管理员添加并启用一把密钥。',
+    'error',
+    '缺少密钥',
+  );
+}
+
+/**
+ * 「9折VIP」标签（2026-10-19 专属折扣）：传 user.discount，
+ * 0.8 / 0.85 / 0.9 / 0.92 / 0.95 / 0.98 都出标签，1（没折扣）给空串。
+ * 服务端口径见 wallet.js 的 DISCOUNT_LEVELS（2026-10-24 加了 85 折与 8 折）。
+ */
+function vipTagHtml(value) {
+  const n = Number(value);
+  if (!(n > 0 && n < 1)) return '';
+  return `<span class="pill-vip">${String(Math.round(n * 100)).replace(/0$/, '')}折VIP</span>`;
+}
+
+/** 顶部用户徽标 */
+function updateUserPill() {
+  renderUserPill($('userPill'), $('userLabel'));
+  $('logoutBtn').classList.toggle('hidden', !auth.loggedIn);
+}
+
+/* ======================================================================
+ * 账户余额（元）与钱包
+ * ====================================================================== */
+
+/** 账号余额：以服务端 /me 与每次提交回报的 balance 为准，前端不自己算（元，显示时折算成算力） */
+function accountBalance() {
+  return Number(auth.user?.balance) || 0;
+}
+
+function updateBalancePill() {
+  const pill = $('balancePill');
+  if (!auth.loggedIn) {
+    pill.classList.add('hidden');
+    return;
+  }
+  pill.classList.remove('hidden');
+  $('balanceLabel').textContent = credits(accountBalance());
+  pill.title = '算力余额（1元 = 10算力）· 每次生成按用量扣除。点此查看流水与充值（在线充值无手续费）。';
+}
+
+/** 服务端回报了新余额就用它刷新顶部（提交响应、/me、钱包接口都带） */
+function setAccountBalance(value) {
+  if (!Number.isFinite(Number(value))) return;
+  auth.user = { ...(auth.user || {}), balance: Number(value) };
+  updateBalancePill();
+}
+
+/**
+ * 是否还处在「刚打开页面」的那一轮余额同步。
+ * 只有首轮要把提醒弹窗往后压（避让上线算力卡片），之后同步都是即时判。
+ */
+let justBooted = true;
+
+/** 定时同步：余额在 /me 里，顺便把密钥状态一起刷新 */
+async function refreshBalance() {
+  try {
+    const res = await api.authMe();
+    auth.user = res.user || auth.user;
+    auth.key = res.key || auth.key;
+  } catch {
+    /* 网络抖动就等下一次 */
+  }
+  updateBalancePill();
+  updateUserPill();
+  /*
+   * 余额偏低提醒（2026-10-22）：累计充值过 1000 元、余额掉到 1000 算力以下时弹一次。
+   * 放在这里而不是 boot 里单独调 —— 启动、每 120 秒同步、充值回来后刷新都走这条路，
+   * 一个入口就够，不用在多处重复判断。频次由模块自己按「每天一次」去重。
+   */
+  checkLowBalanceReminder({
+    getUser: () => auth.user,
+    onRecharge: () => openWallet(),
+    // 启动那一次晚点弹，等首屏渲染稳住；后续同步不必再等
+    delayMs: justBooted ? 15000 : 3000,
+  });
+  justBooted = false;
+}
+
+/**
+ * 电脑网站支付付完之后，支付宝把浏览器送回本站的 return_url，
+ * 落地页再带 ?recharge=xxx&order=xxx 跳回首页：这里提示结果、刷新余额，
+ * 顺手把参数从地址栏抹掉，免得用户刷新页面又弹一次。
+ */
+async function handleRechargeReturn() {
+  const params = new URLSearchParams(location.search);
+  const state = params.get('recharge');
+  if (!state) return;
+
+  // 记一下充值前的折扣：单笔满 1000 元后端会自动升到 9 折，回来时要能提示到
+  const discountBefore = Number(auth.user?.discount) || 1;
+
+  if (state === 'paid') {
+    toast('充值成功，已到账', 'success', '在线充值');
+  } else if (state === 'closed') {
+    toast('订单已超时关闭，未扣款', 'info', '在线充值');
+  } else if (state === 'pending') {
+    toast('还没查到到账记录：已付款的话稍等片刻刷新余额', 'info', '在线充值');
+  }
+
+  params.delete('recharge');
+  params.delete('order');
+  const rest = params.toString();
+  history.replaceState(null, '', `${location.pathname}${rest ? `?${rest}` : ''}`);
+  await refreshBalance();
+  /*
+   * 单笔充值满 1000 元 → 后端在同一事务里把账号折扣升到 0.9（见 wallet.recharge）。
+   * 这里比一下充值前后的折扣，变了就明确告诉用户，否则「9折VIP」只在顶栏悄悄出现。
+   */
+  const discountAfter = Number(auth.user?.discount) || 1;
+  if (state === 'paid' && discountBefore > 0.9 && discountAfter > 0 && discountAfter <= 0.9) {
+    toast('单笔充值满 1000 元，已解锁全站 9 折 VIP，之后按 9 折结算', 'success', '专属折扣');
+  }
+}
+
+/**
+ * 提交前的余额预检。
+ * 返回 true 放行；不足时给提示并打开钱包（服务端还会再拦一次，这里只是提前说清楚）。
+ * priced=false：这个模型没有价目，服务端不扣费，这里也放行。
+ */
+function ensureBalance(amount, priced = true) {
+  if (!priced || !(Number(amount) > 0)) return true;
+  const balance = accountBalance();
+  if (balance >= Number(amount)) return true;
+  toast(
+    `算力不足：本次需要 ${credits(amount)}，当前余额 ${credits(balance)}。请充值后重试。`,
+    'error',
+    '算力不足',
+  );
+  openWallet();
+  return false;
+}
+
+/**
+ * 时长滑条：按当前值在轨道上写高亮填充比例（CSS 变量 --p）。
+ * 每个模型的 min–max 不同，比例必须按当前档位现算。
+ */
+function paintRangeFill(el) {
+  const min = Number(el.min) || 0;
+  const max = Number(el.max) || 100;
+  const value = Number(el.value) || min;
+  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
+  el.style.setProperty('--p', `${pct}%`);
+}
+
+/** 上游 API Key 的额度摘要（已下线，接口保留） */
+// gift = 赠送（注册赠送 / 每日上线算力）；daily 是上线算力最早的写法，老数据也认
+/* adjust = 误充纠正那条负数流水（2026-10-22），用户在自己的流水里也要看得懂 */
+const LEDGER_LABEL = { recharge: '充值', charge: '扣费', refund: '退回', gift: '赠送', daily: '赠送', adjust: '纠错' };
+
+function ledgerHtml(list) {
+  if (!list?.length) {
+    return `<div class="empty">${icon('info')}<span>还没有流水</span></div>`;
+  }
+  return `<table style="width:100%;border-collapse:collapse;font-size:16.5px">
+    ${list
+      .map(
+        (r) => `
+      <tr style="border-bottom:1px solid var(--border-soft)">
+        <td style="padding:7px 8px;white-space:nowrap;color:var(--text-mute)">${fmtClockFull(r.createdAt)}</td>
+        <td style="padding:7px 8px">${escapeHtml(LEDGER_LABEL[r.type] || r.type)}${
+          r.detail ? ` <span style="color:var(--text-mute)">· ${escapeHtml(r.detail)}</span>` : ''
+        }</td>
+        <td style="padding:7px 8px;text-align:right;white-space:nowrap;color:${
+          r.amount >= 0 ? 'var(--success)' : 'var(--text-dim)'
+        }">${r.amount >= 0 ? '+' : ''}${credits(r.amount)}${
+          r.type === 'recharge'
+            ? ` <span class="ledger-yuan">（¥${Number(r.amount).toFixed(2)}）</span>`
+            : ''
+        }</td>
+        <td style="padding:7px 8px;text-align:right;white-space:nowrap;color:var(--text-mute)">余额 ${credits(r.balanceAfter)}</td>
+      </tr>`,
+      )
+      .join('')}
+  </table>`;
+}
+
+/** 钱包弹窗：余额、流水、充值（管理员）、上游额度摘要 */
+async function openWallet() {
+  // 已经开着就不再叠一层（「余额不足」提示里也会调它）
+  if (document.querySelector('[data-modal="wallet"]')) return;
+
+  updateBalancePill();
+  const isAdmin = auth.user?.role === 'admin';
+
+  const modal = openModal({
+    title: '我的钱包',
+    wide: true,
+    bodyHtml: `
+      <div class="field">
+        <label class="label">算力余额 <span class="tip-badge">1元 = 10算力 · 每次生成按用量扣除</span></label>
+        <div style="font-size:30px;font-weight:650" id="walletBalance">${credits(accountBalance())}</div>
+        <div class="field-foot">
+          <span class="grow">生成失败会自动退回；扣费与退回都会记一条流水。<br>
+          充值按实付金额入账，1 人民币 = 10 算力。</span>
+          <button class="btn btn-sm" data-act="wallet-refresh" type="button">刷新</button>
+        </div>
+      </div>
+
+      ${
+        isAdmin
+          ? `<div class="field">
+               <label class="label">手动充值 <span class="tip-badge tip-badge-money">输入的是人民币（元）</span><span class="tip-badge">1 元 = 10 算力</span></label>
+               <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px">
+                 <input class="input" id="walletUserSearch" type="text" autocomplete="off"
+                        placeholder="按用户名搜索账号（输入完整用户名直接选中）" />
+                 <button class="btn btn-sm" data-act="wallet-search-clear" type="button">清空</button>
+               </div>
+               <div style="display:grid;grid-template-columns:1.4fr 1fr auto;gap:8px">
+                 <select class="select" id="walletUserSelect"></select>
+                 <label class="money-input" title="这里填人民币金额（元），不是算力数">
+                   <span class="money-input-prefix">¥</span>
+                   <input class="input" id="walletAmount" type="number" min="1" step="0.01" placeholder="人民币金额" />
+                   <span class="money-input-suffix">元</span>
+                 </label>
+                 <button class="btn btn-sm" data-act="wallet-recharge" type="button">充值</button>
+               </div>
+               <div class="field-foot">
+                 <span class="grow" id="walletRechargeMsg">给指定账号加余额，会记一条流水。</span>
+                 <span class="wallet-convert" id="walletAmountConvert">输入人民币金额，这里显示到账算力</span>
+               </div>
+             </div>`
+          : ''
+      }
+
+      <div class="field" id="walletOnline"></div>
+
+      <div class="field">
+        <label class="label">最近流水</label>
+        <div id="walletLedger" style="max-height:280px;overflow:auto">${
+          `<div class="empty">${icon('info')}<span>正在读取流水…</span></div>`
+        }</div>
+      </div>`,
+    footHtml: `<div class="grow"></div><button class="btn btn-primary" data-act="ok" type="button">关闭</button>`,
+  });
+  // 打个标记：防止重复打开叠出好几层（关闭时随弹窗一起消失）
+  modal.root.dataset.modal = 'wallet';
+
+  modal.$('[data-act="ok"]').addEventListener('click', () => modal.close());
+
+  /** 拉余额与流水，刷新弹窗里的数字 */
+  const loadWallet = async () => {
+    try {
+      const res = await api.getWallet();
+      setAccountBalance(res.balance);
+      modal.$('#walletBalance').textContent = credits(res.balance);
+      modal.$('#walletLedger').innerHTML = ledgerHtml(res.ledger);
+    } catch (err) {
+      modal.$('#walletLedger').innerHTML = `<div class="empty">${icon('error')}<span>${escapeHtml(
+        err instanceof ApiError ? err.message : '读取流水失败',
+      )}</span></div>`;
+    }
+  };
+
+  modal.$('[data-act="wallet-refresh"]').addEventListener('click', () => {
+    loadWallet();
+  });
+
+  /* 管理员：账号下拉 + 充值 */
+  const rechargeBtn = modal.$('[data-act="wallet-recharge"]');
+  if (rechargeBtn) {
+    const select = modal.$('#walletUserSelect');
+    const amountEl = modal.$('#walletAmount');
+    const msgEl = modal.$('#walletRechargeMsg');
+    /*
+     * 2026-10-18 用户反馈：「管理员手动充值那个空格要很明显的标注充的是钱还是算力，有时候会看错」。
+     * 所以输入框本身带 ¥ 前缀与「元」后缀，下面再实时算一遍到账算力 ——
+     * 填的是**人民币金额**，1 元 = 10 算力（服务端 recharge() 直接把元加成余额，前端只负责显示）。
+     */
+    const convertEl = modal.$('#walletAmountConvert');
+    const paintConvert = () => {
+      const v = Number(amountEl.value);
+      const ok = v > 0;
+      convertEl.textContent = ok ? `= ${credits(v)} 到账` : '输入人民币金额，这里显示到账算力';
+      convertEl.classList.toggle('ok', ok);
+    };
+    amountEl.addEventListener('input', paintConvert);
+    paintConvert();
+
+    /** 账号缓存：确认弹窗要显示"当前余额"，不能只靠 option 的文本 */
+    let users = [];
+    const searchEl = modal.$('#walletUserSearch');
+
+    /**
+     * 按下拉里当前的人重建选项。
+     *
+     * 2026-10-24 用户要求：「手动充值那里加一个可以根据用户名精准搜索的」。
+     * 账号多了以后在几百条下拉里翻人太费劲，所以上面加了个搜索框：
+     *   · 输入即过滤（不区分大小写的包含匹配，打「张」就能先缩小范围）；
+     *   · 输入**完整用户名**时精准命中的那条直接选中，回车都不用按；
+     *   · 搜不到就留一条占位项，充值按钮点下去会明确说「没有找到这个用户名」。
+     * 选中的人记在 `select.dataset.currentId` 上，过滤来过滤去不会把人换掉。
+     */
+    const renderUserOptions = () => {
+      const q = String(searchEl?.value || '').trim();
+      const lower = q.toLowerCase();
+      const list = q ? users.filter((u) => String(u.username || '').toLowerCase().includes(lower)) : users;
+      if (!list.length) {
+        select.innerHTML = `<option value="">没有匹配「${escapeHtml(q)}」的账号</option>`;
+        delete select.dataset.currentId;
+        return;
+      }
+      select.innerHTML = list
+        .map(
+          (u) =>
+            `<option value="${u.id}">${escapeHtml(u.username)}（余额 ${credits(u.balance)}）</option>`,
+        )
+        .join('');
+      const exact = q ? list.find((u) => String(u.username || '').toLowerCase() === lower) : null;
+      const keep = String(select.dataset.currentId || '');
+      if (exact) select.value = String(exact.id);
+      else if (keep && list.some((u) => String(u.id) === keep)) select.value = keep;
+      select.dataset.currentId = select.value;
+    };
+
+    const loadUsers = async () => {
+      try {
+        const res = await api.listWallets();
+        users = res.users || [];
+        // 默认选中自己，省得每次都要翻（只在还没选过人时生效，别把正在充的那个换掉）
+        if (!select.dataset.currentId) select.dataset.currentId = String(auth.user?.id || '');
+        renderUserOptions();
+      } catch (err) {
+        msgEl.textContent = err instanceof ApiError ? err.message : '账号列表读取失败';
+      }
+    };
+    loadUsers();
+
+    searchEl?.addEventListener('input', renderUserOptions);
+    select.addEventListener('change', () => {
+      select.dataset.currentId = select.value;
+    });
+    modal.$('[data-act="wallet-search-clear"]')?.addEventListener('click', () => {
+      if (searchEl) searchEl.value = '';
+      renderUserOptions();
+      searchEl?.focus();
+    });
+
+    /*
+     * 手动充值必须**二次确认**（2026-10-22 用户定）：金额是钱，点一下就入账太危险。
+     * 确认框里把「给谁 / 多少 / 充完是多少」全摆出来，并把复核入口写在下面 ——
+     * 万一还是充错了，去「充值记录」用「误充纠正」一键扣回。
+     */
+    rechargeBtn.addEventListener('click', () => {
+      const amount = Number(amountEl.value);
+      if (!(amount > 0)) {
+        msgEl.textContent = '请填写大于 0 的金额';
+        return;
+      }
+      const target = users.find((u) => String(u.id) === String(select.value));
+      if (!target) {
+        // 搜过但没命中：直接说"没这个用户名"，比"请先选择账号"有用
+        const typed = String(searchEl?.value || '').trim();
+        msgEl.textContent = typed ? `没有找到用户名为「${typed}」的账号` : '请先选择要充值的账号';
+        return;
+      }
+      const before = Number(target.balance) || 0;
+      confirmRecharge({ userId: Number(target.id), name: target.username, amount, before });
+    });
+
+    /** 二次确认弹窗；确认后才真的发请求 */
+    function confirmRecharge({ userId, name, amount, before }) {
+      const modal2 = openModal({
+        title: '确认为该账号充值？',
+        bodyHtml: `
+          <div class="recharge-confirm">
+            <p class="recharge-confirm-line">账号：<b>${escapeHtml(name)}</b></p>
+            <p class="recharge-confirm-line">
+              充值金额：<b>¥${Number(amount).toFixed(2)}</b>（${escapeHtml(credits(amount))}）
+            </p>
+            <p class="recharge-confirm-line">
+              余额：${escapeHtml(credits(before))} → <b class="in">${escapeHtml(credits(before + Number(amount)))}</b>
+            </p>
+            <p class="recharge-confirm-tip">
+              确认后立刻入账并记一条流水。充错了可以在「充值记录」里用「误充纠正」整笔扣回。
+            </p>
+          </div>`,
+        footHtml: `
+          <div class="grow"></div>
+          <button class="btn" data-act="rc-cancel" type="button">取消</button>
+          <button class="btn btn-primary" data-act="rc-ok" type="button">确认充值</button>`,
+      });
+
+      modal2.$('[data-act="rc-cancel"]').addEventListener('click', () => modal2.close());
+      modal2.$('[data-act="rc-ok"]').addEventListener('click', async () => {
+        const okBtn = modal2.$('[data-act="rc-ok"]');
+        okBtn.disabled = true;
+        try {
+          const res = await api.rechargeWallet({ userId, amount });
+          // 2026-10-24 起没有首充赠送：充值只入账实际充的那一笔
+          msgEl.textContent = `已给 ${res.user.displayName || res.user.username} 充值 ${credits(
+            res.amount,
+          )}，当前余额 ${credits(res.balance)}`;
+          amountEl.value = '';
+          paintConvert();
+          toast(`充值成功：${credits(res.amount)}`, 'success');
+          if (Number(res.user.id) === Number(auth.user?.id)) setAccountBalance(res.balance);
+          modal2.close();
+          loadWallet();
+          loadUsers();
+        } catch (err) {
+          msgEl.textContent = err instanceof ApiError ? err.message : '充值失败';
+          okBtn.disabled = false;
+        }
+      });
+    }
+  }
+
+  /* 在线充值额度页：无论支付通道是否开通都展示；未开通时点支付走演示弹窗 */
+  const loadRechargeConfig = async () => {
+    const box = modal.$('#walletOnline');
+    let cfg = { enabled: false, min: 1, max: 500 };
+    try {
+      cfg = { ...cfg, ...(await api.getRechargeConfig()) };
+    } catch {
+      /* 拉不到配置就按未开通演示，页面照常可用 */
+    }
+
+    const min = Math.max(0.01, Number(cfg.min) || 1);
+    const max = Number(cfg.max) || 500;
+    // 快捷档位：覆盖到上限（10 起、2000 封顶），并按接口给的 min/max 过滤
+    const tiers = [10, 30, 50, 100, 200, 500, 1000, 2000].filter((a) => a >= min && a <= max);
+
+    const defaultHint = cfg.enabled
+      ? cfg.mode === 'qr'
+        ? '扫码支付，到账自动刷新余额与流水；本站不收手续费，付多少到账多少。'
+        : `点支付宝图标下单，确认付款后跳转支付宝页面扫码付款（${min} 元起）；本站不收手续费。`
+      : '支付宝通道开通前可先体验下单流程，不会产生真实扣款。';
+
+    box.innerHTML = `
+      <label class="label">在线充值 <span class="tip-badge">支付宝支付 · ${min}–${max} 元${
+        cfg.enabled ? '' : ' · 通道开通中'
+      }</span><span class="tip-badge tip-badge-free">无手续费</span></label>
+      <div class="tier-row">${tiers
+        .map(
+          (a) =>
+            `<button type="button" class="btn btn-sm tier-btn" data-tier="${a}" title="¥${a}">${credits(a)}</button>`,
+        )
+        .join('')}</div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
+        <input class="input" id="walletPayAmount" type="number" min="${min}" max="${max}" step="1"
+          placeholder="或输入充值金额（${min} 元起）" />
+        <button class="btn btn-sm btn-primary" data-act="wallet-pay" type="button" title="使用支付宝支付"
+          style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap">${ALIPAY_MARK}<span>支付宝</span></button>
+      </div>
+      <div class="field-foot"><span class="grow" id="walletPayMsg">${defaultHint}</span></div>`;
+
+    const amountInput = box.querySelector('#walletPayAmount');
+    const payMsgEl = box.querySelector('#walletPayMsg');
+    const payBtn = box.querySelector('[data-act="wallet-pay"]');
+
+    /* 金额不合规：输入框描红 + 提示变红；点支付直接拦下，连确认弹窗都不开 */
+    const markPayInvalid = (text) => {
+      payMsgEl.textContent = text;
+      payMsgEl.style.color = '#ff8f8f';
+      amountInput.style.borderColor = '#a4444a';
+      amountInput.style.boxShadow = '0 0 0 2px rgba(164,68,74,.25)';
+      amountInput.setAttribute('aria-invalid', 'true');
+    };
+    const markPayOk = () => {
+      payMsgEl.textContent = defaultHint;
+      payMsgEl.style.color = '';
+      amountInput.style.borderColor = '';
+      amountInput.style.boxShadow = '';
+      amountInput.removeAttribute('aria-invalid');
+    };
+    const readAmount = () => {
+      const raw = String(amountInput.value || '').trim();
+      return raw === '' ? NaN : Number(raw);
+    };
+    const amountHint = () => `充值金额需在 ${min}–${max} 元之间`;
+
+    amountInput.addEventListener('input', () => {
+      const amount = readAmount();
+      if (!(amount >= min && amount <= max)) markPayInvalid(amountHint());
+      else markPayOk();
+    });
+
+    for (const b of box.querySelectorAll('[data-tier]')) {
+      b.addEventListener('click', () => {
+        amountInput.value = b.dataset.tier;
+        for (const x of box.querySelectorAll('[data-tier]')) x.classList.toggle('active', x === b);
+        markPayOk();
+      });
+    }
+
+    payBtn.addEventListener('click', async () => {
+      const amount = readAmount();
+      if (!(amount >= min && amount <= max)) {
+        markPayInvalid(`${amountHint()}，请重新填写`);
+        amountInput.focus();
+        return;
+      }
+      markPayOk();
+      if (!cfg.enabled) {
+        // 通道未开通：演示支付弹窗（占位二维码），不创建真实订单
+        openQrRecharge(
+          { amount, outTradeNo: `DEMO-${Date.now().toString(36)}`, qrPng: demoQrDataUri(), demo: true },
+          { loadWallet },
+        );
+        return;
+      }
+      // 先弹"确认付款"，勾选条款后再下单跳转
+      openPayConfirm({ amount, loadWallet });
+    });
+  };
+
+  loadWallet();
+  loadRechargeConfig();
+}
+
+/**
+ * 占位收款码（纯本地 SVG 生成，不含任何真实收款信息）。
+ * 支付通道开通前给演示弹窗用：长得像二维码，谁扫了也扫不出东西。
+ */
+function demoQrDataUri() {
+  const N = 21;
+  let seed = 20261002;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const cells = [];
+  // 三个定位角
+  const finder = (x, y) => {
+    for (let i = 0; i < 7; i++) {
+      for (let j = 0; j < 7; j++) {
+        const edge = i === 0 || i === 6 || j === 0 || j === 6;
+        const core = i >= 2 && i <= 4 && j >= 2 && j <= 4;
+        if (edge || core) cells.push(`<rect x="${x + i}" y="${y + j}" width="1" height="1"/>`);
+      }
+    }
+  };
+  const reserved = (x, y) =>
+    (x < 8 && y < 8) || (x >= N - 8 && y < 8) || (x < 8 && y >= N - 8);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      if (reserved(x, y)) continue;
+      if (rnd() > 0.52) cells.push(`<rect x="${x}" y="${y}" width="1" height="1"/>`);
+    }
+  }
+  finder(0, 0);
+  finder(N - 7, 0);
+  finder(0, N - 7);
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 ${N + 2} ${N + 2}">` +
+    `<rect x="-1" y="-1" width="${N + 2}" height="${N + 2}" fill="#fff"/>` +
+    `<g fill="#1f1f1f">${cells.join('')}</g>` +
+    `<rect x="8.2" y="8.8" width="4.6" height="4.6" rx="1" fill="#1677ff"/>` +
+    `<text x="10.5" y="12.5" font-size="3.4" text-anchor="middle" fill="#fff" font-family="sans-serif">支</text>` +
+    `</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+/** 充值弹窗的轮询定时器：同一时间只会有一个弹窗，模块级一个变量就够 */
+let rechargeWatchTimer = null;
+
+function stopRechargeWatch() {
+  if (rechargeWatchTimer) clearInterval(rechargeWatchTimer);
+  rechargeWatchTimer = null;
+}
+
+/**
+ * 扫码充值弹窗（订单码模式 / 演示）：展示收款二维码并轮询订单状态。
+ * 支付成功（服务端查单确认）→ 自动关弹窗、刷新余额与流水。
+ * demo=true：占位二维码，不轮询不创建订单，展示下单流程给用户预览。
+ */
+function openQrRecharge(order, { loadWallet }) {
+  const demo = Boolean(order.demo);
+
+  const qrModal = openModal({
+    title: demo ? '支付宝充值（演示）' : '支付宝扫码充值',
+    bodyHtml: `
+      <div class="pay-qr" style="display:grid;place-items:center;gap:10px">
+        <img src="${order.qrPng}" alt="${demo ? '占位二维码' : '支付宝收款码'}" width="280" height="280"
+          style="border-radius:10px;border:1px solid var(--border);background:#fff" />
+        <div style="font-size:26px;font-weight:650">${credits(order.amount)}</div>
+        <div style="color:var(--text-mute);font-size:16px">${
+          demo
+            ? '此二维码为占位图：支付宝通道开通后，这里显示真实收款码'
+            : `支付 ¥${Number(order.amount).toFixed(2)}，到账 ${credits(order.amount)}（无手续费）`
+        }</div>
+        <div class="mono" style="color:var(--text-mute);font-size:15px">订单号 ${escapeHtml(order.outTradeNo)}</div>
+        <div id="payStatus" style="min-height:20px;font-size:16.5px">${
+          demo ? '演示模式 · 未创建真实订单，不会扣款' : '等待支付…'
+        }</div>
+      </div>`,
+    footHtml: `<div class="grow"></div><button class="btn btn-primary" data-act="done" type="button">关闭</button>`,
+  });
+
+  qrModal.$('[data-act="done"]').addEventListener('click', () => {
+    stopRechargeWatch();
+    qrModal.close();
+  });
+
+  // 演示弹窗到此为止：没有真实订单可查
+  if (demo) return;
+  watchRechargeOrder(qrModal, order, loadWallet);
+}
+
+/** 支付宝标识（内联样式画的"支"方块，跟支付宝 App 里的图标同款，不引外部图片） */
+const ALIPAY_MARK =
+  `<span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;` +
+  `background:#1677ff;color:#fff;font-size:14px;font-weight:600;line-height:1">支</span>`;
+
+/**
+ * 确认付款弹窗：先把金额、付款方式、服务条款摆清楚，勾选并点「确认付款」后才下单跳转。
+ * 跳转用"点击时同步开一个空白标签、拿到地址后再导航"的老办法，
+ * 免得异步之后 window.open 被浏览器当弹窗拦掉；万一真被拦就退回当前标签跳。
+ */
+function openPayConfirm({ amount, loadWallet }) {
+  const money = Number(amount).toFixed(2);
+
+  const confirmModal = openModal({
+    title: '确认付款',
+    bodyHtml: `
+      <div style="display:grid;gap:12px">
+        <div style="color:var(--text-mute);font-size:15px">查看您的付款详情</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span>充值金额</span><b style="font-size:20px">${credits(amount)}（¥${money}）</b>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span>您支付</span>
+          <span style="display:inline-flex;align-items:baseline;gap:8px">
+            <b style="font-size:20px">${money}</b>
+            <span class="chip" style="background:var(--success-soft);color:var(--success)">无手续费</span>
+          </span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:12px">
+          <span>付款方式</span>
+          <span style="display:inline-flex;align-items:center;gap:6px">${ALIPAY_MARK}<b>alipay</b></span>
+        </div>
+        <label style="display:flex;gap:8px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;cursor:pointer">
+          <input type="checkbox" id="payAgree" style="margin-top:3px" />
+          <span>我已阅读并同意 <a href="/terms.html" target="_blank" rel="noopener" style="color:#e0a94a;text-decoration:underline">服务条款</a>（含不可退款说明）</span>
+        </label>
+        <div style="color:var(--text-mute);font-size:14px;line-height:1.65">
+          在线充值不收手续费，付多少到账多少；在线充值无法开发票
+        </div>
+        <div id="payConfirmMsg" style="min-height:18px;color:#ff9a9a;font-size:14.5px"></div>
+      </div>`,
+    footHtml:
+      `<div class="grow"></div>` +
+      `<button class="btn" data-act="cancel" type="button">取消</button>` +
+      `<button class="btn btn-primary" data-act="go" type="button">确认付款</button>`,
+  });
+
+  const msgEl = () => confirmModal.$('#payConfirmMsg');
+  confirmModal.$('[data-act="cancel"]').addEventListener('click', () => confirmModal.close());
+
+  confirmModal.$('[data-act="go"]').addEventListener('click', async () => {
+    if (!confirmModal.$('#payAgree').checked) {
+      msgEl().textContent = '请先勾选同意服务条款';
+      return;
+    }
+    const goBtn = confirmModal.$('[data-act="go"]');
+    goBtn.disabled = true;
+    msgEl().textContent = '';
+
+    // 关键：在点击事件里同步开一个空白标签，拿到支付地址后再导航过去
+    const tab = window.open('', '_blank');
+
+    try {
+      const order = await api.createRechargeOrder({ amount });
+
+      // 订单码模式：不跳转，直接在弹窗里出二维码
+      if (order.mode === 'qr') {
+        if (tab) tab.close();
+        confirmModal.close();
+        openQrRecharge(order, { loadWallet });
+        return;
+      }
+
+      if (!order.payUrl) {
+        if (tab) tab.close();
+        goBtn.disabled = false;
+        msgEl().textContent = '服务端没有返回支付地址，请联系管理员检查支付宝配置';
+        return;
+      }
+
+      confirmModal.close();
+      if (tab) tab.location.href = order.payUrl;
+      else location.href = order.payUrl; // 新标签被拦就当前标签跳
+      openWaitingPay(order, { loadWallet, inNewTab: Boolean(tab) });
+    } catch (err) {
+      if (tab) tab.close();
+      goBtn.disabled = false;
+      msgEl().textContent = err instanceof ApiError ? err.message : '创建订单失败';
+    }
+  });
+}
+
+/**
+ * 等待支付弹窗：跳转已经发生（新标签或当前标签），这里只做"等支付 + 自动到账"。
+ * 若后端还给了二维码（ALIPAY_SHOW_QR=true 那种"商家页面扫码"形态），一并显示出来。
+ */
+function openWaitingPay(order, { loadWallet, inNewTab = true }) {
+  const payUrl = String(order.payUrl || '');
+  const qrPng = String(order.qrPng || '');
+  const tip = qrPng
+    ? '请用支付宝扫上面的码付款，付完本页会自动确认到账'
+    : inNewTab
+      ? '已在新标签打开支付宝页面：用手机支付宝扫页面上的二维码完成付款即可。'
+      : '已跳转到支付宝页面，请扫码完成付款。';
+
+  const payModal = openModal({
+    title: qrPng ? '支付宝扫码充值' : '等待支付',
+    bodyHtml: `
+      <div class="pay-qr" style="display:grid;place-items:center;gap:12px;text-align:center">
+        <div style="font-size:26px;font-weight:650">${credits(order.amount)}（¥${Number(order.amount).toFixed(2)}）</div>
+        ${
+          qrPng
+            ? `<img src="${qrPng}" alt="支付宝收款二维码" width="260" height="260"
+                 style="border-radius:10px;border:1px solid var(--border);background:#fff" />`
+            : ''
+        }
+        <div style="color:var(--text-mute);font-size:16px">${tip}</div>
+        ${
+          payUrl
+            ? `<a href="${escapeHtml(payUrl)}" target="_blank" rel="noopener" style="color:var(--text-mute);font-size:15px">没看到支付宝页面？点这里打开</a>`
+            : ''
+        }
+        <div class="mono" style="color:var(--text-mute);font-size:15px">订单号 ${escapeHtml(order.outTradeNo)}</div>
+        <div id="payStatus" style="min-height:20px;font-size:16.5px">等待支付…</div>
+      </div>`,
+    footHtml: `<div class="grow"></div><button class="btn btn-primary" data-act="done" type="button">关闭</button>`,
+  });
+
+  payModal.$('[data-act="done"]').addEventListener('click', () => {
+    stopRechargeWatch();
+    payModal.close();
+  });
+
+  watchRechargeOrder(payModal, order, loadWallet);
+}
+
+/** 轮询订单状态：到账就提示并刷新；订单关闭/超时就停；弹窗关掉即停 */
+function watchRechargeOrder(modal, order, loadWallet) {
+  let settled = false;
+  stopRechargeWatch();
+
+  rechargeWatchTimer = setInterval(async () => {
+    if (settled) return stopRechargeWatch();
+    if (!document.body.contains(modal.root)) return stopRechargeWatch();
+    try {
+      const res = await api.getRechargeOrderStatus(order.outTradeNo);
+      const statusEl = modal.$('#payStatus');
+      if (!statusEl) return stopRechargeWatch();
+      if (res.queryError) {
+        // 查单失败（多为密钥/权限配置问题）：把原因亮出来，别让用户白等
+        statusEl.textContent = `查单失败：${res.queryError}`;
+        return;
+      }
+      if (res.status === 'paid') {
+        settled = true;
+        stopRechargeWatch();
+        statusEl.textContent = '支付成功，已到账';
+        setAccountBalance(res.balance);
+        toast(`充值成功：${credits(order.amount)} 已到账`, 'success', '在线充值');
+        loadWallet();
+        setTimeout(() => modal.close(), 1200);
+      } else if (res.status === 'closed') {
+        settled = true;
+        stopRechargeWatch();
+        statusEl.textContent = '订单已超时关闭，未扣款。可重新发起充值。';
+      }
+    } catch {
+      /* 单次轮询失败不打断，下一轮再试 */
+    }
+  }, 2500);
+}
+
+
+/* ======================================================================
+ * 模型 / 生成方式
+ * ====================================================================== */
+
+/**
+ * 选中的模型必须真的在卡片列表里。
+ *
+ * 渠道那张卡会随配置出现或消失（价目还没拉回来、服务端撤了渠道令牌，
+ * 见 models.js 的 channelCard）。选中的是它却又没摆出来时退回默认整模型 ——
+ * 别出现「没有一张卡是选中的」，更别让校验与提交按一张看不见的卡走。
+ */
+function ensureSelectedModel() {
+  if (!videoModelCards().some((m) => m.id === state.model)) state.model = DEFAULT_MODEL_ID;
+}
+
+function buildModelGrid() {
+  ensureSelectedModel();
+  /*
+   * 卡片 = videoModelCards()：按秒的整模型 + 渠道那张一口价卡
+   * （2026-10-16 起渠道视频不再单开菜单，就摆在这排卡里）。
+   */
+  $('modelGrid').innerHTML = videoModelCards().map(
+    (m) => `
+    <button type="button" class="model-card ${m.id === state.model ? 'active' : ''}" data-model="${m.id}">
+      <div class="m-name">${escapeHtml(m.name)}${m.tag ? `<span class="m-tag">${escapeHtml(m.tag)}</span>` : ''}</div>
+      <div class="m-desc">${escapeHtml(m.desc)}</div>
+      <div class="m-chips">
+        <span class="chip">${m.resolutions.map((r) => resolutionLabel(m, r)).join(' / ')}</span>
+        <span class="chip">${m.minSeconds === m.maxSeconds ? `固定${m.minSeconds}s` : `${m.minSeconds}-${m.maxSeconds}s`}</span>
+      </div>
+    </button>`,
+  ).join('');
+
+  $('modelGrid').onclick = (e) => {
+    const card = e.target.closest('[data-model]');
+    if (!card) return;
+    state.model = card.dataset.model;
+    // 卡片重建已包含在 syncModelDependent 里，别重复渲染
+    syncModelDependent();
+    onFormChanged();
+  };
+}
+
+function buildModeSegmented() {
+  const model = getModel(state.model);
+  $('modeSegmented').innerHTML = MODES.map((m) => {
+    const ok = model.modes.includes(m.id);
+    // 不可用时要说清「为什么」：整模型里只有 2.5 支持非参考的方式，渠道那条线只吃参考图
+    const noReason = model.isChannel
+      ? `${m.label}：渠道视频只支持参考图生视频`
+      : `${m.label} 仅支持 Seedance 2.5`;
+    return `<button type="button" data-mode="${m.id}" ${ok ? '' : 'disabled'}
+      title="${escapeHtml(ok ? m.desc || m.label : noReason)}"
+      class="${state.mode === m.id ? 'active' : ''}">${escapeHtml(m.label)}</button>`;
+  }).join('');
+
+  $('modeSegmented').onclick = (e) => {
+    const btn = e.target.closest('[data-mode]');
+    if (!btn || btn.disabled) return;
+    state.mode = btn.dataset.mode;
+    buildModeSegmented();
+    syncMaterialPlan();
+    onFormChanged();
+  };
+}
+
+function buildAspectOptions() {
+  const model = getModel(state.model);
+  /*
+   * 渠道卡不能选 adaptive：渠道的画面比例必须显式给一档（服务端按 CHANNEL_RATIOS 收口），
+   * 传「跟随素材」会被直接拒单。
+   */
+  // 声明了 ratios 的型号（Muse / Burger）画幅是上游写死的几档，不吃「跟随素材」；
+  // 万相 3.0 那两台虽然也声明了 ratios，但它的枚举里本来就有 adaptive，放行
+  const adaptiveAllowed = !model.ratios || ADAPTIVE_MODELS.has(model.id);
+  const allowAdaptive =
+    !model.isChannel && adaptiveAllowed && ['i2v', 'firstlast', 'reference'].includes(state.mode);
+  // 档位按模型过滤：模型声明了 ratios 就只摆它支持的（Seedance 2.5 已放开为全部主流画幅）
+  const base = ratiosOf(model);
+  const list = allowAdaptive ? [...base, ADAPTIVE_RATIO] : base;
+  if (!list.some((r) => r.value === state.aspectRatio)) state.aspectRatio = list[0].value;
+
+  $('aspectRatio').innerHTML = list
+    .map((r) => `<option value="${r.value}" ${r.value === state.aspectRatio ? 'selected' : ''}>${escapeHtml(r.label)}</option>`)
+    .join('');
+}
+
+function buildResolutionOptions() {
+  const model = getModel(state.model);
+  if (!model.resolutions.includes(state.resolution)) {
+    state.resolution = model.resolutions.includes('720p') ? '720p' : model.resolutions[0];
+  }
+  $('resolution').innerHTML = model.resolutions
+    .map((r) => `<option value="${r}" ${r === state.resolution ? 'selected' : ''}>${resolutionLabel(model, r)}</option>`)
+    .join('');
+}
+
+/** 模型或生成方式变化后，同步所有受影响的控件 */
+function syncModelDependent() {
+  // 先确认选中的卡还在（渠道卡会随配置出现 / 消失），再取模型
+  ensureSelectedModel();
+  const model = getModel(state.model);
+
+  /*
+   * 模型卡片必须在这里一起重建。
+   * 恢复草稿、载入历史参数都会改 state.model，如果漏了这一步，
+   * 就会出现「卡片高亮的是 2.5、实际提交的却是 2.0」——而每次生成都真扣费。
+   */
+  buildModelGrid();
+
+  // 草稿/历史参数里的模式可能已下线：退回默认的参考生视频（所有模型都支持）
+  if (!model.modes.includes(state.mode)) state.mode = 'reference';
+  buildModeSegmented();
+
+  // 时长固定的型号（按条那三台）写「固定 30 秒」，别写成「单次最长 30 秒」误导能调
+  const secondsHint =
+    model.minSeconds === model.maxSeconds
+      ? `固定 ${model.minSeconds} 秒`
+      : `单次最长 ${model.maxSeconds} 秒`;
+  $('modelHint').textContent = model.isChannel
+    ? `一口价按条计费 · 固定 ${model.minSeconds} 秒 / ${resolutionLabel(model, model.resolutions[0])}`
+    : `${model.name} · ${secondsHint}`;
+
+  const range = $('secondsRangeInput');
+  range.min = String(model.minSeconds);
+  range.max = String(model.maxSeconds);
+  state.seconds = Math.min(model.maxSeconds, Math.max(model.minSeconds, Number(state.seconds) || 5));
+  range.value = String(state.seconds);
+  paintRangeFill(range);
+  $('secondsNum').min = String(model.minSeconds);
+  $('secondsNum').max = String(model.maxSeconds);
+  $('secondsNum').value = String(state.seconds);
+  // 渠道卡时长固定（min === max），写成「30 – 30 秒」看着像坏了，直接标「固定」
+  $('secondsRange').textContent =
+    model.minSeconds === model.maxSeconds
+      ? `${model.minSeconds} 秒（固定）`
+      : `${model.minSeconds} – ${model.maxSeconds} 秒`;
+
+  buildAspectOptions();
+  buildResolutionOptions();
+
+  setSwitch($('generateAudio'), state.generateAudio, model.features.audio);
+  setSwitch($('watermark'), state.watermark, model.features.watermark);
+  $('outputFormatField').classList.toggle('hidden', !model.features.outputFormat);
+  const seedInput = $('seed');
+  seedInput.disabled = !model.features.seed;
+  seedInput.closest('.field').style.opacity = model.features.seed ? '1' : '0.5';
+
+  syncMaterialPlan();
+  updateCostEstimate();
+}
+
+function syncMaterialPlan() {
+  buildAspectOptions();
+  buildResolutionOptions();
+  const model = getModel(state.model);
+  const plan = materialPlan(model, state.mode);
+  materials.setPlan(plan, state.mode);
+}
+
+function setSwitch(el, on, enabled) {
+  el.classList.toggle('disabled', !enabled);
+  el.classList.toggle('on', enabled && on);
+  el.setAttribute('aria-checked', String(enabled && on));
+  el.style.pointerEvents = enabled ? 'auto' : 'none';
+}
+
+/* ======================================================================
+ * 表单事件
+ * ====================================================================== */
+
+function bindStaticEvents() {
+  /*
+   * 拖文件落到素材面板以外的地方时，浏览器默认会直接打开这个文件 —— 页面一跳，草稿全丢。
+   * 这里统一挡掉：有落点（素材面板 / 渠道参考图）的地方各自处理，其余一律忽略。
+   */
+  ['dragover', 'drop'].forEach((type) => {
+    document.addEventListener(type, (e) => {
+      if (![...(e.dataTransfer?.types || [])].includes('Files')) return;
+      e.preventDefault();
+    });
+  });
+
+  /*
+   * 上限 12000（2026-10-19 用户定）：云上文档没给 seedance-2.5 的提示词字数上限，
+   * 4000 纯属我们自己卡的；按渠道那档的口径统一放到 12000。
+   * 服务端对视频 prompt 只判空、不截断，所以这里就是真实的提交上限。
+   */
+  $('prompt').addEventListener('input', () => {
+    $('promptCount').textContent = `${$('prompt').value.length} / 12000`;
+    onFormChanged();
+  });
+
+  const range = $('secondsRangeInput');
+  const num = $('secondsNum');
+  const applySeconds = (value) => {
+    const model = getModel(state.model);
+    const v = Math.min(model.maxSeconds, Math.max(model.minSeconds, Math.round(Number(value) || model.minSeconds)));
+    state.seconds = v;
+    range.value = String(v);
+    paintRangeFill(range);
+    num.value = String(v);
+    updateCostEstimate();
+    onFormChanged();
+  };
+  range.addEventListener('input', () => applySeconds(range.value));
+  num.addEventListener('change', () => applySeconds(num.value));
+
+  $('aspectRatio').addEventListener('change', (e) => {
+    state.aspectRatio = e.target.value;
+    buildResolutionOptions();
+    onFormChanged();
+  });
+
+  $('resolution').addEventListener('change', (e) => {
+    state.resolution = e.target.value;
+    updateCostEstimate();
+    onFormChanged();
+  });
+
+
+  const toggleSwitch = (el, key) => {
+    el.addEventListener('click', () => {
+      if (el.classList.contains('disabled')) return;
+      state[key] = !state[key];
+      el.classList.toggle('on', state[key]);
+      el.setAttribute('aria-checked', String(state[key]));
+      onFormChanged();
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        el.click();
+      }
+    });
+  };
+  toggleSwitch($('generateAudio'), 'generateAudio');
+  toggleSwitch($('watermark'), 'watermark');
+
+  $('seed').addEventListener('input', (e) => {
+    state.seed = Number(e.target.value);
+    onFormChanged();
+  });
+
+  $('outputFormat').addEventListener('change', (e) => {
+    state.outputFormat = e.target.value;
+    onFormChanged();
+  });
+
+  // 重置：清空提示词 + 已挂的参考素材；模型、生成方式等参数保持不动
+  $('clearPromptBtn').addEventListener('click', async () => {
+    if (!$('prompt').value.length && materials.isEmpty()) {
+      toast('提示词和参考素材都已经是空的', 'info');
+      return;
+    }
+    if (!(await confirmDialog({
+      title: '重置',
+      message: '将清空提示词文字与已挂的参考素材。模型、生成方式等参数保持不动。',
+      confirmText: '重置',
+    }))) return;
+    // 先放掉素材（含 blob 缩略图的引用），再清空文字：
+    // setPromptValue 内部会同步镜像层与字数，双保险
+    materials.reset();
+    setPromptValue($('prompt'), '');
+    toast('提示词与参考素材已重置', 'info');
+  });
+
+  $('submitBtn').addEventListener('click', submitTask);
+
+  /*
+   * 联系客服（2026-10-21 用户要求）：把 QQ 群与客服微信的二维码挂到玩家找得到的地方。
+   *
+   * 两个入口，共用同一段 HTML：
+   *   · 顶栏「客服」按钮 —— 任何页面一键弹窗，不用先去翻教程；
+   *   · 教程页底部常驻区块 —— 在 index.html 里静态写好（服务条款/隐私政策页签也看得到）。
+   * 图片放 public/img/，点一下开灯箱看原图：电脑上扫不动时能放大或另存。
+   */
+  const SUPPORT_HTML = `
+    <div class="support-qrs">
+      <figure class="support-qr">
+        <img src="img/support-qq-group.png" alt="官方 QQ 群二维码，群号 1109136587" />
+        <figcaption><b>官方 QQ 群</b><span>群号 1109136587</span></figcaption>
+      </figure>
+      <figure class="support-qr">
+        <img src="img/support-wechat.jpg" alt="客服微信二维码" />
+        <figcaption><b>客服微信</b><span>扫码添加好友</span></figcaption>
+      </figure>
+    </div>
+    <p class="support-tip">生成失败、扣费异常、渠道视频取不回、充值疑问，都可以在群里问，或加微信一对一处理。</p>`;
+  $('supportBtn')?.addEventListener('click', () => {
+    openModal({ title: '联系客服', bodyHtml: SUPPORT_HTML, wide: true });
+  });
+  // 教程页那两张是静态 HTML，走同一个灯箱
+  document.addEventListener('click', (e) => {
+    const img = e.target.closest('.support-qr img');
+    if (!img) return;
+    previewImage(img.getAttribute('src') || '', img.getAttribute('alt') || '');
+  });
+
+  $('settingsBtn').addEventListener('click', openSettings);
+  // 顶部账号徽标与「退出」：徽标进设置，退出直接走 auth.logout()
+  $('userPill').addEventListener('click', openSettings);
+  $('logoutBtn').addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: '退出登录？',
+      message: '退出后需要重新输入用户名与密码；正在生成的视频不会中断（服务端还在跑）。',
+      confirmText: '退出',
+    });
+    if (ok) auth.logout();
+  });
+  $('balancePill').addEventListener('click', () => openWallet());
+  initSpendingPanel();
+  initCallsPanel();
+  // 消费记录页的页签：消费流水 / 调用记录
+  $('recordTabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-record-tab]');
+    if (!btn || btn.dataset.recordTab === recordTab) return;
+    showRecordTab(btn.dataset.recordTab);
+  });
+  // 创作台页签：视频生成 / 图片生成（走 switchKind，'video'/'image' 会落到创作台）
+  $('createTabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-create-tab]');
+    if (!btn || btn.dataset.createTab === createTab) return;
+    switchKind(btn.dataset.createTab);
+  });
+  initAnnouncements();
+  initPlaza();
+  initUsersPanel();
+  initChannelsPanel();
+  initOpenApi();
+  initInspiration();
+  initRecharges();
+  // 教程面板内页签：使用教程 / 隐私政策 / 服务条款
+  $('helpTabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-tab]');
+    if (!btn) return;
+    for (const b of $('helpTabs').children) b.classList.toggle('active', b === btn);
+    for (const sec of document.querySelectorAll('#helpPanel .help-sec')) {
+      sec.classList.toggle('hidden', sec.dataset.tab !== btn.dataset.tab);
+    }
+  });
+  $('kindSwitch').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-kind]');
+    if (!btn || btn.dataset.kind === currentKind) return;
+    switchKind(btn.dataset.kind);
+  });
+
+  $('imgSubmitBtn').addEventListener('click', submitImageTask);
+
+  // 资产库
+  $('assetFileInput').addEventListener('change', async (e) => {
+    const files = e.target.files;
+    if (files?.length) await assetPanel.uploadFiles(files);
+    e.target.value = '';
+  });
+  $('assetFromTaskBtn').addEventListener('click', () => {
+    assetPanel.importFromTasks(tasks.tasks);
+  });
+
+  $('refreshAllBtn').addEventListener('click', async () => {
+    await refreshAllRemote();
+    toast('已请求刷新所有进行中的任务', 'success');
+  });
+}
+
+/* ======================================================================
+ * 费用
+ * ====================================================================== */
+
+/**
+ * 单价：以服务端价目表为准 —— 界面的「预计消耗」必须与真正扣费同源，
+ * 否则会出现"预估 3 元、扣了 5 元"。拉不到服务端价目时退回前端快照（数字一样）。
+ *
+ * 两种计费形态都在这一个口子上收口：
+ *   · 按秒 → { perSecond: 元/秒, unit: 元/秒 }，费用还要乘秒数
+ *   · 按条 → { perTask: 元/条 }，费用与时长无关
+ */
+function priceOf(modelId, tier) {
+  /*
+   * 渠道那张卡是一口价（元/条），不查上面那张价目表 ——
+   * 价与扣费同源：服务端 config.channelVideo.price（/api/pricing 的 channel 段带回来）。
+   */
+  if (modelId === CHANNEL_MODEL_ID) {
+    const price = priceOfChannel(channelModel()?.price);
+    return price ? { perTask: price } : null;
+  }
+  const perSecond = priceOfVideo(modelId, tier);
+  if (perSecond) return { perSecond };
+  const perTask = priceOfVideoTask(modelId, tier);
+  return perTask ? { perTask } : null;
+}
+
+/** 这次生成要花多少钱（元）：按秒的乘秒数，按条的就是一条的价 */
+function costOf(price, seconds) {
+  if (!price) return 0;
+  if (price.perTask) return price.perTask;
+  return price.perSecond * Number(seconds || 0);
+}
+
+function updateCostEstimate() {
+  const tier = state.resolution;
+  const model = getModel(state.model);
+  const price = priceOf(state.model, tier);
+  // 顺带把模型名写出来：万一卡片高亮和实际用的模型不一致，提交前就能看出来
+  if (!price) {
+    $('costLabel').textContent = `${model.name} · 预计消耗`;
+    $('costValue').textContent = '该模型暂无价目（不扣费）';
+    return;
+  }
+  // 档位用界面标签（如 1080P / 4K），别把 480p 这种原始值摆给用户
+  const tierLabel = resolutionLabel(model, tier);
+  if (price.perTask) {
+    // 按条计费：与时长无关，别写「× N 秒」误导用户以为时长会影响价格
+    // （渠道卡的名字里已经带「按条计费」了，不再重复写一遍）
+    // 时长固定的型号（30 秒按条那两台）把「固定30s」写进来，免得用户以为时长能调
+    const fixed = model.minSeconds === model.maxSeconds ? `固定${model.minSeconds}s · ` : '';
+    $('costLabel').textContent = model.isChannel
+      ? `${model.name} · ${tierLabel}`
+      : `${model.name} · ${tierLabel} · ${fixed}按条计费`;
+    // 标价统一写成「⚡38（¥3.80/条）」：只给算力看不出计价单位，见 models.js 的 perTaskCost
+    $('costValue').textContent = perTaskCost(price.perTask);
+    return;
+  }
+  $('costLabel').textContent =
+    `${model.name} · ${tierLabel} × ${state.seconds} 秒 · ${credits(price.perSecond)}/秒`;
+  $('costValue').textContent = credits(price.perSecond * state.seconds);
+}
+
+/* ======================================================================
+ * 校验与提交
+ * ====================================================================== */
+
+function buildPayload() {
+  const model = getModel(state.model);
+  const payload = {
+    model: state.model,
+    prompt: $('prompt').value.trim(),
+    seconds: Number(state.seconds),
+  };
+
+  /*
+   * 尺寸只提交 resolution + aspect_ratio 两个字段，**不提交 size**，也不支持自定义像素。
+   *
+   * 为什么不传 size：size 与 aspect_ratio 一起出现时，平台有可能先按像素裁一把，
+   * 出来的画面比例反而与 aspect_ratio 打架（请求 16:9 却出竖屏）。画面比例交回
+   * aspect_ratio 这个「画面比例」字段本身，档位交给 resolution，各管一件事。
+   */
+  payload.resolution = state.resolution;
+  // 纯文生视频不传 adaptive，上游会拒绝
+  if (state.aspectRatio && (state.aspectRatio !== 'adaptive' || state.mode !== 't2v')) {
+    payload.aspect_ratio = state.aspectRatio;
+  }
+
+  if (model.features.audio) payload.generate_audio = Boolean(state.generateAudio);
+  if (model.features.watermark) payload.watermark = Boolean(state.watermark);
+  if (model.features.seed && Number.isFinite(Number(state.seed))) payload.seed = Number(state.seed);
+  if (model.features.outputFormat) payload.output_format = state.outputFormat;
+
+  /*
+   * mode 一如既往地发给网关（现在的型号全是 Seedance 2.0/2.5 系，都认这个字段）。
+   * 语义：无素材→t2v、首帧→i2v、首帧+尾帧→firstlast、带参考素材→reference。
+   */
+  payload.mode = state.mode;
+
+  const { payload: materialPayload, assetIds } = materials.collect();
+  return { payload: { ...payload, ...materialPayload }, assetIds };
+}
+
+function validate() {
+  const problems = [];
+  const model = getModel(state.model);
+  const prompt = $('prompt').value.trim();
+
+  if (prompt.length < 2) problems.push('请先填写提示词（至少 2 个字）');
+  if (state.seconds < model.minSeconds || state.seconds > model.maxSeconds) {
+    problems.push(`时长需要在 ${model.minSeconds}–${model.maxSeconds} 秒之间`);
+  }
+  if (!model.resolutions.includes(state.resolution)) {
+    problems.push(`${model.name} 不支持该清晰度档位`);
+  }
+  // 渠道的画面比例只有渠道规定的那几档（服务端按 CHANNEL_RATIOS 收口），不在列表里就别提交
+  if (model.isChannel && !ratiosOf(model).some((r) => r.value === state.aspectRatio)) {
+    problems.push(`画面比例不支持：${state.aspectRatio}`);
+  }
+  problems.push(...materials.validate());
+
+  return { problems, prompt };
+}
+
+async function submitTask() {
+  if (submitting) return;
+  const { problems, prompt } = validate();
+  if (problems.length) {
+    toast(problems[0], 'warn', problems.length > 1 ? `还有 ${problems.length - 1} 项待处理` : '');
+    return;
+  }
+  const model = getModel(state.model);
+
+  /*
+   * 两条线路、两个接口：
+   *   · 渠道卡（一口价）：令牌在服务端，所以**不查用户 Key**；规格（模型 / 时长 / 清晰度）
+   *     由服务端固定，这里只提交提示词、画面比例与参考图地址；
+   *   · 其余整模型：走 /api/videos，参数按模型能力拼（见 buildPayload）。
+   * 两者的重复提交拦截、余额预检与错误处理共用下面同一段。
+   */
+  let submitKey = '';
+  let send = null;
+  if (model.isChannel) {
+    const spec = channelModel() || {};
+    const { payload: materialPayload } = materials.collect();
+    const channelPayload = {
+      prompt,
+      ratio: state.aspectRatio,
+      reference_image_urls: materialPayload.reference_image_urls || [],
+    };
+    submitKey = JSON.stringify(channelPayload);
+    // meta 与老「渠道视频」页提交时一致：任务卡靠 channel 标记显示「渠道」标签、不给重试
+    send = () =>
+      api.submitChannelVideo(channelPayload, {
+        model: spec.model || 'seedance-2.5',
+        prompt,
+        seconds: Number(spec.seconds) || model.minSeconds,
+        resolution: spec.resolution || model.resolutions[0],
+        aspectRatio: state.aspectRatio,
+        mode: 'reference',
+        channel: 'channel-video',
+      });
+  } else {
+    if (!hasUsableKey()) {
+      warnNoKey();
+      return;
+    }
+    const { payload, assetIds } = buildPayload();
+    submitKey = JSON.stringify(payload);
+    send = () =>
+      api.submit(
+        payload,
+        {
+          model: state.model,
+          mode: state.mode,
+          prompt,
+          seconds: Number(state.seconds),
+          resolution: state.resolution,
+          aspectRatio: payload.aspect_ratio || '',
+          sizeTier: state.resolution,
+          assetIds: assetIds || [],
+        },
+        clientApiKey(),
+      );
+  }
+
+  // 提交前先看余额够不够（服务端还会再拦一次，这里只是提前说清楚）
+  const price = priceOf(state.model, state.resolution);
+  if (!ensureBalance(costOf(price, state.seconds), Boolean(price))) return;
+
+  // 相同参数短时间内重复点击视为误操作，直接忽略（每次生成都真扣费）
+  if (isDuplicateSubmit(submitKey)) return;
+
+  submitting = true;
+  setSubmitLoading(true, '提交中…');
+
+  try {
+    const res = await send();
+    markSubmitted(submitKey);
+    afterSubmit(res);
+  } catch (err) {
+    const message = err instanceof ApiError ? err.message : String(err?.message || err);
+    const advice = explainError(message, err?.detail);
+    toast(advice ? `${message}\n建议：${advice}` : message, 'error', '提交失败');
+  } finally {
+    submitting = false;
+    setSubmitLoading(false);
+  }
+}
+
+/* ======================================================================
+ * 视频 / 图片 模式切换与图片提交
+ * ====================================================================== */
+
+/**
+ * 按 FEATURES 收掉对应入口。
+ * 必须在 restoreDraft() 之前调用：草稿里可能记着上次停在短剧画布，
+ * 而那时草稿恢复会走 switchKind('drama')。
+ */
+function applyFeatureFlags() {
+  const dramaBtn = $('kindSwitch').querySelector('[data-kind="drama"]');
+  if (dramaBtn) dramaBtn.classList.toggle('hidden', !FEATURES.dramaCanvas);
+  if (!FEATURES.dramaCanvas) {
+    $('dramaMain').classList.add('hidden');
+    // 主区域的显隐交给 switchKind（默认视图是首页），这里不再强行展开，
+    // 否则首屏会先闪一下工作台再跳到首页
+  }
+}
+
+/**
+ * 按角色收放入口。要等登录之后才知道角色，所以启动流程里单独调一次。
+ * （密钥管理界面已整体下线：密钥由管理员在服务端后台维护，数据库与
+ *   使用逻辑都不变。要恢复界面，把 index.html 里的 keyPanel 区块和
+ *   keys.js 的 KeyPanel 接回去即可。）
+ */
+function applyRoleFeatures() {
+  const isAdmin = auth.user?.role === 'admin';
+  /*
+   * 测试卡 `seedance-2.5-test` 只给管理员看（models.js 的 adminOnly）：
+   * 登录 / 退出 / 被降权都会走到这里，角色一变就重画一次卡片列表 ——
+   * 否则退出登录后那张卡会一直留在页面上（state.model 也可能还停在它上面）。
+   */
+  setAdminView(isAdmin);
+  buildModelGrid();
+  // 用户管理与公告管理都是管理员专属：入口按角色显隐，非管理员绝不放行
+  const usersBtn = $('kindSwitch').querySelector('[data-kind="users"]');
+  if (usersBtn) usersBtn.classList.toggle('hidden', !isAdmin);
+  const annBtn = $('kindSwitch').querySelector('[data-kind="ann"]');
+  if (annBtn) annBtn.classList.toggle('hidden', !isAdmin);
+  /*
+   * 充值记录是全站所有人的钱，同样只给管理员（接口那边也会 403，这里只是不给入口）。
+   * 2026-10-24 起它不再是顶栏菜单，而是「消费记录」里的第三个页签 ——
+   * 入口跟着角色显隐，页签本身也在 html 里默认 hidden。
+   */
+  const rechargeTab = $('recordTabs')?.querySelector('[data-record-tab="recharges"]');
+  if (rechargeTab) rechargeTab.classList.toggle('hidden', !isAdmin);
+  // 后台（2026-10-22，原「渠道」）：管理员专属 —— 开关线路、调整完整优先级
+  const channelsBtn = $('kindSwitch').querySelector('[data-kind="channels"]');
+  if (channelsBtn) channelsBtn.classList.toggle('hidden', !isAdmin);
+  // 正在停在已下线的视图 / 权限已变化（退出登录、被降权）→ 退回创作台
+  if (!isAdmin && currentKind === 'keys') switchKind('create');
+  if (!isAdmin && currentKind === 'users') switchKind('create');
+  if (!isAdmin && currentKind === 'ann') switchKind('create');
+  // 被降权时可能正停在「充值记录」页签上：静默退回消费流水，不额外拉数据
+  if (!isAdmin && recordTab === 'recharges') {
+    recordTab = 'spending';
+    for (const btn of $('recordTabs').children) {
+      btn.classList.toggle('active', btn.dataset.recordTab === 'spending');
+    }
+    $('rechargePanel').classList.add('hidden');
+    $('spendCard').classList.remove('hidden');
+    if (currentKind === 'spending') showSpending();
+  }
+  if (!isAdmin && currentKind === 'channels') switchKind('create');
+}
+
+/**
+ * 切「消费记录」页的三个页签：消费流水 / 调用记录 / 充值记录。
+ *
+ * 只拉当前这一个列表（各自有筛选与分页），别的保持原样，切回来不丢状态。
+ * 充值记录是 2026-10-24 从独立菜单并进来的（管理员专属页签，非管理员看不到按钮也切不进来）；
+ * 它的自动刷新只在停在这个页签时才开着，切走立刻停。
+ */
+function showRecordTab(tab = recordTab) {
+  recordTab = tab === 'calls' || tab === 'recharges' ? tab : 'spending';
+  // 非管理员点不到「充值记录」，但历史草稿/手改 URL 仍可能传进来
+  if (recordTab === 'recharges' && auth.user?.role !== 'admin') recordTab = 'spending';
+  for (const btn of $('recordTabs').children) {
+    btn.classList.toggle('active', btn.dataset.recordTab === recordTab);
+  }
+  $('spendCard').classList.toggle('hidden', recordTab !== 'spending');
+  $('callsPanel').classList.toggle('hidden', recordTab !== 'calls');
+  $('rechargePanel').classList.toggle('hidden', recordTab !== 'recharges');
+  if (recordTab === 'calls') {
+    hideRecharges();
+    showCalls();
+  } else if (recordTab === 'recharges') {
+    showRecharges();
+  } else {
+    hideRecharges();
+    showSpending();
+  }
+}
+
+function switchKind(kind) {
+  // 短剧画布隐藏时，任何来源（导航按钮、草稿恢复）都退回「视频生成」
+  if (kind === 'drama' && !FEATURES.dramaCanvas) kind = 'video';
+  // 密钥管理界面已下线：任何来源都不许切进去
+  if (kind === 'keys') kind = 'video';
+  // 充值记录已并入「消费记录」（2026-10-24）：草稿/旧入口里的 'recharges' 一律落到那一页
+  if (kind === 'recharges') kind = 'spending';
+  // 用户管理与公告管理只给管理员（服务端还会再拦一次，这里只是别让入口露出来）
+  if (kind === 'users' && auth.user?.role !== 'admin') kind = 'create';
+  if (kind === 'ann' && auth.user?.role !== 'admin') kind = 'create';
+  if (kind === 'channels' && auth.user?.role !== 'admin') kind = 'create';
+  // 宣传首页已删除（2026-10-24）：旧入口/草稿里残留的 'home' 一律落到创作台
+  if (kind === 'home') kind = 'create';
+
+  /*
+   * 「创作台」把视频生成与图片生成并成一个菜单：
+   * 老名字 'video' / 'image'（首页卡片、任务还原、草稿、旧入口）一律落到这一页，
+   * 并切到对应页签 —— 调用方一句都不用改。
+   */
+  if (kind === 'video' || kind === 'image' || kind === 'assets') {
+    createTab = kind;
+    kind = 'create';
+  }
+
+  currentKind = kind;
+  for (const btn of $('kindSwitch').children) {
+    btn.classList.toggle('active', btn.dataset.kind === kind);
+  }
+
+  // 短剧画布要横向空间放时间轴，塞进左栏会挤成一团，所以整块替换主区域
+  const isDrama = kind === 'drama';
+  $('mainLayout').classList.toggle('hidden', isDrama);
+  /*
+   * 右栏（预览 + 任务列表）只在「生成」类页面出现：
+   * 其余页面（广场、资产库、消费记录、灵感、API 接入、教程…）用不到预览，
+   * 收起它让正文独占整宽；切回生成页自动还原。
+   */
+  $('mainLayout').classList.toggle('no-right', !['create', 'channel'].includes(kind));
+  $('dramaMain').classList.toggle('hidden', !isDrama);
+
+  // 创作台的两个面板按页签切换；右栏（预览 + 任务列表）共用，不跟着切
+  $('createTabs').classList.toggle('hidden', kind !== 'create');
+  for (const btn of $('createTabs').children) {
+    btn.classList.toggle('active', btn.dataset.createTab === createTab);
+  }
+  $('videoPanel').classList.toggle('hidden', kind !== 'create' || createTab !== 'video');
+  $('channelPanel').classList.toggle('hidden', kind !== 'channel');
+  $('imagePanel').classList.toggle('hidden', kind !== 'create' || createTab !== 'image');
+  $('plazaPanel').classList.toggle('hidden', kind !== 'plaza');
+  // 资产库已并进创作台当第三个页签（2026-10-23），跟着 createTab 走
+  $('assetPanel').classList.toggle('hidden', kind !== 'create' || createTab !== 'assets');
+  $('spendPanel').classList.toggle('hidden', kind !== 'spending');
+  $('openApiPanel').classList.toggle('hidden', kind !== 'openapi');
+  // 大客户（2026-10-21）：纯静态介绍页，不需要拉任何数据
+  $('vipPanel').classList.toggle('hidden', kind !== 'vip');
+  $('inspirePanel').classList.toggle('hidden', kind !== 'inspire');
+  $('helpPanel').classList.toggle('hidden', kind !== 'help');
+  $('annPanel').classList.toggle('hidden', kind !== 'ann');
+  $('usersPanel').classList.toggle('hidden', kind !== 'users');
+  $('channelsPanel').classList.toggle('hidden', kind !== 'channels');
+  if (kind === 'channel') showChannelPanel();
+  if (kind === 'create' && createTab === 'assets') assetPanel.refresh();
+  if (kind === 'plaza') showPlaza();
+  // 消费记录：停在上次那个页签，进去就刷当前这个列表
+  if (kind === 'spending') showRecordTab();
+  if (kind === 'openapi') showOpenApi();
+  if (kind === 'inspire') showInspiration();
+  if (kind === 'ann') showAnnouncements();
+  if (kind === 'users') showUsers();
+  if (kind === 'channels') showChannels();
+  // 充值记录现在是「消费记录」里的页签（2026-10-24）：面板显隐归 showRecordTab 管，
+  // 这里只管离开这一整页时把它的自动刷新停掉，别在后台空转
+  if (kind !== 'spending') hideRecharges();
+
+  if (isDrama) dramas.show();
+  else dramas.hide();
+
+  onFormChanged();
+}
+
+async function submitImageTask() {
+  if (submitting) return;
+  if (!hasUsableKey()) {
+    warnNoKey();
+    return;
+  }
+
+  // 提交前先看余额（图片按张计费，n 张一起算）
+  const info = images.priceInfo();
+  const imageCount = Number(images.getState().n) || 1;
+  if (!ensureBalance(info ? info.unit * imageCount : 0, Boolean(info))) return;
+
+  submitting = true;
+  images.setLoading(true, '生成中…');
+  try {
+    const task = await images.submit(clientApiKey());
+    if (task) {
+      toast('图片任务已提交，正在生成…', 'success', '已进入队列');
+      tasks.selectedId = task.id;
+      await refreshTasks();
+      // 新单已经在跑：把轮询切到「有活」那一档，别等空闲的 20 秒
+      scheduleTaskPoll();
+      revealTasksPanel();
+      setTimeout(refreshBalance, 5000);
+    }
+  } catch (err) {
+    const message = err instanceof ApiError ? err.message : String(err?.message || err);
+    const advice = explainError(message, err?.detail);
+    toast(advice ? `${message}\n建议：${advice}` : message, 'error', '提交失败');
+  } finally {
+    submitting = false;
+    images.setLoading(false);
+  }
+}
+
+/**
+ * 提交成功后把任务面板带进视野。
+ *
+ * 单列布局（窄屏）下任务面板位于表单**下方**，提交后新任务出现在屏幕外，
+ * 用户看不到任何变化，很容易以为「没反应」而重复点击。
+ * 面板本来就可见时不做任何事，避免无谓的跳动。
+ */
+function revealTasksPanel() {
+  const card = document.querySelector('.tasks-card');
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  const alreadyVisible = r.top < window.innerHeight - 120 && r.bottom > 120;
+  if (alreadyVisible) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function afterSubmit(res) {
+  // 服务端在提交时就把钱扣了，响应里带最新余额，直接用，不必再问一次
+  setAccountBalance(res.balance);
+  // res.cost 是**实扣**（2026-10-17 起没有会员折扣，就是价目表里那个数）
+  const cost = Number(res.cost) || 0;
+  const costText = res.unpriced
+    ? '（该模型暂无价目，本次未扣费）'
+    : cost
+      ? `，已扣 ${credits(cost)}`
+      : '';
+  /*
+   * 2026-10-20 用户要求：提交成功的提示里**不再显示任务号**（一串 ID 对用户没意义），
+   * 只写「任务已成功提交」；taskId 仍要拿来做内部定位（选中新任务、挡住重复点击）。
+   * 上游任务号照旧只在管理员的追溯里出现（2026-10-19）。
+   */
+  const taskId = res.task?.id || '';
+  /*
+   * 拿不到平台任务号时**不能再报"已提交成功"**：那多半是服务端版本对不上
+   * （2026-10-19 就撞过一次：文件传错目录，线上跑的还是旧代码），
+   * 报成功只会让人一直等一个不存在 id 的任务。
+   */
+  if (!taskId) {
+    toast('提交成功，但服务端没有返回任务号：请检查服务器是否已更新到最新代码', 'error', '服务端版本不一致');
+    return;
+  }
+  toast(`任务已成功提交${costText}`, 'success', '已进入队列');
+  tasks.selectedId = taskId;
+  tasks._autoPlayed.delete(res.task?.id);
+  refreshTasks();
+  // 新单已经在跑：把轮询切到「有活」那一档（4 秒），空闲档要等 20 秒
+  scheduleTaskPoll();
+  revealTasksPanel();
+  // 兜底再同步一次（比如上游已经先扣了别的费用）
+  setTimeout(refreshBalance, 4000);
+}
+
+function setSubmitLoading(loading, label) {
+  const btn = $('submitBtn');
+  btn.disabled = loading;
+  $('submitLabel').textContent = loading ? label || '提交中…' : '开始生成';
+  btn.querySelector('svg').classList.toggle('hidden', loading);
+  if (loading) {
+    if (!btn.querySelector('.spinner')) {
+      const sp = document.createElement('span');
+      sp.className = 'spinner';
+      btn.prepend(sp);
+    }
+  } else {
+    btn.querySelector('.spinner')?.remove();
+  }
+}
+
+/* ======================================================================
+ * 任务轮询与操作
+ * ====================================================================== */
+
+/*
+ * 右侧任务面板不再回放历史失败单（2026-10-23 用户要求）：
+ * 10-23 之前提交、最终失败的任务一律不加载进来 —— 那批多是上游整站故障留下的，
+ * 列表被它们拖得很长；10-23 当天的与之后任何一天的失败单照常显示。
+ *
+ * 只筛给任务面板：短剧画布仍拿全量（它要靠失败单把分镜标成失败态），
+ * 后台「调用记录」走 /api/calls，本来就不经过这里。
+ */
+const TASK_LIST_MIN_AT = new Date('2026-10-23T00:00:00+08:00').getTime();
+
+/** 这条任务要不要出现在右侧列表里 */
+function showInTaskList(task) {
+  if (task.status !== 'failed') return true;
+  return (Number(task.createdAt) || 0) >= TASK_LIST_MIN_AT;
+}
+
+/*
+ * 增量同步的水位（2026-10-24「网站比较卡」的第三刀）。
+ *
+ * 以前每轮都拉全量：141 条任务约 2MB，有任务在跑时 4 秒一次。现在带
+ * `?since=<上次拿到的最大 updatedAt>` 只拉变化的几条，响应通常只有几百字节。
+ * 删除没法用增量表达（消失的任务不在任何返回里），所以每 60 秒强制全量兜底一次。
+ *
+ * 两个水位分开放：`tasksSyncAt` 是**服务端**的时间戳（直接回传给它当 since），
+ * `tasksFullAt` 是**本机**时刻（只用来算"多久没全量了"）—— 两者混用会被时钟差带偏。
+ */
+let tasksSyncAt = 0;
+let tasksFullAt = 0;
+const TASK_FULL_SYNC_MS = 60000;
+
+/**
+ * 取一条任务的**全文**：列表接口把提示词截成 120 字预览（省 34% 流量），
+ * 参数回填、发布到灵感、详情弹窗都需要完整提示词。
+ * 取到后写回列表，同一条不需要再取第二次；取失败就退回预览版，不让流程卡死。
+ */
+async function ensureFullTask(task) {
+  if (!task || !task.promptPreview) return task;
+  try {
+    const res = await api.getTask(task.id);
+    const full = res.task || task;
+    tasks.mergeTasks([full]);
+    return full;
+  } catch {
+    return task;
+  }
+}
+
+async function refreshTasks({ full = false } = {}) {
+  if (polling) return;
+  polling = true;
+  try {
+    const needFull = full || !tasksSyncAt || Date.now() - tasksFullAt > TASK_FULL_SYNC_MS;
+    const res = await api.listTasks(needFull ? 0 : tasksSyncAt);
+    const incoming = res.tasks || [];
+    if (res.full) {
+      tasks.setTasks(incoming.filter(showInTaskList));
+      // 短剧画布靠这里把分镜状态同步成最新（定点更新，不打断播放）
+      dramas.applyTasks(incoming);
+      tasksFullAt = Date.now();
+    } else if (incoming.length) {
+      tasks.mergeTasks(incoming.filter(showInTaskList));
+      dramas.applyTasks(incoming);
+    }
+    // 水位只升不降：增量空响应时服务端回的 maxUpdatedAt 等于传进去的 since
+    tasksSyncAt = Math.max(tasksSyncAt, Number(res.maxUpdatedAt) || 0);
+  } catch {
+    /* 静默失败，等待下一次轮询 */
+  } finally {
+    polling = false;
+  }
+}
+
+async function refreshAllRemote() {
+  const active = tasks.tasks.filter((t) => t.status === 'queued' || t.status === 'in_progress');
+  await Promise.allSettled(active.map((t) => api.refreshTask(t.id)));
+  await refreshTasks();
+}
+
+/**
+ * 把某张「生成图」转成资产。
+ *
+ * 后端负责把图片搬到对象存储再登记进资产库（/api/assets/from-task），
+ * 这里只管三件事：调用、让资产库缓存失效、把结果回给调用方好标记按钮。
+ * 用 Set 去重：按钮点快了会重复建资产，而上游上传是有代价的。
+ */
+const convertingToAsset = new Set();
+
+async function convertTaskImageToAsset(taskId, index = 0) {
+  if (!taskId) return false;
+  const key = `${taskId}:${index}`;
+  if (convertingToAsset.has(key)) return false;
+  convertingToAsset.add(key);
+
+  try {
+    const res = await api.assetFromTask(taskId, index);
+    // 资产库有缓存，转完必须失效，否则选择器里看不到刚转的这张
+    invalidateAssets();
+    if (currentKind === 'create' && createTab === 'assets') assetPanel.refresh(true);
+    if (res?.reused) {
+      /*
+       * 复用的那条可能不在当前剧集里（同一张图之前归到别的剧集了）。
+       * 直说它在哪一集，免得用户"转完却看不见"，以为没成功。
+       */
+      const where = String(res.asset?.series || '');
+      const hint =
+        where === getCurrentSeries()
+          ? '它就在当前剧集里'
+          : `它现在归在「${seriesLabelOf(where)}」这一集，可在资产库里切过去查看`;
+      toast(`这张图已经在资产库里了，没有重复添加（${hint}）`, 'info', '无需重复转换');
+    } else {
+      toast(
+        `已转为资产（归到「${seriesLabelOf(getCurrentSeries())}」这一集），可在「资产库」里查看`,
+        'success',
+        '转资产成功',
+      );
+    }
+    return true;
+  } catch (err) {
+    toast(err instanceof ApiError ? err.message : '转资产失败', 'error');
+    return false;
+  } finally {
+    convertingToAsset.delete(key);
+  }
+}
+
+/**
+ * 发布到「灵感」的弹窗。
+ *
+ * 两件事可选：标题（留空就取提示词开头，但**只在公开提示词时**才这么兜底），
+ * 以及「分享提示词」开关 —— 默认开启，关掉后别人在灵感里看不到这条的提示词
+ * （作者本人随时能看到，之后也能改）。提示词里指向参考素材的引用与链接，服务端会统一抹掉。
+ */
+async function openPublishDialog(task) {
+  // 列表里的提示词是 120 字预览，发布到灵感要的是全文
+  task = await ensureFullTask(task);
+  const prompt = String(task.meta?.prompt || task.payload?.prompt || '');
+  // 默认标题直接填进输入框：不写标题（或清空）时就用它，作者也可以随手改
+  const who = auth.user?.displayName || auth.user?.username || '用户';
+  const defaultTitle = `来自${who}的分享`;
+  const modal = openModal({
+    title: '发布到「灵感」',
+    wide: true,
+    bodyHtml: `
+      <div class="field">
+        <label class="label">标题</label>
+        <input class="input" id="pubTitle" maxlength="120" placeholder="可空" value="${escapeHtml(defaultTitle)}" />
+      </div>
+
+      <div class="field">
+        <label class="label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="pubSharePrompt" checked />
+          <span>分享提示词</span>
+        </label>
+        <div class="field-foot">
+          关掉后，灵感里所有人都看不到这条提示词。提示词里指向的参考素材不展示。
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">提示词预览</label>
+        <textarea class="textarea" id="pubPrompt" rows="5" readonly>${escapeHtml(prompt)}</textarea>
+      </div>`,
+    footHtml: `
+      <button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
+      <button class="btn btn-primary" type="button" data-act="ok">发布</button>`,
+  });
+
+  const submit = async () => {
+    const title = modal.$('#pubTitle')?.value.trim() || '';
+    const sharePrompt = Boolean(modal.$('#pubSharePrompt')?.checked);
+    modal.close();
+    try {
+      const res = await api.publishInspiration({ taskId: task.id, title, sharePrompt });
+      publishedTasks.add(task.id);
+      tasks.renderList();
+      toast(
+        res.reused ? '这条作品已经在「灵感」里了，没有重复发布' : '已发布到「灵感」，所有人可浏览、点赞',
+        res.reused ? 'info' : 'success',
+      );
+      refreshInspirationIfVisible();
+    } catch (err) {
+      toast(err?.message || '发布失败', 'error');
+    }
+  };
+
+  modal.root.addEventListener('click', (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'ok') submit();
+    if (act === 'cancel') modal.close();
+  });
+}
+
+async function handleTaskAction(act, id) {
+  const task = tasks.tasks.find((t) => t.id === id);
+  if (!task) return;
+
+  try {
+    if (act === 'publish') {
+      await openPublishDialog(task);
+      return;
+    }
+    if (act === 'retry') {
+      const res = await api.retryTask(id);
+      toast('已用相同参数重新提交', 'success');
+      tasks.selectedId = res.task?.id;
+      await refreshTasks();
+    } else if (act === 'delete') {
+      const ok = await confirmDialog({
+        title: '删除任务记录',
+        message:
+          task.objectKey || task.localFile || task.files?.some((f) => f?.objectKey)
+            ? '云端保存的成片/图片会一并删除，且无法恢复。'
+            : '仅删除任务记录，不影响上游的任务。',
+        confirmText: '删除',
+        danger: true,
+      });
+      if (!ok) return;
+      await api.deleteTask(id);
+      /*
+       * 删除只能靠全量同步体现（增量里不会有「这条没了」）。
+       * 先把水位清零：万一这次 refreshTasks 正撞上一轮增量请求被 `polling` 挡掉，
+       * 下一轮轮询看到 tasksSyncAt=0 会自动走全量，删掉的卡片不会赖着不走。
+       */
+      tasksSyncAt = 0;
+      tasksFullAt = 0;
+      await refreshTasks({ full: true });
+    } else if (act === 'archive') {
+      await api.archiveTask(id);
+      toast('成片已存入云端', 'success');
+      await refreshTasks();
+    } else if (act === 'refresh') {
+      await api.refreshTask(id);
+      await refreshTasks();
+      toast('已请求刷新', 'info');
+    } else if (act === 'params') {
+      /*
+       * 一律载回「视频生成」表单：渠道视频 2026-10-16 起也并进了这一页（单独那张卡），
+       * 渠道任务的提示词与参考图同样回到这里 —— 由 loadParamsIntoForm 认 channel 标记。
+       */
+      await loadParamsIntoForm(task);
+    }
+  } catch (err) {
+    toast(err instanceof ApiError ? err.message : String(err.message || err), 'error', '操作失败');
+  }
+}
+
+/** 把历史任务的参数载回左侧表单 */
+async function loadParamsIntoForm(task) {
+  // 列表里下发的提示词是 120 字预览，回填表单必须是全文
+  task = await ensureFullTask(task);
+  /*
+   * 渠道任务：切回「视频生成」并选中渠道那张卡。
+   * 只还原提示词与参考图 —— 模型 / 时长 / 清晰度由服务端写死，画面比例也不还原：
+   * 用户自己产出的东西就这两样，其余灌进来只会误导（与老「渠道视频」页同一口径）。
+   */
+  if (task.channel === 'channel-video') {
+    switchKind('video');
+    state.model = CHANNEL_MODEL_ID;
+    setPromptValue($('prompt'), task.meta?.prompt || task.payload?.prompt || '');
+    syncModelDependent();
+    const { restored } = await materials.restoreFromPayload({
+      reference_image_urls: task.payload?.reference_image_urls || [],
+    });
+    toast(
+      restored ? `渠道参数与 ${restored} 张参考图已载入左侧表单` : '渠道参数已载入左侧表单',
+      'success',
+    );
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  // 图片任务：切回图片模式并把参数填回去
+  if (task.kind === 'image') {
+    switchKind('image');
+    const imgModel = getImageModel(task.meta?.model || task.payload?.model);
+    const savedSize = task.meta?.size || '';
+    images.setState({
+      model: task.meta?.model || task.payload?.model,
+      /*
+       * 档位：老记录在 sizeTier；新记录里 GPT Image 系把档位直接写在 size（1K / 2K / 4K），
+       * 所以先看 sizeTier，再拿 size 去模型的档位表里对一次。
+       */
+      tier: task.meta?.sizeTier || (imgModel.tiers.includes(savedSize) ? savedSize : undefined),
+      ratio: task.meta?.aspectRatio,
+      quality: task.meta?.quality,
+      n: task.meta?.count,
+      format: task.meta?.format,
+      prompt: task.meta?.prompt || task.payload?.prompt || '',
+    });
+    // 参考图一并还原（payload 里存的就是对象存储上的公网 URL）
+    const imageRestore = await images.materials.restoreFromPayload(task.payload || {});
+    toast(
+      imageRestore.restored ? `图片参数与 ${imageRestore.restored} 张参考图已载入` : '图片参数已载入左侧表单',
+      'success',
+    );
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  const meta = task.meta || {};
+  const payload = task.payload || {};
+  if (payload.model && getModel(payload.model).id === payload.model) state.model = payload.model;
+  // 老任务没存过 mode 时保持当前选择，别硬掰成某个固定模式
+  state.mode = meta.mode || payload.mode || state.mode;
+  state.seconds = Number(payload.seconds) || 5;
+  /*
+   * 尺寸只有「档位 + 画面比例」两个可还原项。
+   * 历史任务里若存过自定义像素（payload.size），提交时用的也是换算后的档位与比例，
+   * 所以同样按这两个字段还原即可。
+   */
+  if (payload.resolution) state.resolution = payload.resolution;
+  if (payload.aspect_ratio) state.aspectRatio = payload.aspect_ratio;
+  if (typeof payload.generate_audio === 'boolean') state.generateAudio = payload.generate_audio;
+  if (typeof payload.watermark === 'boolean') state.watermark = payload.watermark;
+  if (payload.seed !== undefined) state.seed = payload.seed;
+  if (payload.output_format) state.outputFormat = payload.output_format;
+
+  // 载入参数同样要走 setPromptValue，否则镜像层不刷新、看不到载入的提示词
+  setPromptValue($('prompt'), meta.prompt || payload.prompt || '');
+  $('seed').value = String(state.seed);
+  $('outputFormat').value = state.outputFormat;
+
+  buildModelGrid();
+  buildModeSegmented();
+  syncModelDependent();
+
+  /*
+   * 素材也一并还原。
+   * payload 里存的就是对象存储上的公网 URL，参考图 / 参考视频 / 参考音频、
+   * 首帧尾帧都能直接接着用，不必让用户重新上传一遍。
+   */
+  const { restored, dropped } = await materials.restoreFromPayload(payload);
+  if (restored && dropped) {
+    toast(`已还原 ${restored} 个素材；另有 ${dropped} 个超出当前生成方式的上限`, 'warn', '参数已载入');
+  } else if (restored) {
+    toast(`参数与 ${restored} 个素材已载入左侧表单`, 'success');
+  } else if (dropped) {
+    toast(`有 ${dropped} 个素材放不进当前生成方式，切到「参考生视频」后可再试`, 'warn', '参数已载入');
+  } else {
+    toast('参数已载入到左侧表单', 'success');
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ======================================================================
+ * 设置弹窗
+ * ====================================================================== */
+
+function openSettings() {
+  const modal = openModal({
+    title: '设置',
+    wide: true,
+    bodyHtml: `
+      <div class="field">
+        <label class="label">任务完成后自动播放</label>
+        <div class="switch-row">
+          <div class="sw-text"><b>自动播放成片</b><span>关闭后需手动点击播放</span></div>
+          <div class="switch ${settings.autoRefreshPreview !== false ? 'on' : ''}" id="setAutoPlay" role="switch" tabindex="0"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">余额提醒</label>
+        <div class="switch-row" style="align-items:flex-start">
+          <div class="sw-text">
+            <b>
+              余额低于
+              <input class="input balance-warn-credits-input" id="setWarnCredits" type="number"
+                min="500" max="5000" step="100" inputmode="numeric"
+                value="${escapeHtml(String(auth.user?.balanceWarnCredits || 1000))}" />
+              算力时提醒
+            </b>
+            <span>可设 500–5000 算力。累计充值满 1000 元后生效；弹窗与邮件都按这个数判断。</span>
+          </div>
+          <button class="btn btn-sm" data-act="save-warn-credits" type="button">保存门槛</button>
+        </div>
+        <div class="switch-row">
+          <div class="sw-text">
+            <b>站内弹窗提醒</b>
+            <span>余额低于上面这个数时每 3 小时弹一次（需点确认才关）。关掉只停弹窗，不影响邮件。</span>
+          </div>
+          <div class="switch ${auth.user?.balanceWarnPopup !== false ? 'on' : ''}" id="setWarnPopup" role="switch" tabindex="0"></div>
+        </div>
+        <div class="switch-row" style="align-items:flex-start;margin-top:10px">
+          <div class="sw-text">
+            <b>邮件提醒</b>
+            <span>余额不足时会往这个邮箱发 1 封邮件。</span>
+          </div>
+        </div>
+        <input class="input" id="setNotifyEmail" type="email" autocomplete="email"
+          placeholder="name@example.com" value="${escapeHtml(auth.user?.notifyEmail || '')}" />
+        <div class="field-foot">
+          <span class="grow" id="setNotifyMsg" style="color:var(--text-mute);font-size:13px"></span>
+          <button class="btn btn-sm" data-act="save-notify" type="button">保存邮箱</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">账号</label>
+        <dl class="kv">
+          <dt>账号</dt><dd class="mono">${escapeHtml(auth.user?.username || '—')}</dd>
+          <dt>角色</dt><dd>${auth.user?.role === 'admin' ? '管理员' : '普通用户'}${vipTagHtml(auth.user?.discount)}</dd>
+          <dt>算力</dt><dd>${credits(accountBalance())}</dd>
+          <dt>上次登录</dt><dd>${auth.user?.lastLoginAt ? fmtClockFull(auth.user.lastLoginAt) : '—'}</dd>
+        </dl>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <input class="input" id="setOldPass" type="password" placeholder="原密码" autocomplete="current-password" />
+          <input class="input" id="setNewPass" type="password" placeholder="新密码（至少 6 位）" autocomplete="new-password" />
+        </div>
+        <div class="field-foot">
+          <span class="grow" id="setPassMsg"></span>
+          <button class="btn btn-sm" data-act="change-pass" type="button">修改密码</button>
+          <button class="btn btn-sm btn-danger" data-act="logout" type="button">退出登录</button>
+        </div>
+      </div>`,
+    footHtml: `
+      <div class="grow"></div>
+      <button class="btn btn-ghost" data-act="cancel" type="button">取消</button>
+      <button class="btn btn-primary" data-act="save" type="button">保存设置</button>`,
+  });
+
+  /*
+   * 自动播放（2026-10-22 用户反馈「关了刷新又变开启」）：点一下立即写 localStorage。
+   * 以前这里只切 class，必须再点底部「保存设置」才落盘 —— 直接关弹窗或刷新页面就白改了；
+   * 同页的「余额弹窗提醒」开关也是点即生效，两个开关的手感应当一致。
+   * 写失败（隐私模式 / 存储不可用）就把开关拨回原位，别让界面骗人。
+   */
+  const autoEl = modal.$('#setAutoPlay');
+  autoEl.addEventListener('click', () => {
+    const next = !autoEl.classList.contains('on');
+    autoEl.classList.toggle('on', next);
+    try {
+      settings = saveSettings({ autoRefreshPreview: next });
+      toast(`自动播放已${next ? '开启' : '关闭'}（已记住，下次打开仍按这个来）`, 'success');
+    } catch {
+      autoEl.classList.toggle('on', !next);
+      toast('这台设备的浏览器存储不可用，自动播放设置没能记住', 'error');
+    }
+  });
+
+  // 「管理首页」入口随宣传首页一起删除（2026-10-24），设置里不再有这一项
+  modal.$('[data-act="change-pass"]').addEventListener('click', async () => {
+    const oldPassword = modal.$('#setOldPass').value;
+    const newPassword = modal.$('#setNewPass').value;
+    const msg = modal.$('#setPassMsg');
+    if (!oldPassword || !newPassword) {
+      msg.textContent = '请填写原密码与新密码';
+      return;
+    }
+    try {
+      await api.changePassword({ oldPassword, newPassword });
+      modal.$('#setOldPass').value = '';
+      modal.$('#setNewPass').value = '';
+      msg.textContent = '密码已更新（其他设备需要重新登录）';
+      toast('密码已更新', 'success');
+    } catch (err) {
+      msg.textContent = err.message || '修改失败';
+    }
+  });
+
+  /*
+   * 余额提醒门槛（2026-10-22）：500–5000 算力，弹窗与邮件共用这一个数。
+   * 前端先挡一次非法值（input 的 min/max 挡不住手打 10000），最终以服务端校验为准。
+   */
+  modal.$('[data-act="save-warn-credits"]').addEventListener('click', async () => {
+    const input = modal.$('#setWarnCredits');
+    const n = Number(input.value);
+    if (!Number.isFinite(n) || n < 500 || n > 5000) {
+      toast('提醒门槛只能设 500–5000 之间', 'error');
+      input.value = String(auth.user?.balanceWarnCredits || 1000);
+      return;
+    }
+    try {
+      const res = await api.updateBalanceWarnCredits(Math.round(n));
+      auth.user = { ...(auth.user || {}), balanceWarnCredits: res.balanceWarnCredits };
+      input.value = String(res.balanceWarnCredits || 1000);
+      toast(res.message || '已保存', 'success');
+    } catch (err) {
+      toast(err.message || '保存失败，请稍后重试', 'error');
+    }
+  });
+
+  /*
+   * 余额提醒弹窗开关（2026-10-22）：点一下立刻存服务端，不并进「保存设置」——
+   * 那个按钮存的是 localStorage 里的本地偏好（换台电脑就不一样），
+   * 这个开关是账号级的，必须写库。失败就把开关拨回原位，别让界面骗人。
+   */
+  const warnPopupEl = modal.$('#setWarnPopup');
+  warnPopupEl?.addEventListener('click', async () => {
+    const next = !warnPopupEl.classList.contains('on');
+    warnPopupEl.classList.toggle('on', next);
+    try {
+      const res = await api.updateBalanceWarnPopup(next);
+      auth.user = { ...(auth.user || {}), balanceWarnPopup: res.balanceWarnPopup !== false };
+      toast(res.message || '已保存', 'success');
+    } catch (err) {
+      warnPopupEl.classList.toggle('on', !next);
+      toast(err.message || '保存失败，请稍后重试', 'error');
+    }
+  });
+
+  /*
+   * 余额提醒邮箱（2026-10-22）：单独一个保存按钮，不并入下面的「保存设置」——
+   * 那个按钮存的是本地偏好（localStorage），这个要写服务器，
+   * 混在一起会让用户以为抄完就生效、实际还要点一次。
+   */
+  modal.$('[data-act="save-notify"]').addEventListener('click', async () => {
+    const input = modal.$('#setNotifyEmail');
+    const msg = modal.$('#setNotifyMsg');
+    const email = String(input.value || '').trim();
+    try {
+      const res = await api.updateNotifyEmail(email);
+      input.value = res.notifyEmail || '';
+      auth.user = { ...(auth.user || {}), notifyEmail: res.notifyEmail || '' };
+      msg.textContent = res.notifyEmail
+        ? `余额提醒将发送到 ${res.notifyEmail}`
+        : '未设置邮箱：手机号注册的账号不会收到余额提醒邮件';
+      toast(res.message || '已保存', 'success');
+    } catch (err) {
+      msg.textContent = err.message || '保存失败';
+    }
+  });
+
+  modal.$('[data-act="logout"]').addEventListener('click', () => auth.logout());
+
+  modal.$('[data-act="cancel"]').addEventListener('click', () => modal.close());
+  modal.$('[data-act="save"]').addEventListener('click', () => {
+    // 只剩「自动播放」这类本地偏好（密钥与单价都不在这里管了）
+    settings = saveSettings({ autoRefreshPreview: autoEl.classList.contains('on') });
+    updateCostEstimate();
+    toast('设置已保存', 'success');
+    modal.close();
+  });
+}
+
+/* ======================================================================
+ * 草稿
+ * ====================================================================== */
+
+function onFormChanged() {
+  // 只存参数（模型/生成方式/时长等），提示词与素材不存：
+  // 刚进页面时应为空白状态，历史内容通过「载入参数」找回
+  saveDraft({
+    ...state,
+    kind: currentKind,
+    image: { ...images.getState(), prompt: '' },
+  });
+}
+
+function restoreDraft() {
+  const draft = loadDraft();
+  if (draft) {
+    Object.assign(state, {
+      // 用 getModel 解析一次：草稿里的模型可能已被改名或下线，
+      // 不解析的话会把一个不存在的 id 原样提交给上游
+      model: getModel(draft.model || state.model).id,
+      // 生成方式不进草稿：默认始终是参考生视频（「载入参数」仍会带回完整模式）
+      seconds: draft.seconds || state.seconds,
+      aspectRatio: draft.aspectRatio || state.aspectRatio,
+      resolution: draft.resolution || state.resolution,
+      generateAudio: draft.generateAudio ?? state.generateAudio,
+      watermark: draft.watermark ?? state.watermark,
+      seed: draft.seed ?? state.seed,
+      outputFormat: draft.outputFormat || state.outputFormat,
+    });
+    // 提示词与素材不入草稿：刚进页面时保持为空，需要时用「载入参数」找回
+  }
+  $('seed').value = String(state.seed);
+  $('outputFormat').value = state.outputFormat;
+  setSwitch($('generateAudio'), state.generateAudio, true);
+  setSwitch($('watermark'), state.watermark, true);
+
+  // 图片面板的草稿（提示词不恢复，保持为空）
+  if (draft?.image) images.setState({ ...draft.image, prompt: '' });
+  // 草稿只恢复参数，不恢复「上次停在哪一页」：打开就是创作台（boot 里 switchKind('create')）
+  return draft;
+}
+
+/*
+ * 启动。
+ *
+ * boot() 里第一件事就是等登录 —— 所以这里的 catch 主要是兜「后端没起来 / 库连不上」：
+ * 那种情况下登录框都拉不出来，必须给一句人话，而不是一片空白控制台。
+ */
+boot().catch((err) => {
+  toast(
+    err instanceof ApiError
+      ? err.message
+      : `启动失败：${err?.message || err}。请确认后端已启动（npm start），且数据库可连接。`,
+    'error',
+    '无法进入工作台',
+  );
+});

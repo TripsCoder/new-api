@@ -87,7 +87,15 @@ function auth(ctx) {
 }
 function request(ctx, path, body) {
   const result = { url: apiRoot(ctx) + path, method: body === undefined ? 'GET' : 'POST', headers: auth(ctx) };
-  if (body !== undefined) { result.headers['Content-Type'] = 'application/json'; result.body = body; }
+  if (body !== undefined) {
+    if (PROVIDER.key === 'xcmapi_media' && ctx.requestBody?.operation === 'video_generate') {
+      // XCM transport identity belongs to the plugin, outside model field policy.
+      // Reuse the host task ID for both documented interfaces and legacy profiles.
+      if (typeof ctx.publicTaskId !== 'string' || !/^[A-Za-z0-9_.:-]{16,128}$/.test(ctx.publicTaskId)) fail('a valid stable gateway task id is required');
+      body = {...body, client_request_id: ctx.publicTaskId};
+    }
+    result.headers['Content-Type'] = 'application/json'; result.body = body;
+  }
   return result;
 }
 function taskID(value) {
@@ -168,6 +176,9 @@ function normalize(ctx) {
   const p = profile(ctx), body = ctx.requestBody || {}; let input = body.input;
   if (!object(input)) fail('normalized request is missing');
   if (p.documentInterface) return normalizeDocumentInterface(ctx, p, body);
+  if (PROVIDER.key === 'xcmapi_media' && p.kind === 'video' && own(input, 'client_request_id')) {
+    input = copy(input); delete input.client_request_id;
+  }
   if (input.materials !== undefined) {
     if (!p.materials || !Array.isArray(input.materials)) fail('materials is not supported by this model');
     if (['images','videos','audios'].some(key=>array(input[key],key).length)) fail('materials cannot be combined with media arrays');
@@ -484,12 +495,6 @@ export function buildSubmitRequest(ctx) {
   if (r.p.documentInterface) return documentInterfaceRequest(ctx, r);
   if (r.p.kind === 'image') return imageRequest(ctx, r);
   const body = videoBody(r);
-  if (r.p.clientRequestId === 'publicTaskId') {
-    // Only reviewed supplier profiles opt in. Reuse the gateway task identity
-    // across retries; generating a fresh value could create a second paid task.
-    if (typeof ctx.publicTaskId !== 'string' || !/^[A-Za-z0-9_.:-]{16,128}$/.test(ctx.publicTaskId)) fail('a valid stable gateway task id is required');
-    body.client_request_id = ctx.publicTaskId;
-  }
   const descriptor = request(ctx, r.p.submit, body);
   if (r.videoFiles.length) {
     delete descriptor.body;

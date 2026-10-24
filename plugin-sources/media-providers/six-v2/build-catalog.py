@@ -5,11 +5,13 @@ out=Path(__file__).resolve().parent
 root=out.parents[2]
 original=json.loads((out/'evidence/public-catalog.json').read_text(encoding='utf-8'))
 profiles=json.loads((out/'profiles.json').read_text(encoding='utf-8'))
-if '--provider=yuxibox_media' in sys.argv:
+selected = next((arg.split('=',1)[1] for arg in sys.argv if arg.startswith('--provider=')), None)
+if selected:
+ assert selected in ['yuxibox_media','xcmapi_media']
  catalog=json.loads((root/'pkg/modelconfig/catalog.json').read_text(encoding='utf8'))
- catalog['providers']['yuxibox_media']['interfaces']=copy.deepcopy(profiles['yuxibox_media']['interfaces'])
+ catalog['providers'][selected]['interfaces']=copy.deepcopy(profiles[selected]['interfaces'])
  (root/'pkg/modelconfig/catalog.json').write_bytes((json.dumps(catalog,ensure_ascii=False,indent=2)+'\n').encode())
- print(json.dumps({'provider':'yuxibox_media','interfaces':6,'otherProvidersAndLegacyModelsPreserved':True}))
+ print(json.dumps({'provider':selected,'interfaces':len(profiles[selected]['interfaces']),'otherProvidersAndLegacyModelsPreserved':True}))
  sys.exit(0)
 paisioCompat=json.loads((out/'evidence/paisio-compatibility-openapi.json').read_text(encoding='utf-8'))
 h3Schema=json.loads((out/'evidence/native-h3-reviewed-schema.json').read_text(encoding='utf-8'))['schema']

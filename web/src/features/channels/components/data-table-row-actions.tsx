@@ -426,6 +426,8 @@ function canEditConfiguration(type: number, key: string): boolean {
       'artbox_media',
       'lxmone_media',
       'zhangyuge_media',
+      'aotian_video',
+      'fenglang_video',
     ].includes(key)
   )
 }

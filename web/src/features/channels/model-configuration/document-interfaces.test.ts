@@ -26,21 +26,161 @@ const empty = (provider: string): Configuration => ({
 })
 
 describe('document interfaces and actual model IDs', () => {
+  it('matches backend save fixtures to actual UI-generated model and prompt rules', () => {
+    const fixtures: Record<string, Configuration> = {}
+    for (const [provider, model] of [
+      ['aotian_video', '特价seedance-2.5-720p'],
+      ['fenglang_video', 'seedance-2.5'],
+    ]) {
+      const catalog = JSON.parse(
+        readFileSync(
+          path.join(root, 'pkg/modelconfig', `${provider}.catalog.json`),
+          'utf8'
+        )
+      ) as Catalog
+      const projected = projectDocumentInterfaces(
+        catalog,
+        [model],
+        'video'
+      ) as Catalog
+      const document = createSharedGroup(
+        empty(provider),
+        projected,
+        [model],
+        'actual-ui'
+      )
+      const group = document.groups['actual-ui']
+      const mode = group.modes.audio_ref
+      const binding = document.bindings[model].audio_ref
+      mode.enabled = true
+      binding.enabled = true
+      if (!binding.protocol) {
+        throw new Error('Missing projected interface binding')
+      }
+      binding.protocol = { ...binding.protocol, confirmed: true }
+      group.modes = { audio_ref: mode }
+      document.bindings[model] = { audio_ref: binding }
+      expect(mode.parameters?.model).toMatchObject({
+        required: false,
+        definition: { serverGenerated: true },
+      })
+      expect(mode.parameters?.prompt?.required).toBe(true)
+      fixtures[provider] = document
+    }
+    const fixturePath = path.join(
+      root,
+      'controller/testdata/reviewed_video_ui_documents.json'
+    )
+    if (process.env.UPDATE_REVIEWED_VIDEO_UI_FIXTURES === '1') {
+      writeFileSync(fixturePath, `${JSON.stringify(fixtures, null, 2)}\n`)
+    }
+    expect(fixtures).toEqual(JSON.parse(readFileSync(fixturePath, 'utf8')))
+  })
+  it('projects Fenglang exact rules without inventing account models, prices or defaults', () => {
+    const provider = JSON.parse(
+      readFileSync(
+        path.join(root, 'pkg/modelconfig/fenglang_video.catalog.json'),
+        'utf8'
+      )
+    ) as Catalog
+    expect(provider.models).toEqual({})
+    const projected = projectDocumentInterfaces(
+      provider,
+      ['seedance-2.5', 'minimax-video-h3', 'actual-new-model'],
+      'video'
+    ) as Catalog
+    expect(Object.keys(projected.models)).toEqual([
+      'seedance-2.5',
+      'minimax-video-h3',
+      'actual-new-model',
+    ])
+    expect(projected.models['seedance-2.5'].parameters.seconds).toMatchObject({
+      minimum: 4,
+      maximum: 30,
+    })
+    expect(
+      projected.models['seedance-2.5'].parameters.images.definition
+    ).toHaveProperty('maxItems', 30)
+    expect(
+      projected.models['seedance-2.5'].parameters.start_image_url.definition
+    ).toMatchObject({
+      'x-channel-parameter': { vendorFields: ['input_reference'] },
+    })
+    expect(projected.models['minimax-video-h3'].parameters).not.toHaveProperty(
+      'generate_audio'
+    )
+    expect(
+      projected.models['actual-new-model'].parameters.seconds
+    ).toMatchObject({ minimum: 1, maximum: 3600 })
+    expect(
+      projected.models['actual-new-model'].parameters.resolution.enum
+    ).toBeUndefined()
+    const document = createSharedGroup(
+      empty(provider.key),
+      projected,
+      ['seedance-2.5'],
+      'selected'
+    )
+    const mode = effectiveMode(document, 'seedance-2.5', 'text_video')
+    expect(mode?.input).toEqual({})
+    expect(mode?.protocol?.confirmed).toBe(false)
+    expect(mode?.parameters?.generate_audio).toBeDefined()
+    expect(mode?.parameters).not.toHaveProperty('start_image_url')
+    expect(Object.keys(document.bindings)).toEqual(['seedance-2.5'])
+  })
+  it('projects the AoTian interface onto selected IDs without duration or model defaults', () => {
+    const provider = JSON.parse(
+      readFileSync(
+        path.join(root, 'pkg/modelconfig/aotian_video.catalog.json'),
+        'utf8'
+      )
+    ) as Catalog
+    expect(provider.models).toEqual({})
+    const projected = projectDocumentInterfaces(
+      provider,
+      ['account-video-id'],
+      'video'
+    ) as Catalog
+    const document = createSharedGroup(
+      empty(provider.key),
+      projected,
+      ['account-video-id'],
+      'selected'
+    )
+    const mode = effectiveMode(document, 'account-video-id', 'text_video')
+    expect(mode?.input).toEqual({})
+    expect(mode?.parameters?.prompt?.required).toBe(true)
+    expect(
+      mode?.parameters?.aspect_ratio?.definition?.['x-channel-parameter']
+    ).toMatchObject({ vendorFields: ['size'] })
+    expect(mode?.parameters?.resolution?.enum).toBeUndefined()
+    expect(mode?.protocol?.confirmed).toBe(false)
+    expect(mode?.parameters).not.toHaveProperty('start_image_url')
+  })
   it('recognizes all ten exact YuxiBox video IDs and preserves saved interface choices', () => {
     const source = catalogs.yuxibox_media
     const entries = Object.values(source.interfaces ?? {}).filter(
       (entry) => entry.kind === 'video'
     )
-    const names = entries.flatMap((entry) => Object.keys(entry.modelRules ?? {}))
+    const names = entries.flatMap((entry) =>
+      Object.keys(entry.modelRules ?? {})
+    )
     expect(names).toHaveLength(10)
-    const projected = projectDocumentInterfaces(source, names, 'video') as Catalog
+    const projected = projectDocumentInterfaces(
+      source,
+      names,
+      'video'
+    ) as Catalog
     for (const entry of entries) {
       for (const name of Object.keys(entry.modelRules ?? {})) {
         expect(projected.models[name].interfaceId).toBe(entry.id)
-        expect(projected.models[name].parameters.images.definition).toHaveProperty(
-          'maxItems'
-        )
-        if (name.startsWith('seedance-2.5') || name === 'seedance2.5-yx-count') {
+        expect(
+          projected.models[name].parameters.images.definition
+        ).toHaveProperty('maxItems')
+        if (
+          name.startsWith('seedance-2.5') ||
+          name === 'seedance2.5-yx-count'
+        ) {
           expect(projected.models[name].parameters).toHaveProperty('videos')
           expect(projected.models[name].parameters).toHaveProperty('audios')
         }
@@ -54,7 +194,12 @@ describe('document interfaces and actual model IDs', () => {
         protocol: { templateModel: entries[0].id, confirmed: true },
       },
     }
-    const preserved = projectDocumentInterfaces(source, [name], 'video', document) as Catalog
+    const preserved = projectDocumentInterfaces(
+      source,
+      [name],
+      'video',
+      document
+    ) as Catalog
     expect(preserved.models[name].interfaceId).toBe(entries[0].id)
   })
   it('initializes every provider/category from request fields without a matching example model', () => {

@@ -73,6 +73,7 @@ func TestModelDiscoveryMetadataContract(t *testing.T) {
 	}{
 		{"absent", "", false},
 		{"valid", valid, false},
+		{"fenglang pricing", strings.Replace(valid, `"openai"`, `"fenglang_pricing"`, 1), false},
 		{"null", `modelDiscovery:null,`, true},
 		{"string", `modelDiscovery:"/v1/models",`, true},
 		{"missing", `modelDiscovery:{path:"/v1/models"},`, true},

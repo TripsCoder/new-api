@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   waitFor,
@@ -428,6 +431,66 @@ describe('actual channel workflow dialog', () => {
       message: 'fixture',
     })
   })
+  it.each([
+    ['aotian_video', 'seedance2.0'],
+    ['fenglang_video', 'seedance-2.5'],
+  ])(
+    'opens the complete %s configuration workflow with its generated catalog',
+    async (provider, model) => {
+      const actual = JSON.parse(
+        readFileSync(
+          path.resolve('..', 'pkg/modelconfig', `${provider}.catalog.json`),
+          'utf8'
+        )
+      ) as Catalog
+      mocks.get.mockResolvedValueOnce({
+        pluginVersion: '2.1.0',
+        configuration: {
+          format: 'channel-model-configuration/v1',
+          provider,
+          revision: 0,
+          groups: {},
+          bindings: {},
+        },
+        catalog: actual,
+        versions: [],
+      })
+      mount('')
+      await userEvent.click(
+        await screen.findByText('View documented models or enter a model ID')
+      )
+      await userEvent.type(
+        screen.getByPlaceholderText('Enter an exact model ID and press Enter'),
+        `${model}{Enter}`
+      )
+      await advanceToParameters()
+      await userEvent.click(
+        screen.getByText('Advanced: document sources and original records')
+      )
+      expect(
+        screen.getByRole('link', { name: 'Open API documentation' })
+      ).toHaveAttribute('href', actual.docsURL)
+      for (const document of actual.documents) {
+        expect(
+          screen.getByText(
+            `${document.title} · ${document.method} ${document.path}`
+          )
+        ).toBeVisible()
+      }
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Next: model prices' })
+      )
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Next: check and save' })
+      )
+      expect(
+        screen.getByRole('button', { name: 'Save and apply to this channel' })
+      ).toBeInTheDocument()
+      expect(mocks.save).not.toHaveBeenCalled()
+      expect(mocks.tryCall).not.toHaveBeenCalled()
+      expect(actual.models).toEqual({})
+    }
+  )
   it('loads interface fields for actual IDs immediately and keeps them available in individual settings', async () => {
     const entry = structuredClone(catalog.models.A)
     entry.id = 'interface:fixture'

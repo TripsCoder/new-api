@@ -1,0 +1,1678 @@
+{
+  "cases": [
+    {
+      "name": "no example defaults forwarded",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5",
+          "prompt": "Fixture",
+          "mode": "t2v"
+        }
+      }
+    },
+    {
+      "name": "false and zero survive",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": "5",
+              "generate_audio": false,
+              "watermark": false,
+              "seed": 0,
+              "resolution": "720p",
+              "aspect_ratio": "16:9",
+              "output_format": "mov"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5",
+          "prompt": "Fixture",
+          "mode": "t2v",
+          "seconds": 5,
+          "generate_audio": false,
+          "watermark": false,
+          "seed": 0,
+          "resolution": "720p",
+          "aspect_ratio": "16:9",
+          "output_format": "mov"
+        }
+      }
+    },
+    {
+      "name": "i2v has independent first frame",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "input_reference": "https://media.example/a.png?sig=a%2Fb%2B",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5",
+          "prompt": "Fixture",
+          "mode": "i2v",
+          "input_reference": "https://media.example/a.png?sig=a%2Fb%2B",
+          "seconds": 4
+        }
+      }
+    },
+    {
+      "name": "firstlast preserves frame roles",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "start_image_url": "https://media.example/a.png?sig=a%2Fb%2B",
+              "last_frame": "https://media.example/end.png"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5",
+          "prompt": "Fixture",
+          "mode": "firstlast",
+          "input_reference": "https://media.example/a.png?sig=a%2Fb%2B",
+          "last_frame": "https://media.example/end.png"
+        }
+      }
+    },
+    {
+      "name": "reference order and all media types preserved",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/b.png"
+              ],
+              "videos": [
+                "https://media.example/v.mp4"
+              ],
+              "audios": [
+                "https://media.example/a.wav"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5",
+          "prompt": "Fixture",
+          "mode": "reference",
+          "reference_image_urls": [
+            "https://media.example/a.png?sig=a%2Fb%2B",
+            "https://media.example/b.png"
+          ],
+          "reference_video_urls": [
+            "https://media.example/v.mp4"
+          ],
+          "reference_audio_urls": [
+            "https://media.example/a.wav"
+          ]
+        }
+      }
+    },
+    {
+      "name": "invalid seconds {\"seconds\":3}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 3
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "invalid seconds {\"seconds\":31}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 31
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "invalid seconds {\"seconds\":3601}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 3601
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "invalid seconds {\"seconds\":0}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 0
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "invalid seconds {\"seconds\":-1}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": -1
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "invalid seconds {\"seconds\":4.5}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 4.5
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "invalid seconds {\"seconds\":false}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": false
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "invalid seconds {\"seconds\":9007199254740992}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 9007199254740992
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "duration alias equal",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "duration": 30,
+              "seconds": "30",
+              "seed": -1
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5",
+          "prompt": "Fixture",
+          "mode": "t2v",
+          "seconds": 30,
+          "seed": -1
+        }
+      }
+    },
+    {
+      "name": "duration conflict",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "duration": 5,
+              "seconds": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "冲突"
+    },
+    {
+      "name": "fast rejects 1080p",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.0-fast",
+          "upstreamModel": "seedance-2.0-fast",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "1080p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "H3 rejects reference video",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "minimax-video-h3",
+          "upstreamModel": "minimax-video-h3",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "videos": [
+                "https://media.example/v.mp4"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "数量"
+    },
+    {
+      "name": "H3 unsupported audio control",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "minimax-video-h3",
+          "upstreamModel": "minimax-video-h3",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "generate_audio": false
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "未被"
+    },
+    {
+      "name": "reference count images",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "数量"
+    },
+    {
+      "name": "reference count videos",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "videos": [
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4",
+                "https://media.example/v.mp4"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "数量"
+    },
+    {
+      "name": "reference count audios",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "audios": [
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav",
+                "https://media.example/a.wav"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "数量"
+    },
+    {
+      "name": "mode conflict {\"input_reference\":\"https://media.example/a.png?sig=a%2Fb%2B\",\"images\":[\"https://media.example/a.png?sig=a%2Fb%2B\"]}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "input_reference": "https://media.example/a.png?sig=a%2Fb%2B",
+              "images": [
+                "https://media.example/a.png?sig=a%2Fb%2B"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "混用"
+    },
+    {
+      "name": "mode conflict {\"last_frame\":\"https://media.example/a.png?sig=a%2Fb%2B\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "last_frame": "https://media.example/a.png?sig=a%2Fb%2B"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "首帧"
+    },
+    {
+      "name": "mode conflict {\"mode\":\"i2v\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "mode": "i2v"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "mode"
+    },
+    {
+      "name": "mode conflict {\"mode\":\"t2v\",\"input_reference\":\"https://media.example/a.png?sig=a%2Fb%2B\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "mode": "t2v",
+              "input_reference": "https://media.example/a.png?sig=a%2Fb%2B"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "mode"
+    },
+    {
+      "name": "mode conflict {\"mode\":\"reference\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "mode": "reference"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "mode"
+    },
+    {
+      "name": "mode conflict {\"mode\":\"firstlast\",\"input_reference\":\"https://media.example/a.png?sig=a%2Fb%2B\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "mode": "firstlast",
+              "input_reference": "https://media.example/a.png?sig=a%2Fb%2B"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "mode"
+    },
+    {
+      "name": "mode conflict {\"mode\":\"bad\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "mode": "bad"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "mode"
+    },
+    {
+      "name": "invalid media http://media.example/a.png",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "http://media.example/a.png"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "HTTPS"
+    },
+    {
+      "name": "invalid media https://user:pass@media.example/a.png",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "https://user:pass@media.example/a.png"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "HTTPS"
+    },
+    {
+      "name": "invalid media https://media.example\\@evil.example/a.png",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "https://media.example\\@evil.example/a.png"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "HTTPS"
+    },
+    {
+      "name": "invalid media data:image/png;base64,AAAA",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "images": [
+                "data:image/png;base64,AAAA"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "HTTPS"
+    },
+    {
+      "name": "unknown optional fields omitted",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "n": 100,
+              "metadata": {
+                "seconds": 30
+              },
+              "unknown": "x",
+              "protocolTemplate": "spoof"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5",
+          "prompt": "Fixture",
+          "mode": "t2v"
+        }
+      }
+    },
+    {
+      "name": "unknown model has no guessed per-model limits",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "account-new",
+          "upstreamModel": "account-new",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 45,
+              "resolution": "4k"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "account-new",
+          "prompt": "Fixture",
+          "mode": "t2v",
+          "seconds": 45,
+          "resolution": "4k"
+        }
+      }
+    },
+    {
+      "name": "missing confirmed interface",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "input": {
+              "prompt": "Fixture"
+            }
+          }
+        }
+      ],
+      "expectedError": "确认"
+    },
+    {
+      "name": "decoder defers malformed optional members to host",
+      "hook": "protocols",
+      "args": [
+        {
+          "model": "actual",
+          "body": {
+            "kind": "json",
+            "value": {
+              "model": "actual",
+              "prompt": "Fixture",
+              "images": false,
+              "watermark": 0
+            }
+          }
+        }
+      ],
+      "path": [
+        "openai_video",
+        "decodeRequest"
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "actual",
+        "action": "video_generate",
+        "requestBody": {
+          "operation": "video_generate",
+          "input": {
+            "model": "actual",
+            "prompt": "Fixture",
+            "images": false,
+            "watermark": 0
+          },
+          "uploads": []
+        }
+      }
+    },
+    {
+      "name": "multipart not mislabeled JSON",
+      "hook": "protocols",
+      "args": [
+        {
+          "model": "actual",
+          "body": {
+            "kind": "multipart",
+            "fields": {},
+            "files": []
+          }
+        }
+      ],
+      "path": [
+        "openai_video",
+        "decodeRequest"
+      ],
+      "expectedError": "JSON"
+    },
+    {
+      "name": "vendor first frame classified before host capability filtering without value validation",
+      "hook": "protocols",
+      "args": [
+        {
+          "model": "actual",
+          "body": {
+            "kind": "json",
+            "value": {
+              "prompt": "Fixture",
+              "input_reference": false
+            }
+          }
+        }
+      ],
+      "path": [
+        "openai_video",
+        "decodeRequest"
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "actual",
+        "action": "video_generate",
+        "requestBody": {
+          "operation": "video_generate",
+          "input": {
+            "prompt": "Fixture",
+            "start_image_url": false
+          },
+          "uploads": []
+        }
+      }
+    },
+    {
+      "name": "nested submit ID",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 202,
+          "body": {
+            "success": true,
+            "task": {
+              "id": "private_A/B",
+              "done": false,
+              "status": "queued"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "private_A/B",
+        "taskData": {
+          "success": true,
+          "task": {
+            "id": "private_A/B",
+            "done": false,
+            "status": "queued"
+          }
+        },
+        "state": {
+          "protocolTemplate": "interface:86f3f84ab8539ca5"
+        }
+      }
+    },
+    {
+      "name": "escaped polling ID retains full base",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "private_A/B"
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/tasks/private_A%2FB",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "completed status with done false keeps polling",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "success": true,
+          "task": {
+            "status": "completed",
+            "done": false,
+            "videoUrl": "https://media.example/v.mp4"
+          }
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "0%"
+      }
+    },
+    {
+      "name": "queued polling",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "success": true,
+          "task": {
+            "id": "private_A/B",
+            "done": false,
+            "status": "queued"
+          }
+        }
+      ],
+      "expected": {
+        "status": "QUEUED",
+        "progress": "0%"
+      }
+    },
+    {
+      "name": "public completed video",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "success": true,
+          "task": {
+            "done": true,
+            "status": "completed",
+            "videoUrl": "https://media.example/v.mp4"
+          }
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://media.example/v.mp4"
+      }
+    },
+    {
+      "name": "completed protected video",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "success": true,
+          "task": {
+            "done": true,
+            "status": "completed",
+            "downloadUrl": "https://evil.example/steal"
+          }
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%"
+      }
+    },
+    {
+      "name": "failed refunded task",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "success": true,
+          "task": {
+            "done": true,
+            "status": "failed",
+            "error": "bad material",
+            "refunded": true
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "bad material"
+      }
+    },
+    {
+      "name": "unknown terminal state",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "success": true,
+          "task": {
+            "done": true,
+            "status": "new-state"
+          }
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "未识别上游终态"
+      }
+    },
+    {
+      "name": "missing done",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "success": true,
+          "task": {
+            "status": "completed"
+          }
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "任务响应缺少明确的 success、task 或 done"
+      }
+    },
+    {
+      "name": "HTTP 200 failure settles without retry",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "success": false,
+            "code": "BAD",
+            "message": "Bearer sk-fixture https://secret.example/key"
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "task_public",
+        "taskData": {
+          "success": false,
+          "code": "BAD",
+          "message": "Bearer sk-fixture https://secret.example/key"
+        },
+        "immediate": {
+          "status": "FAILURE",
+          "progress": "100%",
+          "reason": "Bearer [redacted] [URL]"
+        }
+      }
+    },
+    {
+      "name": "missing submit ID fails uncertain",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 202,
+          "body": {
+            "success": true,
+            "task": {}
+          }
+        }
+      ],
+      "expectedError": "task.id"
+    },
+    {
+      "name": "requested seconds reserve after effective filtering",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 8,
+              "n": 50
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 8
+      }
+    },
+    {
+      "name": "missing requested seconds cannot bill as zero",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "预扣"
+    },
+    {
+      "name": "no invented actual duration or refund",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {},
+        {
+          "success": true,
+          "task": {
+            "seconds": 99,
+            "refunded": true,
+            "cost": 5
+          }
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "authenticated download ignores response-controlled URLs",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "artifactKey": "video",
+          "status": "SUCCESS",
+          "upstreamTaskId": "private_A/B",
+          "data": {
+            "success": true,
+            "task": {
+              "downloadUrl": "https://evil.example/key",
+              "contentUrl": "https://other.example/content"
+            }
+          },
+          "clientRequest": {
+            "method": "HEAD",
+            "headers": {
+              "Range": "bytes=0-15"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/open/v1/tasks/private_A%2FB/download",
+        "method": "HEAD",
+        "headers": {
+          "Authorization": "Bearer fixture-only"
+        }
+      }
+    },
+    {
+      "name": "public video never receives supplier credentials",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "artifactKey": "video",
+          "status": "SUCCESS",
+          "upstreamTaskId": "private_A/B",
+          "data": {
+            "success": true,
+            "task": {
+              "videoUrl": "https://cdn.example/v.mov"
+            }
+          },
+          "clientRequest": {
+            "method": "HEAD",
+            "headers": {
+              "Range": "bytes=0-15"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/v.mov",
+        "method": "HEAD",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "unfinished content rejected",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "artifactKey": "video",
+          "status": "IN_PROGRESS",
+          "upstreamTaskId": "private_A/B",
+          "data": {
+            "success": true,
+            "task": {
+              "downloadUrl": "https://evil.example/key",
+              "contentUrl": "https://other.example/content"
+            }
+          },
+          "clientRequest": {
+            "method": "HEAD",
+            "headers": {
+              "Range": "bytes=0-15"
+            }
+          }
+        }
+      ],
+      "expectedError": "不可用"
+    },
+    {
+      "name": "artifact does not assume mp4",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "data": {
+            "success": true,
+            "task": {}
+          }
+        }
+      ],
+      "expected": [
+        {
+          "key": "video",
+          "type": "video"
+        }
+      ]
+    },
+    {
+      "name": "renderer hides private ID and uses host content",
+      "hook": "protocols",
+      "args": [
+        {},
+        {
+          "task_id": "task_public",
+          "status": "SUCCESS",
+          "data": {
+            "success": true,
+            "task": {
+              "id": "private_A/B",
+              "done": false,
+              "status": "queued"
+            }
+          }
+        }
+      ],
+      "path": [
+        "openai_video",
+        "render"
+      ],
+      "expected": {
+        "url": "/v1/videos/task_public/content"
+      }
+    }
+  ]
+}

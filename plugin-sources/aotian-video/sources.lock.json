@@ -1,0 +1,42 @@
+{
+  "format": "aotian-video-sources/v1",
+  "policy": "../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#imported-parameter-policy",
+  "sources": [
+    {
+      "file": "evidence/docs.html",
+      "url": "https://aotianzz.xyz/docs#endpoints",
+      "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+      "readAt": "2026-10-24"
+    },
+    {
+      "file": "evidence/Aotian-SKILL.md",
+      "url": "https://video.aotianzz.xyz/Aotian-SKILL.md",
+      "sha256": "3321d3491be077cef8f2ef248fff38ee793aaf357b81585c3106b02e952b23f0",
+      "readAt": "2026-10-24"
+    }
+  ],
+  "modelDeclarations": {
+    "status": "documentation-only-not-account-discovery",
+    "models": [
+      "sh-seedance-2.5-720p"
+    ],
+    "source": {
+      "file": "evidence/Aotian-SKILL.md",
+      "url": "https://video.aotianzz.xyz/Aotian-SKILL.md",
+      "sha256": "3321d3491be077cef8f2ef248fff38ee793aaf357b81585c3106b02e952b23f0",
+      "readAt": "2026-10-24"
+    }
+  },
+  "conflicts": [
+    {
+      "topic": "unsupported fields",
+      "primary": "HTTP 400",
+      "supplement": "ignored",
+      "decision": "Saved channel configuration filters fields before encoding"
+    },
+    {
+      "topic": "automatic creation retries",
+      "decision": "No automatic generation retries; use the host explicit channel single-attempt header"
+    }
+  ]
+}

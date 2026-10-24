@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI视频、图片API | 妖火AI</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">
+    <div class="brand-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="23 7 16 12 23 17 23 7" fill="#fff" stroke="none"></polygon>
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>妖火AI</h1>
+    </div>
+  </div>
+
+  <div class="kind-switch" id="kindSwitch">
+    <!--
+      宣传首页（「一句话拍出一部片」那套海报页）2026-10-24 已整块删除：
+      用户要求「这些内容不需要，第一次进来直接是首页」，所以现在进站就落在创作台。
+      要恢复：git 之外的备份里把 #homePanel 与 home.js 的引用加回来。
+    -->
+    <!--
+      创作台：2026-10-17 起视频生成与图片生成合并为一个菜单（用户要求）。
+      页签「视频生成／图片生成」在同一页里切（见下方 #createTabs 与 app.js 的 switchKind 映射：
+      老名字 'video' / 'image' 一律落到这一页并切到对应页签，首页卡片、任务还原、草稿都不用改）。
+      右栏（预览 + 任务列表）两个页签共用。
+    -->
+    <button type="button" data-kind="create">创作台</button>
+    <!--
+      渠道视频：2026-10-16 起**不再单开菜单**，已合并进「视频生成」页签当一张模型卡
+      （显示名 `seedance-2.5 · 按条计费`，一口价按条计费，见 public/js/models.js 的 channelCard）。
+      下面的 #channelPanel 老面板留着没删，想恢复独立入口就把这一行按钮加回来。
+    -->
+    <!--
+      图片生成：2026-10-16 接过三条 GPT-image 线路，当天又按要求暂时收起（两处 hidden +
+      服务端 EXPOSED_IMAGE_MODELS 置空）；**2026-10-17 随云上那条线一起放回来了** ——
+      七张卡（gpt-image 两代 / doubao-seedream 两代 / nano banana 三兄弟）已填回
+      server/wallet.js 的 EXPOSED_IMAGE_MODELS。
+      再要收起：把下方 #createTabs 里「图片生成」那个按钮加 class="hidden"、删掉首页那张
+      `data-home-go="image"` 卡片，服务端清空清单即可
+      （面板、public/js/images.js、前端卡片与价目表都不用动）。
+    -->
+    <button type="button" data-kind="plaza">模型广场</button>
+    <button type="button" data-kind="inspire">灵感</button>
+    <!--
+      2026-10-17：调用记录并入「消费记录」一个菜单，不再单开入口。
+      页签切换两个列表（消费流水 / 调用记录），见下方 #spendPanel 与 app.js 的 showRecordTab。
+    -->
+    <button type="button" data-kind="spending">消费记录</button>
+    <button type="button" data-kind="openapi">文档</button>
+    <!-- 大客户（2026-10-21）：面向短剧公司 / 站长 / 达人，面板内容见下方 #vipPanel -->
+    <button type="button" data-kind="vip">大客户</button>
+    <button type="button" data-kind="help">教程</button>
+    <button type="button" data-kind="ann" class="hidden">公告</button>
+    <button type="button" data-kind="users" class="hidden">用户管理</button>
+    <!-- 后台（2026-10-22）：管理员专属，开关各条线路、调整完整优先级，面板见 #channelsPanel -->
+    <button type="button" data-kind="channels" class="hidden">后台</button>
+    <button type="button" data-kind="drama" class="hidden">短剧画布</button>
+  </div>
+
+  <div class="header-spacer"></div>
+
+  <div class="header-meta">
+    <button class="pill-btn hidden" id="userPill" title="当前登录账号">
+      <span class="status-dot ok" id="userDot"></span>
+      <span id="userLabel">未登录</span>
+    </button>
+    <button class="pill-btn hidden" id="logoutBtn" title="退出登录">退出</button>
+    <button class="pill-btn hidden" id="balancePill" title="点击刷新额度">
+      <span id="balanceLabel">⚡ —</span>
+    </button>
+    <!-- 联系客服（2026-10-21）：任何页面一键弹出 QQ 群号与两张二维码，见 app.js 的 SUPPORT_HTML -->
+    <button class="pill-btn" id="supportBtn" title="联系客服：QQ 群与微信二维码">客服</button>
+    <button class="pill-btn" id="settingsBtn">设置</button>
+  </div>
+</header>
+
+<!-- 系统公告横幅：放在主布局之外，首页与工作台都能看到，可关闭 -->
+<div id="announceBanner" class="hidden"></div>
+
+<!--
+  默认视图是创作台（2026-10-24：宣传首页已删除）：主布局直接可见，
+  不再「先藏着等 JS 展开」—— 那样第一屏会空白一下，看起来像闪了一下。
+-->
+<main class="layout" id="mainLayout">
+  <!-- ======================= 左：创作参数 ======================= -->
+  <div class="col-left">
+
+    <!--
+      创作台页签：视频生成 / 图片生成（2026-10-17 起两个菜单合并成这一页）。
+      只在创作台可见，其余页面（广场、资产库、消费记录…）由 switchKind 收起来。
+    -->
+    <div class="segmented hidden" id="createTabs">
+      <button type="button" data-create-tab="video" class="active">视频生成</button>
+      <button type="button" data-create-tab="image">图片生成</button>
+      <!-- 资产库（2026-10-23 用户要求）：不再单开菜单，并进创作台当第三个页签 -->
+      <button type="button" data-create-tab="assets">资产库</button>
+    </div>
+
+    <div id="videoPanel" class="panel-stack">
+    <!-- 1. 模型 & 模式 -->
+    <section class="card">
+      <div class="card-head">
+        <span class="step">1</span>
+        <h2>选择视频模型</h2>
+        <span class="head-hint head-hint-active" id="modelHint"></span>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label class="label">视频模型</label>
+          <div class="model-grid" id="modelGrid"></div>
+        </div>
+        <div class="field">
+          <label class="label">生成方式</label>
+          <div class="segmented" id="modeSegmented"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 提示词 & 素材 -->
+    <section class="card">
+      <div class="card-head">
+        <span class="step">2</span>
+        <h2>描述你想生成的画面</h2>
+        <span class="head-hint" id="promptHint"></span>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="label-row">
+            <label class="label">提示词 <span class="req">*</span>
+              <span class="tip-badge">@可快捷选择资产库素材，并自动上传</span>
+            </label>
+            <button class="btn prompt-clear" id="clearPromptBtn" type="button"
+                    title="清空提示词与已挂的参考素材；模型、生成方式等参数保持不动">重置</button>
+          </div>
+          <textarea class="textarea textarea-prompt" id="prompt" maxlength="12000"
+                    placeholder="在这里写提示词…（@可快捷选择资产库素材，并自动上传）"></textarea>
+          <div class="field-foot">
+            <span class="grow" id="promptTip"></span>
+            <span class="mono" id="promptCount">0 / 12000</span>
+          </div>
+        </div>
+
+        <div id="materialsWrap"></div>
+      </div>
+    </section>
+
+    <!-- 3. 输出参数 -->
+    <section class="card">
+      <div class="card-head">
+        <span class="step">3</span>
+        <h2>输出参数</h2>
+        <span class="head-hint" id="paramHint"></span>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label class="label">
+            时长
+            <span class="tip-badge" id="secondsRange">4 – 15 秒</span>
+          </label>
+          <div class="slider-row">
+            <input type="range" id="secondsRangeInput" min="4" max="15" step="1" value="5" />
+            <input type="number" class="input num-box" id="secondsNum" min="4" max="15" step="1" value="5" />
+            <span style="font-size:17px;color:var(--text-mute)">秒</span>
+          </div>
+          <div class="field-foot"><span class="grow" id="secondsTip">时长会直接乘进单价</span></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="label">画面比例</label>
+            <select class="select" id="aspectRatio"></select>
+          </div>
+          <div class="field">
+            <label class="label">清晰度</label>
+            <select class="select" id="resolution"></select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="label">生成音频</label>
+            <div class="switch-row">
+              <div class="sw-text">
+                <b>同步生成声音</b>
+                <span>关闭后输出无声视频</span>
+              </div>
+              <div class="switch on" id="generateAudio" role="switch" tabindex="0"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">AI 水印</label>
+            <div class="switch-row">
+              <div class="sw-text">
+                <b>添加生成水印</b>
+                <span>默认不添加</span>
+              </div>
+              <div class="switch" id="watermark" role="switch" tabindex="0"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="label">随机种子 <span class="tip-badge">-1 为随机</span></label>
+            <input class="input" id="seed" type="number" step="1" value="-1" />
+            <div class="field-foot"><span class="grow">相同种子可复现同一段视频</span></div>
+          </div>
+          <div class="field" id="outputFormatField">
+            <label class="label">输出格式</label>
+            <select class="select" id="outputFormat">
+              <option value="mp4">mp4（默认）</option>
+              <option value="mov">mov</option>
+            </select>
+            <div class="field-foot"><span class="grow">部分型号不支持，选到不支持的型号时该栏自动隐藏</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-bar">
+        <div class="cost-est">
+          <span id="costLabel">预计消耗</span>
+          <b id="costValue">—</b>
+        </div>
+        <div class="grow"></div>
+        <button class="btn btn-primary" id="submitBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon>
+          </svg>
+          <span id="submitLabel">开始生成</span>
+        </button>
+      </div>
+    </section>
+    </div><!-- /videoPanel -->
+
+    <!--
+      ======================= 渠道视频（独立渠道，已整块下线）=======================
+      2026-10-16：顶栏菜单与「视频生成」页里那张渠道卡都已撤下
+      （见 public/js/models.js 的 CHANNEL_VIDEO_ENABLED），这个面板没有入口、进不来。
+      面板与 public/js/channel.js 都留着没删：恢复时打开那个开关 + 把顶栏那处注释里的
+      按钮加回来（或只恢复生成页里的那张卡）。
+    -->
+    <div id="channelPanel" class="panel-stack hidden">
+
+      <section class="card">
+        <div class="card-head">
+          <span class="step">1</span>
+          <h2>描述你想生成的画面</h2>
+          <span class="head-hint" id="chHint">固定 30 秒 · 720P · 最多 9 张参考图</span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <div class="label-row">
+              <label class="label">提示词 <span class="req">*</span></label>
+              <button class="btn prompt-clear" id="chClearBtn" type="button"
+                      title="清空提示词与已挂的参考图；模型与规格是渠道固定的，不在这里改">重置</button>
+            </div>
+            <textarea class="textarea textarea-prompt" id="chPrompt" maxlength="12000"
+                      placeholder="在这里写提示词…打 @ 可引用资产库的图片（渠道上限 12000 字）"></textarea>
+            <div class="field-foot">
+              <span class="grow" id="chPromptTip">渠道只接受文字 + 参考图；打 @ 可挂资产库的图片，不支持首帧 / 尾帧、参考视频与音频</span>
+              <span class="mono" id="chPromptCount">0 / 12000</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label class="label">
+                参考图 <span class="req">*</span>
+                <span class="tip-badge" id="chRefCount">0 / 9</span>
+              </label>
+              <button class="btn btn-sm" id="chRefPick" type="button">添加图片</button>
+            </div>
+            <input type="file" id="chRefInput" class="hidden"
+                   accept="image/png,image/jpeg" multiple />
+            <div class="ch-ref-grid" id="chRefGrid"></div>
+            <div class="field-foot">
+              <span class="grow" id="chRefTip">JPG / PNG，最多 9 张，合计不超过 20 MB；本地添加，或在提示词里打 @ 直接挂资产库的图片（只支持图片）</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <span class="step">2</span>
+          <h2>输出参数</h2>
+          <span class="head-hint">渠道规格固定，不可修改</span>
+        </div>
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label class="label">视频模型</label>
+              <input class="input" id="chModel" value="seedance 2.5" readonly />
+            </div>
+            <div class="field">
+              <label class="label">画面比例</label>
+              <select class="select" id="chRatio"></select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label class="label">时长</label>
+              <input class="input" id="chSeconds" value="30 秒" readonly />
+            </div>
+            <div class="field">
+              <label class="label">清晰度</label>
+              <input class="input" id="chResolution" value="720P" readonly />
+            </div>
+          </div>
+          <div class="field-foot">
+            <span class="grow" id="chParamTip"></span>
+          </div>
+        </div>
+
+        <div class="submit-bar">
+          <div class="cost-est">
+            <span id="chCostLabel">预计消耗</span>
+            <b id="chCostValue">—</b>
+          </div>
+          <div class="grow"></div>
+          <button class="btn btn-primary" id="chSubmitBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon>
+            </svg>
+            <span id="chSubmitLabel">开始生成</span>
+          </button>
+        </div>
+      </section>
+    </div><!-- /channelPanel -->
+
+    <!-- ======================= 图片生成 ======================= -->
+    <div id="imagePanel" class="panel-stack hidden">
+
+      <section class="card">
+        <div class="card-head">
+          <span class="step">1</span>
+          <h2>选择图片模型</h2>
+          <span class="head-hint head-hint-active" id="imgModelHint"></span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="label">图片模型</label>
+            <div class="model-grid" id="imgModelGrid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <span class="step">2</span>
+          <h2>描述你想要的画面</h2>
+          <span class="head-hint" id="imgPromptHint"></span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="label">提示词 <span class="req">*</span>
+              <span class="tip-badge">@可快捷选择资产库素材，并自动上传</span>
+            </label>
+            <textarea class="textarea textarea-prompt" id="imgPrompt" maxlength="4000"
+                      placeholder="在这里写提示词…（@可快捷选择资产库素材，并自动上传）"></textarea>
+            <div class="field-foot">
+              <span class="grow" id="imgPromptTip"></span>
+              <span class="mono" id="imgPromptCount">0 / 4000</span>
+            </div>
+          </div>
+
+          <div class="field hidden" id="imgNegativeField">
+            <label class="label">负向提示词 <span class="tip-badge">按模型支持</span></label>
+            <input class="input" id="imgNegative" placeholder="不希望画面出现的元素，例如：模糊、多余手指、文字水印" />
+          </div>
+
+          <div id="imgMaterialsWrap"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <span class="step">3</span>
+          <h2>输出参数</h2>
+          <span class="head-hint" id="imgParamHint"></span>
+        </div>
+        <div class="card-body">
+          <!--
+            只有「清晰度档 + 画面比例」两项：图片接口的 size 就是档位字符串，
+            像素由平台按「档位 + aspect_ratio」换算。原先还挂着一个「输出尺寸」
+            下拉，选项其实就是「比例 · 档位」的复述，纯属重复，已去掉。
+          -->
+          <div class="field-row">
+            <div class="field">
+              <label class="label">清晰度档</label>
+              <select class="select" id="imgTier"></select>
+              <div class="field-foot"><span class="grow" id="imgTierTip"></span></div>
+            </div>
+            <div class="field">
+              <label class="label">画面比例</label>
+              <select class="select" id="imgRatio"></select>
+              <div class="field-foot"><span class="grow" id="imgRatioTip"></span></div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field" id="imgQualityField">
+              <label class="label">画质档 <span class="tip-badge">会叠加加价</span></label>
+              <select class="select" id="imgQuality"></select>
+            </div>
+            <div class="field" id="imgNField">
+              <label class="label">生成数量</label>
+              <input class="input" id="imgN" type="number" min="1" max="6" step="1" value="1" />
+              <div class="field-foot"><span class="grow" id="imgNTip"></span></div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="label">输出格式</label>
+              <select class="select" id="imgFormat">
+                <option value="png">png（默认）</option>
+                <option value="jpeg">jpeg</option>
+                <option value="webp">webp</option>
+              </select>
+            </div>
+            <div class="field" id="imgBackgroundField">
+              <label class="label">背景</label>
+              <select class="select" id="imgBackground">
+                <option value="">默认</option>
+                <option value="auto">auto</option>
+                <option value="opaque">opaque 不透明</option>
+                <option value="transparent">transparent 透明</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field hidden" id="imgWatermarkField">
+            <div class="switch-row">
+              <div class="sw-text"><b>AI 水印</b><span>右下角添加生成水印</span></div>
+              <div class="switch" id="imgWatermark" role="switch" tabindex="0"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="submit-bar">
+          <div class="cost-est">
+            <span id="imgCostLabel">预计消耗</span>
+            <b id="imgCostValue">—</b>
+          </div>
+          <div class="grow"></div>
+          <button class="btn btn-ghost btn-sm" id="imgResetBtn" type="button">重置</button>
+          <button class="btn btn-primary" id="imgSubmitBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon>
+            </svg>
+            <span id="imgSubmitLabel">开始生成</span>
+          </button>
+        </div>
+      </section>
+    </div><!-- /imagePanel -->
+
+    <!-- ======================= 模型广场 ======================= -->
+    <div id="plazaPanel" class="hidden">
+      <section class="card">
+        <div class="card-head">
+          <h2>模型广场</h2>
+          <span class="head-hint" id="plazaHint"></span>
+        </div>
+        <div class="card-body">
+          <div class="plaza-layout">
+            <aside class="plaza-side" id="plazaSide">
+              <button type="button" class="plaza-nav active" data-plaza="video">视频模型</button>
+              <!-- 图片模型与「图片生成」入口同开同关（2026-10-17 两边一起放回，见顶部导航那一行的注释） -->
+              <button type="button" class="plaza-nav" data-plaza="image">图片模型</button>
+            </aside>
+            <div class="plaza-grid" id="plazaGrid"></div>
+          </div>
+        </div>
+      </section>
+    </div><!-- /plazaPanel -->
+
+    <!-- ======================= 资产库 ======================= -->
+    <div id="assetPanel" class="panel-stack hidden">
+      <section class="card">
+        <div class="card-head">
+          <span class="step">★</span>
+          <h2>全局通用资产库</h2>
+          <span class="head-hint" id="assetHint"></span>
+          <label class="btn btn-sm btn-primary" style="margin-left:12px">
+            上传素材
+            <input type="file" id="assetFileInput" accept="image/*,video/*,audio/*" multiple hidden />
+          </label>
+          <button class="btn btn-sm" id="assetFromTaskBtn" type="button">从生成图导入</button>
+        </div>
+        <div class="card-body">
+          <!-- 当前剧集：列表、@ 引用、各种选择弹窗都只看这一集的素材 -->
+          <div class="asset-seriesbar" id="assetSeriesBar"></div>
+          <div class="asset-toolbar" id="assetToolbar">
+            <input class="input" id="assetSearch" placeholder="搜索名称、标签或备注…" />
+            <button class="btn btn-sm" id="assetSelectAll" type="button">全选</button>
+            <button class="btn btn-sm" id="assetMoveSelected" type="button" disabled>移动到剧集</button>
+            <button class="btn btn-sm btn-danger" id="assetDeleteSelected" type="button" disabled>删除选中</button>
+            <span class="asset-count" id="assetSelectedCount">已选 0</span>
+          </div>
+          <div class="asset-typebar" id="assetTypeBar"></div>
+          <div class="asset-tagbar" id="assetTagBar"></div>
+          <div class="upload-progress hidden" id="assetUploadProgress"><i></i></div>
+          <div class="asset-grid" id="assetGrid"></div>
+        </div>
+      </section>
+    </div><!-- /assetPanel -->
+
+    <!-- ======================= 消费记录（含调用记录） ======================= -->
+    <!--
+      2026-10-17：调用记录并入本页，顶栏只留「消费记录」一个菜单。
+      上面一行页签切两个列表：消费流水 = 钱包流水（扣费 / 退回 / 充值），
+      调用记录 = 每一次生成任务。两边各有自己的筛选与分页，互不影响；
+      切进来只拉当前这个页签的数据（见 app.js 的 showRecordTab）。
+    -->
+    <div id="spendPanel" class="panel-stack hidden">
+      <div class="segmented" id="recordTabs">
+        <button type="button" data-record-tab="spending" class="active">消费流水</button>
+        <button type="button" data-record-tab="calls">调用记录</button>
+        <!--
+          2026-10-24 用户要求：充值记录不再单开菜单，并进「消费记录」当第三个页签。
+          只给管理员（默认 hidden，登录后按角色显隐，见 app.js 的 updateNavForRole）；
+          面板在下方 #rechargePanel，内容与筛选分页一点没动，recharges.js 照旧。
+        -->
+        <button type="button" data-record-tab="recharges" class="hidden">充值记录</button>
+      </div>
+
+      <!-- 消费流水（钱包） -->
+      <section class="card" id="spendCard">
+        <div class="card-head">
+          <div class="mh-actions" style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <select class="select" id="spendUser" style="display:none;min-width:160px"></select>
+            <input class="input" id="spendUserSearch" type="search" autocomplete="off"
+              placeholder="搜索用户名/显示名" style="display:none;min-width:180px" />
+            <select class="select" id="spendType" style="min-width:120px">
+              <option value="">全部类型</option>
+              <option value="charge">扣费</option>
+              <option value="refund">退回</option>
+              <option value="recharge">充值</option>
+              <option value="gift">赠送</option>
+            </select>
+            <button class="btn btn-sm" id="spendRefresh" type="button">刷新</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="spend-summary" id="spendSummary"></div>
+          <div id="spendList"></div>
+          <div class="spend-pager">
+            <button class="btn btn-sm" id="spendPrev" type="button">上一页</button>
+            <span id="spendPage" style="color:var(--text-mute);font-size:16.5px"></span>
+            <button class="btn btn-sm" id="spendNext" type="button">下一页</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 调用记录（同一个菜单里用页签切；id 沿用 callsPanel，前端逻辑不用改） -->
+      <section class="card hidden" id="callsPanel">
+        <div class="card-head">
+          <div class="mh-actions" style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <select class="select" id="callsUser" style="display:none;min-width:160px"></select>
+            <input class="input" id="callsUserSearch" type="search" autocomplete="off"
+              placeholder="搜索用户名/显示名" style="display:none;min-width:180px" />
+            <select class="select" id="callsKind" style="min-width:110px">
+              <option value="">全部类型</option>
+              <option value="video">视频</option>
+              <option value="image">图片</option>
+            </select>
+            <select class="select" id="callsStatus" style="min-width:110px">
+              <option value="">全部状态</option>
+              <option value="queued">排队中</option>
+              <option value="in_progress">生成中</option>
+              <option value="completed">已完成</option>
+              <option value="failed">失败</option>
+            </select>
+            <button class="btn btn-sm" id="callsRefresh" type="button">刷新</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="spend-summary" id="callsSummary"></div>
+          <!-- 管理员追溯：填平台任务 ID，查这一单走的上游渠道与上游任务号（前端仅管理员显示） -->
+          <div id="callsTrace" class="hidden">
+            <div class="trace-bar">
+              <input class="input" id="callsTraceInput" type="text" autocomplete="off"
+                     placeholder="粘贴平台任务 ID（可只填前几位），查这一单的上游渠道与上游任务号" />
+              <button class="btn btn-sm btn-primary" id="callsTraceGo" type="button">查询上游</button>
+            </div>
+            <div id="callsTraceResult"></div>
+          </div>
+          <div id="callsWriteWarn"></div>
+          <div id="callsList"></div>
+          <div class="spend-pager">
+            <button class="btn btn-sm" id="callsPrev" type="button">上一页</button>
+            <span id="callsPage" style="color:var(--text-mute);font-size:16.5px"></span>
+            <button class="btn btn-sm" id="callsNext" type="button">下一页</button>
+          </div>
+        </div>
+      </section>
+      <!--
+        充值记录（2026-10-24 用户要求：从独立菜单并进「消费记录」，当第三个页签）。
+        只给管理员；内层 ID 全部照旧，recharges.js 一个字都不用改，
+        显隐由 app.js 的 showRecordTab 统一管（跟着页签走，不再跟 currentKind 走）。
+      -->
+      <section class="card hidden" id="rechargePanel">
+        <div class="card-head">
+          <span class="step">算</span>
+          <h2>充值记录</h2>
+          <span class="head-hint" id="rechargeHint">全网最新，只记已入账与已关闭的订单</span>
+          <div class="mh-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <!--
+              用户搜索（2026-10-22 用户要求）：原来是精确选择的下拉，现在改成可输入 + datalist，
+              打的字做**模糊匹配**（服务端 `username LIKE %…%`），下拉里仍旧能点选一个账号。
+              留空 = 全部用户。
+            -->
+            <input class="input" id="rechargeUser" list="rechargeUserList" type="search" autocomplete="off"
+                   placeholder="搜索账号（留空=全部）" style="width:190px;padding:6px 10px;font-size:15.5px" />
+            <datalist id="rechargeUserList"></datalist>
+            <select class="select" id="rechargeStatus" style="min-width:120px">
+              <option value="">全部状态</option>
+              <option value="paid">已入账</option>
+              <option value="closed">已关闭</option>
+            </select>
+            <select class="select" id="rechargeSource" style="min-width:140px">
+              <option value="">全部来源</option>
+              <option value="alipay">支付宝在线</option>
+              <option value="manual">手工充值</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15.5px">
+              <input type="checkbox" id="rechargeAuto" checked />
+              <span>自动刷新</span>
+            </label>
+            <button class="btn btn-sm" id="rechargeRefresh" type="button">刷新</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="spend-summary" id="rechargeSummary"></div>
+          <div id="rechargeList"></div>
+          <div class="spend-pager">
+            <button class="btn btn-sm" id="rechargePrev" type="button">上一页</button>
+            <span id="rechargePage" style="color:var(--text-mute);font-size:16.5px"></span>
+            <button class="btn btn-sm" id="rechargeNext" type="button">下一页</button>
+          </div>
+        </div>
+      </section>
+    </div><!-- /spendPanel -->
+
+    <!-- ======================= 灵感（作品墙） ======================= -->
+    <div id="inspirePanel" class="panel-stack hidden">
+      <section class="card">
+        <div class="card-head">
+          <span class="step">♥</span>
+          <h2>灵感</h2>
+          <span class="head-hint" id="inspireHint"></span>
+          <div class="mh-actions" style="display:flex;gap:8px;align-items:center">
+            <label id="inspireHiddenWrap"
+              style="display:none;align-items:center;gap:6px;font-size:15.5px;cursor:pointer"
+              title="管理员：连被关闭展示的作品一起看">
+              <input type="checkbox" id="inspireIncludeHidden" />
+              <span>含已关闭</span>
+            </label>
+            <button class="btn btn-sm" id="inspireRefresh" type="button">刷新</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="inspire-grid" id="inspireGrid"></div>
+        </div>
+      </section>
+    </div><!-- /inspirePanel -->
+
+    <!-- ======================= API 接入 ======================= -->
+    <div id="openApiPanel" class="panel-stack hidden">
+      <section class="card">
+        <div class="card-head">
+          <span class="step">&lt;/&gt;</span>
+          <h2>我的密钥</h2>
+          <span class="head-hint" id="openApiHint"></span>
+          <div class="mh-actions" style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-sm" id="openApiRefresh" type="button">刷新</button>
+            <button class="btn btn-sm btn-primary" id="openApiNew" type="button">新建密钥</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="openApiKeys"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <span class="step">?</span>
+          <h2>接入文档</h2>
+          <span class="head-hint">Base URL 与示例按当前站点地址自动生成</span>
+        </div>
+        <div class="card-body">
+          <div id="openApiDocs"></div>
+        </div>
+      </section>
+    </div><!-- /openApiPanel -->
+
+    <!--
+      大客户（2026-10-21 用户要求）：一页静态介绍，不接任何接口。
+      文案按用户原话组织，不额外承诺；客服二维码与顶栏「客服」弹窗、教程页底部同一套样式（.support-qrs）。
+    -->
+    <div id="vipPanel" class="panel-stack hidden">
+      <section class="card">
+        <div class="card-head">
+          <span class="step">★</span>
+          <h2>大客户合作</h2>
+          <span class="head-hint">短剧公司 · 网站经营者 · 短视频达人</span>
+        </div>
+        <div class="card-body">
+          <p class="vip-lead">
+            本站长期运营，模型不掺假不掺水，持续保持低价优惠。欢迎有需要的短剧公司、网站经营者、短视频达人接入。
+          </p>
+          <ul class="vip-points">
+            <li><b>专属 VIP</b>：单笔支付 1000 元即可解锁全站模型 <b>9 折</b>专属 VIP，使用后不符合预期包退余额算力。</li>
+            <li><b>无并发限制</b>：批量出片不被排队卡住，质量稳定可靠。</li>
+            <li><b>长期低价</b>：模型满血高质量，不掺假不掺水，价格持续低于同档。</li>
+            <li><b>赠送测试算力</b>：接入前先赠测试算力，24 小时技术问题响应。</li>
+          </ul>
+
+          <div class="vip-cta">
+            <div class="vip-cta-text">接入咨询、定价与测试算力，欢迎联系客服：</div>
+            <div class="support-qrs support-qrs--vip">
+              <!-- 大客户对接走微信的更多，所以微信放第一张、给大一档 -->
+              <figure class="support-qr">
+                <img src="img/support-wechat.jpg" alt="客服微信二维码" loading="lazy" />
+                <figcaption><b>客服微信</b><span>扫码添加好友（MR.Jin）</span></figcaption>
+              </figure>
+              <figure class="support-qr">
+                <img src="img/support-qq-group.png" alt="官方 QQ 群二维码，群号 1109136587" loading="lazy" />
+                <figcaption><b>官方 QQ 群</b><span>群号 1109136587</span></figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div><!-- /vipPanel -->
+
+    <!-- ======================= 教程 ======================= -->
+    <div id="helpPanel" class="panel-stack hidden">
+      <section class="card">
+        <div class="card-head">
+          <span class="step">?</span>
+          <h2>使用教程与条款</h2>
+        </div>
+        <div class="card-body">
+          <div class="segmented" id="helpTabs" style="max-width:420px">
+            <button type="button" data-tab="guide" class="active">使用教程</button>
+            <button type="button" data-tab="privacy">隐私政策</button>
+            <button type="button" data-tab="terms">服务条款</button>
+          </div>
+
+          <div class="help-sec" data-tab="guide">
+            <h3>快速上手</h3>
+            <ol>
+              <li><b>选模型</b>：在「创作台」的「视频生成」页签点选模型卡片，再选择生成方式（文生视频、图生视频、首尾帧、参考生视频等）；出图则切到「图片生成」页签。</li>
+              <li><b>写提示词</b>：用自然语言描述画面内容、镜头运动与氛围。提示词越具体，效果越可控。</li>
+              <li><b>提交生成</b>：确认预计费用后点「开始生成」，进度会在右侧任务列表实时刷新。</li>
+            </ol>
+
+            <h3>参考素材</h3>
+            <ul>
+              <li>「首帧图 / 尾帧图 / 参考图 / 参考视频 / 参考音频」按生成方式决定是否可用，添加时支持粘贴公网地址或上传本地文件。</li>
+              <li>上传的文件会先存到对象存储，再以链接形式提交给生成接口，下次可直接复用，不必重复上传。</li>
+              <li><b>顺序即语义</b>：提示词里的「图片1」「图片2」对应参考图列表的第 1、2 项，顺序可用卡片右上角的 ← → 调整。</li>
+              <li><b>参考生视频必须提供参考素材</b>：至少挂 1 个参考图 / 参考视频 / 参考音频，一个都没有时提交会被拦下（免得白扣一次费）。图片生成的参考图仍是可选的，不挂就是文生图。</li>
+              <li>在提示词里输入 <b>@</b> 可以直接引用资产库里的素材，自动挂到素材槽并插入正确的序号引用。</li>
+            </ul>
+
+            <h3>资产库</h3>
+            <ul>
+              <li>上传到资产库的图片 / 视频 / 音频会长期保存在对象存储上，是所有生成任务的公共素材来源。</li>
+              <li>支持改名、打标签、删除；删除时可选择是否同时删除云端文件。</li>
+            </ul>
+
+            <h3>消费与充值</h3>
+            <ul>
+              <li>生成按模型、时长、清晰度计费，提交前会显示预计费用，生成失败会<b>自动退回</b>对应费用。</li>
+              <li>「消费记录」一个菜单看全账目：页签「消费流水」列出每一笔扣费、退回与充值，页签「调用记录」列出每一次生成任务。</li>
+              <li>全站以<b>算力 ⚡</b>计价（1 人民币 = 10 算力）；充多少用多少，没有任何折扣与门槛，也不再有注册礼 / 每日签到一类的赠送。充值记录按人民币 ¥ 计。</li>
+              <li>算力不足时，可在钱包里用<b>支付宝扫码充值</b>，支付成功后算力自动到账。</li>
+            </ul>
+
+            <h3>常见问题</h3>
+            <ul>
+              <li><b>任务一直排队？</b>高峰期上游排队较久，可点「立即刷新」查看最新进度。</li>
+              <li><b>生成失败扣费了？</b>失败会自动原路退回，无需申请。</li>
+              <li><b>视频生成总是提示失败？</b>先核对两项：<b>参考素材</b>是否符合上文「参考素材」一节的规范（链接公网可直接打开、格式与数量不超限、首尾帧不与参考素材混用），<b>提示词</b>是否碰到审核红线（真人素材、侵权元素、暴露与暴力等）。确认都没问题就<b>可以多次提交</b>——上游同一个模型由多条线路共同承载，轮到要切换线路时也会失败，多试几次通常就能过。</li>
+              <li><b>生成视频一直报「真人素材审核不通过」？</b>上游渠道不固定，不同渠道的审核宽严有差异；同一条提示词多试几次、或换个时段再试，常常就能过。</li>
+              <!--
+                渠道视频整块暂时下线（2026-10-16，见 public/js/models.js 的 CHANNEL_VIDEO_ENABLED）：
+                下面两条问答一并收起，恢复渠道时去掉这两处 class="hidden" 即可。
+              -->
+              <li class="hidden"><b>渠道视频提交半小时后返回失败？</b>每天下午到晚上，渠道的可用存量可能不足：任务会在排队约半小时后以失败告终，恢复时间不确定。这类失败<b>会自动原路退回</b>扣费，建议换个时段（上午或次日）再提交。</li>
+              <li class="hidden"><b>渠道视频下载不了？</b>渠道视频生成成功后，归档会受网络影响：有时页面无法预览，但文件其实是可以下载的。如果在任务里找不到下载入口，可以联系客服帮忙取回。</li>
+              <li><b>成片与图片保存期限？</b>成片与图片生成后会自动存到云端，长期有效，本站不承诺永久保存，建议尽快将成片下载到本地留存，避免丢失。</li>
+              <li><b>用户忘了密码？</b>管理员可在「用户管理」里给该账号重置密码；重置后该账号所有已登录设备会立即下线，请把新密码私下发给用户。</li>
+            </ul>
+          </div>
+
+          <div class="help-sec hidden" data-tab="privacy">
+            <p class="help-updated">更新日期：2026 年 10 月 2 日</p>
+            <p>本隐私政策说明「妖火AI」（以下简称"本平台"）如何收集、使用、存储与保护您的信息。请您在使用前仔细阅读。</p>
+
+            <h4>一、我们收集的信息</h4>
+            <ul>
+              <li><b>账号信息</b>：账号名（登录用）、启用短信登录时的手机号、账号创建与最近登录时间、角色与状态。</li>
+              <li><b>生成内容</b>：您提交的提示词与生成参数（模型、时长、清晰度等），以及服务生成的视频、图片结果。</li>
+              <li><b>上传素材</b>：您上传的图片、视频、音频文件及其名称、标签等描述信息。</li>
+              <li><b>消费信息</b>：余额、充值、扣费与退回记录。</li>
+              <li><b>日志信息</b>：登录时间、IP 地址、浏览器标识及关键操作记录（如任务删除、充值），用于安全审计。</li>
+            </ul>
+            <p>本平台<b>不会</b>收集您的通讯录、位置、生物识别信息，也不请求手机相册、麦克风等设备权限。</p>
+
+            <h4>二、信息的使用</h4>
+            <ul>
+              <li>账号信息仅用于身份验证与登录。</li>
+              <li>提示词与素材仅用于您发起的生成任务；生成请求会提交给上游 AI 生成服务以完成生成。</li>
+              <li>消费与日志信息用于账单核对、故障排查与安全防护。</li>
+              <li>本平台<b>不会</b>将您的信息用于广告推荐，也<b>不会</b>将其用于训练任何 AI 模型。</li>
+            </ul>
+
+            <h4>三、信息的存储与安全</h4>
+            <ul>
+              <li>您的账号信息、上传素材与生成内容，保存在本平台管理的服务器与云端存储中。</li>
+              <li>我们采取访问控制、加密传输等措施保护您的信息；账号口令等敏感信息不以明文保存。</li>
+              <li>登录、充值、删除等关键操作留有记录，用于安全防护与问题排查。</li>
+            </ul>
+
+            <h4>四、信息的共享</h4>
+            <ul>
+              <li>我们仅在完成您的生成任务所必需的范围内，向提供相关服务的第三方（如 AI 生成服务、云存储服务）传递必要信息。</li>
+              <li>除法律法规要求外，本平台不会向任何其他方出售或共享您的个人信息。</li>
+            </ul>
+
+            <h4>五、您的权利</h4>
+            <ul>
+              <li>您可以随时在页面内删除自己的任务记录与上传素材（删除素材时可选择同时删除云端文件）。</li>
+              <li>您可以在「消费记录」中查阅自己的全部历史（消费流水与调用记录两个页签）。</li>
+              <li>如需注销账号、导出或更正信息，请联系管理员，我们将在核实后 15 个工作日内处理；注销后账号数据将删除或匿名化。</li>
+            </ul>
+
+            <h4>六、政策更新</h4>
+            <p>本政策如有重大变更，将在页面显著位置公告。变更后继续使用即视为接受更新后的政策。</p>
+            <h4>七、联系我们</h4>
+            <p>对本政策或个人信息保护有任何疑问，请通过管理员联系方式反馈。</p>
+          </div>
+
+          <div class="help-sec hidden" data-tab="terms">
+            <p class="help-updated">更新日期：2026 年 10 月 2 日</p>
+            <p>欢迎使用「妖火AI」（以下简称"本平台"）。注册、登录或以其他方式使用本平台，即表示您已阅读并同意本条款。</p>
+
+            <h4>一、服务说明</h4>
+            <ul>
+              <li>本平台面向授权用户提供 AI 视频 / 图片生成的可视化操作界面，账号由用户自行注册（账号名 + 密码），站点开通短信后也可用手机号验证码登录。</li>
+              <li>本平台仅提供操作界面与任务管理，生成能力由第三方 AI 服务提供。</li>
+            </ul>
+
+            <h4>二、账号</h4>
+            <ul>
+              <li>账号由用户自行注册创建，仅限本人使用，<b>不得赠与、出借、出租或转让</b>。</li>
+              <li>您应对账号下的全部行为负责；请妥善保管设备与验证码，因保管不善造成的损失由您自行承担。</li>
+              <li><b>同一账号同一时间仅允许一处登录</b>：在新设备登录会使原设备下线，请勿与他人共用账号。</li>
+              <li>管理员有权对违规账号采取警告、限制功能或停用等措施。</li>
+            </ul>
+
+            <h4>三、付费与充值</h4>
+            <ul>
+              <li>生成按模型、时长、清晰度<b>按次计费</b>，提交前展示预计费用，以提交时实际扣除金额为准。</li>
+              <li>因上游或系统原因导致生成失败的，对应费用<b>自动原路退回</b>，无需申请。</li>
+              <li>余额通过支付宝扫码充值。<b>充值余额原则上不支持退款</b>；确有特殊情况请与管理员协商。</li>
+              <li>价格与计费标准如有调整，将在页面公示后生效，调整不影响已提交的任务。</li>
+            </ul>
+
+            <h4>四、使用规范</h4>
+            <p>您承诺不上传、不生成、不传播下列内容：</p>
+            <ul>
+              <li>违反法律法规、危害国家安全与社会稳定的内容；</li>
+              <li>侵犯他人著作权、肖像权、名誉权、隐私权等合法权益的内容（包括未经授权使用他人肖像或作品）；</li>
+              <li>淫秽色情、暴力恐怖、赌博诈骗等违法违规内容；</li>
+              <li>虚假新闻、误导性信息，或恶意诱导 AI 生成的违规内容。</li>
+            </ul>
+            <p>您应确保对上传的素材拥有合法权利。以显著方式对外发布 AI 生成内容时，请标明系 AI 生成。违反上述规范的，本平台有权删除相关内容、暂停或终止账号服务；给本平台或第三方造成损失的，您应承担赔偿责任。</p>
+
+            <h4>五、知识产权</h4>
+            <ul>
+              <li>您在使用本平台及相关服务时上传的文本、图片等素材，均为您所有或已取得合法授权（含转授权），不会违反法律法规的规定，也不会侵犯任何第三方的合法权益；您对生成结果享有合法权益，对生成结果的使用与传播由您自行判断并承担相应责任。您通过本平台上传、生成并保存的任何内容的完整产权归您或原创权利人所有，如因此引起任何纠纷，由您自行承担全部责任；给本平台或第三方造成损失的，本平台有权向您追偿。</li>
+              <li>本平台软件界面、标识与文档归运营方所有，未经许可不得复制或用于其他用途。</li>
+            </ul>
+
+            <h4>六、免责声明</h4>
+            <ul>
+              <li>生成内容由 AI 模型自动产出，可能存在瑕疵、偏差或不符预期的结果；相同参数可能生成不同结果，本平台不保证生成结果满足您的特定需求。</li>
+              <li>生成结果不构成专业建议；据此作出的判断与后续行为，后果由您自行承担。</li>
+              <li>因上游服务调整、网络故障、不可抗力等导致的服务中断或数据丢失，本平台不承担责任，但会尽力协助恢复与补救。</li>
+            </ul>
+
+            <h4>七、服务的变更与终止</h4>
+            <p>本平台可依运营需要对功能进行调整、中断或终止，并将以显著方式通知。您可随时停止使用并联系管理员注销账号。</p>
+
+            <h4>八、条款更新</h4>
+            <p>本条款如有修订，将在页面公告。修订后继续使用即视为接受新条款；如不同意，请停止使用并联系管理员处理账号。</p>
+          </div>
+
+          <!--
+            联系方式：三个页签都在最底部常驻。
+            2026-10-21：把 QQ 群与客服微信的二维码挂上来，玩家不用问就能找到后台客服；
+            图片在 public/img/，点一下开灯箱看原图（电脑上扫不动的可以放大）。
+          -->
+          <div class="help-contact">
+            <div class="help-contact-head">遇到问题？找客服</div>
+            <p class="help-contact-desc">
+              生成失败、扣费异常、渠道视频取不回、充值疑问，都可以在群里问，或加微信一对一处理。
+            </p>
+            <div class="support-qrs">
+              <figure class="support-qr">
+                <img src="img/support-qq-group.png" alt="官方 QQ 群二维码，群号 1109136587" loading="lazy" />
+                <figcaption><b>官方 QQ 群</b><span>群号 1109136587</span></figcaption>
+              </figure>
+              <figure class="support-qr">
+                <img src="img/support-wechat.jpg" alt="客服微信二维码" loading="lazy" />
+                <figcaption><b>客服微信</b><span>扫码添加好友</span></figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div><!-- /helpPanel -->
+
+    <!-- ======================= 系统公告 ======================= -->
+    <div id="annPanel" class="panel-stack hidden">
+      <section class="card">
+        <div class="card-head">
+          <span class="step">📣</span>
+          <h2>系统公告</h2>
+          <span class="head-hint" id="annHint"></span>
+          <button class="btn btn-sm" id="annRefresh" type="button">刷新</button>
+        </div>
+        <div class="card-body">
+          <div class="field hidden" id="annPublish">
+            <label class="label">发布新公告 <span class="tip-badge">管理员 · 发布后全员可见</span></label>
+            <input class="input" id="annTitle" maxlength="120" placeholder="公告标题" />
+            <textarea class="input" id="annContent" rows="4" maxlength="4000"
+              placeholder="公告正文（会显示在所有用户的首页横幅上）" style="resize:vertical;margin-top:8px"></textarea>
+            <div class="field-foot">
+              <span class="grow" id="annMsg"></span>
+              <button class="btn btn-sm btn-primary" id="annPublishBtn" type="button">发布</button>
+            </div>
+          </div>
+          <div id="annList"></div>
+        </div>
+      </section>
+    </div><!-- /annPanel -->
+
+    <!-- ======================= 用户管理（仅管理员可见） ======================= -->
+    <div id="usersPanel" class="panel-stack hidden">
+      <section class="card">
+        <div class="card-head">
+          <span class="step">人</span>
+          <h2>用户管理</h2>
+          <span class="head-hint" id="usersHint"></span>
+          <!--
+            用户搜索（2026-10-22 用户要求）：账号列表本来就整份取回本地，
+            所以这里只做前端过滤（账号名 / ID 都认），改一个字就重画一次表格。
+          -->
+          <input class="input" id="usersSearch" type="search" autocomplete="off"
+                 placeholder="搜索账号 / ID" style="width:200px;padding:6px 10px;font-size:15.5px" />
+          <button class="btn btn-sm" id="usersRefresh" type="button">刷新</button>
+          <!--
+            右侧页签（2026-10-24 用户要求）：账号列表 / 注册风控 收进同一张卡里切换，
+            默认停在账号列表；注册风控那页的数据切过去才取（注册码会过期、也会被用掉，进来先取最新的）。
+          -->
+          <div class="segmented" id="usersTabs" style="margin-left:auto;padding:3px"
+               role="tablist" aria-label="用户管理页签">
+            <button type="button" data-utab="accounts" class="active" role="tab"
+                    style="min-width:0;flex:0 0 auto;padding:5px 12px;font-size:14.5px">账号列表</button>
+            <button type="button" data-utab="risk" role="tab"
+                    style="min-width:0;flex:0 0 auto;padding:5px 12px;font-size:14.5px">注册风控</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="usersTabAccounts">
+          <div class="notice notice-warn">
+            <span>账号<b>同一时间只允许一处登录</b>：新登录会自动把旧设备挤下线。<br>
+            点「强制下线」可让某账号当前登录的设备立即退出（<b>密码不变</b>）；点「重置密码」则会改密码并让该账号所有设备下线，
+            需要把新密码私下告知用户（例如客服 QQ 群私聊），不要公开张贴。</span>
+          </div>
+          <div id="usersList"></div>
+          </div><!-- /usersTabAccounts -->
+
+          <!--
+            注册风控（2026-10-24）：网站只对受邀用户开放注册 ——
+            顶部是**注册码**（管理员点一下生成一条，6 位、30 分钟有效、用一次即失效，
+            仅管理员可见，可一键复制）；
+            下面三道闸兜底：24 小时注册配额、邮箱域名黑名单，
+            以及聚出来的可疑注册名单（可按簇一键封禁）。
+          -->
+          <div id="usersTabRisk" class="hidden">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+              <b style="font-size:17px">注册风控</b>
+              <span class="head-hint" id="riskHint">注册码准入 + 配额 + 邮箱域名黑名单 + 可疑聚类</span>
+              <button class="btn btn-sm" id="riskSuspiciousRefresh" type="button"
+                      style="margin-left:auto">刷新</button>
+            </div>
+          <div class="notice notice-warn">
+            <span>注册<b>只对受邀用户开放</b>：必须填下方这条<b>注册码</b>才能完成注册
+            （由你生成，一条 <b>30 分钟有效</b>，注册成功一次即永久失效）。
+            新号注册<b>不再赠送任何算力</b>，也没有每日签到，想用得先充值。<br>
+            下面的配额与黑名单是第二道闸（配额填 <b>0</b> 表示不限）。黑名单按<b>邮箱域名</b>匹配，
+            已内置常见的临时 / 一次性邮箱站（Mailinator、10minutemail、yopmail、temp-mail、
+            maxxspace 等），碰到新的直接加进来即可，子域名也一并挡。</span>
+          </div>
+
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0 12px;
+                      padding:10px 14px;border:1px solid var(--border-soft);border-radius:10px">
+            <span style="color:var(--text-mute)">当前注册码</span>
+            <b id="riskInviteCode" style="font-size:26px;letter-spacing:7px;font-variant-numeric:tabular-nums">未生成</b>
+            <button class="btn btn-sm btn-primary" id="riskInviteCopy" type="button">一键复制</button>
+            <button class="btn btn-sm" id="riskInviteGen" type="button">生成注册码</button>
+            <span style="color:var(--text-mute);font-size:14.5px" id="riskInviteLeft">—</span>
+          </div>
+          <div style="margin:-6px 0 12px;color:var(--text-mute);font-size:14.5px">
+            点「生成注册码」得到 6 位字母和数字，<b>30 分钟内有效</b>，<b>注册成功一次即失效</b>；
+            再生成一次会顶掉上一条。只有管理员看得到；用户那边会看到「请联系管理员获取注册码」，
+            私发给他即可 —— <b>别群发</b>，谁先注册成功谁用掉，其他人得等新码。
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 10px">
+            <label style="display:flex;gap:6px;align-items:center">
+              <span style="color:var(--text-mute)">同 IP 24h 最多</span>
+              <input class="input" id="riskLimitsIp" type="number" min="0" max="50" step="1"
+                     style="width:80px" value="3" />
+              <span style="color:var(--text-mute)">个号</span>
+            </label>
+            <label style="display:flex;gap:6px;align-items:center">
+              <span style="color:var(--text-mute)">同域名 24h 最多</span>
+              <input class="input" id="riskLimitsDomain" type="number" min="0" max="50" step="1"
+                     style="width:80px" value="1" />
+              <span style="color:var(--text-mute)">个号</span>
+            </label>
+            <button class="btn btn-sm btn-primary" id="riskLimitsSave" type="button">保存配额</button>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+            <span style="color:var(--text-mute)">邮箱域名黑名单</span>
+            <input class="input" id="riskDomainInput" type="text" autocomplete="off"
+                   placeholder="maxxspace.com" style="width:200px" />
+            <button class="btn btn-sm" id="riskDomainAdd" type="button">加入黑名单</button>
+          </div>
+          <div id="riskDomains" style="margin-bottom:12px;max-height:132px;overflow:auto"></div>
+
+          <div style="margin:6px 0;color:var(--text-mute);font-size:15.5px">
+            近 7 天成簇的注册（同域名可直接一键封这一簇）
+          </div>
+          <div id="riskSuspicious"></div>
+          </div><!-- /usersTabRisk -->
+        </div>
+      </section>
+    </div><!-- /usersPanel -->
+
+    <!-- ======================= 后台（仅管理员可见，2026-10-22） =======================
+         只显示渠道 label：开关决定这条腿参不参与排队；顺序越靠上越优先，
+         且只在该渠道支持的型号里生效（不支持的单轮不到它）。
+         备注列由服务端从线路表推出来，新增线路会自动多一行，前端不用改。
+    ================================================================================ -->
+    <div id="channelsPanel" class="panel-stack hidden">
+      <section class="card">
+        <div class="card-head">
+          <span class="step">线</span>
+          <h2>后台</h2>
+          <span class="head-hint" id="channelsHint"></span>
+          <button class="btn btn-sm" id="channelsRefresh" type="button">刷新</button>
+        </div>
+        <div class="card-body">
+          <div id="channelsList"></div>
+
+          <!--
+            轮询设置：失败观察窗 1–10 分钟，落库 ca_settings，改完 5 秒内生效
+            （见 server/pollerSettings.js）。这一项**不能去** —— 窗口长度直接影响
+            上游回 failed 后多久才判死退费。
+          -->
+          <div class="switch-row" style="margin-top:14px">
+            <div class="sw-text">
+              <b>失败观察
+                <input class="input balance-warn-credits-input" id="probeWindowMin" type="number"
+                  min="1" max="10" step="1" inputmode="numeric" value="1" />
+                分钟</b>
+              <span>上游回「失败」后先观察这么久再判死，可设 1–10 分钟。</span>
+            </div>
+            <button class="btn btn-sm" id="probeWindowSave" type="button">保存</button>
+          </div>
+        </div>
+      </section>
+    </div><!-- /channelsPanel -->
+  </div>
+
+  <!-- ======================= 右：任务面板 ======================= -->
+  <div class="col-right">
+    <section class="card tasks-card">
+      <div class="preview" id="preview">
+        <div class="preview-stage" id="previewStage">
+          <div class="preview-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+              <path d="M8 21h8M12 17v4"></path>
+            </svg>
+            <span>生成完成后，可在这里预览成片</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tasks-toolbar">
+        <div class="tab-pills" id="taskTabs"></div>
+        <div class="grow" style="flex:1"></div>
+        <button class="btn btn-ghost btn-sm btn-icon" id="refreshAllBtn" title="立即刷新所有任务状态">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="tasks-list" id="tasksList"></div>
+    </section>
+  </div>
+</main>
+
+
+<!-- ======================= 短剧画布 ======================= -->
+<main id="dramaMain" class="drama-main hidden">
+  <div class="drama-bar">
+    <div class="drama-bar-left">
+      <span class="step">★</span>
+      <h2>短剧画布</h2>
+      <select class="select drama-project-select" id="dramaProjectSelect"></select>
+      <span class="head-hint" id="dramaHint"></span>
+    </div>
+    <div class="drama-bar-right">
+      <button class="btn btn-sm" id="dramaNewBtn" type="button">+ 新建短剧</button>
+      <button class="btn btn-sm" id="dramaSettingsBtn" type="button">项目设置</button>
+      <button class="btn btn-sm" id="dramaManageBtn" type="button">管理</button>
+      <button class="btn btn-sm" id="dramaAddCharacterBtn" type="button">+ 角色</button>
+      <button class="btn btn-sm" id="dramaAddShotBtn" type="button">+ 分镜</button>
+      <button class="btn btn-sm btn-primary" id="dramaBatchBtn" type="button">批量生成待生成分镜</button>
+    </div>
+  </div>
+
+  <div class="drama-cols">
+    <aside class="drama-col">
+      <div class="drama-section" id="dramaSummary"></div>
+      <div class="drama-section" id="dramaCharacters"></div>
+    </aside>
+
+    <section class="drama-col drama-col-wide">
+      <div id="dramaShots"></div>
+    </section>
+
+    <aside class="drama-col">
+      <div class="drama-section" id="dramaPreview"></div>
+      <div class="drama-section" id="dramaTimeline"></div>
+      <div class="drama-section" id="dramaExports"></div>
+    </aside>
+  </div>
+</main>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<div id="modalLayer"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

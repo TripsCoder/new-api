@@ -211,7 +211,7 @@ export const channelFormSchema = z
     task_extend_plugin_keys: z.array(z.string()).optional(),
     key: z.string(),
     openai_organization: z.string().optional(),
-    models: z.string().min(1, ERROR_MESSAGES.REQUIRED_MODELS),
+    models: z.string(),
     group: z.array(z.string()).min(1, ERROR_MESSAGES.REQUIRED_GROUP),
     model_mapping: z
       .string()
@@ -296,6 +296,13 @@ export const channelFormSchema = z
     upstream_model_update_ignored_models: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    const isReviewedVideoDraft =
+      data.type === CHANNEL_TYPE_TASK_PLUGIN &&
+      ['aotian_video', 'fenglang_video'].includes(data.task_plugin_key ?? '') &&
+      data.status !== 1
+    if (data.models.length === 0 && !isReviewedVideoDraft) {
+      addRequiredIssue(ctx, 'models', ERROR_MESSAGES.REQUIRED_MODELS)
+    }
     if (
       [
         3,

@@ -13,6 +13,69 @@ func fixture() Document {
 	d.Bindings["b"] = map[string]Binding{"text_image": {GroupID: "shared"}}
 	return d
 }
+
+func TestReviewedVideoDocumentInterfacesSupportDiscoveredModelsWithoutInventedDefaults(t *testing.T) {
+	for _, provider := range []string{"aotian_video", "fenglang_video"} {
+		t.Run(provider, func(t *testing.T) {
+			require.NoError(t, Validate(Empty(provider)))
+			raw, err := ProviderCatalog(provider)
+			require.NoError(t, err)
+			catalog := raw.(map[string]any)
+			require.Empty(t, catalog["models"], "documentation must not populate account model discovery")
+			interfaces := catalog["interfaces"].(map[string]any)
+			require.Len(t, interfaces, 1)
+			var interfaceID string
+			for key := range interfaces {
+				interfaceID = key
+			}
+			protocol := &ProtocolBinding{TemplateModel: interfaceID, Confirmed: true}
+			require.NoError(t, ValidateProtocolBinding(provider, "text_video", protocol))
+			protocol.Confirmed = false
+			require.Error(t, ValidateProtocolBinding(provider, "text_video", protocol))
+			protocol.Confirmed = true
+			document := Empty(provider)
+			document.Groups["selected"] = Group{Modes: map[string]Mode{"text_video": {
+				Enabled: true, Protocol: protocol, StrictMapping: true,
+				Parameters: map[string]Parameter{"prompt": {Type: "string", Required: boolPointer(true)}, "seconds": {Type: "integer"}},
+			}}}
+			document.Bindings["actual-account-model"] = map[string]Binding{"text_video": {GroupID: "selected"}}
+			input, _, _, unified, err := ResolveUnified(document, "actual-account-model", "video_generate", map[string]any{"prompt": "Fixture", "images": false, "generate_audio": "ignored"}, false)
+			require.NoError(t, err)
+			require.True(t, unified)
+			require.Equal(t, map[string]any{"prompt": "Fixture"}, input)
+		})
+	}
+}
+func TestFenglangDocumentedModelsCanSaveAndResolveFramePolicies(t *testing.T) {
+	raw, err := ProviderCatalog("fenglang_video")
+	require.NoError(t, err)
+	interfaces := raw.(map[string]any)["interfaces"].(map[string]any)
+	var id string
+	for key := range interfaces {
+		id = key
+	}
+	for _, name := range []string{"seedance-2.5", "seedance-2.0", "seedance-2.0-fast", "seedance-2.0-mini", "minimax-video-h3"} {
+		t.Run(name, func(t *testing.T) {
+			contract, err := InterfaceContract("fenglang_video", id, name)
+			require.NoError(t, err)
+			data, err := common.Marshal(contract["parameters"])
+			require.NoError(t, err)
+			parameters := map[string]Parameter{}
+			require.NoError(t, common.Unmarshal(data, &parameters))
+			document := Empty("fenglang_video")
+			document.Groups["selected"] = Group{Modes: map[string]Mode{"frames": {Enabled: true, StrictMapping: true, Parameters: parameters, Protocol: &ProtocolBinding{TemplateModel: id, Confirmed: true}, Capabilities: &InputCapabilities{FirstFrame: true, LastFrame: true}}}}
+			document.Bindings[name] = map[string]Binding{"frames": {GroupID: "selected"}}
+			require.NoError(t, Validate(document))
+			// The decoder maps supplier input_reference to start_image_url first;
+			// disabling reference images must retain that distinct frame role.
+			input, _, _, unified, err := ResolveUnified(document, name, "video_generate", map[string]any{"prompt": "Fixture", "seconds": 5, "start_image_url": "https://media.example/start.png", "images": false}, false)
+			require.NoError(t, err)
+			require.True(t, unified)
+			require.Equal(t, "https://media.example/start.png", input["start_image_url"])
+			require.NotContains(t, input, "images")
+		})
+	}
+}
 func TestSharedReferencesAndMemberExceptions(t *testing.T) {
 	d := fixture()
 	b := d.Bindings["b"]["text_image"]

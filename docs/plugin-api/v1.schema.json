@@ -87,7 +87,10 @@
           "pattern": "^/[A-Za-z0-9_/-]{1,255}$"
         },
         "format": {
-          "const": "openai"
+          "enum": [
+            "openai",
+            "fenglang_pricing"
+          ]
         },
         "sourceUrl": {
           "type": "string",
@@ -106,7 +109,7 @@
           ]
         }
       },
-      "description": "Local extension: same-origin GET with channel Bearer key, OpenAI data[].id response. No redirects, static fallback or automatic activation. Host additionally rejects double slashes and credentials in the documentation URL.",
+      "description": "Local extension: same-origin authenticated GET; openai reads data[].id; fenglang_pricing requires success:true and models.video containing string IDs or objects with id. No prices, redirects, static fallback or automatic activation. Other shapes fail closed.",
       "allOf": [
         {
           "if": {
@@ -123,6 +126,9 @@
             "properties": {
               "path": {
                 "const": "/v1/models"
+              },
+              "format": {
+                "const": "openai"
               }
             },
             "not": {

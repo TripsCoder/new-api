@@ -162,6 +162,91 @@ function SelectedDialog() {
   )
 }
 describe('editing saved channel prices', () => {
+  it('can activate dynamic tiers from a flat price and requires every selected price', async () => {
+    for (const key of ['text_video', 'video_ref']) {
+      persisted.bindings.A[key].parameters = {
+        resolution: { enum: ['768px', '2K', '4K'] },
+      }
+    }
+    persisted = applyCustomerPrice(
+      persisted,
+      'A',
+      'text_video',
+      { unit: 'seconds', value: '0.5' },
+      true
+    )
+    const before = structuredClone(persisted)
+    mount()
+    await userEvent.click(
+      await screen.findByRole('checkbox')
+    )
+    for (const resolution of ['768px', '2K', '4K']) {
+      const input = screen.getByRole('spinbutton', {
+        name: `A: ${resolution} Billing amount (USD)`,
+      })
+      expect(input).toHaveValue(null)
+    }
+    await userEvent.click(screen.getByRole('button', { name: 'Save prices' }))
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(persisted).toEqual(before)
+    for (const resolution of ['768px', '2K', '4K']) {
+      fireEvent.change(
+        screen.getByRole('spinbutton', {
+          name: `A: ${resolution} Billing amount (USD)`,
+        }),
+        { target: { value: '0.2' } }
+      )
+    }
+    await userEvent.click(screen.getByRole('button', { name: 'Save prices' }))
+    await waitFor(() => expect(close).toHaveBeenCalled())
+    expect(persisted.bindings.A.text_video.billing?.expression).toContain(
+      'tier("4K", 0.2 * u("seconds"))'
+    )
+  })
+  it('shows configured 768px, 2K and 4K prices without changing saved prices on open', async () => {
+    for (const key of ['text_video', 'video_ref']) {
+      persisted.bindings.A[key].parameters = {
+        resolution: { enum: ['768px', '2K', '4K'] },
+      }
+    }
+    persisted = applyCustomerPrice(
+      persisted,
+      'A',
+      'text_video',
+      {
+        unit: 'seconds',
+        value: '',
+        resolutions: { '768px': '0', '2K': '0.2', '4K': '0.4' },
+      },
+      true
+    )
+    const before = structuredClone(persisted)
+    mount()
+    expect(
+      await screen.findByRole('spinbutton', {
+        name: 'A: 768px Billing amount (USD)',
+      })
+    ).toHaveValue(0)
+    expect(
+      screen.getByRole('spinbutton', { name: 'A: 2K Billing amount (USD)' })
+    ).toHaveValue(0.2)
+    expect(
+      screen.getByRole('spinbutton', { name: 'A: 4K Billing amount (USD)' })
+    ).toHaveValue(0.4)
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(persisted).toEqual(before)
+    fireEvent.change(
+      screen.getByRole('spinbutton', { name: 'A: 4K Billing amount (USD)' }),
+      { target: { value: '0.6' } }
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Save prices' }))
+    await waitFor(() => expect(close).toHaveBeenCalled())
+    expect(persisted.bindings.A.text_video.billing?.expression).toContain(
+      'tier("4K", 0.6 * u("seconds"))'
+    )
+    expect(persisted.groups).toEqual(before.groups)
+    expect(persisted.bindings.B).toEqual(before.bindings.B)
+  })
   it.each([
     ['missing resolution', {}],
     ['fixed resolution', { resolution: { enum: ['720p'] } }],

@@ -454,12 +454,12 @@
   "interfaceParameters": {
     "format": "plugin-interface-contract/v1",
     "legacyExecutionSHA256": "5d886ba687a54c3032ee88830b177968888287d3f59ed2f9e6aa0ec1bc862a11",
-    "builderSHA256": "7387d96557590e9ee56379a06d5dcc823d9bfa31d25575c98df6826b9ee61784",
-    "documentIndexSHA256": "a3df215546999e6ded3ba129be2ac4435a947e1746a22562d137f72b02a74cfe",
+    "builderSHA256": "f5794c6b68c473be4ae3db90796551f0ccac4048e8f0bad7aa59c30b2f162694",
+    "documentIndexSHA256": "453e21b4f611213c10e8fe6d594f1233ca58424f654dc7fa7756290c10c6cdad",
     "modelExamplesCreateBindings": false
   },
   "yuxiboxVideoParameters": {
-    "extractorSHA256": "71aca8dc36e84fe42117d6821407a9cca8267eb1a9d4778a1c66b77edbc258d5",
+    "extractorSHA256": "35b599e9931105cf41c00ce7c27fdc35757c45fc54b86be80615bd5b4d3fbd23",
     "sources": [
       {
         "file": "index.js",
@@ -484,6 +484,37 @@
       }
     ],
     "conflictsSHA256": "44eedeb06757a484fa6de6163818cd512b032ce96547db010b2a7c8fc0c96072",
+    "modelsCreateBindings": false,
+    "pricesChanged": false
+  },
+  "xcmVideoParameters": {
+    "extractorSHA256": "fb7f735dd3ad3ff60e5c95c502c0f2873ba20cb59e445f8d492e4055b5f07e21",
+    "sources": [
+      {
+        "file": "quickstart.html",
+        "url": "https://www.xcmapi.org/docs/QuickStart.html?video_model=seedance-2.5-g2-c1",
+        "finalURL": "https://www.xcmapi.org/docs/QuickStart.html?video_model=seedance-2.5-g2-c1",
+        "status": 200,
+        "sha256": "35c3b1a737236b9287fc84f84828afdf47daf25ea32edd363fa7303815e2dad9",
+        "bytes": 350787
+      },
+      {
+        "file": "video-contract.json",
+        "url": "https://xcmapi.org/docs/video-contract.json",
+        "finalURL": "https://xcmapi.org/docs/video-contract.json",
+        "status": 200,
+        "sha256": "c331d4689bd2527cc01e34d1b33eae672dbe919661f90a4c9629113328e75382",
+        "bytes": 161824
+      },
+      {
+        "file": "openapi.json",
+        "url": "https://www.xcmapi.org/docs/openapi.json",
+        "finalURL": "https://www.xcmapi.org/docs/openapi.json",
+        "status": 200,
+        "sha256": "597ee7129129589611d2c6fd0f6bf8899ba44f3f7735cc9cb5cddf15743f11da",
+        "bytes": 177804
+      }
+    ],
     "modelsCreateBindings": false,
     "pricesChanged": false
   }

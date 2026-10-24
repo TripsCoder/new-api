@@ -1,0 +1,489 @@
+{
+  "key": "aotian_video",
+  "name": "AoTian Video",
+  "baseURL": "https://aotianzz.xyz",
+  "docsURL": "https://aotianzz.xyz/docs#endpoints",
+  "models": {},
+  "interfaces": {
+    "interface:ac205b7903df54b7": {
+      "id": "interface:ac205b7903df54b7",
+      "title": "AoTian 创建视频任务",
+      "kind": "video",
+      "method": "POST",
+      "path": "/v1/videos",
+      "status": "documented-interface-not-account-verification",
+      "source": {
+        "file": "evidence/docs.html",
+        "url": "https://aotianzz.xyz/docs#endpoints",
+        "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+        "readAt": "2026-10-24",
+        "status": "public-documentation"
+      },
+      "parameters": {
+        "model": {
+          "type": "string",
+          "required": true,
+          "description": "当前令牌可用的视频模型",
+          "source": {
+            "file": "evidence/docs.html",
+            "url": "https://aotianzz.xyz/docs#endpoints",
+            "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "当前令牌可用的视频模型",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "model"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "prompt": {
+          "type": "string",
+          "required": true,
+          "description": "非空视频提示词",
+          "source": {
+            "file": "evidence/docs.html",
+            "url": "https://aotianzz.xyz/docs#endpoints",
+            "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "非空视频提示词",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "prompt"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minLength": 1
+          }
+        },
+        "seconds": {
+          "type": "integer",
+          "required": false,
+          "description": "视频时长，发送为 seconds 字符串",
+          "source": {
+            "file": "evidence/docs.html",
+            "url": "https://aotianzz.xyz/docs#endpoints",
+            "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "integer",
+            "description": "视频时长，发送为 seconds 字符串",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "seconds",
+                "duration"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minimum": 1,
+            "maximum": 3600
+          },
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "aspect_ratio": {
+          "type": "string",
+          "required": false,
+          "description": "画面比例，直接发送 size，不换算像素",
+          "source": {
+            "file": "evidence/docs.html",
+            "url": "https://aotianzz.xyz/docs#endpoints",
+            "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "画面比例，直接发送 size，不换算像素",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "size"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "enum": [
+              "16:9",
+              "9:16",
+              "1:1",
+              "4:3",
+              "3:4",
+              "21:9"
+            ]
+          }
+        },
+        "resolution": {
+          "type": "string",
+          "required": false,
+          "description": "独立清晰度，具体支持档位待逐型号确认",
+          "source": {
+            "file": "evidence/docs.html",
+            "url": "https://aotianzz.xyz/docs#endpoints",
+            "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "string",
+            "description": "独立清晰度，具体支持档位待逐型号确认",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "resolution"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "examples": [
+              "480p",
+              "720p",
+              "1080p"
+            ]
+          }
+        },
+        "images": {
+          "type": "array",
+          "required": false,
+          "description": "参考图片 HTTPS URL 数组",
+          "source": {
+            "file": "evidence/docs.html",
+            "url": "https://aotianzz.xyz/docs#endpoints",
+            "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "array",
+            "description": "参考图片 HTTPS URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "images",
+                "reference_image_urls",
+                "image",
+                "input_reference"
+              ],
+              "capabilities": [
+                "image_video",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "videos": {
+          "type": "array",
+          "required": false,
+          "description": "参考视频 HTTPS URL 数组",
+          "source": {
+            "file": "evidence/docs.html",
+            "url": "https://aotianzz.xyz/docs#endpoints",
+            "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "array",
+            "description": "参考视频 HTTPS URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_videos"
+              ],
+              "capabilities": [
+                "video_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "audios": {
+          "type": "array",
+          "required": false,
+          "description": "参考音频 HTTPS URL 数组",
+          "source": {
+            "file": "evidence/docs.html",
+            "url": "https://aotianzz.xyz/docs#endpoints",
+            "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+            "readAt": "2026-10-24",
+            "status": "public-documentation"
+          },
+          "definition": {
+            "type": "array",
+            "description": "参考音频 HTTPS URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_audios"
+              ],
+              "capabilities": [
+                "audio_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      },
+      "mapping": {
+        "model": "model",
+        "prompt": "prompt",
+        "seconds": "seconds",
+        "aspect_ratio": "aspect_ratio",
+        "resolution": "resolution",
+        "images": "images",
+        "videos": "videos",
+        "audios": "audios"
+      },
+      "modes": {
+        "text_video": {
+          "required": []
+        },
+        "image_video": {
+          "required": []
+        },
+        "video_ref": {
+          "required": []
+        },
+        "audio_ref": {
+          "required": []
+        },
+        "mixed_ref": {
+          "required": []
+        }
+      },
+      "capabilities": {
+        "multipleReferences": true
+      },
+      "pending": [
+        "Account-visible model IDs, permissions, per-model duration and reference limits are unverified",
+        "resolution values are examples, not an exhaustive enum",
+        "metadata and input_video/input_audio lack a complete request contract",
+        "seed/fps/n/generate_audio/camera_movement lack model-specific definitions",
+        "Provider documentation disagrees about rejecting versus ignoring unsupported fields",
+        "Actual output duration and provider billing units are not generally documented"
+      ]
+    }
+  },
+  "documents": [
+    {
+      "id": "interface:ac205b7903df54b7",
+      "title": "AoTian 创建视频任务",
+      "method": "POST",
+      "path": "/v1/videos",
+      "description": "Canonical channel parameters projected from the reviewed API document; the plugin driver owns upstream field encoding",
+      "source": {
+        "file": "evidence/docs.html",
+        "url": "https://aotianzz.xyz/docs#endpoints",
+        "sha256": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
+        "readAt": "2026-10-24",
+        "status": "public-documentation"
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "当前令牌可用的视频模型",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "model"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          },
+          "prompt": {
+            "type": "string",
+            "description": "非空视频提示词",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "prompt"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minLength": 1
+          },
+          "seconds": {
+            "type": "integer",
+            "description": "视频时长，发送为 seconds 字符串",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "seconds",
+                "duration"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "minimum": 1,
+            "maximum": 3600
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "description": "画面比例，直接发送 size，不换算像素",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "size"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "enum": [
+              "16:9",
+              "9:16",
+              "1:1",
+              "4:3",
+              "3:4",
+              "21:9"
+            ]
+          },
+          "resolution": {
+            "type": "string",
+            "description": "独立清晰度，具体支持档位待逐型号确认",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "resolution"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "examples": [
+              "480p",
+              "720p",
+              "1080p"
+            ]
+          },
+          "images": {
+            "type": "array",
+            "description": "参考图片 HTTPS URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "images",
+                "reference_image_urls",
+                "image",
+                "input_reference"
+              ],
+              "capabilities": [
+                "image_video",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "videos": {
+            "type": "array",
+            "description": "参考视频 HTTPS URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_videos"
+              ],
+              "capabilities": [
+                "video_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "audios": {
+            "type": "array",
+            "description": "参考音频 HTTPS URL 数组",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_audios"
+              ],
+              "capabilities": [
+                "audio_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            },
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "required": [
+          "model",
+          "prompt"
+        ]
+      }
+    }
+  ],
+  "warnings": [
+    "Account-visible model IDs, permissions, per-model duration and reference limits are unverified",
+    "resolution values are examples, not an exhaustive enum",
+    "metadata and input_video/input_audio lack a complete request contract",
+    "seed/fps/n/generate_audio/camera_movement lack model-specific definitions",
+    "Provider documentation disagrees about rejecting versus ignoring unsupported fields",
+    "Actual output duration and provider billing units are not generally documented"
+  ]
+}

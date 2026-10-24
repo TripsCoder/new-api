@@ -1,0 +1,5812 @@
+{
+  "version": "2026-10-24.catalog-sync-v2",
+  "schema_version": 2,
+  "status": "snapshot",
+  "surface": "documentation",
+  "observed_at": "2026-10-24T15:43:26.022034+00:00",
+  "entry_enabled": true,
+  "origin": "https://xcmapi.org",
+  "scope": {
+    "group_id": 94,
+    "description": "仅描述当前视频综合区适配协议；实际可见模型须按调用者Key查询"
+  },
+  "authentication": "Authorization: Bearer YOUR_API_KEY",
+  "create": {
+    "method": "POST",
+    "path": "/v1/videos/generations",
+    "aliases": [
+      "/v1/videos"
+    ],
+    "content_type": "application/json"
+  },
+  "poll": {
+    "method": "GET",
+    "path": "/v1/videos/{task_id}"
+  },
+  "download": {
+    "method": "GET",
+    "path": "/v1/videos/{task_id}/content"
+  },
+  "create_auto_retry": false,
+  "create_idempotency_header_supported": false,
+  "client_request_id": {
+    "required": true,
+    "pattern": "^[A-Za-z0-9_.:-]{16,128}$",
+    "retry": "同一业务单复用原值；重复或冲突提交会拒绝，不保证再次返回原任务ID"
+  },
+  "asset_upload": {
+    "dedicated_video_asset_upload_endpoint_available": false,
+    "input_mode": "public_https_url_references",
+    "local_files": "先通过应用自己的存储获取公网HTTPS URL；不把本地路径、data URL或blob URL传入视频JSON",
+    "image_edit_is_not_asset_storage": true
+  },
+  "url_rules": {
+    "scheme": "https",
+    "ports": [
+      443
+    ],
+    "max_length": 8192,
+    "no_userinfo": true,
+    "no_fragment": true,
+    "no_local_or_private_addresses": true,
+    "signed_query_allowed": true,
+    "format_size_limits": "当前适配层未声明完整的源文件MIME/尺寸/大小上限，不从备注推断；必须满足实际上游限制"
+  },
+  "media_item_schema": {
+    "images": "URL字符串或{url,name?,type?:first_frame|end_frame,duration_seconds?}",
+    "videos": "URL字符串或{url,name?,duration_seconds?}；minimax-h3须对象并填写duration_seconds",
+    "audios": "URL字符串或{url,name?,duration_seconds?}；minimax-h3须对象并填写duration_seconds",
+    "materials": "{type:image|video|audio,url,name?,duration_seconds?}对象数组",
+    "duration_seconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 120,
+      "description": "素材自身时长；H3参考视频和音频均必填，二者总时长不得超过15秒"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "additional_properties": false
+  },
+  "mutual_exclusion_rules": [
+    "非空materials与非空images/videos/audios不能混用",
+    "首尾帧模式不能混普通参考图或视频/音频",
+    "首帧、尾帧各最多一个；尾帧必须同时有首帧",
+    "不支持素材的模型必须明确报错，不能删除字段后改为文生"
+  ],
+  "current_models_billing_unit": "per_model",
+  "published_model_count": 17,
+  "current_key_model_count": 20,
+  "pending_model_count": 3,
+  "models": [
+    {
+      "id": "minimax-h3",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "15",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "768p",
+          "default": "768p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9",
+          "max_items": 9
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 3；音视频素材须填写 duration_seconds，音视频合计不超过15秒",
+          "max_items": 3
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3；音视频素材须填写 duration_seconds，音视频合计不超过15秒",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 15；音视频素材须填写 duration_seconds，音视频合计不超过15秒",
+          "max_items": 15
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "768p",
+              "price": "0.1",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "768p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "3ae6ec19a5803196d542663fa01960cdd39ed23a0d68d7b6081501b45cf70e43",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "15",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-15",
+          "required": true,
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "default": "768p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "768p",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "minimax-h3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 15,
+            "ratio": "16:9",
+            "resolution": "768p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "minimax-h3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 15,
+            "ratio": "16:9",
+            "resolution": "768p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "minimax-h3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 15,
+            "ratio": "16:9",
+            "resolution": "768p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "h3_reference_image",
+          "label": "参考图片请求",
+          "body": {
+            "model": "minimax-h3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 15,
+            "ratio": "16:9",
+            "resolution": "768p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "h3_mixed_arrays",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "minimax-h3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 15,
+            "ratio": "16:9",
+            "resolution": "768p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": true,
+      "require_audio_duration_seconds": true,
+      "max_reference_duration_seconds": 15,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 15,
+      "resolutions": [
+        "768p"
+      ],
+      "example": {
+        "model": "minimax-h3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 15,
+        "ratio": "16:9",
+        "resolution": "768p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.0-fast-G3",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-12",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p, 1080p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 8",
+          "max_items": 8
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 1",
+          "max_items": 1
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 12",
+          "max_items": 12
+        }
+      ],
+      "groups": [
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "1080p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "2k",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "1080p",
+              "price": "1.4",
+              "published": true
+            },
+            {
+              "label": "2k",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": "1",
+              "published": true
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "e424fc017e52430b7b256985ac1f63ed88ac25ef4dc532d65a5074b7867f9662",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-12",
+          "required": true,
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p, 1080p, 2k",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.0-fast-G3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.0-fast-G3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.0-fast-G3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 8,
+      "max_reference_videos": 1,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 12,
+      "duration_default": 5,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ],
+      "example": {
+        "model": "seedance-2.0-fast-G3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.0-mini-G3",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-12",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 5",
+          "max_items": 5
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 8",
+          "max_items": 8
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.7",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "7e2b6aa60f306d31778a86b79111eb6f289508bbab2a1050d853189d24439fee",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-12",
+          "required": true,
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.0-mini-G3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.0-mini-G3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.0-mini-G3",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 5,
+      "max_reference_videos": 0,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 12,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.0-mini-G3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-G1",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "5-15",
+          "default": "15",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p, 720p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 30",
+          "max_items": 30
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 40",
+          "max_items": 40
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": "0.5",
+              "published": true
+            },
+            {
+              "label": "720p",
+              "price": "0.7",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "0048a551d5c39c9cbebe22ec5bd4283a24cd6e9aa39c85793c326901c8fddc6b",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "30",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "5-30",
+          "required": true,
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "480p, 720p",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-G1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 15,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.5-G1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 15,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.5-G1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 15,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 0,
+      "max_reference_audios": 10,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 5,
+      "duration_max": 15,
+      "duration_default": 15,
+      "resolutions": [
+        "480p",
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.5-G1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 15,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-G3-D1",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-30",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 30",
+          "max_items": 30
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 50",
+          "max_items": 50
+        }
+      ],
+      "groups": [
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "4.8",
+              "published": true
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "ee9e98fbb1e1a9599073d4027b287b3b11a9c4222d5b944213940db9bfd26ce8",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-30",
+          "required": true,
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "required": true,
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-G3-D1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.5-G3-D1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.5-G3-D1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 30,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.5-G3-D1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-g2-1",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p, 720p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 30",
+          "max_items": 30
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 10；720p上限 0",
+          "max_items": 10
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 50",
+          "max_items": 50
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": "0.5",
+              "published": true
+            },
+            {
+              "label": "720p",
+              "price": "0.6",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "9a9a66d6d3763407a73527900b433dd7bca23a8a71cb61a11f622f1c17e45373",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-30",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "480p, 720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-g2-1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.5-g2-1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.5-g2-1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "video_reference",
+          "label": "480p参考视频请求",
+          "body": {
+            "model": "seedance-2.5-g2-1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "480p",
+            "videos": [
+              "https://your-cdn.example.com/reference.mp4"
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "media_limits_by_resolution": {
+        "720p": {
+          "videos": 0
+        }
+      },
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "480p",
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.5-g2-1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-g2-2",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p, 720p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 30",
+          "max_items": 30
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 50",
+          "max_items": 50
+        }
+      ],
+      "groups": [
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": "0.7",
+              "published": true
+            },
+            {
+              "label": "720p",
+              "price": "0.9",
+              "published": true
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "8c91444ec3b1fc54582ddb6ef6bf60d463758b888f2e6498a8daf84e09697514",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-30",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "480p, 720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-g2-2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.5-g2-2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.5-g2-2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "480p",
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.5-g2-2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-g2-c1",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 30",
+          "max_items": 30
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 40",
+          "max_items": 40
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.5",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "8370889252cdb79a508bad47177fb2289b298ab94c28c0b015b324063a2df8fa",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-30",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-g2-c1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.5-g2-c1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.5-g2-c1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 0,
+      "max_reference_audios": 10,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.5-g2-c1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-g4-m-官转",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p, 720p, 1080p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 30",
+          "max_items": 30
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 50",
+          "max_items": 50
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": "0.4",
+              "published": true
+            },
+            {
+              "label": "720p",
+              "price": "0.7",
+              "published": true
+            },
+            {
+              "label": "1080p",
+              "price": "1.1",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "1080p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "acf659008e34d6c0bef7e404bab6fc2953bf4ecb02fd10c5dd399535d2f0282c",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-30",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "480p, 720p, 1080p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-g4-m-官转",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.5-g4-m-官转",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.5-g4-m-官转",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "example": {
+        "model": "seedance-2.5-g4-m-官转",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-g5-L",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 30",
+          "max_items": 30
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 50",
+          "max_items": 50
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.5",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "554733603da6f9dd04b42c86ae948c8d3b0763cbb3217a454e50c97508cd7baf",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-30",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-g5-L",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.5-g5-L",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.5-g5-L",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.5-g5-L",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-g5-v2",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-30",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 30",
+          "max_items": 30
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 10",
+          "max_items": 10
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 50",
+          "max_items": 50
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "7.8",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "ee9e98fbb1e1a9599073d4027b287b3b11a9c4222d5b944213940db9bfd26ce8",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-30",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-g5-v2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance-2.5-g5-v2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance-2.5-g5-v2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 30,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance-2.5-g5-v2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance2.0-g2-m1",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9",
+          "max_items": 9
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 15",
+          "max_items": 15
+        }
+      ],
+      "groups": [
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.5",
+              "published": true
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "59c52126c6257ee4a25aaa9b912bdb3216fea8469512faadcd7de12668c5fddd",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-15",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance2.0-g2-m1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance2.0-g2-m1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance2.0-g2-m1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance2.0-g2-m1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance2.0-g2-o1",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9",
+          "max_items": 9
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 15",
+          "max_items": 15
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.6",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "59c52126c6257ee4a25aaa9b912bdb3216fea8469512faadcd7de12668c5fddd",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-15",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance2.0-g2-o1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance2.0-g2-o1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance2.0-g2-o1",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance2.0-g2-o1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance2.0-g2-o2",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9",
+          "max_items": 9
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 12",
+          "max_items": 12
+        }
+      ],
+      "groups": [
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "5.5",
+              "published": true
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "362c319b0171946500b5fc1cd052f69b01fc850a5407085118442f78f8dbaa30",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-15",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance2.0-g2-o2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance2.0-g2-o2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance2.0-g2-o2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 0,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance2.0-g2-o2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance2.0-g4-官转",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5",
+          "required": true
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p, 1080p",
+          "default": "720p",
+          "required": true
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9",
+          "max_items": 9
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 15",
+          "max_items": 15
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.8",
+              "published": true
+            },
+            {
+              "label": "1080p",
+              "price": "3",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "1080p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "cf1a2498655d545f879af701a372964d51ecf8ee60688ac75c4c8f195b4ab493",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-15",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p, 1080p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance2.0-g4-官转",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance2.0-g4-官转",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance2.0-g4-官转",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ],
+      "example": {
+        "model": "seedance2.0-g4-官转",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance2.0-g5-v",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9",
+          "max_items": 9
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 15",
+          "max_items": 15
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "3.6",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "164acd74b9836e242eb98d3c6b05cb3e2d0962d1c757537ebf9ef91aab69fcab",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-15",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance2.0-g5-v",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance2.0-g5-v",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance2.0-g5-v",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance2.0-g5-v",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance2.0-g5-v2",
+      "available_at_snapshot": true,
+      "parameter_status": "executable",
+      "status": "available",
+      "reason": "",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-15",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "720p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "本站上限 9",
+          "max_items": 9
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "本站上限 3",
+          "max_items": 3
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "本站上限 15",
+          "max_items": 15
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": true,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "4.2",
+              "published": true
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "164acd74b9836e242eb98d3c6b05cb3e2d0962d1c757537ebf9ef91aab69fcab",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-15",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "720p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance2.0-g5-v2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p"
+          }
+        },
+        {
+          "kind": "image_reference",
+          "label": "参考图片请求",
+          "body": {
+            "model": "seedance2.0-g5-v2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ]
+          }
+        },
+        {
+          "kind": "mixed_materials",
+          "label": "混合参考素材请求",
+          "body": {
+            "model": "seedance2.0-g5-v2",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "720p",
+            "images": [
+              "https://your-cdn.example.com/reference.jpg"
+            ],
+            "videos": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp4",
+                "duration_seconds": 3
+              }
+            ],
+            "audios": [
+              {
+                "url": "https://your-cdn.example.com/reference.mp3",
+                "duration_seconds": 3
+              }
+            ]
+          }
+        }
+      ],
+      "media_fields": [
+        "images",
+        "videos",
+        "audios",
+        "materials"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 15,
+      "duration_default": 5,
+      "resolutions": [
+        "720p"
+      ],
+      "example": {
+        "model": "seedance2.0-g5-v2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "seedance-2.5-g4-m1-官转",
+      "available_at_snapshot": false,
+      "parameter_status": "executable",
+      "status": "paused",
+      "reason": "historical_profile_change_requires_review",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "client_request_id",
+          "type": "string",
+          "description": "每个订单固定且唯一，重试必须复用；16-128个字母、数字或_ . : -",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "range": "4-30",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "range": "480p",
+          "default": "480p"
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": "historical_profile_change_requires_review"
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": "0bb7e81feab3894622635a2cd3aac551c70428044d6bb6abd7dc1a7642e78d37",
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-25",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "480p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "480p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "text_only",
+          "label": "文生视频请求",
+          "body": {
+            "model": "seedance-2.5-g4-m1-官转",
+            "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+            "prompt": "请填写视频内容描述。",
+            "duration": 5,
+            "ratio": "16:9",
+            "resolution": "480p"
+          }
+        }
+      ],
+      "media_fields": [],
+      "max_reference_images": 0,
+      "max_reference_videos": 0,
+      "max_reference_audios": 0,
+      "require_video_duration_seconds": false,
+      "require_audio_duration_seconds": false,
+      "duration_min": 4,
+      "duration_max": 30,
+      "duration_default": 5,
+      "resolutions": [
+        "480p"
+      ],
+      "example": {
+        "model": "seedance-2.5-g4-m1-官转",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "480p"
+      }
+    },
+    {
+      "id": "seedance2.5",
+      "available_at_snapshot": false,
+      "parameter_status": "upstream_reference",
+      "status": "reference_only",
+      "reason": "rounded_price_below_cost",
+      "billing_unit": "per_request",
+      "parameters": [
+        {
+          "name": "model",
+          "type": "string",
+          "description": "视频模型 ID",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "description": "想要生成视频的文字描述",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "integer",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "range": "4-30",
+          "default": "5"
+        },
+        {
+          "name": "ratio",
+          "type": "enum",
+          "description": "输出宽高比",
+          "range": "16:9, 9:16, 1:1",
+          "default": "16:9"
+        },
+        {
+          "name": "resolution",
+          "type": "enum",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "range": "480p, 720p, 1080p",
+          "default": "720p"
+        },
+        {
+          "name": "images",
+          "type": "array",
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用"
+        },
+        {
+          "name": "videos",
+          "type": "array",
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name"
+        },
+        {
+          "name": "audios",
+          "type": "array",
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name"
+        },
+        {
+          "name": "materials",
+          "type": "array",
+          "description": "可选 materials[{type,url,name?}]，命名规则同上"
+        }
+      ],
+      "groups": [
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "default",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        },
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": false,
+          "unit_label": "元/条",
+          "tiers": [
+            {
+              "label": "default",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": "rounded_price_below_cost"
+        }
+      ],
+      "parameters_signature": null,
+      "upstream_parameters": [
+        {
+          "description": "视频模型 ID",
+          "name": "model",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "想要生成视频的文字描述",
+          "name": "prompt",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": "5",
+          "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+          "name": "duration",
+          "range": "4-30",
+          "type": "integer"
+        },
+        {
+          "default": "16:9",
+          "description": "输出宽高比",
+          "name": "ratio",
+          "range": "16:9, 9:16, 1:1",
+          "type": "enum"
+        },
+        {
+          "default": "720p",
+          "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+          "name": "resolution",
+          "range": "480p, 720p, 1080p",
+          "type": "enum"
+        },
+        {
+          "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+          "name": "images",
+          "type": "array"
+        },
+        {
+          "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+          "name": "videos",
+          "type": "array"
+        },
+        {
+          "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+          "name": "audios",
+          "type": "array"
+        },
+        {
+          "description": "可选 materials[{type,url,name?}]，命名规则同上",
+          "name": "materials",
+          "type": "array"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "wan3.0-超限",
+      "available_at_snapshot": false,
+      "parameter_status": "upstream_reference",
+      "status": "reference_only",
+      "reason": "dynamic_parameters_incomplete",
+      "billing_unit": "per_second",
+      "parameters": [
+        {
+          "name": "resolution",
+          "type": "enum",
+          "description": "输出分辨率预设",
+          "range": "480p, 720p, 1080p",
+          "default": "720p"
+        }
+      ],
+      "groups": [
+        {
+          "name": "vip",
+          "id": 94,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "1080p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": "dynamic_parameters_incomplete"
+        },
+        {
+          "name": "default",
+          "id": null,
+          "accepting": false,
+          "unit_label": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "1080p",
+              "price": null,
+              "published": false
+            }
+          ],
+          "reason": ""
+        }
+      ],
+      "parameters_signature": null,
+      "upstream_parameters": [
+        {
+          "default": "720p",
+          "description": "输出分辨率预设",
+          "name": "resolution",
+          "range": "480p, 720p, 1080p",
+          "type": "enum"
+        }
+      ],
+      "examples": []
+    }
+  ],
+  "examples": {
+    "text_only": {
+      "summary": "minimax-h3：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "768p",
+              "price": "0.1",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "768p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "minimax-h3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 15,
+        "ratio": "16:9",
+        "resolution": "768p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_0_fast_G3": {
+      "summary": "seedance-2.0-fast-G3：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_request",
+      "price_snapshot": [
+        {
+          "group": "default",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "1080p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "2k",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        },
+        {
+          "group": "vip",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "1080p",
+              "price": "1.4",
+              "published": true
+            },
+            {
+              "label": "2k",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": "1",
+              "published": true
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.0-fast-G3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_0_mini_G3": {
+      "summary": "seedance-2.0-mini-G3：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_request",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.7",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.0-mini-G3",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_5_G1": {
+      "summary": "seedance-2.5-G1：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": "0.5",
+              "published": true
+            },
+            {
+              "label": "720p",
+              "price": "0.7",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.5-G1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 15,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_5_G3_D1": {
+      "summary": "seedance-2.5-G3-D1：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_request",
+      "price_snapshot": [
+        {
+          "group": "default",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        },
+        {
+          "group": "vip",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "4.8",
+              "published": true
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.5-G3-D1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_5_g2_1": {
+      "summary": "seedance-2.5-g2-1：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": "0.5",
+              "published": true
+            },
+            {
+              "label": "720p",
+              "price": "0.6",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.5-g2-1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_5_g2_2": {
+      "summary": "seedance-2.5-g2-2：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        },
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": "0.7",
+              "published": true
+            },
+            {
+              "label": "720p",
+              "price": "0.9",
+              "published": true
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.5-g2-2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_5_g2_c1": {
+      "summary": "seedance-2.5-g2-c1：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.5",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.5-g2-c1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_5_g4_m___": {
+      "summary": "seedance-2.5-g4-m-官转：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": "0.4",
+              "published": true
+            },
+            {
+              "label": "720p",
+              "price": "0.7",
+              "published": true
+            },
+            {
+              "label": "1080p",
+              "price": "1.1",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "480p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "1080p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.5-g4-m-官转",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_5_g5_L": {
+      "summary": "seedance-2.5-g5-L：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.5",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.5-g5-L",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance_2_5_g5_v2": {
+      "summary": "seedance-2.5-g5-v2：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_request",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "7.8",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance-2.5-g5-v2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance2_0_g2_m1": {
+      "summary": "seedance2.0-g2-m1：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        },
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.5",
+              "published": true
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance2.0-g2-m1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance2_0_g2_o1": {
+      "summary": "seedance2.0-g2-o1：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.6",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance2.0-g2-o1",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance2_0_g2_o2": {
+      "summary": "seedance2.0-g2-o2：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_request",
+      "price_snapshot": [
+        {
+          "group": "default",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        },
+        {
+          "group": "vip",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "5.5",
+              "published": true
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance2.0-g2-o2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance2_0_g4___": {
+      "summary": "seedance2.0-g4-官转：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_second",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "0.8",
+              "published": true
+            },
+            {
+              "label": "1080p",
+              "price": "3",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/秒",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            },
+            {
+              "label": "1080p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance2.0-g4-官转",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance2_0_g5_v": {
+      "summary": "seedance2.0-g5-v：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_request",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "3.6",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance2.0-g5-v",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    },
+    "seedance2_0_g5_v2": {
+      "summary": "seedance2.0-g5-v2：当前目录请求示例",
+      "verification": "live_catalog_contract_only_no_paid_generation",
+      "billing_unit": "per_request",
+      "price_snapshot": [
+        {
+          "group": "vip",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": "4.2",
+              "published": true
+            }
+          ]
+        },
+        {
+          "group": "default",
+          "unit": "元/条",
+          "tiers": [
+            {
+              "label": "720p",
+              "price": null,
+              "published": false
+            }
+          ]
+        }
+      ],
+      "body": {
+        "model": "seedance2.0-g5-v2",
+        "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+        "prompt": "请填写视频内容描述。",
+        "duration": 5,
+        "ratio": "16:9",
+        "resolution": "720p",
+        "images": [
+          "https://your-cdn.example.com/reference.jpg"
+        ],
+        "videos": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp4",
+            "duration_seconds": 3
+          }
+        ],
+        "audios": [
+          {
+            "url": "https://your-cdn.example.com/reference.mp3",
+            "duration_seconds": 3
+          }
+        ]
+      }
+    }
+  },
+  "native_models_not_in_group": [
+    {
+      "id": "h3",
+      "protocol": "独立原生h3协议，使用reference_images/reference_audios/aspect_ratio；不能替换为minimax-h3",
+      "requires_separate_key_visibility": true,
+      "reference": "QuickStart.html#h3-video"
+    }
+  ],
+  "verification": {
+    "method": "authenticated_provider_visibility_and_current_public_catalog",
+    "paid_generation_performed": false,
+    "upstream_media_fetch_or_output_not_verified": true,
+    "placeholder_urls_must_be_replaced": true,
+    "upstream_resolution_wire_not_normalized": true
+  },
+  "provenance": {
+    "adapter_sha256": "da20302cddd0b48c811f21ae0382f6f0d8242c40155e07340d242f6064ac842c",
+    "managed_adapter_sha256": "38e2ff85cab5c173f48ce10f221fb6a04198fe7c3a4e01da5020092bcf0e919f",
+    "live_parameters_url": "https://xcmapi.org/api/public/prices",
+    "key_catalog_url": "/v1/catalog",
+    "catalog_sha256": "32137de98f671f041aa9f9f0080d5407fd959a50f579ab3e5313438eb4691a9e"
+  },
+  "verified_end_to_end_models": [],
+  "historical_verification": {
+    "deprecated": true,
+    "observed_at": "2026-10-01T09:47:31+08:00",
+    "verified_end_to_end_models": [
+      {
+        "id": "seedance-2.0-900-特惠",
+        "duration": 5,
+        "resolution": "720p",
+        "actual_billing": 0.8,
+        "billing_records": 1,
+        "repeat_gets_did_not_add_billing": true
+      }
+    ],
+    "warning": "历史型号与任务记录，仅保留审计意义，不能据此调用当前模型或推断素材支持"
+  },
+  "validation_gaps": [],
+  "source_model_count": 118,
+  "accepting_model_count": 17,
+  "live_catalog": {
+    "url": "https://xcmapi.org/api/public/prices",
+    "json_pointer": "/model_catalog",
+    "observed_at": "2026-10-24T15:43:26.022034+00:00",
+    "source_version": "a42d372ccf0b5dd13ecf71203521f9d2",
+    "catalog_sha256": "32137de98f671f041aa9f9f0080d5407fd959a50f579ab3e5313438eb4691a9e",
+    "refresh_seconds": 30,
+    "availability": "snapshot_only_query_live_catalog_before_create",
+    "availability_description": "此文件记录检查时的快照。提交前查询实时 model_catalog，并以当前 API KEY 权限与接单保护为准。"
+  },
+  "parameter_verified_model_count": 18,
+  "parameter_reference_notice": "parameters为本站当前执行结构；upstream_parameters仅为上游参考，未列入本站parameters的字段不能直接提交。"
+}

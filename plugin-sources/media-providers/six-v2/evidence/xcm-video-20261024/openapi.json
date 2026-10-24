@@ -1,0 +1,5314 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "鸡出没API · 常用端点参考",
+    "version": "2026-10-14-media-docs",
+    "description": "常用端点参考。视频综合区的素材字段来自当前适配代码和能力快照；示例经代码校验与模拟透传验证，未发起真实生成。说明文字或模型可见性不代表支持任意素材。",
+    "x-documentation": "https://www.xcmapi.com/docs/QuickStart.html",
+    "x-video-contract": "https://xcmapi.org/docs/video-contract.json"
+  },
+  "servers": [
+    {
+      "url": "https://xcmapi.org",
+      "description": "API Origin，不含 /v1；下面路径已含版本前缀。"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "用户自己的 API Key"
+      },
+      "geminiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-goog-api-key"
+      }
+    },
+    "schemas": {
+      "MediaRefString": {
+        "type": "string",
+        "format": "uri",
+        "maxLength": 8192,
+        "description": "公网HTTPS（443）地址；不能是本地路径、data/blob URL、私网地址或带用户名密码/片段的URL。签名查询参数可保留。",
+        "pattern": "^https://"
+      },
+      "ImageRef": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "$ref": "#/components/schemas/MediaRefString"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 120,
+            "description": "素材自身时长（秒），与输出duration无关。"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "first_frame",
+              "end_frame"
+            ],
+            "description": "仅首尾帧模式使用；普通参考图省略type。"
+          }
+        }
+      },
+      "AudioRef": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "$ref": "#/components/schemas/MediaRefString"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 120,
+            "description": "素材自身时长（秒），与输出duration无关。"
+          }
+        }
+      },
+      "VideoRef": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "$ref": "#/components/schemas/MediaRefString"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 120,
+            "description": "素材自身时长（秒），与输出duration无关。"
+          }
+        },
+        "description": "参考视频对象；H3须填写duration_seconds，参考视频与音频合计不得超过15秒。"
+      },
+      "MaterialItem": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "$ref": "#/components/schemas/MediaRefString"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "duration_seconds": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 120,
+                "description": "素材自身时长（秒），与输出duration无关。"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "image"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "$ref": "#/components/schemas/MediaRefString"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "duration_seconds": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 120,
+                "description": "素材自身时长（秒），与输出duration无关。"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "video"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "$ref": "#/components/schemas/MediaRefString"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "duration_seconds": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 120,
+                "description": "素材自身时长（秒），与输出duration无关。"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "audio"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "GwayVideoCreate": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt",
+          "client_request_id"
+        ],
+        "additionalProperties": false,
+        "description": "视频综合区Gway协议。以下约束为带时间戳的执行参数快照；参数可验证不代表正在接单。提交前读取 /api/public/prices 的 model_catalog，且以当前 API KEY 的 /v1/models 权限为准。",
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "minimax-h3",
+              "seedance-2.0-fast-G3",
+              "seedance-2.0-mini-G3",
+              "seedance-2.5-G1",
+              "seedance-2.5-G3-D1",
+              "seedance-2.5-g2-1",
+              "seedance-2.5-g2-2",
+              "seedance-2.5-g2-c1",
+              "seedance-2.5-g4-m-官转",
+              "seedance-2.5-g5-L",
+              "seedance-2.5-g5-v2",
+              "seedance2.0-g2-m1",
+              "seedance2.0-g2-o1",
+              "seedance2.0-g2-o2",
+              "seedance2.0-g4-官转",
+              "seedance2.0-g5-v",
+              "seedance2.0-g5-v2",
+              "seedance-2.5-g4-m1-官转"
+            ]
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "client_request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{16,128}$",
+            "description": "每个业务单唯一且固定；替换示例占位值。重试不能更换ID。重复提交可能返回422，不能据此再新建订单。"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "description": "每个型号的执行时长范围见 oneOf 与实时目录；按秒模型保留本站已验证的时长上限。"
+          },
+          "ratio": {
+            "type": "string",
+            "description": "建议使用的画幅字段；取值以当前模型为准。"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "deprecated": true,
+            "description": "ratio的兼容别名；二者同时传时必须一致。推荐仅传ratio。"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "当前模型支持的分辨率；minimax-h3按实时执行参数使用小写2k。不要把旧768p或自行猜测的拼写当作当前有效参数。"
+          },
+          "images": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MediaRefString"
+                },
+                {
+                  "$ref": "#/components/schemas/ImageRef"
+                }
+              ]
+            }
+          },
+          "videos": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MediaRefString"
+                },
+                {
+                  "$ref": "#/components/schemas/VideoRef"
+                }
+              ]
+            }
+          },
+          "audios": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MediaRefString"
+                },
+                {
+                  "$ref": "#/components/schemas/AudioRef"
+                }
+              ]
+            }
+          },
+          "materials": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/MaterialItem"
+            }
+          }
+        },
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "materials",
+                    "images"
+                  ],
+                  "properties": {
+                    "materials": {
+                      "minItems": 1
+                    },
+                    "images": {
+                      "minItems": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "materials",
+                    "videos"
+                  ],
+                  "properties": {
+                    "materials": {
+                      "minItems": 1
+                    },
+                    "videos": {
+                      "minItems": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "materials",
+                    "audios"
+                  ],
+                  "properties": {
+                    "materials": {
+                      "minItems": 1
+                    },
+                    "audios": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "x-model-constraints": {
+          "minimax-h3": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 3,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "768p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second",
+            "require_video_duration_seconds": true,
+            "require_audio_duration_seconds": true,
+            "max_reference_duration_seconds": 15
+          },
+          "seedance-2.0-fast-G3": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 8,
+            "max_videos": 1,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 12,
+            "resolutions": [
+              "720p",
+              "1080p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_request"
+          },
+          "seedance-2.0-mini-G3": {
+            "media_fields": [
+              "images",
+              "audios",
+              "materials"
+            ],
+            "max_images": 5,
+            "max_videos": 0,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 12,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_request"
+          },
+          "seedance-2.5-G1": {
+            "media_fields": [
+              "images",
+              "audios",
+              "materials"
+            ],
+            "max_images": 30,
+            "max_videos": 0,
+            "max_audios": 10,
+            "duration_min": 5,
+            "duration_max": 15,
+            "resolutions": [
+              "480p",
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second"
+          },
+          "seedance-2.5-G3-D1": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 30,
+            "max_videos": 10,
+            "max_audios": 10,
+            "duration_min": 4,
+            "duration_max": 30,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_request"
+          },
+          "seedance-2.5-g2-1": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 30,
+            "max_videos": 10,
+            "max_audios": 10,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "480p",
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second",
+            "media_limits_by_resolution": {
+              "720p": {
+                "videos": 0
+              }
+            }
+          },
+          "seedance-2.5-g2-2": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 30,
+            "max_videos": 10,
+            "max_audios": 10,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "480p",
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second"
+          },
+          "seedance-2.5-g2-c1": {
+            "media_fields": [
+              "images",
+              "audios",
+              "materials"
+            ],
+            "max_images": 30,
+            "max_videos": 0,
+            "max_audios": 10,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second"
+          },
+          "seedance-2.5-g4-m-官转": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 30,
+            "max_videos": 10,
+            "max_audios": 10,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "480p",
+              "720p",
+              "1080p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second"
+          },
+          "seedance-2.5-g5-L": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 30,
+            "max_videos": 10,
+            "max_audios": 10,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second"
+          },
+          "seedance-2.5-g5-v2": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 30,
+            "max_videos": 10,
+            "max_audios": 10,
+            "duration_min": 4,
+            "duration_max": 30,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_request"
+          },
+          "seedance2.0-g2-m1": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 3,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second"
+          },
+          "seedance2.0-g2-o1": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 3,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second"
+          },
+          "seedance2.0-g2-o2": {
+            "media_fields": [
+              "images",
+              "audios",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 0,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_request"
+          },
+          "seedance2.0-g4-官转": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 3,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p",
+              "1080p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_second"
+          },
+          "seedance2.0-g5-v": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 3,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_request"
+          },
+          "seedance2.0-g5-v2": {
+            "media_fields": [
+              "images",
+              "videos",
+              "audios",
+              "materials"
+            ],
+            "max_images": 9,
+            "max_videos": 3,
+            "max_audios": 3,
+            "duration_min": 4,
+            "duration_max": 15,
+            "resolutions": [
+              "720p"
+            ],
+            "available_at_snapshot": true,
+            "reason": "",
+            "billing_unit": "per_request"
+          },
+          "seedance-2.5-g4-m1-官转": {
+            "media_fields": [],
+            "max_images": 0,
+            "max_videos": 0,
+            "max_audios": 0,
+            "duration_min": 4,
+            "duration_max": 30,
+            "resolutions": [
+              "480p"
+            ],
+            "available_at_snapshot": false,
+            "reason": "historical_profile_change_requires_review",
+            "billing_unit": "per_request"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "minimax-h3"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "768p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 9
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 3,
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/VideoRef"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "url",
+                        "duration_seconds"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3,
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AudioRef"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "url",
+                        "duration_seconds"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 15,
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/MaterialItem"
+                    },
+                    {
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "image"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "video",
+                                "audio"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "duration_seconds"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ]
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.0-fast-G3"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 12
+              },
+              "resolution": {
+                "enum": [
+                  "720p",
+                  "1080p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 8
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 1
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 12
+              }
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.0-mini-G3"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 12
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 5
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 8
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "videos"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-G1"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 5,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 30
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 40
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "videos"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-G3-D1"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 30
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 30
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 50
+              }
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-g2-1"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 30
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 50
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ],
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "resolution": {
+                          "enum": [
+                            "720p"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "resolution"
+                      ]
+                    }
+                  },
+                  {
+                    "properties": {
+                      "videos": {
+                        "type": "array",
+                        "maxItems": 0
+                      },
+                      "materials": {
+                        "items": {
+                          "not": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "video"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-g2-2"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 30
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 50
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ]
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-g2-c1"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 30
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 40
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "videos"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-g4-m-官转"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "480p",
+                  "720p",
+                  "1080p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 30
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 50
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ]
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-g5-L"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 30
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 50
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ]
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-g5-v2"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 30
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 30
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 10
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 50
+              }
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance2.0-g2-m1"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 9
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 15
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ]
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance2.0-g2-o1"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 9
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 15
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ]
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance2.0-g2-o2"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 9
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 12
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "videos"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance2.0-g4-官转"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p",
+                  "1080p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 9
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 15
+              }
+            },
+            "required": [
+              "duration",
+              "resolution"
+            ]
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance2.0-g5-v"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 9
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 15
+              }
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance2.0-g5-v2"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15
+              },
+              "resolution": {
+                "enum": [
+                  "720p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "maxItems": 9
+              },
+              "videos": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "audios": {
+                "type": "array",
+                "maxItems": 3
+              },
+              "materials": {
+                "type": "array",
+                "maxItems": 15
+              }
+            }
+          },
+          {
+            "properties": {
+              "model": {
+                "enum": [
+                  "seedance-2.5-g4-m1-官转"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 30
+              },
+              "resolution": {
+                "enum": [
+                  "480p"
+                ]
+              },
+              "ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              },
+              "aspect_ratio": {
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "images"
+                  ]
+                },
+                {
+                  "required": [
+                    "videos"
+                  ]
+                },
+                {
+                  "required": [
+                    "audios"
+                  ]
+                },
+                {
+                  "required": [
+                    "materials"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "x-live-model-catalog": {
+          "url": "https://xcmapi.org/api/public/prices",
+          "json_pointer": "/model_catalog",
+          "observed_at": "2026-10-24T15:43:26.022034+00:00",
+          "source_version": "a42d372ccf0b5dd13ecf71203521f9d2",
+          "catalog_sha256": "32137de98f671f041aa9f9f0080d5407fd959a50f579ab3e5313438eb4691a9e",
+          "refresh_seconds": 30,
+          "availability": "snapshot_only_query_live_catalog_before_create",
+          "availability_description": "此文件记录检查时的快照。提交前查询实时 model_catalog，并以当前 API KEY 权限与接单保护为准。"
+        },
+        "x-upstream-parameters": {
+          "minimax-h3": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "15",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-15",
+              "required": true,
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "default": "768p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "768p",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.0-fast-G3": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-12",
+              "required": true,
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p, 1080p, 2k",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.0-mini-G3": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-12",
+              "required": true,
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-G1": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "30",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "5-30",
+              "required": true,
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "480p, 720p",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-G3-D1": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-30",
+              "required": true,
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "required": true,
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-g2-1": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-30",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "480p, 720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-g2-2": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-30",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "480p, 720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-g2-c1": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-30",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-g4-m-官转": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-30",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "480p, 720p, 1080p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-g5-L": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-30",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-g5-v2": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-30",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance2.0-g2-m1": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-15",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance2.0-g2-o1": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-15",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance2.0-g2-o2": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-15",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance2.0-g4-官转": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-15",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p, 1080p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance2.0-g5-v": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-15",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance2.0-g5-v2": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-15",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "720p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance-2.5-g4-m1-官转": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-25",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "480p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "480p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "seedance2.5": [
+            {
+              "description": "视频模型 ID",
+              "name": "model",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "想要生成视频的文字描述",
+              "name": "prompt",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "default": "5",
+              "description": "视频时长（秒）。客户端未传时长时使用此默认值。",
+              "name": "duration",
+              "range": "4-30",
+              "type": "integer"
+            },
+            {
+              "default": "16:9",
+              "description": "输出宽高比",
+              "name": "ratio",
+              "range": "16:9, 9:16, 1:1",
+              "type": "enum"
+            },
+            {
+              "default": "720p",
+              "description": "输出分辨率预设。启用视频计费时，客户端未传分辨率则使用此默认值。",
+              "name": "resolution",
+              "range": "480p, 720p, 1080p",
+              "type": "enum"
+            },
+            {
+              "description": "参考图：URL 或 {url,name?}。不传 name→图片N；传了 name→用于 @引用",
+              "name": "images",
+              "type": "array"
+            },
+            {
+              "description": "参考视频：URL 或 {url,name?}。不传 name→视频N；传了则用该 name",
+              "name": "videos",
+              "type": "array"
+            },
+            {
+              "description": "参考音频：URL 或 {url,name?}。不传 name→音频N；传了则用该 name",
+              "name": "audios",
+              "type": "array"
+            },
+            {
+              "description": "可选 materials[{type,url,name?}]，命名规则同上",
+              "name": "materials",
+              "type": "array"
+            }
+          ],
+          "wan3.0-超限": [
+            {
+              "default": "720p",
+              "description": "输出分辨率预设",
+              "name": "resolution",
+              "range": "480p, 720p, 1080p",
+              "type": "enum"
+            }
+          ]
+        }
+      },
+      "NativeH3Create": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "h3"
+            ]
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 15,
+            "description": "官方计费上限 15 秒；实际时长是否允许以该模型上游约束为准。"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "description": "H3 使用该字段而非 ratio；具体值以模型约束为准。"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "计价档不等于经过出片验证；见现行 H3 章节。"
+          }
+        },
+        "additionalProperties": true,
+        "description": "仅供模型名h3的独立原生协议参考，需当前Key另有该模型权限；不属于Gway minimax-h3。保留原字段，本次未做该原生协议的付费测试。"
+      }
+    }
+  },
+  "paths": {
+    "/v1/models": {
+      "get": {
+        "operationId": "listModels",
+        "summary": "读取当前 Key 可见模型目录",
+        "description": "不是价格 API，也不证明端点或模态已经通过测试。",
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/chat/completions": {
+      "post": {
+        "operationId": "chatCompletions",
+        "summary": "聊天与视觉理解",
+        "description": "messages 中可用文字或图片内容块；流式为 SSE，解析 choices[].delta，不能套用 Responses 事件。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "messages"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "messages": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "role",
+                            "content"
+                          ],
+                          "properties": {
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "system",
+                                "developer",
+                                "user"
+                              ]
+                            },
+                            "content": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "role"
+                          ],
+                          "properties": {
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "assistant"
+                              ]
+                            },
+                            "content": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                  }
+                                }
+                              ]
+                            },
+                            "tool_calls": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          "additionalProperties": true,
+                          "anyOf": [
+                            {
+                              "required": [
+                                "content"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "tool_calls"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "role",
+                            "content",
+                            "tool_call_id"
+                          ],
+                          "properties": {
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "tool"
+                              ]
+                            },
+                            "content": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                  }
+                                }
+                              ]
+                            },
+                            "tool_call_id": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  },
+                  "max_tokens": {
+                    "type": "integer"
+                  },
+                  "temperature": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\ndata: [DONE]\n\n"
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/responses": {
+      "post": {
+        "operationId": "responses",
+        "summary": "Responses API",
+        "description": "input 和 output 结构；流式事件与聊天不同。模型需支持该端点。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "input"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "input": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      }
+                    ]
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "按 Responses 事件类型处理。"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/messages": {
+      "post": {
+        "operationId": "anthropicMessages",
+        "summary": "Anthropic Messages 原生协议",
+        "description": "需当前 Key 与渠道支持；与 OpenAI 消息格式不同。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "messages",
+                  "max_tokens"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "messages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "role",
+                        "content"
+                      ],
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "assistant"
+                          ]
+                        },
+                        "content": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "max_tokens": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  },
+                  "system": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "anthropic-version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "2023-06-01"
+            }
+          }
+        ]
+      }
+    },
+    "/v1beta/models/{model}:generateContent": {
+      "post": {
+        "operationId": "geminiGenerateContent",
+        "summary": "Gemini 原生内容生成",
+        "description": "使用 x-goog-api-key，不套用 OpenAI Chat 请求体。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "contents"
+                ],
+                "properties": {
+                  "contents": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "generationConfig": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "geminiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "model",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/images/generations": {
+      "post": {
+        "operationId": "generateImage",
+        "summary": "根据提示词生成图片",
+        "description": "只支持指定图像模型。size/n 等值由型号决定。返回 data[].url 或 data[].b64_json。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "prompt"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "string"
+                  },
+                  "n": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "response_format": {
+                    "type": "string",
+                    "enum": [
+                      "url",
+                      "b64_json"
+                    ]
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/images/edits": {
+      "post": {
+        "operationId": "editImage",
+        "summary": "上传图片并编辑",
+        "description": "multipart 文件上传。字段与多图上限受模型约束；不要手动设置 boundary。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "prompt",
+                  "image[]"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "从当前 Key 的目录选择完整 ID；目录存在不保证模态、参数或端点能力。"
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "image[]": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "size": {
+                    "type": "string"
+                  },
+                  "n": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/videos": {
+      "post": {
+        "operationId": "createVideo",
+        "summary": "创建一个视频任务",
+        "description": "创建视频任务。两路径进入同一视频适配校验。视频综合区使用GwayVideoCreate；原生h3为不同协议。Content-Type必须为application/json；不接受本地素材文件作为本端点上传。每个订单只提交一次。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/GwayVideoCreate"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NativeH3Create"
+                  }
+                ]
+              },
+              "examples": {
+                "text_only": {
+                  "summary": "minimax-h3：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 15,
+                    "ratio": "16:9",
+                    "resolution": "768p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_0_fast_G3": {
+                  "summary": "seedance-2.0-fast-G3：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.0-fast-G3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_0_mini_G3": {
+                  "summary": "seedance-2.0-mini-G3：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.0-mini-G3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_G1": {
+                  "summary": "seedance-2.5-G1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-G1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 15,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_G3_D1": {
+                  "summary": "seedance-2.5-G3-D1：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-G3-D1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g2_1": {
+                  "summary": "seedance-2.5-g2-1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g2-1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g2_2": {
+                  "summary": "seedance-2.5-g2-2：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g2-2",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g2_c1": {
+                  "summary": "seedance-2.5-g2-c1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g2-c1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g4_m___": {
+                  "summary": "seedance-2.5-g4-m-官转：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g4-m-官转",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g5_L": {
+                  "summary": "seedance-2.5-g5-L：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g5-L",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g5_v2": {
+                  "summary": "seedance-2.5-g5-v2：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g5-v2",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g2_m1": {
+                  "summary": "seedance2.0-g2-m1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g2-m1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g2_o1": {
+                  "summary": "seedance2.0-g2-o1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g2-o1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g2_o2": {
+                  "summary": "seedance2.0-g2-o2：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g2-o2",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g4___": {
+                  "summary": "seedance2.0-g4-官转：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g4-官转",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g5_v": {
+                  "summary": "seedance2.0-g5-v：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g5-v",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g5_v2": {
+                  "summary": "seedance2.0-g5-v2：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g5-v2",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "任务已创建。ID 可能位于顶层或 data 中。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "任务已受理，继续查询。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或素材格式不支持。不会静默删除素材后改为文生。"
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "创建视频接口要求application/json，不能使用文件multipart上传。"
+          },
+          "422": {
+            "description": "请求号缺失/无效、重复/冲突、计费保护或创建结果不确定；保留原业务号与任务号，不自动重发。"
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/videos/generations": {
+      "post": {
+        "operationId": "createVideoAlias",
+        "summary": "创建一个视频任务",
+        "description": "创建视频任务。两路径进入同一视频适配校验。视频综合区使用GwayVideoCreate；原生h3为不同协议。Content-Type必须为application/json；不接受本地素材文件作为本端点上传。每个订单只提交一次。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/GwayVideoCreate"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NativeH3Create"
+                  }
+                ]
+              },
+              "examples": {
+                "text_only": {
+                  "summary": "minimax-h3：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "minimax-h3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 15,
+                    "ratio": "16:9",
+                    "resolution": "768p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_0_fast_G3": {
+                  "summary": "seedance-2.0-fast-G3：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.0-fast-G3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_0_mini_G3": {
+                  "summary": "seedance-2.0-mini-G3：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.0-mini-G3",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_G1": {
+                  "summary": "seedance-2.5-G1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-G1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 15,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_G3_D1": {
+                  "summary": "seedance-2.5-G3-D1：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-G3-D1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g2_1": {
+                  "summary": "seedance-2.5-g2-1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g2-1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g2_2": {
+                  "summary": "seedance-2.5-g2-2：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g2-2",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g2_c1": {
+                  "summary": "seedance-2.5-g2-c1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g2-c1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g4_m___": {
+                  "summary": "seedance-2.5-g4-m-官转：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g4-m-官转",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g5_L": {
+                  "summary": "seedance-2.5-g5-L：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g5-L",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance_2_5_g5_v2": {
+                  "summary": "seedance-2.5-g5-v2：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance-2.5-g5-v2",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g2_m1": {
+                  "summary": "seedance2.0-g2-m1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g2-m1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g2_o1": {
+                  "summary": "seedance2.0-g2-o1：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g2-o1",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g2_o2": {
+                  "summary": "seedance2.0-g2-o2：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g2-o2",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g4___": {
+                  "summary": "seedance2.0-g4-官转：当前目录请求示例",
+                  "description": "计费单位快照：per_second；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g4-官转",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g5_v": {
+                  "summary": "seedance2.0-g5-v：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g5-v",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                },
+                "seedance2_0_g5_v2": {
+                  "summary": "seedance2.0-g5-v2：当前目录请求示例",
+                  "description": "计费单位快照：per_request；价格以实时目录及提交时锁定的报价为准。",
+                  "value": {
+                    "model": "seedance2.0-g5-v2",
+                    "client_request_id": "YOUR_UNIQUE_ORDER_ID_0001",
+                    "prompt": "请填写视频内容描述。",
+                    "duration": 5,
+                    "ratio": "16:9",
+                    "resolution": "720p",
+                    "images": [
+                      "https://your-cdn.example.com/reference.jpg"
+                    ],
+                    "videos": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp4",
+                        "duration_seconds": 3
+                      }
+                    ],
+                    "audios": [
+                      {
+                        "url": "https://your-cdn.example.com/reference.mp3",
+                        "duration_seconds": 3
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "任务已创建。ID 可能位于顶层或 data 中。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "任务已受理，继续查询。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或素材格式不支持。不会静默删除素材后改为文生。"
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "创建视频接口要求application/json，不能使用文件multipart上传。"
+          },
+          "422": {
+            "description": "请求号缺失/无效、重复/冲突、计费保护或创建结果不确定；保留原业务号与任务号，不自动重发。"
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/videos/{task_id}": {
+      "get": {
+        "operationId": "getVideoTask",
+        "summary": "查询同一个视频任务",
+        "description": "每 3–5 秒查询，设置总次数和时间上限。成功：done/completed/succeeded/success；失败：failed/error/expired/cancelled/canceled；未知状态停止自动轮询并保留 ID。",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "创建时返回的 id/task_id/request_id。始终使用同一 Key 查询。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功；字段依具体端点和模型而异。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/videos/{task_id}/content": {
+      "get": {
+        "operationId": "downloadVideo",
+        "summary": "下载已完成的视频",
+        "description": "若返回外部地址，后续下载不要携带本站 Authorization；禁止 location-trusted。",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "创建时返回的 id/task_id/request_id。始终使用同一 Key 查询。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "视频内容或依渠道给出的下载结果；检查 Content-Type。",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "下载跳转；后续请求不得向外部域名转发 API Key。",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "307": {
+            "description": "临时跳转，遵守相同凭据隔离要求。"
+          },
+          "401": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "错误响应；读取状态和 error/message。视频创建失败或超时不可自动重建。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-gway-model-catalog": {
+    "url": "https://xcmapi.org/api/public/prices",
+    "json_pointer": "/model_catalog",
+    "observed_at": "2026-10-24T15:43:26.022034+00:00",
+    "source_version": "a42d372ccf0b5dd13ecf71203521f9d2",
+    "catalog_sha256": "32137de98f671f041aa9f9f0080d5407fd959a50f579ab3e5313438eb4691a9e",
+    "refresh_seconds": 30,
+    "availability": "snapshot_only_query_live_catalog_before_create",
+    "availability_description": "此文件记录检查时的快照。提交前查询实时 model_catalog，并以当前 API KEY 权限与接单保护为准。"
+  }
+}

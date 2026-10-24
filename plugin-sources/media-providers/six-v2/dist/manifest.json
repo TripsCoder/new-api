@@ -4,12 +4,14 @@
   "status": "candidate-not-installed",
   "preserveKeys": true,
   "inputs": {
-    "profiles.json": "a272b9611f352f2a0dceafe7cecbab359c63b1cbd56b9bc6f97c5edc874ce04f",
-    "runtime.js": "3926ad7621f5130171ef546db22017757183190bb9532803652016d2fbe0e517",
-    "interface-runtime.js": "b813bce026d81606157bf6ff9b5ab5cc01fe8cbd7f8705154dc712189b6cb328",
-    "interface_contracts.py": "ea9e1d41e605c45b6f418edacdd415f9a67b5dc11f9c5a63e5a5bd1ee87e69f6",
-    "sources.lock.json": "55eb07e6739e0a546f35e746ae1bbb2218b753ade5bcefcac8f1ed53b084c515",
-    "build.mjs": "7323f65d7a7fbd4b1ab9ca0773b5d2bbc2de3ab5aeb2a86d23b2196a7d488f4b"
+    "profiles.json": "ad0e1018134602b6d8dc493ad87a61f15b44c3786ece6f2ae43572d9d5c0bc7c",
+    "runtime.js": "0022d68d6a932405951af492d05fb159c603f4d1277320ed6a02409ddf727a9b",
+    "interface-runtime.js": "f452f83c7f5539c98490f6e5ebac83b5b4210f7a6f25ac7ec3274119c908a2f7",
+    "interface_contracts.py": "f5794c6b68c473be4ae3db90796551f0ccac4048e8f0bad7aa59c30b2f162694",
+    "xcm_contracts.py": "fb7f735dd3ad3ff60e5c95c502c0f2873ba20cb59e445f8d492e4055b5f07e21",
+    "xcm-runtime.js": "f653c211b9061ffe6ea034b16d93add36514b10dd867fb9cc9529db25bccb4c9",
+    "sources.lock.json": "a8d893f3b8fe41c3a551c7b2f0922eeab58b662d6ffe1eddd73470fb378d09a7",
+    "build.mjs": "311fa1a00accd08fb7caddf0c30baaf5c9d4e5c57be68f137d3223128a345b95"
   },
   "plugins": [
     {
@@ -19,14 +21,6 @@
       "models": 16,
       "pendingModels": 0,
       "sha256": "800ccbdef6ae0313fe0b4f29ca50c6dc41151b40266985cf252de04bc0b7f84c"
-    },
-    {
-      "key": "xcmapi_media",
-      "version": "2.1.5",
-      "file": "xcmapi_media.plugin.js",
-      "models": 14,
-      "pendingModels": 17,
-      "sha256": "c19d21cba3d757eccfb4b34eb262d8a98a3d5c7f9540ced5ed55fcfca8bce4b2"
     },
     {
       "key": "artbox_media",
@@ -59,6 +53,14 @@
       "models": 50,
       "pendingModels": 0,
       "sha256": "a8ffcd4918bf040fa0e2021f1dae95c489ca8fc0e85d0e93d637a2e61416bd6a"
+    },
+    {
+      "key": "xcmapi_media",
+      "version": "2.1.6",
+      "file": "xcmapi_media.plugin.js",
+      "models": 14,
+      "pendingModels": 17,
+      "sha256": "7e52fc828004f69dc84f1a9c98f9867995f10fa2e180e4962ddcd284fee31be0"
     }
   ]
 }

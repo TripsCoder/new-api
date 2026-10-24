@@ -182,6 +182,13 @@ func validateInterfaceParameters(document Document) error {
 						required = true
 					}
 				}
+				// The pinned routing model is supplied by the gateway, as in
+				// Resolve's request validation. UI drafts correctly make it
+				// non-required for callers. Trust only the documented ownership
+				// of other generated fields, never a flag added by the draft.
+				if field == "model" || expected.Definition["serverGenerated"] == true {
+					required = false
+				}
 				if !required {
 					if !slices.Contains(caps, any("base")) && !slices.Contains(caps, any(key)) {
 						continue

@@ -2,12 +2,15 @@ package controller
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	"github.com/QuantumNous/new-api/pkg/modelconfig"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -17,6 +20,93 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
+	previousDB, previousRegistry, previousCache := model.DB, jsplugin.DefaultRegistry, common.MemoryCacheEnabled
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	require.NoError(t, err)
+	model.DB, jsplugin.DefaultRegistry, common.MemoryCacheEnabled = db, jsplugin.NewRegistry(), false
+	t.Cleanup(func() {
+		model.DB, jsplugin.DefaultRegistry, common.MemoryCacheEnabled = previousDB, previousRegistry, previousCache
+	})
+	require.NoError(t, db.AutoMigrate(&model.Channel{}, &model.ChannelModelConfiguration{}, &model.TaskPlugin{}, &model.Ability{}))
+	raw, err := os.ReadFile(filepath.Join("testdata", "reviewed_video_ui_documents.json"))
+	require.NoError(t, err)
+	fixtures := map[string]modelconfig.Document{}
+	require.NoError(t, common.Unmarshal(raw, &fixtures))
+	for index, provider := range []string{"aotian_video", "fenglang_video"} {
+		t.Run(provider, func(t *testing.T) {
+			document := fixtures[provider]
+			require.Len(t, document.Bindings, 1)
+			var name string
+			for key := range document.Bindings {
+				name = key
+			}
+			setting, err := common.Marshal(map[string]string{"task_plugin_key": provider})
+			require.NoError(t, err)
+			settingText := string(setting)
+			channel := model.Channel{Id: index + 1, Type: 61, Name: "isolated UI save", Setting: &settingText, Key: "fixture-only-private-key", Models: "existing", Group: "default", Status: 2}
+			require.NoError(t, db.Create(&channel).Error)
+			require.NoError(t, db.Create(&model.Ability{ChannelId: channel.Id, Model: "existing", Group: "default", Enabled: false}).Error)
+			require.NoError(t, db.Create(&model.TaskPlugin{Key: provider, Version: "2.1.0", APIVersion: 1, Active: true, Enabled: true}).Error)
+			call := func(draft modelconfig.Document) *httptest.ResponseRecorder {
+				payload, err := common.Marshal(channelConfigurationSave{Configuration: draft, AddModels: []string{name}, ExpectedModels: "existing"})
+				require.NoError(t, err)
+				recorder := httptest.NewRecorder()
+				ctx, _ := gin.CreateTestContext(recorder)
+				ctx.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+				ctx.Set("id", 1)
+				ctx.Request = httptest.NewRequest("PUT", "/api/channel/"+fmt.Sprint(channel.Id)+"/model-configuration", bytes.NewReader(payload))
+				ctx.Request.Header.Set("Content-Type", "application/json")
+				SaveChannelModelConfiguration(ctx)
+				assert.NotContains(t, recorder.Body.String(), "fixture-only-private-key")
+				return recorder
+			}
+			encoded, err := common.Marshal(document)
+			require.NoError(t, err)
+			for _, change := range []string{"remove prompt", "optional prompt", "ignore prompt", "spoof generated prompt"} {
+				invalid := modelconfig.Document{}
+				require.NoError(t, common.Unmarshal(encoded, &invalid))
+				mode := invalid.Groups["actual-ui"].Modes["audio_ref"]
+				parameter := mode.Parameters["prompt"]
+				optional := false
+				switch change {
+				case "remove prompt":
+					delete(mode.Parameters, "prompt")
+				case "ignore prompt":
+					mode.Mapping["prompt"] = "@ignore"
+				default:
+					parameter.Required = &optional
+					if change == "spoof generated prompt" {
+						parameter.Definition["serverGenerated"] = true
+					}
+					mode.Parameters["prompt"] = parameter
+				}
+				rejected := call(invalid)
+				assert.Contains(t, rejected.Body.String(), `"success":false`, change)
+				assert.Contains(t, rejected.Body.String(), "/prompt: required document rules must be retained", change)
+			}
+			accepted := call(document)
+			var response struct {
+				Success bool                 `json:"success"`
+				Data    modelconfig.Document `json:"data"`
+			}
+			require.NoError(t, common.Unmarshal(accepted.Body.Bytes(), &response))
+			require.True(t, response.Success, accepted.Body.String())
+			assert.Equal(t, int64(1), response.Data.Revision)
+			saved, err := model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
+			require.NoError(t, err)
+			assert.False(t, *saved.Groups["actual-ui"].Modes["audio_ref"].Parameters["model"].Required)
+			require.NoError(t, db.First(&channel, channel.Id).Error)
+			assert.Equal(t, "existing,"+name, channel.Models)
+			assert.Equal(t, "fixture-only-private-key", channel.Key)
+			assert.Equal(t, 2, channel.Status)
+			var abilities []model.Ability
+			require.NoError(t, db.Where("channel_id = ?", channel.Id).Find(&abilities).Error)
+			assert.Len(t, abilities, 2)
+		})
+	}
+}
 
 func TestChannelModelConfigurationReviewedPluginVersion(t *testing.T) {
 	previous := model.DB

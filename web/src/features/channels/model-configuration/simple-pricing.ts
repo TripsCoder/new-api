@@ -29,12 +29,10 @@ export const CUSTOMER_BILLING_METHODS: Record<string, string> = {
   seconds: 'Per second',
   image_count: 'Per image',
 }
-export const VIDEO_PRICE_RESOLUTIONS = ['480p', '720p', '1080p'] as const
-type VideoPriceResolution = (typeof VIDEO_PRICE_RESOLUTIONS)[number]
 export type CustomerPriceFields = {
   unit: string
   value: string
-  resolutions?: Partial<Record<VideoPriceResolution, string>>
+  resolutions?: Record<string, string>
 }
 export type CustomerPriceEdits = Record<string, CustomerPriceFields>
 export function videoPriceResolutions(
@@ -42,7 +40,7 @@ export function videoPriceResolutions(
   model: string,
   modeKey: string,
   allModes = false
-): VideoPriceResolution[] {
+): string[] {
   const allowed = new Set<string>()
   const keys = allModes
     ? Object.keys(document.bindings[model] ?? {})
@@ -64,21 +62,25 @@ export function videoPriceResolutions(
       for (const candidate of candidates) {
         if (typeof candidate !== 'string') continue
         if (field === 'resolution') {
-          allowed.add(candidate.toLowerCase())
+          if (candidate.trim()) allowed.add(candidate)
         } else {
           // Match the existing plugin's size-to-resolution billing fact.
           // Aspect ratios and model names never supply resolution choices.
           const dimensions = /^(\d{1,5})x(\d{1,5})$/i.exec(candidate)
           if (dimensions) {
-            allowed.add(
-              `${Math.min(Number(dimensions[1]), Number(dimensions[2]))}p`
+            const height = Math.min(
+              Number(dimensions[1]),
+              Number(dimensions[2])
             )
+            // The existing pixel-size plugin codec only publishes these usage
+            // facts. Do not invent a new wire-to-billing mapping in this editor.
+            if ([480, 720, 1080].includes(height)) allowed.add(`${height}p`)
           }
         }
       }
     }
   }
-  return VIDEO_PRICE_RESOLUTIONS.filter((resolution) => allowed.has(resolution))
+  return [...allowed]
 }
 export function readCustomerPrice(mode?: Mode): CustomerPriceFields {
   if (!mode?.billing || mode.billing.currency !== 'USD') {
@@ -86,19 +88,34 @@ export function readCustomerPrice(mode?: Mode): CustomerPriceFields {
   }
   const expression = mode.billing.expression.trim()
   let remainder = expression
-  const prices: Partial<Record<VideoPriceResolution, CustomerPriceFields>> = {}
+  const prices: Record<string, CustomerPriceFields> = Object.create(null)
   let branch: RegExpExecArray | null
   while (
     (branch =
-      /^u\("resolution"\) == "(480p|720p|1080p)" \? tier\("\1", (.+?)\) : /.exec(
+      /^(?:u\("resolution"\)|lower\(string\(u\("resolution"\)\)\)) == ("(?:[^"\\]|\\.)*") \? tier\(("(?:[^"\\]|\\.)*"), (.+?)\) : /.exec(
         remainder
       ))
   ) {
-    const resolution = branch[1] as VideoPriceResolution
+    let resolution: string
+    let condition: string
+    try {
+      resolution = JSON.parse(branch[2])
+      condition = JSON.parse(branch[1])
+    } catch {
+      // Custom expressions may use non-JSON string escapes. Preserve them as
+      // advanced prices rather than crashing or rewriting their formula.
+      return { unit: '', value: '' }
+    }
+    if (
+      condition !==
+      (branch[0].startsWith('lower(') ? resolution.toLowerCase() : resolution)
+    ) {
+      return { unit: '', value: '' }
+    }
     if (prices[resolution]) return { unit: '', value: '' }
     prices[resolution] = readCustomerPrice({
       ...mode,
-      billing: { expression: branch[2], currency: 'USD', confirmed: true },
+      billing: { expression: branch[3], currency: 'USD', confirmed: true },
     })
     remainder = remainder.slice(branch[0].length)
   }
@@ -153,15 +170,13 @@ export function customerPriceError(
     }
     if (
       Object.keys(fields.resolutions).length < 2 ||
-      Object.keys(fields.resolutions).some(
-        (key) => !VIDEO_PRICE_RESOLUTIONS.includes(key as VideoPriceResolution)
-      )
+      Object.keys(fields.resolutions).some((key) => !key.trim()) ||
+      new Set(Object.keys(resolutions).map((key) => key.toLowerCase())).size !==
+        Object.keys(resolutions).length
     ) {
       return 'Enter a price value'
     }
-    for (const resolution of VIDEO_PRICE_RESOLUTIONS.filter((key) =>
-      Object.hasOwn(resolutions, key)
-    )) {
+    for (const resolution of Object.keys(resolutions)) {
       const error = customerPriceError({
         unit: fields.unit,
         value: fields.resolutions[resolution] ?? '',
@@ -188,12 +203,10 @@ export function applyCustomerPrice(
   let expression = `${Number(fields.value)} * u("${fields.unit}")`
   if (fields.resolutions) {
     const resolutions = fields.resolutions
-    const tiers = VIDEO_PRICE_RESOLUTIONS.filter((key) =>
-      Object.hasOwn(resolutions, key)
-    )
+    const tiers = Object.keys(resolutions)
       .map(
         (resolution) =>
-          `u("resolution") == "${resolution}" ? tier("${resolution}", ${Number(fields.resolutions?.[resolution])} * u("${fields.unit}")) : `
+          `lower(string(u("resolution"))) == ${JSON.stringify(resolution.toLowerCase())} ? tier(${JSON.stringify(resolution)}, ${Number(fields.resolutions?.[resolution])} * u("${fields.unit}")) : `
       )
       .join('')
     // A missing/unpriced resolution must fail evaluation before submission,
