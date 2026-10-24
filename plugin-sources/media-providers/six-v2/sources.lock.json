@@ -454,7 +454,7 @@
   "interfaceParameters": {
     "format": "plugin-interface-contract/v1",
     "legacyExecutionSHA256": "5d886ba687a54c3032ee88830b177968888287d3f59ed2f9e6aa0ec1bc862a11",
-    "builderSHA256": "f5794c6b68c473be4ae3db90796551f0ccac4048e8f0bad7aa59c30b2f162694",
+    "builderSHA256": "7f486364fffa831f46023e9a7551cb991e4dd4c2e38734ec2b61e2e80c3a8499",
     "documentIndexSHA256": "453e21b4f611213c10e8fe6d594f1233ca58424f654dc7fa7756290c10c6cdad",
     "modelExamplesCreateBindings": false
   },
@@ -488,7 +488,7 @@
     "pricesChanged": false
   },
   "xcmVideoParameters": {
-    "extractorSHA256": "fb7f735dd3ad3ff60e5c95c502c0f2873ba20cb59e445f8d492e4055b5f07e21",
+    "extractorSHA256": "49ceab485613c11101f8444f6c4313beaa9ef167f41e5508152961112a1fb538",
     "sources": [
       {
         "file": "quickstart.html",

@@ -150,3 +150,26 @@ XCM video JSON submissions use the existing host-generated `ctx.publicTaskId` as
 `xcm_contracts.py` reads the hash-locked QuickStart, video contract and OpenAPI snapshots in `evidence/xcm-video-20261024/`. Eighteen executable model parameter records become per-model rules on both existing interface IDs; two upstream-reference records do not create rules or bindings. Actual native `h3` retains its independent fields. `xcm-runtime.js` covers documented material combinations after unsupported optional fields are removed. The publisher's conflicting `minimax-h3` resolution table (768p) and prose (2k) is retained as a visible `sourceConflicts` item, with the previous reviewed 2k value unchanged pending clarification.
 
 Refresh only this provider with `python -B plugin-sources/media-providers/six-v2/build-profiles.py --provider=xcmapi_media`, `python -B plugin-sources/media-providers/six-v2/build-catalog.py --provider=xcmapi_media`, then `node plugin-sources/media-providers/six-v2/build.mjs --provider=xcmapi_media`. Other suppliers, legacy models, saved configuration and prices are preserved. The default full legacy import has a pre-existing fixed-hash mismatch and was not repaired by this task; do not bypass that guard. Source/isolated validation is complete; installation, UI checks and paid supplier verification are separate and have not occurred. See the [original host task](../../../../juhefuwu/docs/migration/new-api-channel-sync-20261011.md#xcm-video-parameters-20261024).
+
+## Local installation status (2026-10-25)
+
+XCM 2.1.6 and Paisio 2.1.6 are now installed and active in the local r39 new-api instance. XCM output is canonical LF so its immutable installed-source hash matches the manifest; other supplier artifacts are unchanged. This is a dynamic-plugin deployment, with no binary replacement or channel/price reset. Four actual-engine sandbox checks and source/configuration hashes passed; supplier generation was not called. The minimax-h3 resolution conflict remains pending. Exact versions, hashes, backup and rollback are in the [original local deployment record](../../../../juhefuwu/docs/migration/new-api-channel-sync-20261011.md#media-plugins-local-install-20261025).
+
+
+## minimax-h3 resolution decision (2026-10-25; candidate only)
+
+The user selected the structured table's exact `768p` value for XCM `minimax-h3`. Both saved document-interface IDs now use it for their model rule and wire enum. The previous 2k override was removed; `sourceResolutions` records the user decision and `sourceConflicts` no longer lists it as pending. Locked publisher snapshots remain unchanged. This supersedes the earlier pending local resolution described above, without claiming that the publisher has corrected its conflicting prose.
+
+XCM 2.1.7 is a new candidate, preserving immutable installed 2.1.6. All 32 offline tests and the selective generator check pass. H3 is not newly bound, enabled, initialized or installed by this change. Other supplier artifacts, legacy execution records, native `h3`, discovery and billing definitions remain unchanged. The active local plugin remains 2.1.6. Decision, scoped diff proof and rollback are in the [original task](../../../../juhefuwu/docs/migration/new-api-channel-sync-20261011.md#xcm-h3-resolution-decision-20261025).
+
+
+### Local activation of 2.1.7 (2026-10-25)
+
+Following explicit user authorization, XCM 2.1.7 is now installed and active (row 77) in local new-api r39; its source matches the manifest SHA256 `ec812b1357d4bbd0561106f3bf58db9742640224bbd242f113010b570b78caf7`. The management page reports registered. This supersedes the candidate-only status above; candidate manifests themselves remain build metadata. Old 2.1.6 is retained for activation rollback. Channels, model configuration, prices, options, abilities, other plugins and all 16 containers are unchanged. No H3 binding, initialization or enablement was added; no supplier generation or production operation occurred. The [original installation receipt](../../../../juhefuwu/docs/migration/new-api-channel-sync-20261011.md#xcm-h3-resolution-local-install-20261025) contains backup, exact verification and rollback evidence.
+
+
+### Host routing verification and local r40 (2026-10-25)
+
+The previous plugin load check did not cover the saved-interface routing gate: the running r39 host only reviewed plugin versions through 2.1.5. A real G3-D1 request therefore returned protocol_unsupported before reaching the installed XCM 2.1.7. The user explicitly authorized the minimal host exception; local r40 now registers reviewed 2.1.6 and 2.1.7, while future/prerelease versions stay blocked. Plugin bytes, channel bindings and prices remain unchanged.
+
+Both affected Go packages pass their full regressions. In a restored, internal-network candidate, the same channel/model POST reached XCM 2.1.7 buildSubmitRequest and deliberately failed required-prompt validation without provider transport. The exact tested image is deployed locally; old runtime and data are retained for rollback. Subsequent plugin updates must check the running host's saved-interface routing eligibility as well as plugin registration. Exact source, image, preservation and verification limits are in the [original host task](../../../../juhefuwu/docs/migration/new-api-channel-sync-20261011.md#reviewed-plugin-routing-20261025).

@@ -306,6 +306,7 @@ def attach_interfaces(providers):
     # Same endpoint, documented model-specific wire shape; preserve saved IDs.
     native['modelRules'] = copy.deepcopy(xcm['modelRules'])
     native['sourceConflicts'] = copy.deepcopy(xcm['sourceConflicts'])
+    native['sourceResolutions'] = copy.deepcopy(xcm['sourceResolutions'])
     # ArtBox prose, including the text/video/audio reference section, is the
     # source. Recommendations are not promoted to absolute request ceilings.
     raw, source = evidence('https://artbox.top/docs')

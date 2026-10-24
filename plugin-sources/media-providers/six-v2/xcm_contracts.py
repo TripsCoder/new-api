@@ -43,7 +43,7 @@ def documented_xcm_video(provider, contract):
                  frameEncoding=dict(roleField='type', firstRole='first_frame', lastRole='end_frame', requiresFirstForLast=True))
     _, entry = contract('视频综合区 JSON 接口', 'video', document['create']['path'], '/v1/videos/', common, source, **codec)
     assert entry['id'] == 'interface:1e862884de01a7c1', 'saved interface identity must remain stable'
-    rules, conflicts = {}, []
+    rules, resolutions = {}, []
     for model in document['models']:
         if model.get('parameter_status') != 'executable':
             continue
@@ -69,10 +69,9 @@ def documented_xcm_video(provider, contract):
                 field['items'] = item
             fields[name] = field
         if model['id'] == 'minimax-h3' and '768p' in fields['resolution'].get('enum', []) and '2k' in schema['properties']['resolution'].get('description', ''):
-            # Conflicting publisher prose/table: keep the prior reviewed value.
-            prior = provider['models']['minimax-h3']['resolutions']
-            fields['resolution'].update(enum=prior, default=prior[0])
-            conflicts.append(dict(model=model['id'], field='resolution', table=['768p'], prose=['2k'], retained=prior, status='publisher-confirmation-required'))
+            # User decision, 2026-10-25: follow the structured table, not prose.
+            # This resolves the local contract only; it never enables a model.
+            resolutions.append(dict(model=model['id'], field='resolution', table=['768p'], prose=['2k'], selected=['768p'], status='resolved-by-user', decidedAt='2026-10-25', decision='docs/migration/new-api-channel-sync-20261011.md#xcm-h3-resolution-decision-20261025'))
         constraints = dict(limits={key: model['max_reference_' + key] for key in ['images', 'videos', 'audios']},
                            byResolution=model.get('media_limits_by_resolution', {}),
                            requireVideoDuration=model.get('require_video_duration_seconds', False),
@@ -83,7 +82,8 @@ def documented_xcm_video(provider, contract):
         rules[model['id']] = {key: rule[key] for key in ['parameters', 'mapping', 'modes', 'capabilities', 'codec']}
     assert len(rules) == document['parameter_verified_model_count']
     entry['modelRules'] = rules
-    entry['sourceConflicts'] = conflicts
+    entry['sourceConflicts'] = []
+    entry['sourceResolutions'] = resolutions
     entry['referenceOnlyModels'] = [model['id'] for model in document['models'] if model.get('parameter_status') != 'executable']
     provider['interfaces'][entry['id']] = entry
     return entry

@@ -4,14 +4,14 @@
   "status": "candidate-not-installed",
   "preserveKeys": true,
   "inputs": {
-    "profiles.json": "ad0e1018134602b6d8dc493ad87a61f15b44c3786ece6f2ae43572d9d5c0bc7c",
+    "profiles.json": "ec24cac90ffed614f5e3407c45739ec6515fd23fd6d0ad890cebab12c2f35cf1",
     "runtime.js": "0022d68d6a932405951af492d05fb159c603f4d1277320ed6a02409ddf727a9b",
     "interface-runtime.js": "f452f83c7f5539c98490f6e5ebac83b5b4210f7a6f25ac7ec3274119c908a2f7",
-    "interface_contracts.py": "f5794c6b68c473be4ae3db90796551f0ccac4048e8f0bad7aa59c30b2f162694",
-    "xcm_contracts.py": "fb7f735dd3ad3ff60e5c95c502c0f2873ba20cb59e445f8d492e4055b5f07e21",
+    "interface_contracts.py": "7f486364fffa831f46023e9a7551cb991e4dd4c2e38734ec2b61e2e80c3a8499",
+    "xcm_contracts.py": "49ceab485613c11101f8444f6c4313beaa9ef167f41e5508152961112a1fb538",
     "xcm-runtime.js": "f653c211b9061ffe6ea034b16d93add36514b10dd867fb9cc9529db25bccb4c9",
-    "sources.lock.json": "a8d893f3b8fe41c3a551c7b2f0922eeab58b662d6ffe1eddd73470fb378d09a7",
-    "build.mjs": "311fa1a00accd08fb7caddf0c30baaf5c9d4e5c57be68f137d3223128a345b95"
+    "sources.lock.json": "8590a12f4169c28d1bf0c3a9e8b3722a7caa9e07e52e09107edcad976c4a9c2a",
+    "build.mjs": "211248172722f6bc941dd299c000f2bd60cdbde543437614933b556934151f3d"
   },
   "plugins": [
     {
@@ -56,11 +56,11 @@
     },
     {
       "key": "xcmapi_media",
-      "version": "2.1.6",
+      "version": "2.1.7",
       "file": "xcmapi_media.plugin.js",
       "models": 14,
       "pendingModels": 17,
-      "sha256": "7e52fc828004f69dc84f1a9c98f9867995f10fa2e180e4962ddcd284fee31be0"
+      "sha256": "ec812b1357d4bbd0561106f3bf58db9742640224bbd242f113010b570b78caf7"
     }
   ]
 }

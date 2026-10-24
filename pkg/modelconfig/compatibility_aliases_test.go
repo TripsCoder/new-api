@@ -7,10 +7,10 @@ import (
 )
 
 func TestReviewedPluginVersionKeepsExplicitCompatibilityWindow(t *testing.T) {
-	for _, version := range []string{"2.0.0", "2.0.1", "2.0.2", "2.1.0", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.1.5", "2.1.6"} {
+	for _, version := range []string{"2.0.0", "2.0.1", "2.0.2", "2.1.0", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.1.5", "2.1.6", "2.1.7"} {
 		assert.True(t, ReviewedPluginVersion(version), "retained version %s", version)
 	}
-	for _, version := range []string{"", "2.1.7", "2.2.0", "3.0.0", "2.1.6-beta.1", "v2.1.6", " 2.1.6"} {
+	for _, version := range []string{"", "2.1.8", "2.2.0", "3.0.0", "2.1.6-beta.1", "2.1.7-beta.1", "v2.1.7", " 2.1.7"} {
 		assert.False(t, ReviewedPluginVersion(version), "unreviewed version %s", version)
 	}
 }

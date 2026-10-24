@@ -34,7 +34,7 @@ test('reviewed parameter gaps use the exact supplier definitions without network
  assert.equal(yuxi.buildSubmitRequest(context('minimax-h3-fast',{seconds:5,seed:0,images:['https://media.example/ref.png']})).body.seed,0);
  assert.throws(()=>paisio.buildSubmitRequest(context('sd2-720p',{seconds:5,seed:0})),/unsupported field/);
 });
-test('exactly six final artifacts match their build manifest',()=>{const manifest=JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url),'utf8'));assert.equal(manifest.plugins.length,6);for(const item of manifest.plugins){const source=fs.readFileSync(new URL('./dist/'+item.file,import.meta.url));assert.equal(crypto.createHash('sha256').update(source).digest('hex'),item.sha256);assert.equal(load(item.key).meta.version,['paisio_media','xcmapi_media'].includes(item.key)?'2.1.6':'2.1.5');assert.equal(item.version,['paisio_media','xcmapi_media'].includes(item.key)?'2.1.6':'2.1.5')}});
+test('exactly six final artifacts match their build manifest',()=>{const manifest=JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url),'utf8'));assert.equal(manifest.plugins.length,6);for(const item of manifest.plugins){const source=fs.readFileSync(new URL('./dist/'+item.file,import.meta.url));assert.equal(crypto.createHash('sha256').update(source).digest('hex'),item.sha256);assert.equal(load(item.key).meta.version,item.key==='xcmapi_media'?'2.1.7':item.key==='paisio_media'?'2.1.6':'2.1.5');assert.equal(item.version,item.key==='xcmapi_media'?'2.1.7':item.key==='paisio_media'?'2.1.6':'2.1.5')}});
 test('every final artifact model builds declared usage facts without network',()=>{let count=0;for(const [key,provider]of Object.entries(profiles)){const plugin=load(key);for(const [model,p]of Object.entries(provider.models)){const input={};if(p.secondsField||p.fixedSeconds)input.seconds=p.defaultSeconds??p.secondsChoices?.[0]??p.minSeconds;if(p.minImages||p.firstLastOnly)input.images=Array(p.minImages||1).fill('https://media.example.com/ref.png');if(p.minAudios)input.audios=Array(p.minAudios).fill('https://media.example.com/ref.mp3');if(p.anyImageOrAudio&&!input.images&&!input.audios)input.images=['https://media.example.com/ref.png'];const ctx=context(model,input,p.kind==='image'?'image_generate':'video_generate');let request;try{request=plugin.buildSubmitRequest(ctx)}catch(error){throw new Error(key+' '+model+': '+error.message)}assert.ok(request.url.startsWith('https://provider.invalid/'));assert.equal(request.method,'POST');const facts=plugin.extractUsage(ctx);const schema=plugin.meta.usageProfiles.find(profile=>profile.models.some(name=>name.toLowerCase()===(p.canonicalModel||model).toLowerCase())).schema;for(const name of Object.keys(facts))assert.ok(Object.hasOwn(schema,name),key+' '+model+' '+name);count++}}assert.ok(count>190)});
 test('Paisio image explicit async false is not forced to async true',()=>{const plugin=load('paisio_media');const ctx=context('gpt-image2-high',{n:1,async:false},'image_generate');assert.equal(plugin.buildSubmitRequest(ctx).body.async,false);ctx.requestBody.input.async=true;assert.equal(plugin.buildSubmitRequest(ctx).body.async,true)});
 
@@ -340,13 +340,13 @@ test('XCM current execution parameters cover 18 models on both saved interface i
  assert.deepEqual(plain(entry.modelRules['seedance-2.5-g2-c1'].parameters.resolution.enum),['720p']);
  assert.equal(entry.modelRules['seedance-2.5-g2-c1'].parameters.videos,undefined);
  assert.equal(entry.modelRules['seedance-2.5-G3-D1'].parameters.seconds.maximum,30);
- assert.equal(entry.sourceConflicts[0].field,'resolution');assert.deepEqual(plain(entry.sourceConflicts[0].retained),['2k']);
+ assert.deepEqual(plain(entry.sourceConflicts),[]);assert.equal(entry.sourceResolutions[0].status,'resolved-by-user');assert.deepEqual(plain(entry.sourceResolutions[0].selected),['768p']);
  assert.ok(entry.referenceOnlyModels.includes('seedance2.5'));
 });
 
 test('XCM documented media conditions retain durations, material metadata and reference limits',()=>{
  const plugin=load('xcmapi_media'),id='interface:1e862884de01a7c1';
- const ctx=context('minimax-h3',{seconds:5,resolution:'2k',videos:[{url:'https://media.example.com/video.mp4',duration_seconds:8}],audios:[{url:'https://media.example.com/audio.mp3',duration_seconds:7}]});ctx.requestBody.protocolTemplate=id;
+ const ctx=context('minimax-h3',{seconds:5,resolution:'768p',videos:[{url:'https://media.example.com/video.mp4',duration_seconds:8}],audios:[{url:'https://media.example.com/audio.mp3',duration_seconds:7}]});ctx.requestBody.protocolTemplate=id;
  const before=plain(ctx);assert.equal(plugin.buildSubmitRequest(ctx).body.audios[0].duration_seconds,7);assert.deepEqual(plain(ctx),before);
  const change=input=>({...ctx,requestBody:{...ctx.requestBody,input:{...ctx.requestBody.input,...input}}});
  assert.throws(()=>plugin.buildSubmitRequest(change({audios:[{url:'https://media.example.com/audio.mp3'}]})),/duration_seconds/);
@@ -360,4 +360,20 @@ test('XCM documented media conditions retain durations, material metadata and re
  conditional.requestBody.input.resolution='720p';assert.throws(()=>plugin.buildSubmitRequest(conditional),/selected resolution/);
  const frames=context('seedance-2.5-G3-D1',{seconds:5,resolution:'720p',images:[{url:'https://media.example.com/end.png',type:'end_frame'}]});frames.requestBody.protocolTemplate=id;
  assert.throws(()=>plugin.buildSubmitRequest(frames),/frame combination/);
+});
+
+
+test('XCM minimax-h3 resolution follows the user-selected table on both interfaces without enabling a model',()=>{
+ const plugin=load('xcmapi_media');
+ for(const [id,entry] of Object.entries(profiles.xcmapi_media.interfaces)){
+  const parameter=entry.modelRules['minimax-h3'].parameters.resolution;
+  assert.deepEqual(plain(parameter.enum),['768p']);assert.equal(parameter.definition.documentedDefault,'768p');
+  const ctx=context('minimax-h3',{seconds:5,resolution:'768p'});ctx.requestBody.protocolTemplate=id;
+  assert.equal(plugin.buildSubmitRequest(ctx).body.resolution,'768p');
+  delete ctx.requestBody.input.resolution;assert.throws(()=>plugin.buildSubmitRequest(ctx),/required documented field/);
+  ctx.requestBody.input.resolution='2k';assert.throws(()=>plugin.buildSubmitRequest(ctx),/candidate/);
+  assert.ok(!entry.sourceConflicts.some(c=>c.model==='minimax-h3'));
+  const decision=entry.sourceResolutions.find(c=>c.model==='minimax-h3');
+  assert.equal(decision.decidedAt,'2026-10-25');assert.equal(decision.status,'resolved-by-user');
+ }
 });

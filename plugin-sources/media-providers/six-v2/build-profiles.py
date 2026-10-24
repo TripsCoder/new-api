@@ -20,6 +20,7 @@ if selected == 'xcmapi_media':
     native['modelRules'] = entry['modelRules']
     native['codec'].pop('modelRules', None)
     native['sourceConflicts'] = entry['sourceConflicts']
+    native['sourceResolutions'] = entry['sourceResolutions']
 else:
     raw = (root / 'legacy-profiles.json').read_bytes()
     assert hashlib.sha256(raw).hexdigest() == '5d886ba687a54c3032ee88830b177968888287d3f59ed2f9e6aa0ec1bc862a11'

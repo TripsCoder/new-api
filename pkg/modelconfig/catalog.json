@@ -71093,10 +71093,10 @@
                       "requiredIn": [],
                       "status": "documented"
                     },
-                    "documentedDefault": "2k",
+                    "documentedDefault": "768p",
                     "type": "string",
                     "enum": [
-                      "2k"
+                      "768p"
                     ]
                   },
                   "required": true,
@@ -71108,7 +71108,7 @@
                   },
                   "type": "string",
                   "enum": [
-                    "2k"
+                    "768p"
                   ]
                 },
                 "images": {
@@ -71455,7 +71455,7 @@
                     "schema": {
                       "type": "string",
                       "enum": [
-                        "2k"
+                        "768p"
                       ]
                     },
                     "required": true
@@ -83582,7 +83582,8 @@
               }
             }
           },
-          "sourceConflicts": [
+          "sourceConflicts": [],
+          "sourceResolutions": [
             {
               "model": "minimax-h3",
               "field": "resolution",
@@ -83592,10 +83593,12 @@
               "prose": [
                 "2k"
               ],
-              "retained": [
-                "2k"
+              "selected": [
+                "768p"
               ],
-              "status": "publisher-confirmation-required"
+              "status": "resolved-by-user",
+              "decidedAt": "2026-10-25",
+              "decision": "docs/migration/new-api-channel-sync-20261011.md#xcm-h3-resolution-decision-20261025"
             }
           ],
           "referenceOnlyModels": [
@@ -84247,10 +84250,10 @@
                       "requiredIn": [],
                       "status": "documented"
                     },
-                    "documentedDefault": "2k",
+                    "documentedDefault": "768p",
                     "type": "string",
                     "enum": [
-                      "2k"
+                      "768p"
                     ]
                   },
                   "required": true,
@@ -84262,7 +84265,7 @@
                   },
                   "type": "string",
                   "enum": [
-                    "2k"
+                    "768p"
                   ]
                 },
                 "images": {
@@ -84609,7 +84612,7 @@
                     "schema": {
                       "type": "string",
                       "enum": [
-                        "2k"
+                        "768p"
                       ]
                     },
                     "required": true
@@ -96736,7 +96739,8 @@
               }
             }
           },
-          "sourceConflicts": [
+          "sourceConflicts": [],
+          "sourceResolutions": [
             {
               "model": "minimax-h3",
               "field": "resolution",
@@ -96746,10 +96750,12 @@
               "prose": [
                 "2k"
               ],
-              "retained": [
-                "2k"
+              "selected": [
+                "768p"
               ],
-              "status": "publisher-confirmation-required"
+              "status": "resolved-by-user",
+              "decidedAt": "2026-10-25",
+              "decision": "docs/migration/new-api-channel-sync-20261011.md#xcm-h3-resolution-decision-20261025"
             }
           ]
         }
