@@ -70,7 +70,11 @@ for (const [model,rule] of Object.entries(modelRules)) {
     modes:Object.fromEntries(Object.entries(contract.modes).filter(([mode])=>model!=='minimax-video-h3' || !['video_ref','audio_ref','mixed_ref'].includes(mode))),
     capabilities:contract.capabilities});
 }
-const meta={apiVersion:1,key:'fenglang_video',name:'风浪云视频',version:'2.1.0',author:{name:'TripsCoder'},icon:'text:FL',description:{en:'Video generation through the Fenglang Cloud API',zh:'通过风浪云接口生成视频'},website:'https://fenglang.cloud/',baseUrl:'https://fenglang.cloud/open/v1',auth:'api_key',models:['seedance-2.5'],fetchMode:'per_task',protocols:['openai_video'],modelDiscovery:{path:'/pricing',format:'fenglang_pricing',sourceUrl:source.url,sourceSha256:source.sha256},parameterInterfaces:{[id]:contract},usageSchema:{request_count:{type:'number',unit:'count',description:{en:'Video generation unit price',zh:'视频生成单价'}},seconds:{type:'number',unit:'second',description:{en:'Video generation unit price',zh:'视频生成单价'}}}};
+// Usage labels describe pricing dimensions, not per-model request candidates.
+// Each request still passes the exact modelRules above before usage extraction.
+const usageSchema={request_count:{type:'number',unit:'count',description:{en:'Video generation unit price',zh:'视频生成单价'}},seconds:{type:'number',unit:'second',description:{en:'Video generation unit price',zh:'视频生成单价'}},resolution:{enum:[...new Set(documented.flatMap(([, , , values])=>values))],description:{en:'Requested video resolution',zh:'请求视频分辨率'}}};
+const meta={apiVersion:1,key:'fenglang_video',name:'风浪云视频',version:'2.1.1',author:{name:'TripsCoder'},icon:'text:FL',description:{en:'Video generation through the Fenglang Cloud API',zh:'通过风浪云接口生成视频'},website:'https://fenglang.cloud/',baseUrl:'https://fenglang.cloud/open/v1',auth:'api_key',models:['seedance-2.5'],fetchMode:'per_task',protocols:['openai_video'],modelDiscovery:{path:'/pricing',format:'fenglang_pricing',sourceUrl:source.url,sourceSha256:source.sha256},parameterInterfaces:{[id]:contract},usageSchema,
+};
 // The configuration UI consumes both the execution interface and its source
 // document list. Keep the document projection derived from the same contract.
 const projection = {

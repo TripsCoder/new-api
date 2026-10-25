@@ -129,7 +129,12 @@ export function extractUsage(ctx) {
   // Current documented models charge by requested second. No undocumented
   // vendor default is safe for reservation. Require an explicit effective value.
   if (input.seconds===undefined) throw new Error('按秒预扣需要显式 seconds 或已保存的渠道时长默认值');
-  return {request_count:1,seconds:input.seconds};
+  // A requested resolution selects a pricing tier; it is not a numeric ratio.
+  // Preserve omission instead of inventing a supplier default or a free tier.
+  // Unknown account models retain their existing seconds-only usage contract
+  // for unreviewed labels; do not invent a tier or reject a seconds-only price.
+  const resolution=meta.usageSchema.resolution.enum.includes(input.resolution)?input.resolution:undefined;
+  return {request_count:1,seconds:input.seconds,...(resolution===undefined?{}:{resolution})};
 }
 
 export function extractUsageOnComplete() {

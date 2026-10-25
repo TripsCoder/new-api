@@ -3,7 +3,7 @@ export const meta = {
   "apiVersion": 1,
   "key": "fenglang_video",
   "name": "风浪云视频",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": {
     "name": "TripsCoder"
   },
@@ -2912,6 +2912,19 @@ export const meta = {
         "en": "Video generation unit price",
         "zh": "视频生成单价"
       }
+    },
+    "resolution": {
+      "enum": [
+        "480p",
+        "720p",
+        "1080p",
+        "768p",
+        "2k"
+      ],
+      "description": {
+        "en": "Requested video resolution",
+        "zh": "请求视频分辨率"
+      }
     }
   }
 };
@@ -3046,7 +3059,12 @@ export function extractUsage(ctx) {
   // Current documented models charge by requested second. No undocumented
   // vendor default is safe for reservation. Require an explicit effective value.
   if (input.seconds===undefined) throw new Error('按秒预扣需要显式 seconds 或已保存的渠道时长默认值');
-  return {request_count:1,seconds:input.seconds};
+  // A requested resolution selects a pricing tier; it is not a numeric ratio.
+  // Preserve omission instead of inventing a supplier default or a free tier.
+  // Unknown account models retain their existing seconds-only usage contract
+  // for unreviewed labels; do not invent a tier or reject a seconds-only price.
+  const resolution=meta.usageSchema.resolution.enum.includes(input.resolution)?input.resolution:undefined;
+  return {request_count:1,seconds:input.seconds,...(resolution===undefined?{}:{resolution})};
 }
 
 export function extractUsageOnComplete() {

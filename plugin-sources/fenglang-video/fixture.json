@@ -1464,6 +1464,121 @@
       }
     },
     {
+      "name": "pricing dimension 480p",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "seedance-2.0-mini",
+          "upstreamModel": "seedance-2.0-mini",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 4,
+              "resolution": "480p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 4,
+        "resolution": "480p"
+      }
+    },
+    {
+      "name": "pricing dimension 720p",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "seedance-2.0-mini",
+          "upstreamModel": "seedance-2.0-mini",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 4,
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 4,
+        "resolution": "720p"
+      }
+    },
+    {
+      "name": "saved duration alias feeds usage with resolution",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "seedance-2.0-mini",
+          "upstreamModel": "seedance-2.0-mini",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "duration": "8",
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 8,
+        "resolution": "720p"
+      }
+    },
+    {
+      "name": "unknown resolution retains legacy seconds-only usage",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "account-new",
+          "upstreamModel": "account-new",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 45,
+              "resolution": "4k"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 45
+      }
+    },
+    {
       "name": "missing requested seconds cannot bill as zero",
       "hook": "extractUsage",
       "args": [

@@ -44,6 +44,9 @@ const failure={success:false,code:'BAD',message:'Bearer sk-fixture https://secre
 add('HTTP 200 failure settles without retry','parseSubmitResponse',[ctx(),{statusCode:200,body:failure}],{taskId:'task_public',taskData:failure,immediate:{status:'FAILURE',progress:'100%',reason:'Bearer [redacted] [URL]'}});
 add('missing submit ID fails uncertain','parseSubmitResponse',[ctx(),{statusCode:202,body:{success:true,task:{}}}],null,'task.id');
 add('requested seconds reserve after effective filtering','extractUsage',[ctx({seconds:8,n:50})],{request_count:1,seconds:8});
+for(const resolution of ['480p','720p'])add('pricing dimension '+resolution,'extractUsage',[ctx({seconds:4,resolution},'seedance-2.0-mini')],{request_count:1,seconds:4,resolution});
+add('saved duration alias feeds usage with resolution','extractUsage',[ctx({duration:'8',resolution:'720p'},'seedance-2.0-mini')],{request_count:1,seconds:8,resolution:'720p'});
+add('unknown resolution retains legacy seconds-only usage','extractUsage',[ctx({seconds:45,resolution:'4k'},'account-new')],{request_count:1,seconds:45});
 add('missing requested seconds cannot bill as zero','extractUsage',[ctx()],null,'预扣');
 add('no invented actual duration or refund','extractUsageOnComplete',[{}, {}, {success:true,task:{seconds:99,refunded:true,cost:5}}],{});
 const content={...ctx(),artifactKey:'video',status:'SUCCESS',upstreamTaskId:'private_A/B',data:{success:true,task:{downloadUrl:'https://evil.example/key',contentUrl:'https://other.example/content'}},clientRequest:{method:'HEAD',headers:{Range:'bytes=0-15'}}};
@@ -61,6 +64,7 @@ for(const entry of cases) {
 }
 assert.deepEqual(Array.from(plugin.meta.models),['seedance-2.5']);
 assert.equal(plugin.meta.parameterInterfaces[id].parameters.seconds.definition.default,undefined);
+assert.deepEqual(Array.from(plugin.meta.usageSchema.resolution.enum),[...new Set(Object.values(plugin.meta.parameterInterfaces[id].modelRules).flatMap(rule=>Array.from(rule.parameters.resolution.enum)))]);
 assert.equal(crypto.createHash('sha256').update(source).digest('hex'),JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url))).sha256);
 fs.writeFileSync(new URL('./fixture.json',import.meta.url),JSON.stringify({cases},null,2)+'\n');
 console.log('Fenglang offline regression: '+cases.length+'/'+cases.length+' passed; host fixture written');
