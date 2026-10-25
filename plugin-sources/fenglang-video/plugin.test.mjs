@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 const source=fs.readFileSync(new URL('./dist/fenglang_video.plugin.js',import.meta.url),'utf8');
 const plugin=vm.runInNewContext(source.replace(/^export /gm,'')+'\n({meta,protocols,buildSubmitRequest,parseSubmitResponse,buildQueryRequest,parseTaskResult,extractUsage,extractUsageOnComplete,listArtifacts,buildContentRequest})',{utils:{uuid:()=> 'task_fixture'}});
 const id=Object.keys(plugin.meta.parameterInterfaces)[0];
@@ -67,4 +70,31 @@ assert.equal(plugin.meta.parameterInterfaces[id].parameters.seconds.definition.d
 assert.deepEqual(Array.from(plugin.meta.usageSchema.resolution.enum),[...new Set(Object.values(plugin.meta.parameterInterfaces[id].modelRules).flatMap(rule=>Array.from(rule.parameters.resolution.enum)))]);
 assert.equal(crypto.createHash('sha256').update(source).digest('hex'),JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url))).sha256);
 fs.writeFileSync(new URL('./fixture.json',import.meta.url),JSON.stringify({cases},null,2)+'\n');
-console.log('Fenglang offline regression: '+cases.length+'/'+cases.length+' passed; host fixture written');
+// Exercise the actual generator against both checkout line endings, including
+// source hashes, catalog projection and compiled plugin bytes.
+const tempBase=fileURLToPath(new URL('../../.tmp/',import.meta.url));
+fs.mkdirSync(tempBase,{recursive:true});
+const temp=fs.mkdtempSync(path.join(tempBase,'fenglang-repro-'));
+assert.equal(path.dirname(temp),path.resolve(tempBase));
+try {
+  const outputs=[];
+  for(const newline of ['\n','\r\n']) {
+    const root=path.join(temp,newline==='\n'?'lf':'crlf');
+    const provider=path.join(root,'plugin-sources/fenglang-video');
+    fs.mkdirSync(path.join(provider,'evidence'),{recursive:true});
+    fs.mkdirSync(path.join(provider,'dist'),{recursive:true});
+    fs.mkdirSync(path.join(root,'pkg/modelconfig'),{recursive:true});
+    for(const name of ['build.mjs','plugin.js','evidence/openapi.js.txt','evidence/models.js.txt']) {
+      const value=fs.readFileSync(new URL(name,import.meta.url),'utf8').replace(/\r\n/g,'\n').replace(/\n/g,newline);
+      fs.writeFileSync(path.join(provider,name),value);
+    }
+    execFileSync(process.execPath,[path.join(provider,'build.mjs'),'--sync-catalog'],{stdio:'pipe'});
+    execFileSync(process.execPath,[path.join(provider,'build.mjs'),'--check'],{stdio:'pipe'});
+    outputs.push(['dist/fenglang_video.plugin.js','dist/manifest.json','sources.lock.json','../../pkg/modelconfig/fenglang_video.catalog.json'].map(name=>fs.readFileSync(path.join(provider,name),'utf8')));
+  }
+  assert.deepEqual(outputs[0],outputs[1],'LF and CRLF checkouts must produce identical plugin, hashes and catalog');
+} finally {
+  fs.rmSync(temp,{recursive:true,force:true});
+}
+assert.equal(fs.existsSync(temp),false);
+console.log('Fenglang offline regression: '+cases.length+'/'+cases.length+' passed; LF/CRLF reproducibility passed; host fixture written');

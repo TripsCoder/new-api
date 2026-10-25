@@ -1,15 +1,15 @@
 {
   "format": "fenglang-video-build/v1",
   "key": "fenglang_video",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "interface": "interface:86f3f84ab8539ca5",
   "inputs": {
-    "build.mjs": "6e2acfce0bdb0880a45aa9a6cbdcfbb0678c2a22033e93617433430fae7470cf",
+    "build.mjs": "52c523e33bbe37ea91f5913b88b311caa569e20a2208ded12631de9d74419ad9",
     "plugin.js": "37c0f6f91ff9b0414bace41a1f84cc63d2688a3d08334cabd58b1a26aa5a55b3",
-    "evidence/openapi.js.txt": "b565c38cd8f4e1c68e9129e18e13e5847ab29827566c578408ca7af093e1993e",
-    "evidence/models.js.txt": "620bea212f6f4faffb39a828dc3f080e308dbdf4bd687ad899d5bd445492b666"
+    "evidence/openapi.js.txt": "98f8251039d2d399ae4492d9e8d376e03a473b49cad71a89ef1c72c1e1491ba3",
+    "evidence/models.js.txt": "5222542c1cfada5c9b19fc424bcfbb04da7bfe878c07ef9eb981218ea794abdb"
   },
   "file": "fenglang_video.plugin.js",
-  "sha256": "af93684c89c8dfb9b676e7bd50766299964a37a266099e37c13126663206f4bd",
+  "sha256": "b950f4983550dc5e9485ddb1beba26d6c8a3153ede478d6b75ce79d77ea7843b",
   "status": "account-models-and-pricing-not-configured"
 }
