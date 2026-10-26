@@ -170,10 +170,10 @@ func TestChannelModelConfigurationReviewedPluginVersion(t *testing.T) {
 			require.NotContains(t, response["message_key"], "select a documented interface")
 		})
 	}
-	for _, version := range []string{"2.0.0", "2.0.1", "2.0.2", "2.1.0", "2.1.1", "2.1.2", "2.1.3", "2.1.4"} {
+	for _, version := range []string{"2.0.0", "2.0.1", "2.0.2", "2.1.0", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.1.5", "2.1.6", "2.1.7"} {
 		require.True(t, modelconfig.ReviewedPluginVersion(version), version)
 	}
-	for _, version := range []string{"", "1.0.0", "2.1.6", "3.0.0", "2.1.4-preview"} {
+	for _, version := range []string{"", "1.0.0", "2.1.8", "3.0.0", "2.1.4-preview", "2.1.6-beta.1", "2.1.7-beta.1"} {
 		require.False(t, modelconfig.ReviewedPluginVersion(version), version)
 	}
 }
