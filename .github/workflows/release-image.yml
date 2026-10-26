@@ -20,6 +20,26 @@ jobs:
     env:
       GOWORK: 'off'
       GIN_MODE: release
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: fixture
+          POSTGRES_PASSWORD: fixture-only-release
+          POSTGRES_DB: six_config_test
+        ports: ['127.0.0.1:54377:5432']
+        options: >-
+          --health-cmd "pg_isready -U fixture -d six_config_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fixture-only-release
+          MYSQL_DATABASE: six_config_test
+        ports: ['127.0.0.1:33177:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -pfixture-only-release"
+          --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -41,18 +61,24 @@ jobs:
           git diff --exit-code -- plugin-sources/fenglang-video
       - name: Verify affected backend packages
         run: |
-          go vet ./pkg/jsplugin ./plugins ./middleware ./controller ./relay/channel/task/jsplugin
-          go test -count=1 -timeout=5m ./pkg/jsplugin ./plugins ./middleware ./relay/channel/task/jsplugin
-          TEST_PATTERN="$(sed -nE 's/^func (Test[A-Za-z0-9_]+)\(.*/\1/p' controller/channel_upstream_update_test.go | paste -sd '|' -)"
+          go vet ./pkg/modelconfig ./pkg/jsplugin ./plugins ./middleware ./controller ./relay/channel/task/jsplugin
+          go test -count=1 -timeout=5m ./pkg/modelconfig ./pkg/jsplugin ./plugins ./middleware ./relay/channel/task/jsplugin
+          TEST_PATTERN="$(sed -nE 's/^func (Test[A-Za-z0-9_]+)\(.*/\1/p' controller/channel_upstream_update_test.go controller/channel_model_configuration_test.go | paste -sd '|' -)"
           test -n "$TEST_PATTERN"
           go test -count=1 -timeout=5m ./controller -run "^(${TEST_PATTERN})$"
           go test -count=1 -timeout=5m ./service -run '^(TestRefundTaskQuota|TestSettle_|TestTaskBillingOther|TestLogTaskConsumption)'
+      - name: Verify configuration save and reopen on all supported databases
+        env:
+          CHANNEL_CONFIG_TEST_REQUIRE_THREE: '1'
+          CHANNEL_CONFIG_TEST_MYSQL_DSN: root:fixture-only-release@tcp(127.0.0.1:33177)/six_config_test?charset=utf8mb4&parseTime=True&loc=Local
+          CHANNEL_CONFIG_TEST_POSTGRES_DSN: host=127.0.0.1 port=54377 user=fixture password=fixture-only-release dbname=six_config_test sslmode=disable
+        run: go test -count=1 -timeout=5m ./model -run '^TestChannelModelConfigurationDatabaseMatrix$' -v
       - name: Verify affected frontend
         working-directory: web
         run: |
           bun install --frozen-lockfile
           bun run typecheck
-          bun run test src/features/channels/components/__tests__/channel-configuration.test.tsx
+          bun run test src/features/channels/components/__tests__/channel-configuration.test.tsx src/features/channels/model-configuration
           bunx --no-install oxlint -c .oxlintrc.json src/features/channels/components/drawers/channel-mutate-drawer.tsx src/features/channels/components/__tests__/channel-configuration.test.tsx
 
   publish:

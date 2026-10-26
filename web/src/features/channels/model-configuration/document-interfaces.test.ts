@@ -259,15 +259,19 @@ describe('document interfaces and actual model IDs', () => {
   it('applies explicitly documented per-model constraints only to the matching actual ID', () => {
     const catalog = projectDocumentInterfaces(
       catalogs.xcmapi_media,
-      ['dola-seedance-2.0-900', 'fetched-unknown'],
+      ['seedance-2.5-g2-c1', 'dola-seedance-2.0-900', 'fetched-unknown'],
       'video'
     ) as Catalog
     expect(
-      catalog.models['dola-seedance-2.0-900'].parameters.resolution.enum
+      catalog.models['seedance-2.5-g2-c1'].parameters.resolution.enum
     ).toEqual(['720p'])
     expect(
-      catalog.models['dola-seedance-2.0-900'].parameters
+      catalog.models['seedance-2.5-g2-c1'].parameters
     ).not.toHaveProperty('videos')
+    // A retired documentation example must not inherit another model's rules.
+    expect(
+      catalog.models['dola-seedance-2.0-900'].parameters.resolution.enum
+    ).toBeUndefined()
     expect(
       catalog.models['fetched-unknown'].parameters.resolution.enum
     ).toBeUndefined()

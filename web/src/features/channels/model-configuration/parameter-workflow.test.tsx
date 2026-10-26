@@ -100,11 +100,11 @@ function document(): Configuration {
 }
 
 describe('document to parameter configuration workflow', () => {
-  it('restores individual document rules with the actual model constraints', async () => {
+  it('restores editable individual document rules with the actual model constraints', async () => {
     const providers = JSON.parse(
       readFileSync(path.resolve('../pkg/modelconfig/catalog.json'), 'utf8')
     ).providers as Record<string, Catalog>
-    const model = 'dola-seedance-2.0-900'
+    const model = 'seedance2.0-g2-o2'
     const projected = projectDocumentInterfaces(
       providers.xcmapi_media,
       [model],
@@ -126,6 +126,9 @@ describe('document to parameter configuration workflow', () => {
     if (!parameter) {
       throw new Error('Missing documented duration field')
     }
+    expect(parameter.required).toBe(false)
+    expect(parameter.minimum).toBe(4)
+    expect(parameter.maximum).toBe(15)
     parameter.minimum = 5
     parameter.maximum = 10
     let applied: Configuration | undefined
