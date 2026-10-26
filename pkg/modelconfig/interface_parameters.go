@@ -59,33 +59,7 @@ func normalizeInterfaceAliases(input map[string]any, parameters map[string]Param
 		}
 	}
 	for field, parameter := range parameters {
-		aliases := []string{}
-		meta, _ := parameter.Definition["x-channel-parameter"].(map[string]any)
-		vendorFields, _ := meta["vendorFields"].([]any)
-		for _, raw := range vendorFields {
-			if name, ok := raw.(string); ok && !strings.ContainsAny(name, ".[]") && name != field {
-				aliases = append(aliases, name)
-			}
-		}
-		if field == "seconds" {
-			aliases = append(aliases, "duration", "duration_seconds")
-		}
-		if field == "aspect_ratio" {
-			aliases = append(aliases, "ratio", "aspectRatio")
-		}
-		if field == "image" || field == "start_image_url" {
-			aliases = append(aliases, "first_frame")
-			if field == "image" {
-				aliases = append(aliases, "start_image_url")
-			}
-		}
-		if field == "last_frame" {
-			aliases = append(aliases, "end_image_url")
-		}
-		if field == "end_image_url" {
-			aliases = append(aliases, "last_frame")
-		}
-		for _, alias := range aliases {
+		for _, alias := range parameterAliases(field, parameter) {
 			value, present := result[alias]
 			if !present {
 				continue
@@ -109,6 +83,32 @@ func normalizeInterfaceAliases(input map[string]any, parameters map[string]Param
 		}
 	}
 	return result, nil
+}
+
+func parameterAliases(field string, parameter Parameter) []string {
+	aliases := []string{}
+	meta, _ := parameter.Definition["x-channel-parameter"].(map[string]any)
+	vendorFields, _ := meta["vendorFields"].([]any)
+	for _, raw := range vendorFields {
+		if name, ok := raw.(string); ok && !strings.ContainsAny(name, ".[]") && name != field {
+			aliases = append(aliases, name)
+		}
+	}
+	switch field {
+	case "seconds":
+		aliases = append(aliases, "duration", "duration_seconds")
+	case "aspect_ratio":
+		aliases = append(aliases, "ratio", "aspectRatio")
+	case "image":
+		aliases = append(aliases, "first_frame", "start_image_url")
+	case "start_image_url":
+		aliases = append(aliases, "first_frame")
+	case "last_frame":
+		aliases = append(aliases, "end_image_url")
+	case "end_image_url":
+		aliases = append(aliases, "last_frame")
+	}
+	return aliases
 }
 
 // InterfaceContract projects documentation for an actual model, without ever

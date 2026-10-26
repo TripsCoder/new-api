@@ -7,11 +7,60 @@ import (
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
+	"io"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 )
+
+func TestChannelConfigurationUpstreamDefaultsReachRealPlugin(t *testing.T) {
+	source, err := os.ReadFile("../../../../plugin-sources/fenglang-video/dist/fenglang_video.plugin.js")
+	require.NoError(t, err)
+	plugin, err := pluginruntime.CompilePlugin(string(source), pluginruntime.Options{})
+	require.NoError(t, err)
+	var template string
+	for key := range plugin.Meta.ParameterInterfaces {
+		template = key
+	}
+	require.NotEmpty(t, template)
+	document := modelconfig.Empty("fenglang_video")
+	document.Revision = 3
+	document.Groups["g"] = modelconfig.Group{Modes: map[string]modelconfig.Mode{"text_video": {
+		Enabled: true, Protocol: &modelconfig.ProtocolBinding{TemplateModel: template, Confirmed: true},
+		Input: map[string]any{"generate_audio": false, "seed": float64(0), "seconds": float64(5)},
+		Parameters: map[string]modelconfig.Parameter{
+			"prompt":         {Type: "string"},
+			"generate_audio": {Type: "boolean", InputPolicy: modelconfig.InputPolicyUpstreamDefault},
+			"seed":           {Type: "integer", InputPolicy: modelconfig.InputPolicyUpstreamDefault},
+			"seconds":        {Type: "integer"},
+		},
+	}}}
+	document.Bindings["seedance-2.5"] = map[string]modelconfig.Binding{"text_video": {GroupID: "g"}}
+	for _, supplied := range []map[string]any{{}, {"generate_audio": true, "seed": 12345}, {"generate_audio": "invalid", "seed": false}} {
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest("POST", "/v1/videos", nil)
+		input := map[string]any{"prompt": "Offline fixture"}
+		for key, value := range supplied {
+			input[key] = value
+		}
+		c.Set("task_request", map[string]any{"operation": "video_generate", "input": input})
+		c.Set(channelConfigurationPinKey, &requestConfigurationPin{Documents: map[int]*modelconfig.Document{11: &document}})
+		info := &relaycommon.RelayInfo{OriginModelName: "seedance-2.5", ChannelMeta: &relaycommon.ChannelMeta{ChannelId: 11, UpstreamModelName: "seedance-2.5", ChannelBaseUrl: "https://supplier.invalid/open/v1", ApiKey: "isolated-only"}, TaskRelayInfo: &relaycommon.TaskRelayInfo{}}
+		adaptor := New(plugin)
+		adaptor.Init(info)
+		require.NoError(t, adaptor.applyChannelModelConfiguration(c, info))
+		body, err := adaptor.BuildRequestBody(c, info)
+		require.NoError(t, err)
+		raw, err := io.ReadAll(body)
+		require.NoError(t, err)
+		var wire map[string]any
+		require.NoError(t, common.Unmarshal(raw, &wire))
+		require.Equal(t, false, wire["generate_audio"])
+		require.Equal(t, float64(0), wire["seed"])
+		require.Equal(t, float64(5), wire["seconds"])
+	}
+}
 
 func configurationFixture(revision int64, n float64) *modelconfig.Document {
 	d := modelconfig.Empty("paisio_media")

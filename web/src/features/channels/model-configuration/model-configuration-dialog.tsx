@@ -181,6 +181,10 @@ export function ModelConfigurationDialog(props: {
   const [kind, setKind] = useState<'image' | 'video'>('video')
   const [removedModels, setRemovedModels] = useState<string[]>([])
   const [modelSearch, setModelSearch] = useState('')
+  const [configurationMode, setConfigurationMode] = useState<'add' | 'edit'>(
+    'add'
+  )
+  const [modelsToEdit, setModelsToEdit] = useState<string[]>([])
   const [priceEdits, setPriceEdits] = useState<CustomerPriceEdits>({})
   const [step, setStep] = useState(0),
     [selected, setSelected] = useState<string[]>([]),
@@ -232,6 +236,8 @@ export function ModelConfigurationDialog(props: {
     setModeKey('')
     setRemovedModels([])
     setModelSearch('')
+    setConfigurationMode('add')
+    setModelsToEdit([])
     setPriceEdits({})
     setRaw({})
     setRawDirty({})
@@ -280,8 +286,11 @@ export function ModelConfigurationDialog(props: {
   const group = draft?.groups[groupId],
     mode = group?.modes[modeKey],
     scope = `${groupId}|${modeKey}`
-  const scopeModels = [...new Set(selected)].filter(
-    (name) => !configuredModels.includes(name) && !removedModels.includes(name)
+  const activeSelection = configurationMode === 'edit' ? modelsToEdit : selected
+  const scopeModels = [...new Set(activeSelection)].filter((name) =>
+    configurationMode === 'edit'
+      ? configuredModels.includes(name)
+      : !configuredModels.includes(name) && !removedModels.includes(name)
   )
   const linked = draft
     ? Object.keys(draft.bindings).filter(
@@ -384,7 +393,7 @@ export function ModelConfigurationDialog(props: {
   const realChoices = savedTestChoices(
     baseline,
     (savedBatchModels ?? scopeModels).filter(
-      (name) => selected.includes(name) && !removedModels.includes(name)
+      (name) => activeSelection.includes(name) && !removedModels.includes(name)
     )
   )
   const realTestModel =
@@ -512,7 +521,10 @@ export function ModelConfigurationDialog(props: {
     ]
     let next = draft,
       id = ids.length === 1 ? ids[0] : ''
-    if (!selectionMatchesGroup(draft, catalog, scopeModels, id)) {
+    if (
+      configurationMode === 'edit' ||
+      !selectionMatchesGroup(draft, catalog, scopeModels, id)
+    ) {
       const previousMembers = Object.keys(draft.bindings).filter((model) =>
         Object.values(draft.bindings[model]).some(
           (binding) => binding.groupId === id
@@ -663,7 +675,7 @@ export function ModelConfigurationDialog(props: {
       const saved = await saveModelConfiguration(
         props.channel.id,
         draft,
-        scopeModels,
+        scopeModels.filter((name) => !configuredModels.includes(name)),
         removedModels,
         routeSnapshot
       )
@@ -855,191 +867,231 @@ export function ModelConfigurationDialog(props: {
           )}
           {draft && catalog && step === 0 && (
             <section className='space-y-4'>
-              <div className='flex flex-wrap items-center justify-between gap-3'>
-                <div>
-                  <h3 className='font-semibold'>
-                    {t('Select models to configure together')}
-                  </h3>
+              <Tabs
+                value={configurationMode}
+                onValueChange={(value) => {
+                  if (changeRows.length) return
+                  setConfigurationMode(value as 'add' | 'edit')
+                  setRemovedModels([])
+                }}
+              >
+                <TabsList aria-label={t('Configuration mode')}>
+                  <TabsTrigger value='add' disabled={changeRows.length > 0}>
+                    {t('Add models')}
+                  </TabsTrigger>
+                  <TabsTrigger value='edit' disabled={changeRows.length > 0}>
+                    {t('Edit configured models')}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value='edit' className='space-y-4'>
                   <p className='text-muted-foreground text-sm'>
                     {t(
-                      'Selecting models does not delete other models or change their keys'
+                      'Select saved models to edit their capabilities and parameters. Other models keep their settings.'
                     )}
                   </p>
-                </div>
-                <Button
-                  onClick={() => discovery.fetch()}
-                  disabled={discovery.status === 'loading'}
-                >
-                  {discovery.status === 'loading'
-                    ? t('Reading models...')
-                    : t('Read model list')}
-                </Button>
-              </div>
-              {discovery.status === 'error' && (
-                <Alert variant='destructive'>
-                  <AlertTitle>{t('Model list could not be read')}</AlertTitle>
-                  <AlertDescription>
-                    {modelDiscoveryErrorMessage(discovery.error, t)}
-                  </AlertDescription>
-                </Alert>
-              )}
-              {discovery.status === 'success' && (
-                <p className='text-sm'>
-                  {t('Models returned by the channel')}:{' '}
-                  {discovery.models.length}.{' '}
-                  {t(
-                    'Missing models are kept; a public catalog is not added to this result.'
-                  )}
-                </p>
-              )}
-              {discovery.status === 'success' && (
-                <div className='space-y-3'>
-                  <Input
-                    aria-label={t('Search models...')}
-                    placeholder={t('Search models...')}
-                    value={modelSearch}
-                    onChange={(event) => setModelSearch(event.target.value)}
+                  <UpstreamModelSelection
+                    models={configuredModels}
+                    selected={modelsToEdit}
+                    onChange={setModelsToEdit}
+                    existingModels={configuredModels}
+                    onViewParameters={setPreviewModel}
+                    showChanges={false}
                   />
-                  <Tabs defaultValue='new'>
-                    <TabsList className='w-full'>
-                      <TabsTrigger value='new'>
-                        {t('Newly discovered models')} ({newlyDiscovered.length}
-                        )
-                      </TabsTrigger>
-                      <TabsTrigger value='existing'>
-                        {t('Configured')} ({configuredReturned.length})
-                      </TabsTrigger>
-                      <TabsTrigger value='removed'>
-                        {t('Removed')} ({missing.length})
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value='new'>
-                      <UpstreamModelSelection
-                        models={newlyDiscovered}
-                        selected={selected}
-                        onChange={setSelected}
-                        existingModels={configuredModels}
-                        showChanges={false}
-                        summaryText=''
-                        search={modelSearch}
-                        showSelectionSummary={false}
-                      />
-                    </TabsContent>
-                    <TabsContent value='existing'>
-                      <UpstreamModelSelection
-                        models={configuredReturned}
-                        onViewParameters={setPreviewModel}
-                        selected={selected}
-                        onChange={setSelected}
-                        existingModels={configuredModels}
-                        showChanges={false}
-                        summaryText=''
-                        search={modelSearch}
-                        showSelectionSummary={false}
-                      />
-                    </TabsContent>
-                    <TabsContent value='removed'>
-                      <MissingModels
-                        models={missing.filter((name) =>
-                          name
-                            .toLowerCase()
-                            .includes(modelSearch.trim().toLowerCase())
+                </TabsContent>
+                <TabsContent value='add' className='space-y-4'>
+                  <div className='flex flex-wrap items-center justify-between gap-3'>
+                    <div>
+                      <h3 className='font-semibold'>
+                        {t('Select models to configure together')}
+                      </h3>
+                      <p className='text-muted-foreground text-sm'>
+                        {t(
+                          'Selecting models does not delete other models or change their keys'
                         )}
-                        removed={removedModels}
-                        onToggle={(name, keep) => {
-                          setRemovedModels((previous) =>
-                            keep
-                              ? previous.filter((value) => value !== name)
-                              : [...new Set([...previous, name])]
-                          )
-                          if (!keep) {
-                            setSelected((previous) =>
-                              previous.filter((value) => value !== name)
-                            )
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => discovery.fetch()}
+                      disabled={discovery.status === 'loading'}
+                    >
+                      {discovery.status === 'loading'
+                        ? t('Reading models...')
+                        : t('Read model list')}
+                    </Button>
+                  </div>
+                  {discovery.status === 'error' && (
+                    <Alert variant='destructive'>
+                      <AlertTitle>
+                        {t('Model list could not be read')}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {modelDiscoveryErrorMessage(discovery.error, t)}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {discovery.status === 'success' && (
+                    <p className='text-sm'>
+                      {t('Models returned by the channel')}:{' '}
+                      {discovery.models.length}.{' '}
+                      {t(
+                        'Missing models are kept; a public catalog is not added to this result.'
+                      )}
+                    </p>
+                  )}
+                  {discovery.status === 'success' && (
+                    <div className='space-y-3'>
+                      <Input
+                        aria-label={t('Search models...')}
+                        placeholder={t('Search models...')}
+                        value={modelSearch}
+                        onChange={(event) => setModelSearch(event.target.value)}
+                      />
+                      <Tabs defaultValue='new'>
+                        <TabsList className='w-full'>
+                          <TabsTrigger value='new'>
+                            {t('Newly discovered models')} (
+                            {newlyDiscovered.length})
+                          </TabsTrigger>
+                          <TabsTrigger value='existing'>
+                            {t('Configured')} ({configuredReturned.length})
+                          </TabsTrigger>
+                          <TabsTrigger value='removed'>
+                            {t('Removed')} ({missing.length})
+                          </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value='new'>
+                          <UpstreamModelSelection
+                            models={newlyDiscovered}
+                            selected={selected}
+                            onChange={setSelected}
+                            existingModels={configuredModels}
+                            showChanges={false}
+                            summaryText=''
+                            search={modelSearch}
+                            showSelectionSummary={false}
+                          />
+                        </TabsContent>
+                        <TabsContent value='existing'>
+                          <UpstreamModelSelection
+                            models={configuredReturned}
+                            onViewParameters={setPreviewModel}
+                            selected={selected}
+                            onChange={setSelected}
+                            existingModels={configuredModels}
+                            showChanges={false}
+                            summaryText=''
+                            search={modelSearch}
+                            showSelectionSummary={false}
+                          />
+                        </TabsContent>
+                        <TabsContent value='removed'>
+                          <MissingModels
+                            models={missing.filter((name) =>
+                              name
+                                .toLowerCase()
+                                .includes(modelSearch.trim().toLowerCase())
+                            )}
+                            removed={removedModels}
+                            onToggle={(name, keep) => {
+                              setRemovedModels((previous) =>
+                                keep
+                                  ? previous.filter((value) => value !== name)
+                                  : [...new Set([...previous, name])]
+                              )
+                              if (!keep) {
+                                setSelected((previous) =>
+                                  previous.filter((value) => value !== name)
+                                )
+                              }
+                            }}
+                          />
+                        </TabsContent>
+                      </Tabs>
+                      <p className='text-muted-foreground text-sm'>
+                        {t('{{n}} model(s) selected', {
+                          n: scopeModels.length,
+                        })}
+                      </p>
+                    </div>
+                  )}
+                  {discovery.status !== 'success' && (
+                    <UpstreamModelSelection
+                      models={configurationModelChoices(
+                        [],
+                        parseModelsString(routeSnapshot),
+                        Object.keys(draft?.bindings ?? {}),
+                        selected
+                      ).filter((name) => !missing.includes(name))}
+                      selected={selected}
+                      onChange={setSelected}
+                      existingModels={parseModelsString(routeSnapshot)}
+                      onViewParameters={setPreviewModel}
+                    />
+                  )}
+                  <details>
+                    <summary className='cursor-pointer font-medium'>
+                      {t('View documented models or enter a model ID')}
+                    </summary>
+                    <p className='text-muted-foreground my-3 text-sm'>
+                      {t(
+                        'These are documentation references, not a successful account model lookup'
+                      )}
+                    </p>
+                    <Field>
+                      <FieldLabel>{t('Add a model ID manually')}</FieldLabel>
+                      <Input
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            const value = event.currentTarget.value.trim()
+                            if (value) {
+                              setSelected((previous) => [
+                                ...new Set([...previous, value]),
+                              ])
+                              event.currentTarget.value = ''
+                            }
                           }
                         }}
+                        placeholder={t(
+                          'Enter an exact model ID and press Enter'
+                        )}
                       />
-                    </TabsContent>
-                  </Tabs>
-                  <p className='text-muted-foreground text-sm'>
-                    {t('{{n}} model(s) selected', { n: scopeModels.length })}
-                  </p>
-                </div>
-              )}
-              {discovery.status !== 'success' && (
-                <UpstreamModelSelection
-                  models={configurationModelChoices(
-                    [],
-                    parseModelsString(routeSnapshot),
-                    Object.keys(draft?.bindings ?? {}),
-                    selected
-                  ).filter((name) => !missing.includes(name))}
-                  selected={selected}
-                  onChange={setSelected}
-                  existingModels={parseModelsString(routeSnapshot)}
-                  onViewParameters={setPreviewModel}
-                />
-              )}
-              <details>
-                <summary className='cursor-pointer font-medium'>
-                  {t('View documented models or enter a model ID')}
-                </summary>
-                <p className='text-muted-foreground my-3 text-sm'>
-                  {t(
-                    'These are documentation references, not a successful account model lookup'
+                    </Field>
+                    <div className='mt-3 flex max-h-64 flex-wrap gap-2 overflow-auto'>
+                      {Object.keys(catalog.models).map((model) => (
+                        <Button
+                          key={model}
+                          size='sm'
+                          variant={
+                            selected.includes(model) ? 'secondary' : 'outline'
+                          }
+                          onClick={() =>
+                            setSelected((previous) =>
+                              previous.includes(model)
+                                ? previous.filter((value) => value !== model)
+                                : [...previous, model]
+                            )
+                          }
+                        >
+                          {model}
+                        </Button>
+                      ))}
+                    </div>
+                  </details>
+                  {unknown.length > 0 && (
+                    <Alert>
+                      <AlertTitle>
+                        {t('Some interface settings still need confirmation')}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {unknown.join(', ')}.{' '}
+                        {t(
+                          'These models can be kept as drafts; their capabilities are not guessed from names.'
+                        )}
+                      </AlertDescription>
+                    </Alert>
                   )}
-                </p>
-                <Field>
-                  <FieldLabel>{t('Add a model ID manually')}</FieldLabel>
-                  <Input
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        const value = event.currentTarget.value.trim()
-                        if (value) {
-                          setSelected((previous) => [
-                            ...new Set([...previous, value]),
-                          ])
-                          event.currentTarget.value = ''
-                        }
-                      }
-                    }}
-                    placeholder={t('Enter an exact model ID and press Enter')}
-                  />
-                </Field>
-                <div className='mt-3 flex max-h-64 flex-wrap gap-2 overflow-auto'>
-                  {Object.keys(catalog.models).map((model) => (
-                    <Button
-                      key={model}
-                      size='sm'
-                      variant={
-                        selected.includes(model) ? 'secondary' : 'outline'
-                      }
-                      onClick={() =>
-                        setSelected((previous) =>
-                          previous.includes(model)
-                            ? previous.filter((value) => value !== model)
-                            : [...previous, model]
-                        )
-                      }
-                    >
-                      {model}
-                    </Button>
-                  ))}
-                </div>
-              </details>
-              {unknown.length > 0 && (
-                <Alert>
-                  <AlertTitle>
-                    {t('Some interface settings still need confirmation')}
-                  </AlertTitle>
-                  <AlertDescription>
-                    {unknown.join(', ')}.{' '}
-                    {t(
-                      'These models can be kept as drafts; their capabilities are not guessed from names.'
-                    )}
-                  </AlertDescription>
-                </Alert>
-              )}
+                </TabsContent>
+              </Tabs>
             </section>
           )}
           {draft && catalog && step === 1 && (
@@ -2094,7 +2146,7 @@ export function ModelConfigurationDialog(props: {
               if (scopeModels.includes(name)) setEditingModel(name)
             }}
             models={scopeModels}
-            selected={selected}
+            selected={activeSelection}
             removed={removedModels}
             draft={draft}
             baseline={baseline}

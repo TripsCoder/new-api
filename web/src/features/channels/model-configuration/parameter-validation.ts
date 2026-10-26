@@ -50,6 +50,16 @@ export function parameterConfigurationIssues(
           !requiredParameter(reference, field)
         const prefix = `${model} / ${key} / ${field}`
         if (
+          actual?.inputPolicy === 'upstream_default' &&
+          (!Object.hasOwn(mode.input, field) ||
+            mode.input[field] === null ||
+            mode.input[field] === undefined)
+        ) {
+          issues.push(
+            `${prefix}: ${t('Upstream-only parameters need an explicit default')}`
+          )
+        }
+        if (
           actual?.definition?.['x-business-allowed-values'] === 'fixed' &&
           !actual.enum?.length
         ) {

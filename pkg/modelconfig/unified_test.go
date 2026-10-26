@@ -5,8 +5,73 @@ import (
 	"os"
 	"testing"
 
+	"github.com/QuantumNous/new-api/common"
 	"github.com/stretchr/testify/require"
 )
+
+func TestUpstreamOnlyDefaultsIgnoreCallerValues(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		value   any
+		request map[string]any
+	}{
+		{"false", false, map[string]any{"generate_audio": true}},
+		{"true", true, map[string]any{"generate_audio": false}},
+		{"invalid caller value", false, map[string]any{"generate_audio": map[string]any{"bad": true}}},
+		{"missing caller value", false, map[string]any{}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			doc := unifiedFixture()
+			m := doc.Groups["g"].Modes["text_video"]
+			var p Parameter
+			require.NoError(t, common.UnmarshalJsonStr(`{"type":"boolean","inputPolicy":"upstream_default"}`, &p))
+			m.Parameters["generate_audio"] = p
+			m.Input = map[string]any{"generate_audio": tc.value}
+			doc.Groups["g"].Modes["text_video"] = m
+			request := cloneMap(tc.request)
+			request["prompt"] = "fixture"
+			original := cloneMap(request)
+			got, _, _, _, err := ResolveUnified(doc, "dynamic-model", "video_generate", request, false)
+			require.NoError(t, err)
+			require.Equal(t, tc.value, got["generate_audio"])
+			require.Equal(t, original, request)
+		})
+	}
+}
+
+func TestUpstreamOnlyDefaultsRequireExplicitValidScalar(t *testing.T) {
+	for _, raw := range []string{
+		`{"type":"boolean","inputPolicy":"upstream_default"}`,
+		`{"type":"boolean","inputPolicy":"unknown"}`,
+		`{"type":"boolean","required":true,"inputPolicy":"upstream_default"}`,
+		`{"type":"array","inputPolicy":"upstream_default"}`,
+	} {
+		doc := unifiedFixture()
+		m := doc.Groups["g"].Modes["text_video"]
+		var p Parameter
+		require.NoError(t, common.UnmarshalJsonStr(raw, &p))
+		m.Parameters["generate_audio"] = p
+		_, _, _, _, err := ResolveUnified(doc, "dynamic-model", "video_generate", map[string]any{"prompt": "fixture", "generate_audio": true}, false)
+		require.Error(t, err, raw)
+	}
+}
+
+func TestUpstreamOnlyDefaultsRemoveAliasesBeforeValidation(t *testing.T) {
+	doc := unifiedFixture()
+	m := doc.Groups["g"].Modes["text_video"]
+	m.Input = map[string]any{"seconds": float64(6), "seed": float64(0)}
+	m.Parameters["seconds"] = Parameter{Type: "integer", InputPolicy: InputPolicyUpstreamDefault}
+	m.Parameters["seed"] = Parameter{Type: "integer", InputPolicy: InputPolicyUpstreamDefault}
+	doc.Groups["g"].Modes["text_video"] = m
+	for _, form := range []bool{false, true} {
+		input, _, _, _, err := ResolveUnified(doc, "dynamic-model", "video_generate", map[string]any{"prompt": "fixture", "seconds": 9000, "duration": "bad", "duration_seconds": false, "seed": 12345}, form)
+		require.NoError(t, err)
+		require.Equal(t, float64(6), input["seconds"])
+		require.Equal(t, float64(0), input["seed"])
+		require.NotContains(t, input, "duration")
+		require.NotContains(t, input, "duration_seconds")
+	}
+}
 
 func unifiedFixture() Document {
 	no := false

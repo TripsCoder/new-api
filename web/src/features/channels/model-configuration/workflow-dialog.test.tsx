@@ -542,8 +542,9 @@ describe('actual channel workflow dialog', () => {
   it('uses one classification with shared search and selection across tabs', async () => {
     mount(channel.models)
     await screen.findByRole('tab', { name: 'Newly discovered models (1)' })
-    expect(screen.getAllByRole('tablist')).toHaveLength(1)
-    expect(screen.getAllByRole('tab')).toHaveLength(3)
+    const addModels = screen.getByRole('tabpanel', { name: 'Add models' })
+    expect(within(addModels).getAllByRole('tablist')).toHaveLength(1)
+    expect(within(addModels).getAllByRole('tab')).toHaveLength(3)
     const search = screen.getByRole('textbox', { name: 'Search models...' })
     expect(
       screen.getAllByRole('textbox', { name: 'Search models...' })

@@ -63,6 +63,13 @@ func TestChannelModelConfigurationDatabaseMatrix(t *testing.T) {
 			sqlDB, err := DB.DB()
 			require.NoError(t, err)
 			defer sqlDB.Close()
+			query := "SELECT version()"
+			if tc.name == "sqlite" {
+				query = "SELECT sqlite_version()"
+			}
+			var engineVersion string
+			require.NoError(t, DB.Raw(query).Scan(&engineVersion).Error)
+			t.Logf("%s version: %s", tc.name, engineVersion)
 			require.NoError(t, DB.AutoMigrate(&Channel{}, &ChannelModelConfiguration{}, &Task{}))
 			require.NoError(t, DB.AutoMigrate(&ChannelModelConfiguration{}))
 			const target = 18100301
@@ -75,11 +82,21 @@ func TestChannelModelConfigurationDatabaseMatrix(t *testing.T) {
 			defer DB.Where("channel_id IN ?", []int{target, other}).Delete(&ChannelModelConfiguration{})
 			defer DB.Where("id IN ?", []int{target, other}).Delete(&Channel{})
 			d := modelconfig.Empty("paisio_media")
-			d.Groups["unicode"] = modelconfig.Group{Name: "模型参数与价格", Modes: map[string]modelconfig.Mode{"text_image": {Enabled: true, Input: map[string]any{"n": float64(1), "prompt": strings.Repeat("长文本", 10000)}}}}
+			d.Groups["unicode"] = modelconfig.Group{Name: "模型参数与价格", Modes: map[string]modelconfig.Mode{"text_image": {Enabled: true, Input: map[string]any{"n": float64(1), "prompt": strings.Repeat("长文本", 10000), "watermark": false}, Parameters: map[string]modelconfig.Parameter{"watermark": {Type: "boolean", InputPolicy: modelconfig.InputPolicyUpstreamDefault}}}}}
 			d.Bindings["image"] = map[string]modelconfig.Binding{"text_image": {GroupID: "unicode"}}
 			first, err := SaveChannelModelConfiguration(context.Background(), target, 1, d, 0)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), first.Revision)
+			encoded, err := common.Marshal(d)
+			require.NoError(t, err)
+			var invalid modelconfig.Document
+			require.NoError(t, common.Unmarshal(encoded, &invalid))
+			delete(invalid.Groups["unicode"].Modes["text_image"].Input, "watermark")
+			_, err = SaveChannelModelConfiguration(t.Context(), target, 1, invalid, first.Revision)
+			require.ErrorContains(t, err, "explicit default")
+			unchanged, err := GetChannelModelConfiguration(t.Context(), target, 0)
+			require.NoError(t, err)
+			require.Equal(t, first.Revision, unchanged.Revision)
 			// The optional supplement must survive the same payload storage on all
 			// three engines, including reopen and a second revision.
 			manual := modelconfig.Empty("xcmapi_media")
@@ -127,6 +144,10 @@ func TestChannelModelConfigurationDatabaseMatrix(t *testing.T) {
 			restored, err := GetChannelModelConfiguration(context.Background(), target, 1)
 			require.NoError(t, err)
 			require.Equal(t, first.Groups["unicode"].Modes["text_image"].Input["prompt"], restored.Groups["unicode"].Modes["text_image"].Input["prompt"])
+			require.Equal(t, modelconfig.InputPolicyUpstreamDefault, restored.Groups["unicode"].Modes["text_image"].Parameters["watermark"].InputPolicy)
+			input, _, err := modelconfig.Resolve(restored, "image", "text_image", map[string]any{"watermark": true})
+			require.NoError(t, err)
+			require.Equal(t, false, input["watermark"])
 			_, err = SaveChannelModelConfiguration(context.Background(), target, 1, restored, 1)
 			require.NoError(t, err)
 			versions, err := ListChannelModelConfigurationVersions(context.Background(), target)

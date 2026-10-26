@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"net/url"
 	"reflect"
@@ -19,6 +20,7 @@ import (
 
 const Format = "channel-model-configuration/v1"
 const ContextKeyRevision = "channel_model_configuration_revision"
+const InputPolicyUpstreamDefault = "upstream_default"
 
 var namePattern = regexp.MustCompile(`^[A-Za-z0-9_.:-]{1,128}$`)
 var blocked = regexp.MustCompile(`(?i)^(authorization|api[-_]?key|access[-_]?token|refresh[-_]?token|password|secret|cookie|credential|__proto__|prototype|constructor)$`)
@@ -31,6 +33,7 @@ type Source struct {
 	Status string `json:"status,omitempty"`
 }
 type Parameter struct {
+	InputPolicy string          `json:"inputPolicy,omitempty"`
 	Definition  map[string]any  `json:"definition,omitempty"`
 	Type        string          `json:"type,omitempty"`
 	Required    *bool           `json:"required,omitempty"`
@@ -223,6 +226,16 @@ func validateDocument(document Document, requireConfirmation bool) error {
 					return errors.New("invalid parameter mapping")
 				}
 			}
+			definition := group.Modes[key]
+			parameters := mergeParameters(definition.Parameters, binding.Parameters)
+			mapping := maps.Clone(definition.Mapping)
+			if mapping == nil {
+				mapping = map[string]string{}
+			}
+			maps.Copy(mapping, binding.Mapping)
+			if err := validateUpstreamDefaults(parameters, merge(definition.Input, binding.Input), mapping); err != nil {
+				return fmt.Errorf("%s/%s: %w", model, key, err)
+			}
 
 		}
 	}
@@ -344,6 +357,27 @@ func Resolve(document Document, model, mode string, request map[string]any, form
 	}
 	for key, value := range binding.Mapping {
 		mapping[key] = value
+	}
+	if err := validateUpstreamDefaults(definition.Parameters, defaults, mapping); err != nil {
+		return nil, definition, err
+	}
+	// Upstream-only values are owned by this saved configuration. Discard caller
+	// spellings before alias conflicts, defaults, validation and usage extraction.
+	request = cloneMap(request)
+	for field, parameter := range definition.Parameters {
+		if parameter.InputPolicy != InputPolicyUpstreamDefault {
+			continue
+		}
+		for _, name := range append(parameterAliases(field, parameter), field, mapping[field]) {
+			if name != "" {
+				deletePath(request, name)
+			}
+		}
+		for from, to := range mapping {
+			if to == field {
+				deletePath(request, from)
+			}
+		}
 	}
 	for key, parameter := range definition.Parameters {
 		if key == "model" || parameter.Definition["serverGenerated"] == true {
@@ -499,6 +533,39 @@ func Resolve(document Document, model, mode string, request map[string]any, form
 		}
 	}
 	return input, definition, nil
+}
+
+// validateUpstreamDefaults is shared by saving and execution: an upstream-only
+// field requires an explicit administrator value, including false or zero.
+func validateUpstreamDefaults(parameters map[string]Parameter, defaults map[string]any, mapping map[string]string) error {
+	for field, parameter := range parameters {
+		if parameter.InputPolicy == "" {
+			continue
+		}
+		if parameter.InputPolicy != InputPolicyUpstreamDefault {
+			return fmt.Errorf("%s: invalid parameter input policy", field)
+		}
+		meta, _ := parameter.Definition["x-channel-parameter"].(map[string]any)
+		if field == "model" || field == "prompt" || field == "client_request_id" || parameter.Required != nil && *parameter.Required || parameter.Definition["serverGenerated"] == true || meta["workflowManaged"] == true {
+			return fmt.Errorf("%s: upstream-only defaults require an optional business parameter", field)
+		}
+		switch parameter.Type {
+		case "boolean", "integer", "number", "string":
+		default:
+			return fmt.Errorf("%s: upstream-only defaults require a scalar parameter", field)
+		}
+		if strings.HasPrefix(mapping[field], "@") {
+			return fmt.Errorf("%s: upstream-only defaults cannot be ignored or rejected", field)
+		}
+		value, exists := getPath(defaults, field)
+		if !exists || value == nil {
+			return fmt.Errorf("%s: upstream-only parameters need an explicit default", field)
+		}
+		if err := validateParameter(field, value, parameter); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func validateParameter(key string, value any, parameter Parameter) error {

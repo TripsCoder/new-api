@@ -24,6 +24,7 @@ export type Source = {
   status?: string
 }
 export type Parameter = {
+  inputPolicy?: 'upstream_default'
   type?: string
   required?: boolean
   default?: unknown

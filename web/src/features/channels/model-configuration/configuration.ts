@@ -664,6 +664,8 @@ export function readParameterRules(value: unknown): Record<string, Parameter> {
       !isObject(parameter) ||
       (parameter.enum !== undefined && !Array.isArray(parameter.enum)) ||
       (parameter.type !== undefined && typeof parameter.type !== 'string') ||
+      (parameter.inputPolicy !== undefined &&
+        parameter.inputPolicy !== 'upstream_default') ||
       (parameter.required !== undefined &&
         typeof parameter.required !== 'boolean')
     ) {

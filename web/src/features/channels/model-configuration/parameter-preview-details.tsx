@@ -334,6 +334,12 @@ export function ParameterComparison(props: {
                       : t('Shared settings')}
                   </Badge>
                   <SchemaFacts value={value} />
+                  {parameter?.inputPolicy === 'upstream_default' && (
+                    <p>
+                      {t('Parameter delivery')}:{' '}
+                      {t('Upstream only: configured default')}
+                    </p>
+                  )}
                   {!hasDefault &&
                     !Object.hasOwn(parameter ?? {}, 'default') && (
                       <p>

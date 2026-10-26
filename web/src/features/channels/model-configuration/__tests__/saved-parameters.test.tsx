@@ -25,6 +25,7 @@ import { channelSchema } from '../../types'
 import { ModelConfigurationDialog } from '../model-configuration-dialog'
 import { SavedModelParametersDialog } from '../saved-model-parameters-dialog'
 import type { ConfigurationResponse } from '../types'
+import { effectiveMode } from '../workflow'
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
@@ -154,6 +155,242 @@ function mountPreview(model = 'A') {
     </QueryClientProvider>
   )
 }
+
+describe('editing saved models', () => {
+  beforeEach(() => {
+    response.configuration.groups.g.modes.text_video.billing = {
+      expression: '0.25',
+      currency: 'USD',
+      confirmed: true,
+    }
+    response.configuration.bindings.B = structuredClone(
+      response.configuration.bindings.A
+    )
+    response.catalog.models = Object.fromEntries(
+      ['A', 'B'].map((id) => [
+        id,
+        {
+          id,
+          kind: 'video',
+          status: 'reviewed',
+          source: { url: 'https://docs.invalid/video' },
+          parameters: structuredClone(
+            response.configuration.groups.g.modes.text_video.parameters ?? {}
+          ),
+          modes: { text_video: { required: [] }, video_ref: { required: [] } },
+        },
+      ])
+    )
+    mocks.save.mockImplementation(async (_id, document) => {
+      response.configuration = { ...structuredClone(document), revision: 9 }
+      return structuredClone(response.configuration)
+    })
+  })
+
+  async function editA() {
+    const user = userEvent.setup()
+    const view = render(
+      <QueryClientProvider client={client}>
+        <ModelConfigurationDialog channel={channel} open onOpenChange={close} />
+      </QueryClientProvider>
+    )
+    await user.click(
+      await screen.findByRole('tab', { name: 'Edit configured models' })
+    )
+    const picker = screen.getByRole('tabpanel', {
+      name: 'Edit configured models',
+    })
+    await user.click(within(picker).getByRole('checkbox', { name: 'A' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Next: output type and functions' })
+    )
+    return { user, view }
+  }
+
+  it('edits saved capabilities through review and save, preserving other shared members and routes after reopening', async () => {
+    const original = structuredClone(response.configuration)
+    const { user, view } = await editA()
+    const scope = screen.getByRole('complementary', {
+      name: 'Actual affected models',
+    })
+    expect(within(scope).getByRole('button', { name: 'A' })).toBeVisible()
+    expect(
+      within(scope).queryByRole('button', { name: 'B' })
+    ).not.toBeInTheDocument()
+    await user.click(
+      screen.getByRole('checkbox', { name: /Use reference video/ })
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Next: documented parameters' })
+    )
+    const parameters = screen.getByTestId('selected-capability-parameters')
+    const resolution = within(parameters).getByRole('combobox', {
+      name: /Resolution/,
+    })
+    expect(resolution).toHaveTextContent('1080p')
+    await user.click(resolution)
+    await user.click(await screen.findByRole('option', { name: '720p' }))
+    await user.click(
+      within(parameters).getByRole('checkbox', { name: /resolution: 1080p/ })
+    )
+    expect(
+      within(parameters).getByRole('combobox', {
+        name: 'generate_audio: Default value',
+      })
+    ).toHaveTextContent('False')
+    const deliverySettings = within(parameters).getByLabelText(
+      'generate_audio: Advanced parameter delivery'
+    )
+    await user.click(
+      within(deliverySettings).getByText('Advanced parameter delivery')
+    )
+    await user.click(
+      within(deliverySettings).getByRole('combobox', {
+        name: 'generate_audio: Parameter delivery',
+      })
+    )
+    await user.click(
+      screen.getByRole('option', { name: 'Upstream only: configured default' })
+    )
+    await user.click(screen.getByRole('button', { name: 'Next: model prices' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Next: check and save' })
+    )
+    expect(mocks.save).not.toHaveBeenCalled()
+    await user.click(
+      screen.getByRole('button', { name: 'Save and apply to this channel' })
+    )
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1))
+    const [id, saved, added, removed, routes] = mocks.save.mock.calls[0]
+    expect(id).toBe(12)
+    expect(added).toEqual([])
+    expect(removed).toEqual([])
+    expect(routes).toBe('A,B')
+    expect(effectiveMode(saved, 'A', 'video_ref')?.enabled).toBe(true)
+    expect(effectiveMode(saved, 'A', 'text_video')?.input).toEqual({
+      ...original.groups.g.modes.text_video.input,
+      resolution: '720p',
+    })
+    expect(
+      effectiveMode(saved, 'A', 'text_video')?.parameters?.resolution.enum
+    ).toEqual(['720p'])
+    expect(effectiveMode(saved, 'A', 'text_video')?.mapping?.resolution).toBe(
+      'output_resolution'
+    )
+    expect(effectiveMode(saved, 'A', 'text_video')?.billing).toEqual(
+      original.groups.g.modes.text_video.billing
+    )
+    expect(
+      effectiveMode(saved, 'A', 'text_video')?.parameters?.generate_audio
+        .inputPolicy
+    ).toBe('upstream_default')
+    expect(effectiveMode(saved, 'A', 'text_video')?.input.generate_audio).toBe(
+      false
+    )
+    expect(saved.bindings.B).toEqual(original.bindings.B)
+    expect(saved.groups.g).toEqual(original.groups.g)
+    expect(mocks.call).not.toHaveBeenCalled()
+    view.unmount()
+    await editA()
+    expect(
+      screen.getByRole('checkbox', { name: /Use reference video/ })
+    ).toBeChecked()
+    await user.click(
+      screen.getByRole('button', { name: 'Next: documented parameters' })
+    )
+    expect(
+      within(screen.getByTestId('selected-capability-parameters')).getByRole(
+        'combobox',
+        { name: /Resolution/ }
+      )
+    ).toHaveTextContent('720p')
+    expect(
+      within(screen.getByTestId('selected-capability-parameters')).getByRole(
+        'combobox',
+        { name: 'generate_audio: Default value' }
+      )
+    ).toHaveTextContent('False')
+  })
+
+  it('keeps saved state unchanged on failure and leaves the draft available for retry', async () => {
+    mocks.save.mockRejectedValueOnce(
+      new Error('configuration revision changed')
+    )
+    const original = structuredClone(response.configuration)
+    const { user } = await editA()
+    await user.click(
+      screen.getByRole('checkbox', { name: /Use reference video/ })
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Next: documented parameters' })
+    )
+    await user.click(screen.getByRole('button', { name: 'Next: model prices' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Next: check and save' })
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Save and apply to this channel' })
+    )
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1))
+    expect(response.configuration).toEqual(original)
+    expect(
+      screen.getByRole('button', { name: 'Save and apply to this channel' })
+    ).toBeEnabled()
+    expect(close).not.toHaveBeenCalled()
+  })
+
+  it('shows routed models for editing even when model discovery did not return them', async () => {
+    response.channelModels = 'A,B,not-returned'
+    render(
+      <QueryClientProvider client={client}>
+        <ModelConfigurationDialog channel={channel} open onOpenChange={close} />
+      </QueryClientProvider>
+    )
+    await userEvent.click(
+      await screen.findByRole('tab', { name: 'Edit configured models' })
+    )
+    const picker = screen.getByRole('tabpanel', {
+      name: 'Edit configured models',
+    })
+    expect(
+      within(picker).getByRole('checkbox', { name: 'not-returned' })
+    ).toBeVisible()
+    expect(
+      within(picker).queryByRole('checkbox', { name: 'new-model' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('requires an explicit edit selection and cancels without saving', async () => {
+    const user = userEvent.setup()
+    const original = structuredClone(response.configuration)
+    render(
+      <QueryClientProvider client={client}>
+        <ModelConfigurationDialog channel={channel} open onOpenChange={close} />
+      </QueryClientProvider>
+    )
+    const edit = await screen.findByRole('tab', {
+      name: 'Edit configured models',
+    })
+    edit.focus()
+    await user.keyboard('{Enter}')
+    expect(edit).toHaveAttribute('aria-selected', 'true')
+    await user.click(
+      screen.getByRole('button', { name: 'Next: output type and functions' })
+    )
+    expect(
+      screen.getByRole('tabpanel', { name: 'Edit configured models' })
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Choose output type, then supported functions',
+      })
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByText('Close', { selector: 'button' }))
+    expect(close).toHaveBeenCalledWith(false)
+    expect(response.configuration).toEqual(original)
+    expect(mocks.save).not.toHaveBeenCalled()
+  })
+})
 
 describe('saved model parameter preview', () => {
   it('shows effective saved overrides, explicit zero and false, and no document default', async () => {

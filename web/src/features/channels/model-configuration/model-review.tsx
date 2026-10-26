@@ -93,6 +93,9 @@ function capabilities(value: InputCapabilities | undefined): string {
 function parameter(value: Parameter | undefined): string {
   if (!value) return '未设置额外限制'
   const parts = [value.required ? '上游要求填写' : '可不填写']
+  if (value.inputPolicy === 'upstream_default') {
+    parts.push(t('Upstream only: configured default'))
+  }
   if (value.enum) parts.push(`允许值：${readable(value.enum)}`)
   if (value.minimum !== undefined) parts.push(`最小值：${value.minimum}`)
   if (value.maximum !== undefined) parts.push(`最大值：${value.maximum}`)

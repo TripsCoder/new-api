@@ -257,7 +257,11 @@ export function ParameterFields(props: {
                 ))}
               </div>
               <p className='text-muted-foreground text-xs'>
-                {t('Default value (optional)')}
+                {t(
+                  parameter?.inputPolicy === 'upstream_default'
+                    ? 'Configured upstream value (required)'
+                    : 'Default value (optional)'
+                )}
               </p>
               <Select
                 value={
@@ -369,12 +373,33 @@ export function ParameterFields(props: {
             </div>
           )
         } else if (type === 'boolean') {
+          let label = t('Not specified')
+          if (typeof value === 'boolean') label = t(value ? 'True' : 'False')
           control = (
-            <Checkbox
-              id={id}
-              checked={value === true}
-              onCheckedChange={(checked) => update(key, checked)}
-            />
+            <Select
+              value={value === undefined ? '__unset__' : String(value)}
+              onValueChange={(next) =>
+                update(key, next === '__unset__' ? undefined : next === 'true')
+              }
+            >
+              <SelectTrigger
+                id={id}
+                aria-label={`${key}: ${t('Default value')}`}
+              >
+                <SelectValue>{label}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value='__unset__'>
+                    {t(
+                      props.overrides ? 'Restore inheritance' : 'Not specified'
+                    )}
+                  </SelectItem>
+                  <SelectItem value='true'>{t('True')}</SelectItem>
+                  <SelectItem value='false'>{t('False')}</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           )
         } else if (
           type === 'array' &&
@@ -454,6 +479,14 @@ export function ParameterFields(props: {
           )
         }
         const included = props.mode.mapping?.[key] !== '@ignore'
+        let deliveryLabel = t('Both directions: caller value first')
+        if (!included) deliveryLabel = t('Ignore both directions')
+        else if (parameter?.inputPolicy === 'upstream_default') {
+          deliveryLabel = t('Upstream only: configured default')
+        }
+        let resetLabel = t('Use default')
+        if (props.overrides) resetLabel = t('Restore inheritance')
+        else if (type === 'boolean') resetLabel = t('Clear default value')
         return (
           <Field key={key}>
             <div className='flex items-center justify-between gap-2'>
@@ -491,7 +524,7 @@ export function ParameterFields(props: {
                       : update(key, undefined)
                   }
                 >
-                  {t(props.overrides ? 'Restore inheritance' : 'Use default')}
+                  {resetLabel}
                 </Button>
               )}
             </div>
@@ -505,6 +538,9 @@ export function ParameterFields(props: {
                     next.mapping = {
                       ...next.mapping,
                       [key]: checked ? key : '@ignore',
+                    }
+                    if (!checked && next.parameters?.[key]) {
+                      delete next.parameters[key].inputPolicy
                     }
                     props.onChange(next)
                   }}
@@ -536,14 +572,89 @@ export function ParameterFields(props: {
                 key !== 'prompt' &&
                 (numericParameter(parameter) || type === 'string') && (
                   <p className='text-muted-foreground text-xs'>
-                    {t('Default value (optional)')} ·{' '}
                     {t(
-                      'One value only; leave blank to omit. Allowed values and ranges are configured separately.'
+                      parameter?.inputPolicy === 'upstream_default'
+                        ? 'Configured upstream value (required)'
+                        : 'Default value (optional)'
+                    )}{' '}
+                    ·{' '}
+                    {t(
+                      parameter?.inputPolicy === 'upstream_default'
+                        ? 'Caller values are ignored. Only the explicitly configured default is sent upstream.'
+                        : 'One value only; leave blank to omit. Allowed values and ranges are configured separately.'
                     )}
                   </p>
                 )}
               {control}
             </fieldset>
+            {props.allowExclusion &&
+              props.advanced &&
+              parameter &&
+              ['boolean', 'integer', 'number', 'string'].includes(
+                parameter.type ?? ''
+              ) && (
+                <details
+                  className='space-y-2'
+                  aria-label={`${key}: ${t('Advanced parameter delivery')}`}
+                >
+                  <summary className='cursor-pointer text-sm'>
+                    {t('Advanced parameter delivery')}
+                  </summary>
+                  <Select
+                    value={
+                      !included ? 'ignore' : (parameter.inputPolicy ?? 'both')
+                    }
+                    onValueChange={(delivery) => {
+                      const next = structuredClone(props.mode)
+                      const rule = { ...parameter }
+                      if (delivery === 'upstream_default') {
+                        rule.inputPolicy = 'upstream_default'
+                      } else delete rule.inputPolicy
+                      next.parameters = { ...next.parameters, [key]: rule }
+                      let target = next.mapping?.[key] ?? key
+                      if (delivery === 'ignore') target = '@ignore'
+                      else if (target.startsWith('@')) target = key
+                      next.mapping = {
+                        ...next.mapping,
+                        [key]: target,
+                      }
+                      props.onChange(next)
+                    }}
+                  >
+                    <SelectTrigger
+                      aria-label={`${key}: ${t('Parameter delivery')}`}
+                    >
+                      <SelectValue>{deliveryLabel}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value='both'>
+                          {t('Both directions: caller value first')}
+                        </SelectItem>
+                        <SelectItem value='ignore'>
+                          {t('Ignore both directions')}
+                        </SelectItem>
+                        <SelectItem value='upstream_default'>
+                          {t('Upstream only: configured default')}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {parameter.inputPolicy === 'upstream_default' && (
+                    <p className='text-muted-foreground text-sm'>
+                      {t(
+                        'Caller values are ignored. Only the explicitly configured default is sent upstream.'
+                      )}
+                    </p>
+                  )}
+                  {parameter.inputPolicy === 'upstream_default' &&
+                    value === undefined && (
+                      <p role='alert' className='text-destructive text-sm'>
+                        {t('Upstream-only parameters need an explicit default')}
+                      </p>
+                    )}
+                </details>
+              )}
             {Boolean(membership) && typeof membership === 'object' && (
               <FieldDescription>
                 {t(
