@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -30,6 +30,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { api } from '@/lib/api'
 
 import publicCatalog from '../../../channel-workflow-catalog.fixture.json'
 import { channelSchema } from '../types'
@@ -434,6 +436,7 @@ describe('actual channel workflow dialog', () => {
   it.each([
     ['aotian_video', 'seedance2.0'],
     ['fenglang_video', 'seedance-2.5'],
+    ['apipath_video', 'seedance-2.5-YZ'],
   ])(
     'opens the complete %s configuration workflow with its generated catalog',
     async (provider, model) => {
@@ -455,7 +458,7 @@ describe('actual channel workflow dialog', () => {
         catalog: actual,
         versions: [],
       })
-      mount('')
+      mount('', false)
       await userEvent.click(
         await screen.findByText('View documented models or enter a model ID')
       )
@@ -464,6 +467,13 @@ describe('actual channel workflow dialog', () => {
         `${model}{Enter}`
       )
       await advanceToParameters()
+      if (provider === 'apipath_video') {
+        await userEvent.click(
+          screen.getByRole('checkbox', {
+            name: 'I checked this interface applies to this model',
+          })
+        )
+      }
       await userEvent.click(
         screen.getByText('Advanced: document sources and original records')
       )
@@ -489,6 +499,61 @@ describe('actual channel workflow dialog', () => {
       expect(mocks.save).not.toHaveBeenCalled()
       expect(mocks.tryCall).not.toHaveBeenCalled()
       expect(actual.models).toEqual({})
+      if (provider === 'apipath_video') {
+        await userEvent.click(
+          screen.getByRole('button', { name: 'Save and apply to this channel' })
+        )
+        await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1))
+        const args = mocks.save.mock.calls[0]
+        const document = structuredClone(args[1] as Configuration)
+        // Only random group identities are normalized for a stable fixture.
+        // Parameters, capabilities, defaults, bindings and API serialization
+        // all come from the real populated dialog's Save action.
+        const identities = Object.fromEntries(
+          Object.keys(document.groups).map((key, index) => [
+            key,
+            `dialog-${index}`,
+          ])
+        )
+        document.groups = Object.fromEntries(
+          Object.entries(document.groups).map(([key, value]) => [
+            identities[key],
+            value,
+          ])
+        )
+        for (const modes of Object.values(document.bindings)) {
+          for (const binding of Object.values(modes)) {
+            binding.groupId = identities[binding.groupId]
+          }
+        }
+        const put = vi.spyOn(api, 'put').mockResolvedValue({
+          data: { success: true, data: document },
+        })
+        try {
+          const actualApi =
+            await vi.importActual<typeof import('./api')>('./api')
+          await actualApi.saveModelConfiguration(
+            args[0],
+            document,
+            args[2],
+            args[3],
+            args[4]
+          )
+          const serialized = JSON.stringify(put.mock.calls[0][1])
+          const payload = JSON.parse(serialized)
+          const target = path.resolve(
+            '..',
+            'controller/testdata/apipath_video_ui_save.json'
+          )
+          if (process.env.UPDATE_APIPATH_UI_SAVE_FIXTURE === '1') {
+            writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`)
+          }
+          expect(payload).toEqual(JSON.parse(readFileSync(target, 'utf8')))
+          expect(payload.addModels).toEqual([model])
+        } finally {
+          put.mockRestore()
+        }
+      }
     }
   )
   it('loads interface fields for actual IDs immediately and keeps them available in individual settings', async () => {

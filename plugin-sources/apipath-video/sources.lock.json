@@ -1,0 +1,50 @@
+{
+  "format": "apipath-video-sources/v1",
+  "policy": "../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#imported-parameter-policy",
+  "sources": [
+    {
+      "url": "https://online.apipath.top/api/api-docs",
+      "sha256": "5ea1c9baf64e45e68c3447bba4e5c67b52743cac2f8cfafe3bdb764e23aca846",
+      "readAt": "2026-11-02",
+      "scope": "Published video records only; not authenticated account discovery"
+    }
+  ],
+  "modelDeclarations": {
+    "status": "published-documentation-only",
+    "exactIDs": [
+      "seedance-2.5-YZ",
+      "seedance-2.0-YZ",
+      "seedance-2.0-Fast-YZ",
+      "seedance-2-0-mini",
+      "seedance2-0-低价",
+      "MiniMax-H3-720P-特惠",
+      "minimax-h3-官K质量",
+      "h3-768",
+      "h3-2k",
+      "Grok-imagine-15-特价特惠",
+      "Seedance2.0-mini-720-GK",
+      "Seedance-2.0-mini-480-GK",
+      "Seedance-2.0-fast-720-GK",
+      "Seedance-2.0-fast-480-GK",
+      "seedance2-5-特惠-1080p",
+      "dola2.5",
+      "SD2.0",
+      "dola2.0"
+    ]
+  },
+  "reusedRuntime": [
+    "../media-providers/six-v2/runtime.js",
+    "../media-providers/six-v2/interface-runtime.js"
+  ],
+  "pending": [
+    "Published model codes are documentation evidence, not authenticated /v1/models results or enabled channel routes",
+    "Unknown account models need explicit interface applicability review; exact documented model limits are not inferred from names",
+    "Reference item limits and combinations are not specified by these request parameter tables and remain pending supplier confirmation",
+    "The document describes image as template-dependent; use explicit first_frame or reference_images when its role matters",
+    "Resolution documented defaults may differ in letter case from candidates; no documentation defaults or example prices become business defaults",
+    "No verified actual output duration is documented; completion retains requested usage without reading estimated_cost",
+    "Authenticated discovery and paid generation have not been performed"
+  ],
+  "paidCalls": 0,
+  "accountPricesImported": false
+}

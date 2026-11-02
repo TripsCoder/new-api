@@ -428,6 +428,7 @@ function canEditConfiguration(type: number, key: string): boolean {
       'zhangyuge_media',
       'aotian_video',
       'fenglang_video',
+      'apipath_video',
     ].includes(key)
   )
 }

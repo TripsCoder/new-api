@@ -53,7 +53,7 @@ function newAPIForm(baseUrl: string) {
 }
 
 describe('New API channel', () => {
-  test.each(['aotian_video', 'fenglang_video'])(
+  test.each(['aotian_video', 'fenglang_video', 'apipath_video'])(
     'disabled %s drafts can save replacement credentials before model discovery',
     (provider) => {
       const draft = {

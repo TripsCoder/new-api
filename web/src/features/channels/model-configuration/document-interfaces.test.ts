@@ -31,6 +31,7 @@ describe('document interfaces and actual model IDs', () => {
     for (const [provider, model] of [
       ['aotian_video', '特价seedance-2.5-720p'],
       ['fenglang_video', 'seedance-2.5'],
+      ['apipath_video', 'seedance-2.5-YZ'],
     ]) {
       const catalog = JSON.parse(
         readFileSync(
@@ -265,9 +266,9 @@ describe('document interfaces and actual model IDs', () => {
     expect(
       catalog.models['seedance-2.5-g2-c1'].parameters.resolution.enum
     ).toEqual(['720p'])
-    expect(
-      catalog.models['seedance-2.5-g2-c1'].parameters
-    ).not.toHaveProperty('videos')
+    expect(catalog.models['seedance-2.5-g2-c1'].parameters).not.toHaveProperty(
+      'videos'
+    )
     // A retired documentation example must not inherit another model's rules.
     expect(
       catalog.models['dola-seedance-2.0-900'].parameters.resolution.enum

@@ -44,6 +44,7 @@ afterEach(() => {
 test.each([
   ['aotian_video', true],
   ['fenglang_video', true],
+  ['apipath_video', true],
   ['unknown_unreviewed_plugin', false],
 ])(
   'channel plugin %s exposes configuration only when reviewed',

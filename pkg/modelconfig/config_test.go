@@ -15,7 +15,7 @@ func fixture() Document {
 }
 
 func TestReviewedVideoDocumentInterfacesSupportDiscoveredModelsWithoutInventedDefaults(t *testing.T) {
-	for _, provider := range []string{"aotian_video", "fenglang_video"} {
+	for _, provider := range []string{"aotian_video", "fenglang_video", "apipath_video"} {
 		t.Run(provider, func(t *testing.T) {
 			require.NoError(t, Validate(Empty(provider)))
 			raw, err := ProviderCatalog(provider)

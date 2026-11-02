@@ -298,7 +298,9 @@ export const channelFormSchema = z
   .superRefine((data, ctx) => {
     const isReviewedVideoDraft =
       data.type === CHANNEL_TYPE_TASK_PLUGIN &&
-      ['aotian_video', 'fenglang_video'].includes(data.task_plugin_key ?? '') &&
+      ['aotian_video', 'fenglang_video', 'apipath_video'].includes(
+        data.task_plugin_key ?? ''
+      ) &&
       data.status !== 1
     if (data.models.length === 0 && !isReviewedVideoDraft) {
       addRequiredIssue(ctx, 'models', ERROR_MESSAGES.REQUIRED_MODELS)

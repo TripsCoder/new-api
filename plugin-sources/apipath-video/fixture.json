@@ -1,0 +1,4115 @@
+{
+  "unixNow": 1,
+  "cases": [
+    {
+      "name": "no undocumented or business defaults",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5-YZ",
+          "prompt": "Offline fixture"
+        }
+      }
+    },
+    {
+      "name": "known values reach canonical JSON wire fields",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 5,
+              "resolution": "720p",
+              "aspect_ratio": "9:16",
+              "count": 1,
+              "orientation": "portrait",
+              "size": "720x1280"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5-YZ",
+          "prompt": "Offline fixture",
+          "duration": 5,
+          "resolution": "720p",
+          "aspect_ratio": "9:16",
+          "count": 1,
+          "orientation": "portrait",
+          "size": "720x1280"
+        }
+      }
+    },
+    {
+      "name": "URL references and frames preserve explicit roles and order",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "images": [
+                "https://media.example/a.png?sig=a%2Fb"
+              ],
+              "videos": [
+                "https://media.example/v.mp4"
+              ],
+              "audios": [
+                "https://media.example/a.wav"
+              ],
+              "start_image_url": "https://media.example/f.png",
+              "end_image_url": "https://media.example/l.png"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5-YZ",
+          "prompt": "Offline fixture",
+          "reference_images": [
+            "https://media.example/a.png?sig=a%2Fb"
+          ],
+          "reference_videos": [
+            "https://media.example/v.mp4"
+          ],
+          "reference_audios": [
+            "https://media.example/a.wav"
+          ],
+          "first_frame": "https://media.example/f.png",
+          "last_frame": "https://media.example/l.png"
+        }
+      }
+    },
+    {
+      "name": "documented aliases deduplicate",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "duration": 5,
+              "input_reference": [
+                "https://media.example/a.png"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5-YZ",
+          "prompt": "Offline fixture",
+          "duration": 5,
+          "reference_images": [
+            "https://media.example/a.png"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown and unsupported fields never reappear",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seed": 0,
+              "watermark": false,
+              "generate_audio": false,
+              "metadata": {
+                "duration": 99999
+              },
+              "unknown": "x"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5-YZ",
+          "prompt": "Offline fixture"
+        }
+      }
+    },
+    {
+      "name": "model without reference videos filters optional invalid videos",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.5",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "videos": false
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "dola2.5",
+          "prompt": "Offline fixture"
+        }
+      }
+    },
+    {
+      "name": "seedance-2.5-YZ duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5-YZ",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "seedance-2.5-YZ duration 30",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 30
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5-YZ",
+          "prompt": "Offline fixture",
+          "duration": 30
+        }
+      }
+    },
+    {
+      "name": "seedance-2.5-YZ rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 31
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "seedance-2.5-YZ keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "seedance-2.0-YZ duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.0-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.0-YZ",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "seedance-2.0-YZ duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.0-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.0-YZ",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "seedance-2.0-YZ rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.0-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "seedance-2.0-YZ keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.0-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "seedance-2.0-Fast-YZ duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.0-Fast-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.0-Fast-YZ",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "seedance-2.0-Fast-YZ duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.0-Fast-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.0-Fast-YZ",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "seedance-2.0-Fast-YZ rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.0-Fast-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "seedance-2.0-Fast-YZ keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.0-Fast-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "seedance-2-0-mini duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2-0-mini",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2-0-mini",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "seedance-2-0-mini duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2-0-mini",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2-0-mini",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "seedance-2-0-mini rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2-0-mini",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "seedance-2-0-mini keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2-0-mini",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "seedance2-0-低价 duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 5",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 5
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 5
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 6",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 6
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 7",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 7
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 7
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 8",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 8
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 8
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 9
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 9
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 10",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 10
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 10
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 11",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 11
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 11
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 12",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 12
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 12
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 13",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 13
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 13
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 14",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 14
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 14
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-0-低价",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "seedance2-0-低价 rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "seedance2-0-低价 keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-0-低价",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 5",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 5
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 5
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 6",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 6
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 7",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 7
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 7
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 8",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 8
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 8
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 9
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 9
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 10",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 10
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 10
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 11",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 11
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 11
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 12",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 12
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 12
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 13",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 13
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 13
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 14",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 14
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 14
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3-720P-特惠",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "MiniMax-H3-720P-特惠 keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "MiniMax-H3-720P-特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "minimax-h3-官K质量 duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "minimax-h3-官K质量",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "minimax-h3-官K质量",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "minimax-h3-官K质量 duration 30",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "minimax-h3-官K质量",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 30
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "minimax-h3-官K质量",
+          "prompt": "Offline fixture",
+          "duration": 30
+        }
+      }
+    },
+    {
+      "name": "minimax-h3-官K质量 rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "minimax-h3-官K质量",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 31
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "minimax-h3-官K质量 keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "minimax-h3-官K质量",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "h3-768 duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "h3-768",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "h3-768",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "h3-768 duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "h3-768",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "h3-768",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "h3-768 rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "h3-768",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "h3-768 keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "h3-768",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "h3-2k duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "h3-2k",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "h3-2k",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "h3-2k duration 30",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "h3-2k",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 30
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "h3-2k",
+          "prompt": "Offline fixture",
+          "duration": 30
+        }
+      }
+    },
+    {
+      "name": "h3-2k rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "h3-2k",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 31
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "h3-2k keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "h3-2k",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "Grok-imagine-15-特价特惠 duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Grok-imagine-15-特价特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Grok-imagine-15-特价特惠",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "Grok-imagine-15-特价特惠 duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Grok-imagine-15-特价特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Grok-imagine-15-特价特惠",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "Grok-imagine-15-特价特惠 rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Grok-imagine-15-特价特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "Grok-imagine-15-特价特惠 keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Grok-imagine-15-特价特惠",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "Seedance2.0-mini-720-GK duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance2.0-mini-720-GK",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "Seedance2.0-mini-720-GK duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance2.0-mini-720-GK",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "Seedance2.0-mini-720-GK rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "Seedance2.0-mini-720-GK keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "Seedance-2.0-mini-480-GK duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-mini-480-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance-2.0-mini-480-GK",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "Seedance-2.0-mini-480-GK duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-mini-480-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance-2.0-mini-480-GK",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "Seedance-2.0-mini-480-GK rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-mini-480-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "Seedance-2.0-mini-480-GK keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-mini-480-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "Seedance-2.0-fast-720-GK duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-fast-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance-2.0-fast-720-GK",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "Seedance-2.0-fast-720-GK duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-fast-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance-2.0-fast-720-GK",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "Seedance-2.0-fast-720-GK rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-fast-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "Seedance-2.0-fast-720-GK keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-fast-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "Seedance-2.0-fast-480-GK duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-fast-480-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance-2.0-fast-480-GK",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "Seedance-2.0-fast-480-GK duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-fast-480-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance-2.0-fast-480-GK",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "Seedance-2.0-fast-480-GK rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-fast-480-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "Seedance-2.0-fast-480-GK keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance-2.0-fast-480-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "seedance2-5-特惠-1080p duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-5-特惠-1080p",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-5-特惠-1080p",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "seedance2-5-特惠-1080p duration 30",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-5-特惠-1080p",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 30
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance2-5-特惠-1080p",
+          "prompt": "Offline fixture",
+          "duration": 30
+        }
+      }
+    },
+    {
+      "name": "seedance2-5-特惠-1080p rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-5-特惠-1080p",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 31
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "seedance2-5-特惠-1080p keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance2-5-特惠-1080p",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "dola2.5 duration 5",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.5",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 5
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "dola2.5",
+          "prompt": "Offline fixture",
+          "duration": 5
+        }
+      }
+    },
+    {
+      "name": "dola2.5 duration 10",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.5",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 10
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "dola2.5",
+          "prompt": "Offline fixture",
+          "duration": 10
+        }
+      }
+    },
+    {
+      "name": "dola2.5 duration 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.5",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 15
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "dola2.5",
+          "prompt": "Offline fixture",
+          "duration": 15
+        }
+      }
+    },
+    {
+      "name": "dola2.5 rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.5",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "dola2.5 keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.5",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "SD2.0 duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "SD2.0",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "SD2.0",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "SD2.0 duration 30",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "SD2.0",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 30
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "SD2.0",
+          "prompt": "Offline fixture",
+          "duration": 30
+        }
+      }
+    },
+    {
+      "name": "SD2.0 rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "SD2.0",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 31
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "SD2.0 keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "SD2.0",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "dola2.0 duration 4",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.0",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 4
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "dola2.0",
+          "prompt": "Offline fixture",
+          "duration": 4
+        }
+      }
+    },
+    {
+      "name": "dola2.0 duration 30",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.0",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 30
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "dola2.0",
+          "prompt": "Offline fixture",
+          "duration": 30
+        }
+      }
+    },
+    {
+      "name": "dola2.0 rejects high duration",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.0",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 31
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "dola2.0 keeps its resolution candidates",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "dola2.0",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "resolution": "unsupported"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "unsafe duration 0",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 0
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration -1",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": -1
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration 3601",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 3601
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration 5.5",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 5.5
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration false",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": false
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration 5s",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": "5s"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "unsafe duration 9007199254740992",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 9007199254740992
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "count cannot produce an extra billable video",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "count": 2
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "count"
+    },
+    {
+      "name": "blank prompt remains invalid",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": " "
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "prompt"
+    },
+    {
+      "name": "no file upload invented from URL alias",
+      "hook": "protocols",
+      "args": [
+        {
+          "model": "seedance-2.5-YZ",
+          "body": {
+            "kind": "multipart",
+            "fields": {},
+            "files": []
+          }
+        }
+      ],
+      "expectedError": "JSON",
+      "path": [
+        "openai_video",
+        "decodeRequest"
+      ]
+    },
+    {
+      "name": "invalid public reference {\"images\":[\"data:image/png;base64,YQ==\"]}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "images": [
+                "data:image/png;base64,YQ=="
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "reference"
+    },
+    {
+      "name": "invalid public reference {\"videos\":[\"http://127.0.0.1/a\"]}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "videos": [
+                "http://127.0.0.1/a"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "reference"
+    },
+    {
+      "name": "invalid public reference {\"start_image_url\":\"https://user:password@media.example/a\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "start_image_url": "https://user:password@media.example/a"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "reference"
+    },
+    {
+      "name": "saved unrestricted scalar values preserve protocol types",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 3,
+              "resolution": "8k"
+            },
+            "uploads": [],
+            "unrestrictedValueFields": [
+              "seconds",
+              "resolution"
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "seedance-2.5-YZ",
+          "prompt": "Offline fixture",
+          "duration": 3,
+          "resolution": "8k"
+        }
+      }
+    },
+    {
+      "name": "unrestricted resolution is not an invented pricing category",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 3,
+              "resolution": "8k"
+            },
+            "uploads": [],
+            "unrestrictedValueFields": [
+              "seconds",
+              "resolution"
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 3
+      }
+    },
+    {
+      "name": "unrestricted duration retains billing safety",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 99999
+            },
+            "uploads": [],
+            "unrestrictedValueFields": [
+              "seconds"
+            ]
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "documented task_no becomes pinned task identity",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "task_no": "upstream_task",
+            "status": "pending",
+            "estimated_cost": 999,
+            "poll_url": "https://evil.example/steal"
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "upstream_task",
+        "taskData": {
+          "task_no": "upstream_task",
+          "status": "pending",
+          "estimated_cost": 999,
+          "poll_url": "https://evil.example/steal",
+          "id": "upstream_task"
+        },
+        "state": {
+          "protocolTemplate": "interface:784e5344ec29295f",
+          "pluginVersion": "2.1.0",
+          "configurationRevision": 0,
+          "operation": "video_generate",
+          "query": "/v1/tasks/"
+        }
+      }
+    },
+    {
+      "name": "task query never follows response poll_url",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "a/b",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "pluginVersion": "2.1.0",
+            "configurationRevision": 0,
+            "operation": "video_generate",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/tasks/a%2Fb",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "missing task identity is not invented",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "status": "queued"
+          }
+        }
+      ],
+      "expectedError": "task_id_missing"
+    },
+    {
+      "name": "conflicting identities are rejected",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "task_no": "one",
+            "id": "two",
+            "status": "queued"
+          }
+        }
+      ],
+      "expectedError": "conflicting"
+    },
+    {
+      "name": "HTTP 200 explicit failure is terminal",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "error": {
+              "message": "duration invalid"
+            },
+            "success": false
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "offline_public_task",
+        "taskData": {
+          "error": {
+            "message": "duration invalid"
+          },
+          "success": false
+        },
+        "state": {
+          "protocolTemplate": "interface:784e5344ec29295f",
+          "pluginVersion": "2.1.0",
+          "configurationRevision": 0,
+          "operation": "video_generate",
+          "query": "/v1/tasks/"
+        },
+        "immediate": {
+          "status": "FAILURE",
+          "progress": "100%",
+          "reason": "duration invalid"
+        }
+      }
+    },
+    {
+      "name": "poll pending",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "pending",
+          "progress": 101
+        }
+      ],
+      "expected": {
+        "status": "QUEUED",
+        "progress": "0%"
+      }
+    },
+    {
+      "name": "poll queued",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "queued",
+          "progress": 101
+        }
+      ],
+      "expected": {
+        "status": "QUEUED",
+        "progress": "0%"
+      }
+    },
+    {
+      "name": "poll processing",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "processing",
+          "progress": 101
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "99%"
+      }
+    },
+    {
+      "name": "poll running",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "running",
+          "progress": 101
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "99%"
+      }
+    },
+    {
+      "name": "poll in_progress",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "in_progress",
+          "progress": 101
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "99%"
+      }
+    },
+    {
+      "name": "completed direct URL",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "completed",
+          "url": "https://cdn.example/video.mp4"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "failed result cannot reuse stale URL",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "failed",
+          "error": {
+            "message": "bad reference"
+          },
+          "url": "https://cdn.example/stale.mp4"
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "bad reference"
+      }
+    },
+    {
+      "name": "unknown result stays unknown",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "new_status"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "unrecognized upstream status: new_status"
+      }
+    },
+    {
+      "name": "completed without output stays unknown",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "completed"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "unconfigured optional duration supports request-count fact only",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1
+      }
+    },
+    {
+      "name": "supplied duration and resolution are explicit requested usage",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture",
+              "seconds": 5,
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 5,
+        "resolution": "720p"
+      }
+    },
+    {
+      "name": "cost and echoed duration are never actual usage",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "estimated_cost": 100,
+          "duration": 99
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "artifact URL never carries supplier credentials",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "status": "completed",
+            "url": "https://cdn.example/video.mp4"
+          },
+          "apiKey": "offline-only"
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/video.mp4",
+        "method": "GET",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "public renderer exposes only the reviewed URL",
+      "hook": "protocols",
+      "args": [
+        {},
+        {
+          "status": "SUCCESS",
+          "data": {
+            "task_no": "private",
+            "url": "https://cdn.example/video.mp4",
+            "authorization": "private"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/video.mp4"
+      },
+      "path": [
+        "openai_video",
+        "render"
+      ]
+    }
+  ]
+}

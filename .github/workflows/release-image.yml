@@ -54,11 +54,14 @@ jobs:
           bun-version: '1.4.0'
       - name: Check public publication guard
         run: node --test deploy/check-public-image.test.mjs
-      - name: Verify reviewed Fenglang plugin source and usage fixtures
+      - name: Verify reviewed supplier plugin source and usage fixtures
         run: |
           node plugin-sources/fenglang-video/build.mjs --check
           node plugin-sources/fenglang-video/plugin.test.mjs
           git diff --exit-code -- plugin-sources/fenglang-video
+          node plugin-sources/apipath-video/build.mjs --check
+          node plugin-sources/apipath-video/plugin.test.mjs
+          git diff --exit-code -- plugin-sources/apipath-video
       - name: Verify affected backend packages
         run: |
           go vet ./pkg/modelconfig ./pkg/jsplugin ./plugins ./middleware ./controller ./relay/channel/task/jsplugin
@@ -122,6 +125,9 @@ jobs:
           docker run --rm --network none \
             --mount "type=bind,src=$PWD/plugin-sources,dst=/snapshots,readonly" \
             "$IMAGE:sha-$GITHUB_SHA" plugin test /snapshots/fenglang-video/dist/fenglang_video.plugin.js --fixture /snapshots/fenglang-video/fixture.json
+          docker run --rm --network none \
+            --mount "type=bind,src=$PWD/plugin-sources,dst=/snapshots,readonly" \
+            "$IMAGE:sha-$GITHUB_SHA" plugin test /snapshots/apipath-video/dist/apipath_video.plugin.js --fixture /snapshots/apipath-video/fixture.json
           docker run --rm --network none \
             --mount "type=bind,src=$PWD/plugins/tasks/doubao-audio,dst=/plugin,readonly" \
             --mount "type=bind,src=$PWD/plugin-sources,dst=/snapshots,readonly" \

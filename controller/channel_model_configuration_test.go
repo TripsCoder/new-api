@@ -34,7 +34,7 @@ func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 	require.NoError(t, err)
 	fixtures := map[string]modelconfig.Document{}
 	require.NoError(t, common.Unmarshal(raw, &fixtures))
-	for index, provider := range []string{"aotian_video", "fenglang_video"} {
+	for index, provider := range []string{"aotian_video", "fenglang_video", "apipath_video"} {
 		t.Run(provider, func(t *testing.T) {
 			document := fixtures[provider]
 			require.Len(t, document.Bindings, 1)
@@ -104,6 +104,78 @@ func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 			var abilities []model.Ability
 			require.NoError(t, db.Where("channel_id = ?", channel.Id).Find(&abilities).Error)
 			assert.Len(t, abilities, 2)
+			if provider != "apipath_video" {
+				return
+			}
+			// Unlike the projection fixture above, this envelope is captured from
+			// the real five-stage dialog's Save action and production API serializer.
+			serialized, err := os.ReadFile(filepath.Join("testdata", "apipath_video_ui_save.json"))
+			require.NoError(t, err)
+			var ui channelConfigurationSave
+			require.NoError(t, common.Unmarshal(serialized, &ui))
+			source, err := os.ReadFile("../plugin-sources/apipath-video/dist/apipath_video.plugin.js")
+			require.NoError(t, err)
+			compiled, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{})
+			require.NoError(t, err)
+			require.NoError(t, db.Model(&model.TaskPlugin{}).Where("key = ?", provider).Updates(map[string]any{"source": string(source), "source_hash": compiled.SourceSHA256}).Error)
+			channel.Id += 100
+			channel.Models = ""
+			require.NoError(t, db.Create(&channel).Error)
+			recorder := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(recorder)
+			ctx.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+			ctx.Set("id", 1)
+			ctx.Request = httptest.NewRequest("PUT", "/api/channel/configuration", bytes.NewReader(serialized))
+			ctx.Request.Header.Set("Content-Type", "application/json")
+			SaveChannelModelConfiguration(ctx)
+			require.Contains(t, recorder.Body.String(), `"success":true`)
+			readback, err := model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
+			require.NoError(t, err)
+			assert.Equal(t, int64(1), readback.Revision)
+			assert.Equal(t, ui.Configuration.Groups, readback.Groups)
+			expectedBindings, err := common.Marshal(ui.Configuration.Bindings)
+			require.NoError(t, err)
+			actualBindings, err := common.Marshal(readback.Bindings)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(expectedBindings), string(actualBindings))
+			input, _, _, unified, err := modelconfig.ResolveUnified(readback, name, "video_generate", map[string]any{"prompt": "Offline fixture", "seconds": 5, "resolution": "720p"}, false)
+			require.NoError(t, err)
+			require.True(t, unified)
+			assert.EqualValues(t, 5, input["seconds"])
+			assert.Equal(t, "720p", input["resolution"])
+			require.NoError(t, db.First(&channel, channel.Id).Error)
+			assert.Equal(t, name, channel.Models)
+			// Reopen through the production read handler, including installed
+			// plugin/catalog compatibility, rather than a mocked successful save.
+			reopened := httptest.NewRecorder()
+			get, _ := gin.CreateTestContext(reopened)
+			get.Params = ctx.Params
+			get.Request = httptest.NewRequest("GET", "/api/channel/configuration", nil)
+			GetChannelModelConfiguration(get)
+			require.Contains(t, reopened.Body.String(), `"success":true`)
+			assert.Contains(t, reopened.Body.String(), `"revision":1`)
+			assert.NotContains(t, reopened.Body.String(), channel.Key)
+			// A rejected edit after the successful save cannot advance the revision
+			// or alter routing, even when the UI carries a current concurrency token.
+			ui.ExpectedRevision, ui.Configuration.Revision = 1, 1
+			ui.ExpectedModels, ui.AddModels = name, []string{}
+			textMode := ui.Configuration.Groups["dialog-0"].Modes["text_video"]
+			textMode.Mapping["prompt"] = "@ignore"
+			rejectedPayload, err := common.Marshal(ui)
+			require.NoError(t, err)
+			rejectedRecorder := httptest.NewRecorder()
+			reject, _ := gin.CreateTestContext(rejectedRecorder)
+			reject.Params = ctx.Params
+			reject.Set("id", 1)
+			reject.Request = httptest.NewRequest("PUT", "/api/channel/configuration", bytes.NewReader(rejectedPayload))
+			reject.Request.Header.Set("Content-Type", "application/json")
+			SaveChannelModelConfiguration(reject)
+			require.Contains(t, rejectedRecorder.Body.String(), `"success":false`)
+			unchanged, err := model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
+			require.NoError(t, err)
+			assert.Equal(t, readback, unchanged)
+			require.NoError(t, db.First(&channel, channel.Id).Error)
+			assert.Equal(t, name, channel.Models)
 		})
 	}
 }
