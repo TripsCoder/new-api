@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
+import os from 'node:os';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
 
 const source=fs.readFileSync(new URL('./dist/aotian_video.plugin.js',import.meta.url),'utf8');
 const plugin=vm.runInNewContext(source.replace(/^export /gm,'')+'\n({meta,protocols,buildSubmitRequest,parseSubmitResponse,buildQueryRequest,parseTaskResult,extractUsage,extractUsageOnComplete,listArtifacts,buildContentRequest})', {utils:{uuid:()=> 'task_fixture'}});
@@ -72,4 +75,29 @@ assert.equal(plugin.meta.parameterInterfaces[id].parameters.seconds.definition.d
 const manifest=JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url)));
 assert.equal(crypto.createHash('sha256').update(source).digest('hex'),manifest.sha256);
 fs.writeFileSync(new URL('./fixture.json',import.meta.url),JSON.stringify({cases},null,2)+'\n');
-console.log('AoTian offline regression: '+cases.length+'/'+cases.length+' passed; host fixture written');
+const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aotian-plugin-newline-'));
+try {
+  const outputs = [];
+  for (const [index, newline] of ['\n', '\r\n'].entries()) {
+    const root = path.join(temp, String(index));
+    const provider = path.join(root, 'plugin-sources/aotian-video');
+    fs.mkdirSync(path.join(provider, 'evidence'), {recursive:true});
+    fs.mkdirSync(path.join(provider, 'dist'));
+    fs.mkdirSync(path.join(root, 'pkg/modelconfig'), {recursive:true});
+    for (const name of ['build.mjs', 'plugin.js', 'evidence/docs.html', 'evidence/Aotian-SKILL.md']) {
+      const value = fs.readFileSync(new URL(name, import.meta.url), 'utf8').replace(/\r\n/g, '\n').replace(/\n/g, newline);
+      fs.writeFileSync(path.join(provider, name), value);
+    }
+    execFileSync(process.execPath, [path.join(provider, 'build.mjs'), '--sync-catalog'], {stdio:'pipe'});
+    execFileSync(process.execPath, [path.join(provider, 'build.mjs'), '--check'], {stdio:'pipe'});
+    outputs.push(['dist/aotian_video.plugin.js', 'dist/manifest.json', 'sources.lock.json', '../../pkg/modelconfig/aotian_video.catalog.json'].map(name => fs.readFileSync(path.join(provider,name), 'utf8')));
+  }
+  assert.deepEqual(outputs[0], outputs[1], 'LF and CRLF checkouts must produce identical artifacts');
+  assert.equal(outputs[0][0], source, 'Reviewed runtime plugin bytes must remain unchanged');
+} finally {
+  const resolved = fs.realpathSync(temp);
+  assert.equal(path.dirname(resolved), fs.realpathSync(os.tmpdir()));
+  assert.ok(path.basename(resolved).startsWith('aotian-plugin-newline-'));
+  fs.rmSync(resolved, {recursive:true, force:true});
+}
+console.log('AoTian offline regression: '+cases.length+'/'+cases.length+' passed; LF/CRLF reproducibility passed; host fixture written');

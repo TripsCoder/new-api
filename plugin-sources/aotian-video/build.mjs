@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 
 const root = new URL('./', import.meta.url);
-const read = name => fs.readFileSync(new URL(name, root));
+const read = name => Buffer.from(fs.readFileSync(new URL(name, root), 'utf8').replace(/\r\n/g, '\n'));
 const digest = data => crypto.createHash('sha256').update(data).digest('hex');
 const check = process.argv.includes('--check');
 const sources = [
