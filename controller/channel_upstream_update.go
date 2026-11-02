@@ -28,6 +28,7 @@ import (
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
 
+	"github.com/Calcium-Ion/moejs/syntax"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 )
@@ -519,12 +520,7 @@ func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) (
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+discoveryPath, nil)
-	if err != nil {
-		return nil, errors.New("The channel model discovery address is invalid")
-	}
-	req.Header = headers
-	req.Header.Del(constant.ChannelSelectionHeader)
+	headers.Del(constant.ChannelSelectionHeader)
 	settings := channel.GetSetting()
 	shared, err := service.GetHttpClientWithProxySettings(settings.Proxy, settings)
 	if err != nil {
@@ -533,23 +529,15 @@ func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) (
 	client := *shared
 	client.Timeout = 15 * time.Second
 	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
-	response, err := client.Do(req)
+	body, err := readTaskPluginModelList(ctx, &client, base+discoveryPath, headers)
 	if err != nil {
-		return nil, errors.New("Upstream model discovery request failed; no static catalog was substituted")
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Upstream model discovery returned HTTP %d", response.StatusCode)
-	}
-	body, err := io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
-	if err != nil || len(body) > 1<<20 {
-		return nil, errors.New("Upstream model discovery response is unreadable or too large")
+		return nil, err
 	}
 	// Do not expose upstream bodies or decoder errors which could contain secrets.
 	var result struct {
 		Data *[]OpenAIModel `json:"data"`
 	}
-	if meta.ModelDiscovery != nil && meta.ModelDiscovery.Format == "fenglang_pricing" {
+	if meta.ModelDiscovery != nil && (meta.ModelDiscovery.Format == "fenglang_pricing" || meta.ModelDiscovery.Format == "fenglang_video_catalog") {
 		// Read model IDs only. Public rates are neither account cost nor retail
 		// prices. An undocumented response shape fails closed without a fallback.
 		var pricing struct {
@@ -576,6 +564,23 @@ func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) (
 	} else if common.Unmarshal(body, &result) != nil || result.Data == nil {
 		return nil, errors.New("Upstream model discovery returned an invalid model list")
 	}
+	if meta.ModelDiscovery != nil && meta.ModelDiscovery.Format == "fenglang_video_catalog" {
+		// Fenglang excludes official-protocol cards from its authenticated pricing
+		// API. Read its current published catalog as a second source, never the
+		// plugin's static declarations. Public assets receive no channel headers.
+		u.Path, u.RawPath = "/js/models.js", ""
+		catalog, err := readTaskPluginModelList(ctx, &client, u.String(), nil)
+		if err != nil {
+			return nil, err
+		}
+		published, err := fenglangPublishedVideoModels(ctx, catalog)
+		if err != nil {
+			return nil, err
+		}
+		for _, id := range published {
+			*result.Data = append(*result.Data, OpenAIModel{ID: id})
+		}
+	}
 	ids := make([]string, 0, len(*result.Data))
 	for _, item := range *result.Data {
 		if item.ID == "" || item.ID != strings.TrimSpace(item.ID) || len(item.ID) > 512 || strings.ContainsAny(item.ID, "\r\n\t") {
@@ -585,6 +590,79 @@ func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) (
 	}
 	// [] is a genuine empty upstream list, distinct from missing data/error.
 	return normalizeModelNames(ids), nil
+}
+
+func readTaskPluginModelList(ctx context.Context, client *http.Client, address string, headers http.Header) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, address, nil)
+	if err != nil {
+		return nil, errors.New("The channel model discovery address is invalid")
+	}
+	req.Header = headers.Clone()
+	response, err := client.Do(req)
+	if err != nil {
+		return nil, errors.New("Upstream model discovery request failed; no static catalog was substituted")
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Upstream model discovery returned HTTP %d", response.StatusCode)
+	}
+	body, err := io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
+	if err != nil || len(body) > 1<<20 {
+		return nil, errors.New("Upstream model discovery response is unreadable or too large")
+	}
+	return body, nil
+}
+
+func fenglangPublishedVideoModels(ctx context.Context, body []byte) ([]string, error) {
+	// Parse syntax only: no supplier code, function, getter, or expression runs.
+	module, err := syntax.ParseModule("fenglang-model-catalog", string(body), syntax.Options{Stop: ctx.Err})
+	if err != nil {
+		return nil, errors.New("Upstream model discovery returned an invalid model list")
+	}
+	var ids []string
+	found := false
+	for _, statement := range module.Body {
+		declaration, ok := statement.(*syntax.VarDecl)
+		if !ok {
+			continue
+		}
+		for _, binding := range declaration.Decls {
+			name, ok := binding.Target.(*syntax.Ident)
+			if !ok || name.Name != "VIDEO_CATALOG" {
+				continue
+			}
+			rows, ok := binding.Init.(*syntax.ArrayLit)
+			if found || !ok {
+				return nil, errors.New("Upstream model discovery returned an invalid model list")
+			}
+			found = true
+			for _, entry := range rows.Elems {
+				row, ok := entry.(*syntax.ArrayLit)
+				if !ok || len(row.Elems) < 2 {
+					return nil, errors.New("Upstream model discovery returned an invalid model list")
+				}
+				id, ok := row.Elems[0].(*syntax.StringLit)
+				if !ok {
+					return nil, errors.New("Upstream model discovery returned an invalid model list")
+				}
+				// The supplier's ninth column marks administrator-only test cards.
+				if len(row.Elems) > 8 {
+					adminOnly, ok := row.Elems[8].(*syntax.BoolLit)
+					if !ok {
+						return nil, errors.New("Upstream model discovery returned an invalid model list")
+					}
+					if adminOnly.Value {
+						continue
+					}
+				}
+				ids = append(ids, id.Value)
+			}
+		}
+	}
+	if !found {
+		return nil, errors.New("Upstream model discovery returned an invalid model list")
+	}
+	return ids, nil
 }
 
 func fetchAdvancedCustomUpstreamModelIDs(channel *model.Channel, baseURL string) ([]string, error) {
@@ -697,6 +775,9 @@ func taskPluginDiscoveryDetails(channel *model.Channel, meta jsplugin.Meta, ids 
 		if meta.ModelDiscovery.SourceStatus != "" {
 			method = meta.ModelDiscovery.SourceStatus
 		}
+	}
+	if meta.ModelDiscovery != nil && meta.ModelDiscovery.Format == "fenglang_video_catalog" {
+		method = "authenticated_pricing_and_public_catalog"
 	}
 	return gin.H{"source": "upstream", "checked_at": common.GetTimestamp(), "plugin_key": meta.Key, "source_url": sourceURL, "source_sha256": sourceSHA, "discovery_method": method, "models": models}
 }

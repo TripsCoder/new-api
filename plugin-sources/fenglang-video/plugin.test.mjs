@@ -58,6 +58,50 @@ add('public video never receives supplier credentials','buildContentRequest',[{.
 add('unfinished content rejected','buildContentRequest',[{...content,status:'IN_PROGRESS'}],null,'不可用');
 add('artifact does not assume mp4','listArtifacts',[{status:'SUCCESS',data:{success:true,task:{}}}],[{key:'video',type:'video'}]);
 add('renderer hides private ID and uses host content','protocols',[{},{task_id:'task_public',status:'SUCCESS',data:envelope}],{url:'/v1/videos/task_public/content'},null,['openai_video','render']);
+const officialID=Object.keys(plugin.meta.parameterInterfaces).find(key=>plugin.meta.parameterInterfaces[key].path==='/api/v3/contents/generations/tasks');
+const official=(input={},model='doubao-seedance-2-5-260628')=>({...ctx({resolution:'720p',...input},model),requestBody:{...ctx({resolution:'720p',...input},model).requestBody,protocolTemplate:officialID}});
+const officialBody={model:'doubao-seedance-2-5-260628',content:[{type:'text',text:'Fixture'}],resolution:'720p'};
+const officialDescriptor=body=>({...descriptor(),url:'https://supplier.example/api/v3/contents/generations/tasks',body:{...officialBody,...body}});
+add('official omission does not inject supplier defaults','buildSubmitRequest',[official()],officialDescriptor({}));
+add('official scalars preserve explicit false and zero','buildSubmitRequest',[official({duration:6,ratio:'1:1',seed:0,generate_audio:false,watermark:false,return_last_frame:false,draft:false,priority:0,output_format:'mov',unknown:'ignored'})],officialDescriptor({duration:6,ratio:'1:1',seed:0,generate_audio:false,watermark:false,return_last_frame:false,draft:false,priority:0,output_format:'mov'}));
+add('official exact -s ID is not rewritten','buildSubmitRequest',[official({},'doubao-seedance-2-5-260628-s')],officialDescriptor({model:'doubao-seedance-2-5-260628-s'}));
+add('official frame roles','buildSubmitRequest',[official({start_image_url:image,end_image_url:'https://media.example/end.png'})],officialDescriptor({content:[{type:'text',text:'Fixture'},{type:'image_url',image_url:{url:image},role:'first_frame'},{type:'image_url',image_url:{url:'https://media.example/end.png'},role:'last_frame'}]}));
+add('official reference roles and order','buildSubmitRequest',[official({images:[image],videos:['https://media.example/v.mp4'],audios:['https://media.example/a.wav']})],officialDescriptor({content:[{type:'text',text:'Fixture'},{type:'image_url',image_url:{url:image},role:'reference_image'},{type:'video_url',video_url:{url:'https://media.example/v.mp4'},role:'reference_video'},{type:'audio_url',audio_url:{url:'https://media.example/a.wav'},role:'reference_audio'}]}));
+for(const [input,model,error] of [
+  [{resolution:'4k'},'doubao-seedance-2-5-260628','resolution'],
+  [{resolution:'480p'},'doubao-seedance-2-5-260628-s','resolution'],
+  [{resolution:'1080p'},'doubao-seedance-2-0-fast-260128-s','resolution'],
+  [{seconds:16},'doubao-seedance-2-0-260128','seconds'],
+  [{seconds:31},'doubao-seedance-2-5-260628','seconds'],
+  [{images:Array(10).fill(image)},'doubao-seedance-2-0-260128','数量'],
+  [{start_image_url:image,videos:['https://media.example/v.mp4']},'doubao-seedance-2-5-260628','混用'],
+  [{resolution:''},'doubao-seedance-2-5-260628','resolution'],
+  [{priority:10},'doubao-seedance-2-5-260628','priority'],
+])add('official validates '+JSON.stringify(input),'buildSubmitRequest',[official(input,model)],null,error);
+add('official model cannot use original endpoint','buildSubmitRequest',[ctx({seconds:5},'doubao-seedance-2-5-260628')],null,'官方协议');
+add('official unreviewed model fails closed','buildSubmitRequest',[official({},'future-official')],null,'适用性');
+add('official submit persists protocol for polling','parseSubmitResponse',[official(),{body:{id:'private_A/B'}}],{taskId:'private_A/B',taskData:{id:'private_A/B'},state:{protocolTemplate:officialID}});
+const officialQuery={...ctx(),state:{protocolTemplate:officialID},taskId:'private_A/B'};
+add('official poll recovers protocol without request body','buildQueryRequest',[officialQuery],{url:'https://supplier.example/api/v3/contents/generations/tasks/private_A%2FB',method:'GET',headers:{Authorization:'Bearer fixture-only',Accept:'application/json'}});
+add('official queued state','parseTaskResult',[officialQuery,{status:'queued'}],{status:'QUEUED',progress:'0%'});
+add('official processing state','parseTaskResult',[officialQuery,{status:'processing'}],{status:'IN_PROGRESS',progress:'0%'});
+const officialSuccess={status:'succeeded',content:{video_url:'https://cdn.example/v.mp4',last_frame_url:image},usage:{total_tokens:1000,completion_tokens:900}};
+add('official completion URL','parseTaskResult',[officialQuery,officialSuccess],{status:'SUCCESS',progress:'100%',url:'https://cdn.example/v.mp4'});
+add('official missing artifact cannot become successful','parseTaskResult',[officialQuery,{status:'succeeded',content:{}}],{status:'UNKNOWN',reason:'官方协议成功响应缺少有效视频 URL'});
+add('official failure is a terminal failure','parseTaskResult',[officialQuery,{status:'failed',error:{message:'invalid_resolution'}}],{status:'FAILURE',progress:'100%',reason:'invalid_resolution'});
+add('official HTTP 200 error does not retry','parseSubmitResponse',[official(),{body:{error:{code:'bad',message:'invalid_resolution'}}}],{taskId:'task_public',taskData:{error:{code:'bad',message:'invalid_resolution'}},immediate:{status:'FAILURE',progress:'100%',reason:'invalid_resolution'}});
+add('official draft rejects non-480p','buildSubmitRequest',[official({draft:true})],null,'480p');
+add('official draft accepts explicit 480p','buildSubmitRequest',[official({draft:true,resolution:'480p'})],officialDescriptor({draft:true,resolution:'480p'}));
+add('official missing ID is uncertain','parseSubmitResponse',[official(),{body:{}}],null,'task.id');
+add('official token reservation uses documented omitted duration','extractUsage',[official()],{tokens:86400,resolution:'720p',video_input:'none'});
+add('official ratio changes reservation','extractUsage',[official({seconds:6,aspect_ratio:'1:1'})],{tokens:72900,resolution:'720p',video_input:'none'});
+add('official reference estimate includes all media classes','extractUsage',[official({seconds:4,images:[image],videos:['https://media.example/v.mp4'],audios:['https://media.example/a.wav']})],{tokens:199800,resolution:'720p',video_input:'video'});
+add('official total tokens settle instead of completion tokens','extractUsageOnComplete',[officialQuery,{status:'SUCCESS'},officialSuccess],{tokens:1000});
+for(const value of [0,-1,1.5,Number.MAX_SAFE_INTEGER+1,'1000',null]) add('official invalid actual usage keeps reservation '+value,'extractUsageOnComplete',[officialQuery,{status:'SUCCESS'},{status:'succeeded',usage:{total_tokens:value,completion_tokens:1}}],{});
+add('official failure cannot settle usage','extractUsageOnComplete',[officialQuery,{status:'FAILURE'},officialSuccess],{});
+add('official content is credentialless','buildContentRequest',[{...officialQuery,status:'SUCCESS',artifactKey:'video',data:officialSuccess,clientRequest:{method:'HEAD'}}],{url:'https://cdn.example/v.mp4',method:'HEAD',credentialless:true});
+add('official last frame is credentialless','buildContentRequest',[{...officialQuery,status:'SUCCESS',artifactKey:'last_frame',data:officialSuccess}],{url:image,method:'GET',credentialless:true});
+add('official exposes last frame only when present','listArtifacts',[{status:'SUCCESS',data:officialSuccess}],[{key:'video',type:'video'},{key:'last_frame',type:'image'}]);
 for(const entry of cases) {
   const args=structuredClone(entry.args),before=JSON.stringify(args);
   let fn=plugin[entry.hook];for(const member of entry.path || []) fn=fn[member];
@@ -65,7 +109,7 @@ for(const entry of cases) {
   else assert.deepEqual(JSON.parse(JSON.stringify(fn(...args))),entry.expected,entry.name);
   assert.equal(JSON.stringify(args),before,entry.name+' must not mutate arguments');
 }
-assert.deepEqual(Array.from(plugin.meta.models),['seedance-2.5']);
+assert.deepEqual(Array.from(plugin.meta.models),['seedance-2.5',...Object.keys(plugin.meta.parameterInterfaces[officialID].modelRules)]);
 assert.equal(plugin.meta.parameterInterfaces[id].parameters.seconds.definition.default,undefined);
 assert.deepEqual(Array.from(plugin.meta.usageSchema.resolution.enum),[...new Set(Object.values(plugin.meta.parameterInterfaces[id].modelRules).flatMap(rule=>Array.from(rule.parameters.resolution.enum)))]);
 assert.equal(crypto.createHash('sha256').update(source).digest('hex'),JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url))).sha256);
@@ -84,7 +128,7 @@ try {
     fs.mkdirSync(path.join(provider,'evidence'),{recursive:true});
     fs.mkdirSync(path.join(provider,'dist'),{recursive:true});
     fs.mkdirSync(path.join(root,'pkg/modelconfig'),{recursive:true});
-    for(const name of ['build.mjs','plugin.js','evidence/openapi.js.txt','evidence/models.js.txt']) {
+    for(const name of ['build.mjs','plugin.js','official.js','official-contract.mjs','evidence/discovery-20261102-models.js.txt','evidence/openapi.js.txt','evidence/models.js.txt','evidence/official-20261102-official.html.txt','evidence/official-20261102-models.js.txt','evidence/official-20261102-openapi.js.txt','evidence/ark-create-20261102.md.txt']) {
       const value=fs.readFileSync(new URL(name,import.meta.url),'utf8').replace(/\r\n/g,'\n').replace(/\n/g,newline);
       fs.writeFileSync(path.join(provider,name),value);
     }

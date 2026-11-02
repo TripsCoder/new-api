@@ -49,6 +49,13 @@ add('unknown is not running or successful','parseTaskResult',[{}, {status:'new_s
 add('completed without URL is not successful','parseTaskResult',[{}, {status:'completed'}],{status:'UNKNOWN',reason:'完成响应缺少有效视频 URL'});
 add('measured duration is not invented','extractUsageOnComplete',[{}, {status:'SUCCESS'}, {seconds:5,cost:0.1}],{});
 add('request count excludes ignored billing multipliers','extractUsage',[ctx({seconds:6,n:20})],{request_count:1});
+for (const resolution of ['480p','720p','768p','1080p','1440p','2k']) {
+  add('resolution is available to saved tiered pricing: '+resolution,'extractUsage',[ctx({seconds:8,resolution})],{request_count:1,resolution});
+}
+add('billing resolution canonicalizes case without changing the upstream tier','extractUsage',[ctx({resolution:'768P'})],{request_count:1,resolution:'768p'});
+add('billing keeps 2k and 1440p as separate declared values','buildSubmitRequest',[ctx({resolution:'2k'})],descriptor({resolution:'2k'}));
+add('absent or ignored resolution does not invent a billing default','extractUsage',[ctx({resolution_name:'768p',metadata:{resolution:'768p'}})],{request_count:1});
+add('unknown resolution does not invent a billing tier','extractUsage',[ctx({resolution:'custom-tier'})],{request_count:1});
 add('legacy billing requires explicit expression','extractUsage',[{...ctx({}),usagePurpose:'billing_ratios'}],null,'计费表达式');
 add('download HEAD uses URL without credentials or content suffix','buildContentRequest',[{artifactKey:'video',data:{url:'https://video.aotianzz.xyz/result.mp4'},clientRequest:{method:'HEAD'}}],{url:'https://video.aotianzz.xyz/result.mp4',method:'HEAD',credentialless:true});
 add('renderer returns URL without upstream private ID','protocols',[{}, {status:'SUCCESS',data:{id:'task_private',url:'https://video.aotianzz.xyz/result.mp4'}}],{url:'https://video.aotianzz.xyz/result.mp4'},null,['openai_video','render']);

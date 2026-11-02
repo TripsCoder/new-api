@@ -853,12 +853,36 @@ export function requiredParameter(mode: Mode, key: string): boolean {
     (name) => mode.parameters?.[name]?.required === true
   )
 }
-// Imports and advanced JSON must not turn inherited required rules into edits.
+// Required presence and wire ownership stay fixed; documented choices may narrow.
+export function editableRequiredParameter(mode: Mode, key: string): boolean {
+  const parameter = mode.parameters?.[key]
+  const membership = parameter?.definition?.['x-channel-parameter'] as
+    | Record<string, unknown>
+    | undefined
+  const choices = parameter?.definition?.enum ?? parameter?.enum
+  return (
+    requiredParameter(mode, key) &&
+    !['prompt', 'model', 'client_request_id'].includes(key) &&
+    membership?.workflowManaged !== true &&
+    parameter?.definition?.['x-scope-conflict'] !== true &&
+    Array.isArray(choices) &&
+    choices.length > 0
+  )
+}
 export function retainRequiredParameters(current: Mode, edited: Mode): Mode {
   const next = clone(edited)
   for (const [key, parameter] of Object.entries(current.parameters ?? {})) {
     if (!parameter.required) continue
-    next.parameters = { ...next.parameters, [key]: clone(parameter) }
+    const editable = editableRequiredParameter(current, key)
+    const configured = next.parameters?.[key]
+    const retained = clone(parameter)
+    if (editable && configured) {
+      if (configured.enum) retained.enum = clone(configured.enum)
+      if (Object.hasOwn(configured, 'default')) {
+        retained.default = clone(configured.default)
+      } else delete retained.default
+    }
+    next.parameters = { ...next.parameters, [key]: retained }
     next.mapping = {
       ...next.mapping,
       [key]:
@@ -866,6 +890,7 @@ export function retainRequiredParameters(current: Mode, edited: Mode): Mode {
           ? current.mapping[key]
           : key,
     }
+    if (editable) continue
     if (Object.hasOwn(current.input, key)) {
       next.input[key] = clone(current.input[key])
     } else delete next.input[key]

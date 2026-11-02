@@ -6,13 +6,61 @@ import (
 	"os"
 	"testing"
 
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	pluginruntime "github.com/QuantumNous/new-api/pkg/jsplugin"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestFenglangOfficialTokenReservationAndPollingSettlement(t *testing.T) {
+	source, err := os.ReadFile("../../../../plugin-sources/fenglang-video/dist/fenglang_video.plugin.js")
+	require.NoError(t, err)
+	plugin, err := pluginruntime.CompilePlugin(string(source), pluginruntime.Options{})
+	require.NoError(t, err)
+	var template string
+	for id, definition := range plugin.Meta.ParameterInterfaces {
+		if definition.(map[string]any)["path"] == "/api/v3/contents/generations/tasks" {
+			template = id
+		}
+	}
+	require.NotEmpty(t, template)
+	const name = "doubao-seedance-2-5-260628"
+	schema, _ := plugin.Meta.UsageForModels(name)
+	assert.Contains(t, schema, "tokens")
+	assert.NotContains(t, schema, "seconds")
+	const expression = `tier("fixture", u("tokens") * 2 / 1000000)`
+	require.True(t, billing_setting.TaskExprCompatible(expression, schema))
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/videos", nil)
+	c.Set("task_request", map[string]any{"operation": "video_generate", "protocolTemplate": template, "input": map[string]any{"prompt": "Fixture", "seconds": 4, "resolution": "720p"}})
+	info := &relaycommon.RelayInfo{OriginModelName: name, ChannelMeta: &relaycommon.ChannelMeta{UpstreamModelName: name, ChannelBaseUrl: "https://supplier.example/open/v1", ApiKey: "fixture-only"}, TaskRelayInfo: &relaycommon.TaskRelayInfo{}}
+	adaptor := New(plugin)
+	adaptor.Init(info)
+	require.Nil(t, adaptor.ValidateRequestAndSetAction(c, info))
+	facts, err := adaptor.ExtractUsageFactsValidated(c, info)
+	require.NoError(t, err)
+	assert.Equal(t, float64(86400), facts["tokens"])
+	state, err := common.Marshal(map[string]string{"protocolTemplate": template})
+	require.NoError(t, err)
+	task := &model.Task{TaskID: "task_fixture", Properties: model.Properties{OriginModelName: name, UpstreamModelName: name}, PrivateData: model.TaskPrivateData{UpstreamTaskID: "private_fixture", PluginState: state}}
+	result, err := adaptor.ParseTaskResult(task, &http.Response{StatusCode: http.StatusOK, Header: make(http.Header)}, []byte(`{"status":"succeeded","content":{"video_url":"https://media.example/video.mp4"},"usage":{"total_tokens":1000,"completion_tokens":900}}`))
+	require.NoError(t, err)
+	assert.Equal(t, "SUCCESS", result.Status)
+	assert.Equal(t, float64(1000), result.UsageFacts["tokens"])
+	for key, value := range result.UsageFacts {
+		facts[key] = value
+	}
+	assert.Equal(t, "720p", facts["resolution"])
+	assert.Equal(t, "none", facts["video_input"])
+	cost, _, err := billingexpr.RunExprWithRequest(expression, billingexpr.TokenParams{}, billingexpr.RequestInput{Usage: facts})
+	require.NoError(t, err)
+	assert.InDelta(t, .002, cost, 1e-12)
+}
 
 func TestFenglangResolutionUsageRunsSavedTieredExpression(t *testing.T) {
 	source, err := os.ReadFile("../../../../plugin-sources/fenglang-video/dist/fenglang_video.plugin.js")
@@ -23,8 +71,10 @@ func TestFenglangResolutionUsageRunsSavedTieredExpression(t *testing.T) {
 	schema, _ := plugin.Meta.UsageForModels("seedance-2.0-mini")
 	require.True(t, billing_setting.TaskExprCompatible(expression, schema))
 	var template string
-	for key := range plugin.Meta.ParameterInterfaces {
-		template = key
+	for key, definition := range plugin.Meta.ParameterInterfaces {
+		if definition.(map[string]any)["path"] == "/open/v1/videos" {
+			template = key
+		}
 	}
 	require.NotEmpty(t, template)
 	for _, tc := range []struct {

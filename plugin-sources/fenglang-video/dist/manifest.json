@@ -1,15 +1,22 @@
 {
   "format": "fenglang-video-build/v1",
   "key": "fenglang_video",
-  "version": "2.1.2",
+  "version": "2.1.4",
   "interface": "interface:86f3f84ab8539ca5",
   "inputs": {
-    "build.mjs": "52c523e33bbe37ea91f5913b88b311caa569e20a2208ded12631de9d74419ad9",
-    "plugin.js": "37c0f6f91ff9b0414bace41a1f84cc63d2688a3d08334cabd58b1a26aa5a55b3",
+    "build.mjs": "57f366224b7657f347dcead36ace1be26266bd1061d19fd8bd9ed190bf51f52b",
+    "plugin.js": "0fbc8fecb1b2ceb699783547b75c9aea2df0daad2990548a82378666ed419e8f",
+    "official.js": "0b0483e0ecdb23c330cbac1cedf26986919d8a7dd9161b53c4560e8f74756974",
+    "official-contract.mjs": "f9708ddb5b685738d1b04b1dd08a96b38e81f84a8136f93c5ed8c115256b4f11",
+    "evidence/discovery-20261102-models.js.txt": "01182c2449da9a476ce86994f81deb8dc449b8046e14f5ab8298d6166a3aca90",
     "evidence/openapi.js.txt": "98f8251039d2d399ae4492d9e8d376e03a473b49cad71a89ef1c72c1e1491ba3",
-    "evidence/models.js.txt": "5222542c1cfada5c9b19fc424bcfbb04da7bfe878c07ef9eb981218ea794abdb"
+    "evidence/models.js.txt": "5222542c1cfada5c9b19fc424bcfbb04da7bfe878c07ef9eb981218ea794abdb",
+    "evidence/official-20261102-official.html.txt": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+    "evidence/official-20261102-models.js.txt": "86ec685eae3f54cf8e5fe08603178df4e6cec0d796cd3fb22ef8b67e01fe8491",
+    "evidence/official-20261102-openapi.js.txt": "1865fc3a930393d0f09c2fa2926b11e2c1efd34a2ca6e7886c1a69b930ddf39e",
+    "evidence/ark-create-20261102.md.txt": "a779514c668fc18272275f07351034078e5aeec9da98cb1352b11a083751f324"
   },
   "file": "fenglang_video.plugin.js",
-  "sha256": "b950f4983550dc5e9485ddb1beba26d6c8a3153ede478d6b75ce79d77ea7843b",
+  "sha256": "fb6d74a7589ac7cab99fd7713f06bf1adccde5330a721a8fa864ff0297346407",
   "status": "account-models-and-pricing-not-configured"
 }

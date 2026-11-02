@@ -3691,6 +3691,7 @@
     "Listing also depends on metadata visibility and the user’s group access.": "是否顯示亦取決於中繼資料顯示策略及使用者可用群組。",
     "Listing hidden": "已隱藏",
     "Live refresh pauses when no task is running": "無任務執行時暫停自動重新整理",
+    "Live supplier catalog and API results. Select models before configuring prices and parameters. Account access and pricing still need verification.": "供應商即時目錄與 API 回傳結果。先選擇型號，再設定價格和參數；帳號權限及價格仍須核實。",
     "Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.": "以下為上游即時結果。未適配的新模型不可選取，既有選擇保留；啟用模型前請核驗價格。",
     "LLM Leaderboard": "LLM 排行榜",
     "LLM prompt helper": "LLM 輔助設計提示詞",

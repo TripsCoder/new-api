@@ -3691,6 +3691,7 @@
     "Listing also depends on metadata visibility and the user’s group access.": "Việc hiển thị còn phụ thuộc vào cài đặt siêu dữ liệu và quyền truy cập nhóm của người dùng.",
     "Listing hidden": "Đã ẩn",
     "Live refresh pauses when no task is running": "Tự động làm mới tạm dừng khi không có tác vụ nào đang chạy",
+    "Live supplier catalog and API results. Select models before configuring prices and parameters. Account access and pricing still need verification.": "Danh mục trực tiếp từ nhà cung cấp và kết quả API. Chọn mô hình trước khi cấu hình giá và tham số. Quyền truy cập tài khoản và giá vẫn cần xác minh.",
     "Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.": "Kết quả trực tiếp từ nhà cung cấp. Không thể chọn mô hình mới chưa được hỗ trợ; giữ nguyên lựa chọn hiện có. Xác minh giá trước khi bật.",
     "LLM Leaderboard": "Bảng xếp hạng LLM",
     "LLM prompt helper": "Trợ lý prompt LLM",

@@ -70,7 +70,9 @@ function apiRequest(ctx,path) {
 }
 
 export function buildSubmitRequest(ctx) {
+  if (officialTask(ctx)) return officialSubmit(ctx);
   const {input,model,mode}=normalized(ctx);
+  if (meta.parameterInterfaces[officialID].modelRules[model]) throw new Error('sd-官key 模型必须选择官方协议接口');
   const body={model,prompt:input.prompt,mode};
   const mapping={seconds:'seconds',resolution:'resolution',aspect_ratio:'aspect_ratio',generate_audio:'generate_audio',watermark:'watermark',seed:'seed',output_format:'output_format',start_image_url:'input_reference',end_image_url:'last_frame',images:'reference_image_urls',videos:'reference_video_urls',audios:'reference_audio_urls'};
   for (const [field,vendor] of Object.entries(mapping)) if (own(input,field)) body[vendor]=input[field];
@@ -80,12 +82,13 @@ export function buildSubmitRequest(ctx) {
 }
 
 function failureReason(body) {
-  const error=body?.task?.error ?? body?.message;
+  const error=body?.task?.error ?? body?.error ?? body?.message;
   const value=object(error)?error.message:error;
   return typeof value==='string' && value.trim() ? value.replace(/https?:\/\/\S+/gi,'[URL]').replace(/Bearer\s+\S+/gi,'Bearer [redacted]').replace(/\bsk-[A-Za-z0-9_-]+/g,'[redacted]').slice(0,2048) : '上游视频任务失败';
 }
 
 function resultURL(data) {
+  if (data?.status==='succeeded' && httpsURL(data.content?.video_url)) return data.content.video_url;
   return object(data?.task) && httpsURL(data.task.videoUrl)?data.task.videoUrl:'';
 }
 
@@ -96,6 +99,7 @@ function taskID(id) {
 }
 
 export function parseTaskResult(ctx,body) {
+  if (officialTask(ctx)) return officialResult(body);
   if (!object(body)) return {status:'UNKNOWN',reason:'任务响应不是 JSON 对象'};
   if (body.success===false) return {status:'FAILURE',progress:'100%',reason:failureReason(body)};
   const task=body.task;
@@ -110,6 +114,14 @@ export function parseTaskResult(ctx,body) {
 
 export function parseSubmitResponse(ctx,response) {
   const body=response.body;
+  if (officialTask(ctx)) {
+    if (!object(body)) throw new Error('创建响应不是 JSON 对象，请核对任务记录，勿重复创建');
+    const result=officialResult(body);
+    if (result.status==='FAILURE') return {taskId:body.id?taskID(body.id):ctx.publicTaskId || utils.uuid(),taskData:body,immediate:result};
+    const parsed={taskId:taskID(body.id),taskData:body,state:{protocolTemplate:officialID}};
+    if (result.status==='SUCCESS') parsed.immediate=result;
+    return parsed;
+  }
   if (!object(body)) throw new Error('创建响应不是 JSON 对象，请核对任务记录，勿重复创建');
   const result=parseTaskResult(ctx,body);
   if (result.status==='FAILURE') return {taskId:body.task?.id?taskID(body.task.id):ctx.publicTaskId || utils.uuid(),taskData:body,immediate:result};
@@ -120,10 +132,12 @@ export function parseSubmitResponse(ctx,response) {
 }
 
 export function buildQueryRequest(ctx) {
+  if (officialTask(ctx)) return officialRequest(ctx,ctx.taskId);
   return apiRequest(ctx,'/tasks/'+encodeURIComponent(taskID(ctx.taskId)));
 }
 
 export function extractUsage(ctx) {
+  if (officialTask(ctx)) return officialUsage(ctx);
   const {input}=normalized(ctx);
   if (ctx.usagePurpose==='billing_ratios') throw new Error('请先配置该模型的插件计费表达式');
   // Current documented models charge by requested second. No undocumented
@@ -137,17 +151,30 @@ export function extractUsage(ctx) {
   return {request_count:1,seconds:input.seconds,...(resolution===undefined?{}:{resolution})};
 }
 
-export function extractUsageOnComplete() {
+export function extractUsageOnComplete(task,result,body) {
+  if (officialTask(task) && result.status==='SUCCESS' && body?.status==='succeeded') {
+    const tokens=body.usage?.total_tokens;
+    // Missing, zero, fractional and oversized counters keep the reservation.
+    // completion_tokens is not substituted for the documented billing total.
+    if (Number.isSafeInteger(tokens) && tokens>0) return {tokens};
+  }
   // No documented actual-duration usage. Keep the reserved requested seconds;
   // refunded is supplier metadata, not an instruction to credit the local wallet.
   return {};
 }
 
 export function listArtifacts(task) {
+  if (task.status==='SUCCESS' && task.data?.status==='succeeded' && httpsURL(task.data.content?.last_frame_url)) return [{key:'video',type:'video'},{key:'last_frame',type:'image'}];
   return task.status==='SUCCESS'?[{key:'video',type:'video'}]:[];
 }
 
 export function buildContentRequest(ctx) {
+  if (officialTask(ctx)) {
+    if (ctx.status!=='SUCCESS' || !['video','last_frame'].includes(ctx.artifactKey)) throw new Error('视频结果不可用');
+    const url=ctx.artifactKey==='last_frame'?ctx.data?.content?.last_frame_url:ctx.data?.content?.video_url;
+    if (!httpsURL(url)) throw new Error('官方协议结果地址不可用');
+    return {url,method:ctx.clientRequest?.method==='HEAD'?'HEAD':'GET',credentialless:true};
+  }
   if (ctx.artifactKey!=='video' || ctx.status!=='SUCCESS') throw new Error('视频结果不可用');
   const method=ctx.clientRequest?.method==='HEAD'?'HEAD':'GET';
   const url=resultURL(ctx.data);

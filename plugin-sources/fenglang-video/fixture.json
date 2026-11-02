@@ -1788,6 +1788,1478 @@
       "expected": {
         "url": "/v1/videos/task_public/content"
       }
+    },
+    {
+      "name": "official omission does not inject supplier defaults",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/api/v3/contents/generations/tasks",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "doubao-seedance-2-5-260628",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture"
+            }
+          ],
+          "resolution": "720p"
+        }
+      }
+    },
+    {
+      "name": "official scalars preserve explicit false and zero",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "duration": 6,
+              "ratio": "1:1",
+              "seed": 0,
+              "generate_audio": false,
+              "watermark": false,
+              "return_last_frame": false,
+              "draft": false,
+              "priority": 0,
+              "output_format": "mov",
+              "unknown": "ignored"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/api/v3/contents/generations/tasks",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "doubao-seedance-2-5-260628",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture"
+            }
+          ],
+          "resolution": "720p",
+          "duration": 6,
+          "ratio": "1:1",
+          "seed": 0,
+          "generate_audio": false,
+          "watermark": false,
+          "return_last_frame": false,
+          "draft": false,
+          "priority": 0,
+          "output_format": "mov"
+        }
+      }
+    },
+    {
+      "name": "official exact -s ID is not rewritten",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628-s",
+          "upstreamModel": "doubao-seedance-2-5-260628-s",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/api/v3/contents/generations/tasks",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "doubao-seedance-2-5-260628-s",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture"
+            }
+          ],
+          "resolution": "720p"
+        }
+      }
+    },
+    {
+      "name": "official frame roles",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "start_image_url": "https://media.example/a.png?sig=a%2Fb%2B",
+              "end_image_url": "https://media.example/end.png"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/api/v3/contents/generations/tasks",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "doubao-seedance-2-5-260628",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture"
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://media.example/a.png?sig=a%2Fb%2B"
+              },
+              "role": "first_frame"
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://media.example/end.png"
+              },
+              "role": "last_frame"
+            }
+          ],
+          "resolution": "720p"
+        }
+      }
+    },
+    {
+      "name": "official reference roles and order",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "images": [
+                "https://media.example/a.png?sig=a%2Fb%2B"
+              ],
+              "videos": [
+                "https://media.example/v.mp4"
+              ],
+              "audios": [
+                "https://media.example/a.wav"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/api/v3/contents/generations/tasks",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "doubao-seedance-2-5-260628",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture"
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://media.example/a.png?sig=a%2Fb%2B"
+              },
+              "role": "reference_image"
+            },
+            {
+              "type": "video_url",
+              "video_url": {
+                "url": "https://media.example/v.mp4"
+              },
+              "role": "reference_video"
+            },
+            {
+              "type": "audio_url",
+              "audio_url": {
+                "url": "https://media.example/a.wav"
+              },
+              "role": "reference_audio"
+            }
+          ],
+          "resolution": "720p"
+        }
+      }
+    },
+    {
+      "name": "official validates {\"resolution\":\"4k\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "4k"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "official validates {\"resolution\":\"480p\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628-s",
+          "upstreamModel": "doubao-seedance-2-5-260628-s",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "480p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "official validates {\"resolution\":\"1080p\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-0-fast-260128-s",
+          "upstreamModel": "doubao-seedance-2-0-fast-260128-s",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "1080p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "official validates {\"seconds\":16}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-0-260128",
+          "upstreamModel": "doubao-seedance-2-0-260128",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "seconds": 16
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "official validates {\"seconds\":31}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "seconds": 31
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "official validates {\"images\":[\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\",\"https://media.example/a.png?sig=a%2Fb%2B\"]}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-0-260128",
+          "upstreamModel": "doubao-seedance-2-0-260128",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "images": [
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B",
+                "https://media.example/a.png?sig=a%2Fb%2B"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "数量"
+    },
+    {
+      "name": "official validates {\"start_image_url\":\"https://media.example/a.png?sig=a%2Fb%2B\",\"videos\":[\"https://media.example/v.mp4\"]}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "start_image_url": "https://media.example/a.png?sig=a%2Fb%2B",
+              "videos": [
+                "https://media.example/v.mp4"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "混用"
+    },
+    {
+      "name": "official validates {\"resolution\":\"\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": ""
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "resolution"
+    },
+    {
+      "name": "official validates {\"priority\":10}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "priority": 10
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "priority"
+    },
+    {
+      "name": "official model cannot use original endpoint",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "官方协议"
+    },
+    {
+      "name": "official unreviewed model fails closed",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "future-official",
+          "upstreamModel": "future-official",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "适用性"
+    },
+    {
+      "name": "official submit persists protocol for polling",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "body": {
+            "id": "private_A/B"
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "private_A/B",
+        "taskData": {
+          "id": "private_A/B"
+        },
+        "state": {
+          "protocolTemplate": "interface:50d8a4ba97672fd1"
+        }
+      }
+    },
+    {
+      "name": "official poll recovers protocol without request body",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/api/v3/contents/generations/tasks/private_A%2FB",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "official queued state",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "queued"
+        }
+      ],
+      "expected": {
+        "status": "QUEUED",
+        "progress": "0%"
+      }
+    },
+    {
+      "name": "official processing state",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "processing"
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "0%"
+      }
+    },
+    {
+      "name": "official completion URL",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "succeeded",
+          "content": {
+            "video_url": "https://cdn.example/v.mp4",
+            "last_frame_url": "https://media.example/a.png?sig=a%2Fb%2B"
+          },
+          "usage": {
+            "total_tokens": 1000,
+            "completion_tokens": 900
+          }
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/v.mp4"
+      }
+    },
+    {
+      "name": "official missing artifact cannot become successful",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "succeeded",
+          "content": {}
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "官方协议成功响应缺少有效视频 URL"
+      }
+    },
+    {
+      "name": "official failure is a terminal failure",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "failed",
+          "error": {
+            "message": "invalid_resolution"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "invalid_resolution"
+      }
+    },
+    {
+      "name": "official HTTP 200 error does not retry",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "body": {
+            "error": {
+              "code": "bad",
+              "message": "invalid_resolution"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "task_public",
+        "taskData": {
+          "error": {
+            "code": "bad",
+            "message": "invalid_resolution"
+          }
+        },
+        "immediate": {
+          "status": "FAILURE",
+          "progress": "100%",
+          "reason": "invalid_resolution"
+        }
+      }
+    },
+    {
+      "name": "official draft rejects non-480p",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "draft": true
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "480p"
+    },
+    {
+      "name": "official draft accepts explicit 480p",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "480p",
+              "draft": true
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/api/v3/contents/generations/tasks",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "doubao-seedance-2-5-260628",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture"
+            }
+          ],
+          "resolution": "480p",
+          "draft": true
+        }
+      }
+    },
+    {
+      "name": "official missing ID is uncertain",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "body": {}
+        }
+      ],
+      "expectedError": "task.id"
+    },
+    {
+      "name": "official token reservation uses documented omitted duration",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "tokens": 86400,
+        "resolution": "720p",
+        "video_input": "none"
+      }
+    },
+    {
+      "name": "official ratio changes reservation",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "seconds": 6,
+              "aspect_ratio": "1:1"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "tokens": 72900,
+        "resolution": "720p",
+        "video_input": "none"
+      }
+    },
+    {
+      "name": "official reference estimate includes all media classes",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "doubao-seedance-2-5-260628",
+          "upstreamModel": "doubao-seedance-2-5-260628",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:50d8a4ba97672fd1",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "720p",
+              "seconds": 4,
+              "images": [
+                "https://media.example/a.png?sig=a%2Fb%2B"
+              ],
+              "videos": [
+                "https://media.example/v.mp4"
+              ],
+              "audios": [
+                "https://media.example/a.wav"
+              ]
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "tokens": 199800,
+        "resolution": "720p",
+        "video_input": "video"
+      }
+    },
+    {
+      "name": "official total tokens settle instead of completion tokens",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "status": "succeeded",
+          "content": {
+            "video_url": "https://cdn.example/v.mp4",
+            "last_frame_url": "https://media.example/a.png?sig=a%2Fb%2B"
+          },
+          "usage": {
+            "total_tokens": 1000,
+            "completion_tokens": 900
+          }
+        }
+      ],
+      "expected": {
+        "tokens": 1000
+      }
+    },
+    {
+      "name": "official invalid actual usage keeps reservation 0",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "status": "succeeded",
+          "usage": {
+            "total_tokens": 0,
+            "completion_tokens": 1
+          }
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "official invalid actual usage keeps reservation -1",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "status": "succeeded",
+          "usage": {
+            "total_tokens": -1,
+            "completion_tokens": 1
+          }
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "official invalid actual usage keeps reservation 1.5",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "status": "succeeded",
+          "usage": {
+            "total_tokens": 1.5,
+            "completion_tokens": 1
+          }
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "official invalid actual usage keeps reservation 9007199254740992",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "status": "succeeded",
+          "usage": {
+            "total_tokens": 9007199254740992,
+            "completion_tokens": 1
+          }
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "official invalid actual usage keeps reservation 1000",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "status": "succeeded",
+          "usage": {
+            "total_tokens": "1000",
+            "completion_tokens": 1
+          }
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "official invalid actual usage keeps reservation null",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "status": "succeeded",
+          "usage": {
+            "total_tokens": null,
+            "completion_tokens": 1
+          }
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "official failure cannot settle usage",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B"
+        },
+        {
+          "status": "FAILURE"
+        },
+        {
+          "status": "succeeded",
+          "content": {
+            "video_url": "https://cdn.example/v.mp4",
+            "last_frame_url": "https://media.example/a.png?sig=a%2Fb%2B"
+          },
+          "usage": {
+            "total_tokens": 1000,
+            "completion_tokens": 900
+          }
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "official content is credentialless",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B",
+          "status": "SUCCESS",
+          "artifactKey": "video",
+          "data": {
+            "status": "succeeded",
+            "content": {
+              "video_url": "https://cdn.example/v.mp4",
+              "last_frame_url": "https://media.example/a.png?sig=a%2Fb%2B"
+            },
+            "usage": {
+              "total_tokens": 1000,
+              "completion_tokens": 900
+            }
+          },
+          "clientRequest": {
+            "method": "HEAD"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/v.mp4",
+        "method": "HEAD",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "official last frame is credentialless",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "model": "seedance-2.5",
+          "upstreamModel": "seedance-2.5",
+          "baseUrl": "https://supplier.example/open/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:86f3f84ab8539ca5",
+            "input": {
+              "prompt": "Fixture"
+            },
+            "uploads": []
+          },
+          "state": {
+            "protocolTemplate": "interface:50d8a4ba97672fd1"
+          },
+          "taskId": "private_A/B",
+          "status": "SUCCESS",
+          "artifactKey": "last_frame",
+          "data": {
+            "status": "succeeded",
+            "content": {
+              "video_url": "https://cdn.example/v.mp4",
+              "last_frame_url": "https://media.example/a.png?sig=a%2Fb%2B"
+            },
+            "usage": {
+              "total_tokens": 1000,
+              "completion_tokens": 900
+            }
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://media.example/a.png?sig=a%2Fb%2B",
+        "method": "GET",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "official exposes last frame only when present",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "data": {
+            "status": "succeeded",
+            "content": {
+              "video_url": "https://cdn.example/v.mp4",
+              "last_frame_url": "https://media.example/a.png?sig=a%2Fb%2B"
+            },
+            "usage": {
+              "total_tokens": 1000,
+              "completion_tokens": 900
+            }
+          }
+        }
+      ],
+      "expected": [
+        {
+          "key": "video",
+          "type": "video"
+        },
+        {
+          "key": "last_frame",
+          "type": "image"
+        }
+      ]
     }
   ]
 }

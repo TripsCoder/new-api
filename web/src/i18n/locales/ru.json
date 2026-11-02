@@ -3691,6 +3691,7 @@
     "Listing also depends on metadata visibility and the user’s group access.": "Отображение также зависит от настроек видимости метаданных и доступа пользователя к группам.",
     "Listing hidden": "Скрыто",
     "Live refresh pauses when no task is running": "Автообновление приостанавливается, когда нет выполняемых задач",
+    "Live supplier catalog and API results. Select models before configuring prices and parameters. Account access and pricing still need verification.": "Актуальный каталог поставщика и результаты API. Сначала выберите модели, затем настройте цены и параметры. Доступ аккаунта и цены требуют проверки.",
     "Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.": "Актуальные результаты провайдера. Новые неподдерживаемые модели недоступны для выбора; прежний выбор сохраняется. Проверьте цены перед включением.",
     "LLM Leaderboard": "Рейтинг LLM",
     "LLM prompt helper": "Помощник с промптом для LLM",

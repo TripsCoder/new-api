@@ -27,14 +27,13 @@ export function projectDocumentInterfaces(
         (binding) => catalog.interfaces?.[binding.protocol?.templateModel ?? '']
       )
       .find((entry) => entry?.kind === kind)
-    // YuxiBox publishes several video request tables. An exact documented ID
+    // Suppliers can publish several video request tables. An exact documented ID
     // can select its table; a saved operator selection still takes precedence.
-    const documented =
-      catalog.key === 'yuxibox_media'
-        ? Object.values(catalog.interfaces).find(
-            (entry) => entry.kind === kind && entry.modelRules?.[name]
-          )
-        : undefined
+    const documented = ['yuxibox_media', 'fenglang_video'].includes(catalog.key)
+      ? Object.values(catalog.interfaces).find(
+          (entry) => entry.kind === kind && entry.modelRules?.[name]
+        )
+      : undefined
     const reference = selected ?? documented ?? fallback
     if (reference) {
       actual[name] = supplementReference(

@@ -23,10 +23,16 @@ func TestReviewedVideoDocumentInterfacesSupportDiscoveredModelsWithoutInventedDe
 			catalog := raw.(map[string]any)
 			require.Empty(t, catalog["models"], "documentation must not populate account model discovery")
 			interfaces := catalog["interfaces"].(map[string]any)
-			require.Len(t, interfaces, 1)
+			if provider == "fenglang_video" {
+				require.Len(t, interfaces, 2)
+			} else {
+				require.Len(t, interfaces, 1)
+			}
 			var interfaceID string
-			for key := range interfaces {
-				interfaceID = key
+			for key, value := range interfaces {
+				if value.(map[string]any)["path"] != "/api/v3/contents/generations/tasks" {
+					interfaceID = key
+				}
 			}
 			protocol := &ProtocolBinding{TemplateModel: interfaceID, Confirmed: true}
 			require.NoError(t, ValidateProtocolBinding(provider, "text_video", protocol))
@@ -51,8 +57,10 @@ func TestFenglangDocumentedModelsCanSaveAndResolveFramePolicies(t *testing.T) {
 	require.NoError(t, err)
 	interfaces := raw.(map[string]any)["interfaces"].(map[string]any)
 	var id string
-	for key := range interfaces {
-		id = key
+	for key, value := range interfaces {
+		if value.(map[string]any)["path"] == "/open/v1/videos" {
+			id = key
+		}
 	}
 	for _, name := range []string{"seedance-2.5", "seedance-2.0", "seedance-2.0-fast", "seedance-2.0-mini", "minimax-video-h3"} {
 		t.Run(name, func(t *testing.T) {

@@ -1305,6 +1305,293 @@
       }
     },
     {
+      "name": "resolution is available to saved tiered pricing: 480p",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 8,
+              "resolution": "480p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "resolution": "480p"
+      }
+    },
+    {
+      "name": "resolution is available to saved tiered pricing: 720p",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 8,
+              "resolution": "720p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "resolution": "720p"
+      }
+    },
+    {
+      "name": "resolution is available to saved tiered pricing: 768p",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 8,
+              "resolution": "768p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "resolution": "768p"
+      }
+    },
+    {
+      "name": "resolution is available to saved tiered pricing: 1080p",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 8,
+              "resolution": "1080p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "resolution": "1080p"
+      }
+    },
+    {
+      "name": "resolution is available to saved tiered pricing: 1440p",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 8,
+              "resolution": "1440p"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "resolution": "1440p"
+      }
+    },
+    {
+      "name": "resolution is available to saved tiered pricing: 2k",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 8,
+              "resolution": "2k"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "resolution": "2k"
+      }
+    },
+    {
+      "name": "billing resolution canonicalizes case without changing the upstream tier",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "768P"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "resolution": "768p"
+      }
+    },
+    {
+      "name": "billing keeps 2k and 1440p as separate declared values",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "2k"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "new-account-video-id",
+          "prompt": "Fixture",
+          "resolution": "2k"
+        }
+      }
+    },
+    {
+      "name": "absent or ignored resolution does not invent a billing default",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "resolution_name": "768p",
+              "metadata": {
+                "resolution": "768p"
+              }
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1
+      }
+    },
+    {
+      "name": "unknown resolution does not invent a billing tier",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "resolution": "custom-tier"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1
+      }
+    },
+    {
       "name": "legacy billing requires explicit expression",
       "hook": "extractUsage",
       "args": [

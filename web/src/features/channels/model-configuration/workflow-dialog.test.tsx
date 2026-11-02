@@ -436,9 +436,10 @@ describe('actual channel workflow dialog', () => {
   it.each([
     ['aotian_video', 'seedance2.0'],
     ['fenglang_video', 'seedance-2.5'],
+    ['fenglang_video', 'doubao-seedance-2-5-260628'],
     ['apipath_video', 'seedance-2.5-YZ'],
   ])(
-    'opens the complete %s configuration workflow with its generated catalog',
+    'opens the complete %s/%s configuration workflow with its generated catalog',
     async (provider, model) => {
       const actual = JSON.parse(
         readFileSync(
@@ -467,7 +468,10 @@ describe('actual channel workflow dialog', () => {
         `${model}{Enter}`
       )
       await advanceToParameters()
-      if (provider === 'apipath_video') {
+      if (
+        provider === 'apipath_video' ||
+        model.startsWith('doubao-seedance-')
+      ) {
         await userEvent.click(
           screen.getByRole('checkbox', {
             name: 'I checked this interface applies to this model',
@@ -490,6 +494,20 @@ describe('actual channel workflow dialog', () => {
       await userEvent.click(
         screen.getByRole('button', { name: 'Next: model prices' })
       )
+      if (model.startsWith('doubao-seedance-')) {
+        await userEvent.click(
+          screen.getByRole('combobox', { name: `${model}: Billing method` })
+        )
+        await userEvent.click(
+          screen.getByRole('option', { name: 'Per 1M tokens' })
+        )
+        await userEvent.type(
+          screen.getByRole('spinbutton', {
+            name: `${model}: Billing amount (USD)`,
+          }),
+          '2'
+        )
+      }
       await userEvent.click(
         screen.getByRole('button', { name: 'Next: check and save' })
       )
@@ -499,7 +517,10 @@ describe('actual channel workflow dialog', () => {
       expect(mocks.save).not.toHaveBeenCalled()
       expect(mocks.tryCall).not.toHaveBeenCalled()
       expect(actual.models).toEqual({})
-      if (provider === 'apipath_video') {
+      if (
+        provider === 'apipath_video' ||
+        model.startsWith('doubao-seedance-')
+      ) {
         await userEvent.click(
           screen.getByRole('button', { name: 'Save and apply to this channel' })
         )
@@ -543,9 +564,13 @@ describe('actual channel workflow dialog', () => {
           const payload = JSON.parse(serialized)
           const target = path.resolve(
             '..',
-            'controller/testdata/apipath_video_ui_save.json'
+            `controller/testdata/${model.startsWith('doubao-seedance-') ? 'fenglang_official' : 'apipath_video'}_ui_save.json`
           )
-          if (process.env.UPDATE_APIPATH_UI_SAVE_FIXTURE === '1') {
+          if (
+            (model.startsWith('doubao-seedance-')
+              ? process.env.UPDATE_FENGLANG_UI_SAVE_FIXTURE
+              : process.env.UPDATE_APIPATH_UI_SAVE_FIXTURE) === '1'
+          ) {
             writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`)
           }
           expect(payload).toEqual(JSON.parse(readFileSync(target, 'utf8')))

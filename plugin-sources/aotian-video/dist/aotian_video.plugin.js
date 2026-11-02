@@ -3,7 +3,7 @@ export const meta = {
   "apiVersion": 1,
   "key": "aotian_video",
   "name": "AoTian Video",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": {
     "name": "TripsCoder"
   },
@@ -338,6 +338,20 @@ export const meta = {
         "en": "Video generation unit price",
         "zh": "视频生成单价"
       }
+    },
+    "resolution": {
+      "enum": [
+        "480p",
+        "720p",
+        "768p",
+        "1080p",
+        "1440p",
+        "2k"
+      ],
+      "description": {
+        "en": "Video resolution",
+        "zh": "视频分辨率"
+      }
     }
   }
 };
@@ -486,9 +500,12 @@ export function buildQueryRequest(ctx) {
 }
 
 export function extractUsage(ctx) {
-  normalized(ctx);
+  const {input}=normalized(ctx);
   if (ctx.usagePurpose==='billing_ratios') throw new Error('请先配置该模型的插件计费表达式');
-  return {request_count:1};
+  // Only the effective request selects the pricing tier. Do not infer one from
+  // pixel dimensions, ignored fields, metadata or an unspecified default.
+  const resolution=input.resolution?.trim().toLowerCase();
+  return {request_count:1,...(meta.usageSchema.resolution.enum.includes(resolution)?{resolution}:{})};
 }
 
 export function extractUsageOnComplete() {

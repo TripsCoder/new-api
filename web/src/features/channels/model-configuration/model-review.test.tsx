@@ -40,6 +40,18 @@ function text() {
     .join(' ')
 }
 describe('Chinese operator save review', () => {
+  it('labels token selling prices per million rather than per token', () => {
+    const before = fixture()
+    const after = structuredClone(before)
+    after.bindings.A.video_ref.billing = {
+      expression: '2 * u("tokens") / 1000000',
+      currency: 'USD',
+      confirmed: true,
+    }
+    render(<ModelReview baseline={before} draft={after} />)
+    expect(text()).toContain('2 USD / 1M tokens')
+    expect(text()).not.toContain('2 USD / tokens')
+  })
   it('shows capability names and enabled states without technical JSON in the visible values', () => {
     const before = fixture()
     const after = structuredClone(before)

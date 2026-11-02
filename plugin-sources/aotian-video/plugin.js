@@ -143,9 +143,12 @@ export function buildQueryRequest(ctx) {
 }
 
 export function extractUsage(ctx) {
-  normalized(ctx);
+  const {input}=normalized(ctx);
   if (ctx.usagePurpose==='billing_ratios') throw new Error('请先配置该模型的插件计费表达式');
-  return {request_count:1};
+  // Only the effective request selects the pricing tier. Do not infer one from
+  // pixel dimensions, ignored fields, metadata or an unspecified default.
+  const resolution=input.resolution?.trim().toLowerCase();
+  return {request_count:1,...(meta.usageSchema.resolution.enum.includes(resolution)?{resolution}:{})};
 }
 
 export function extractUsageOnComplete() {

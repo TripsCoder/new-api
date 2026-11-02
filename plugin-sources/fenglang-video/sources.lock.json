@@ -15,24 +15,77 @@
       "sha256": "5222542c1cfada5c9b19fc424bcfbb04da7bfe878c07ef9eb981218ea794abdb",
       "readAt": "2026-10-24",
       "status": "public-documentation"
+    },
+    {
+      "file": "evidence/official-20261102-official.html.txt",
+      "url": "https://fenglang.cloud/docs/seedance-official.html",
+      "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+      "readAt": "2026-11-02",
+      "status": "public-documentation"
+    },
+    {
+      "file": "evidence/official-20261102-models.js.txt",
+      "url": "https://fenglang.cloud/js/models.js",
+      "sha256": "86ec685eae3f54cf8e5fe08603178df4e6cec0d796cd3fb22ef8b67e01fe8491",
+      "readAt": "2026-11-02",
+      "status": "public-documentation"
+    },
+    {
+      "file": "evidence/official-20261102-openapi.js.txt",
+      "url": "https://fenglang.cloud/js/openapi.js",
+      "sha256": "1865fc3a930393d0f09c2fa2926b11e2c1efd34a2ca6e7886c1a69b930ddf39e",
+      "readAt": "2026-11-02",
+      "status": "public-documentation"
+    },
+    {
+      "file": "evidence/ark-create-20261102.md.txt",
+      "url": "https://ark.volcengine.com/region:cn-beijing/docs/create-video-generation-task-api.md",
+      "sha256": "a779514c668fc18272275f07351034078e5aeec9da98cb1352b11a083751f324",
+      "readAt": "2026-11-02",
+      "status": "official-protocol-reference"
+    },
+    {
+      "file": "evidence/discovery-20261102-models.js.txt",
+      "url": "https://fenglang.cloud/js/models.js",
+      "sha256": "01182c2449da9a476ce86994f81deb8dc449b8046e14f5ab8298d6166a3aca90",
+      "readAt": "2026-11-02",
+      "status": "live-public-video-catalog"
     }
   ],
   "readOnlyProbes": {
-    "ping": 200,
-    "pricing": 401,
-    "apiKeyUsed": false
+    "historicalPublicPricing": 401,
+    "pricing": 200,
+    "publicVideoCatalog": 200,
+    "apiKeyUsed": true,
+    "officialModelAccessVerified": false
   },
   "modelDeclarations": {
-    "status": "documentation-only-not-account-discovery",
+    "status": "live-discovery-required-not-static-fallback",
     "static": [
-      "seedance-2.5"
+      "seedance-2.5",
+      "doubao-seedance-2-0-260128",
+      "doubao-seedance-2-0-260128-s",
+      "doubao-seedance-2-0-fast-260128",
+      "doubao-seedance-2-0-fast-260128-s",
+      "doubao-seedance-2-0-mini-260615",
+      "doubao-seedance-2-0-mini-260615-s",
+      "doubao-seedance-2-5-260628",
+      "doubao-seedance-2-5-260628-s"
     ],
     "exactPublicIDs": [
       "seedance-2.5",
       "seedance-2.0",
       "seedance-2.0-fast",
       "seedance-2.0-mini",
-      "minimax-video-h3"
+      "minimax-video-h3",
+      "doubao-seedance-2-0-260128",
+      "doubao-seedance-2-0-260128-s",
+      "doubao-seedance-2-0-fast-260128",
+      "doubao-seedance-2-0-fast-260128-s",
+      "doubao-seedance-2-0-mini-260615",
+      "doubao-seedance-2-0-mini-260615-s",
+      "doubao-seedance-2-5-260628",
+      "doubao-seedance-2-5-260628-s"
     ]
   },
   "pending": [
@@ -41,7 +94,14 @@
     "Reference clip minimum 2 seconds and per-media-class aggregate 30 seconds require supplier media inspection; URL/count checks are local",
     "Aspect ratios, output formats and optional controls require actual model confirmation",
     "Per-second reservation requires explicit seconds or an administrator-saved duration default; no provider default is fabricated",
-    "No actual output-duration usage is documented; completion retains reserved requested seconds"
+    "No actual output-duration usage is documented; completion retains reserved requested seconds",
+    "Official protocol models are excluded from /open/v1/pricing; discovery also reads the live supplier video catalog without confirming account access or prices; interface confirmation remains required",
+    "Supplier documentation and public UI disagree on discount labels; no cost or selling price is imported",
+    "Supplier proxy requires nonempty text and explicit resolution; omitted duration and ratio retain documented supplier defaults without injecting channel defaults",
+    "Reference video/audio duration is estimated at five seconds per URL as documented; completion settles on positive safe-integer usage.total_tokens",
+    "Draft task continuation, callback and unlisted fields are not implemented; unknown parameters are not forwarded",
+    "The proxy documents positive duration and six fixed ratios, unlike Ark adaptive and automatic-duration workflows; edit and extend are not claimed as verified",
+    "Reference file dimensions, bytes and duration require supplier media inspection; no paid request has verified model permissions or outputs"
   ],
   "securityReferences": [
     "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",

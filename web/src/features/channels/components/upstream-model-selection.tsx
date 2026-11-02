@@ -325,9 +325,14 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
     <div className='space-y-3'>
       {props.discovery && (
         <p className='text-muted-foreground text-sm'>
-          {t(
-            'Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.'
-          )}
+          {props.discovery.discovery_method ===
+          'authenticated_pricing_and_public_catalog'
+            ? t(
+                'Live supplier catalog and API results. Select models before configuring prices and parameters. Account access and pricing still need verification.'
+              )
+            : t(
+                'Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.'
+              )}
         </p>
       )}
       {props.search === undefined && (

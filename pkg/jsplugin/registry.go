@@ -1284,7 +1284,7 @@ func ValidateV1Meta(meta Meta) error {
 
 func normalizeV1Meta(meta *Meta) error {
 	if discovery := meta.ModelDiscovery; discovery != nil {
-		if !slices.Contains([]string{"openai", "fenglang_pricing"}, discovery.Format) || !regexp.MustCompile(`^/[A-Za-z0-9_/-]{1,255}$`).MatchString(discovery.Path) || strings.Contains(discovery.Path, "//") {
+		if !slices.Contains([]string{"openai", "fenglang_pricing", "fenglang_video_catalog"}, discovery.Format) || !regexp.MustCompile(`^/[A-Za-z0-9_/-]{1,255}$`).MatchString(discovery.Path) || strings.Contains(discovery.Path, "//") {
 			return fmt.Errorf("plugin modelDiscovery requires a supported format and a same-origin absolute path without query or fragment")
 		}
 		switch discovery.SourceStatus {

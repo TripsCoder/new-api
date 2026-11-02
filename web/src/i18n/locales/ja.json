@@ -3691,6 +3691,7 @@
     "Listing also depends on metadata visibility and the user’s group access.": "表示はメタデータの表示設定とユーザーのグループアクセスにも依存します。",
     "Listing hidden": "非表示",
     "Live refresh pauses when no task is running": "実行中のタスクがない場合、自動更新は一時停止します",
+    "Live supplier catalog and API results. Select models before configuring prices and parameters. Account access and pricing still need verification.": "供給元の最新カタログと API の取得結果です。モデルを選択してから価格とパラメーターを設定してください。アカウントの利用権限と価格は要確認です。",
     "Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.": "上流の最新取得結果です。未対応の新規モデルは選択できません。既存の選択は保持されます。有効化前に料金を確認してください。",
     "LLM Leaderboard": "LLM リーダーボード",
     "LLM prompt helper": "LLMプロンプトヘルパー",

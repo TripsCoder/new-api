@@ -89,7 +89,8 @@
         "format": {
           "enum": [
             "openai",
-            "fenglang_pricing"
+            "fenglang_pricing",
+            "fenglang_video_catalog"
           ]
         },
         "sourceUrl": {

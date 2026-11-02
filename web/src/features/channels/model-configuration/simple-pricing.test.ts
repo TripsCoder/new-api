@@ -12,6 +12,63 @@ import type { Configuration, Mode } from './types'
 
 const mode = (cost: Mode['cost']): Mode => ({ enabled: true, input: {}, cost })
 describe('customer billing method and amount', () => {
+  it('round trips a per-million-token price without scaling per-second prices', () => {
+    const document: Configuration = {
+      format: 'channel-model-configuration/v1',
+      provider: 'fenglang_video',
+      revision: 0,
+      groups: {
+        g: {
+          name: 'official',
+          modes: { text_video: mode({ amount: null, confirmed: false }) },
+        },
+      },
+      bindings: { official: { text_video: { groupId: 'g' } } },
+    }
+    const fields = { unit: 'tokens', value: '2' }
+    const saved = applyCustomerPrice(document, 'official', 'text_video', fields)
+    expect(saved.bindings.official.text_video.billing?.expression).toBe(
+      '2 * u("tokens") / 1000000'
+    )
+    expect(
+      readCustomerPrice({
+        ...mode({ amount: null, confirmed: false }),
+        billing: saved.bindings.official.text_video.billing,
+      })
+    ).toEqual(fields)
+    const tiers = {
+      ...fields,
+      value: '',
+      resolutions: { '720p': '2', '1080p': '3' },
+    }
+    expect(customerPriceError(tiers)).toBeUndefined()
+    expect(
+      readUniformCustomerPrice(
+        applyCustomerPrice(document, 'official', 'text_video', tiers),
+        'official'
+      ).fields
+    ).toEqual(tiers)
+    expect(
+      readCustomerPrice({
+        ...mode({ amount: null, confirmed: false }),
+        billing: {
+          expression: '2 * u("tokens")',
+          currency: 'USD',
+          confirmed: true,
+        },
+      })
+    ).toEqual({ unit: '', value: '' })
+    expect(
+      readCustomerPrice({
+        ...mode({ amount: null, confirmed: false }),
+        billing: {
+          expression: '2 * u("seconds")',
+          currency: 'USD',
+          confirmed: true,
+        },
+      })
+    ).toEqual({ unit: 'seconds', value: '2' })
+  })
   it('keeps documented resolution names and round trips arbitrary selected tiers', () => {
     const document: Configuration = {
       format: 'channel-model-configuration/v1',

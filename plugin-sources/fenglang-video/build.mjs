@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import {officialContract} from './official-contract.mjs';
 
 const root=new URL('./',import.meta.url);
 // Hash and compile the same canonical text on Windows and Linux checkouts.
@@ -8,6 +9,15 @@ const digest=data=>crypto.createHash('sha256').update(data).digest('hex');
 const check=process.argv.includes('--check');
 const sources=['openapi','models'].map(name=>({file:'evidence/'+name+'.js.txt',url:'https://fenglang.cloud/js/'+name+'.js',sha256:digest(read('evidence/'+name+'.js.txt')),readAt:'2026-10-24',status:'public-documentation'}));
 const source=sources[0];
+const discoverySource={file:'evidence/discovery-20261102-models.js.txt',url:'https://fenglang.cloud/js/models.js',sha256:digest(read('evidence/discovery-20261102-models.js.txt')),readAt:'2026-11-02',status:'live-public-video-catalog'};
+const officialSources=[['official.html','https://fenglang.cloud/docs/seedance-official.html'],['models.js','https://fenglang.cloud/js/models.js'],['openapi.js','https://fenglang.cloud/js/openapi.js']].map(([file,url])=>({file:'evidence/official-20261102-'+file+'.txt',url,sha256:digest(read('evidence/official-20261102-'+file+'.txt')),readAt:'2026-11-02',status:'public-documentation'}));
+officialSources.push({file:'evidence/ark-create-20261102.md.txt',url:'https://ark.volcengine.com/region:cn-beijing/docs/create-video-generation-task-api.md',sha256:digest(read('evidence/ark-create-20261102.md.txt')),readAt:'2026-11-02',status:'official-protocol-reference'});
+const official=officialContract(officialSources[0],digest);
+for(const rule of Object.values(official.modelRules)) {
+  rule.parameters.priority.source=officialSources[3];
+}
+for(const model of Object.keys(official.modelRules)) if(!read(officialSources[1].file).toString().includes("['"+model+"',")) throw new Error('Missing reviewed official ID '+model);
+for(const rule of Object.values(official.modelRules)) for(const field of ['images','videos','audios']) rule.parameters[field].source=officialSources[1];
 const parameter=(type,vendorFields,capabilities,description,extra={})=>({type,required:false,description,source,definition:{type,description,'x-channel-parameter':{vendorFields,capabilities,requiredIn:[],status:'documented'},...extra}});
 const refs=(field,capabilities)=>parameter('array',[field],capabilities,'公网 HTTPS 素材 URL 数组',{items:{type:'string',format:'uri'}});
 const parameters={
@@ -74,31 +84,28 @@ for (const [model,rule] of Object.entries(modelRules)) {
 // Usage labels describe pricing dimensions, not per-model request candidates.
 // Each request still passes the exact modelRules above before usage extraction.
 const usageSchema={request_count:{type:'number',unit:'count',description:{en:'Video generation unit price',zh:'视频生成单价'}},seconds:{type:'number',unit:'second',description:{en:'Video generation unit price',zh:'视频生成单价'}},resolution:{enum:[...new Set(documented.flatMap(([, , , values])=>values))],description:{en:'Requested video resolution',zh:'请求视频分辨率'}}};
-const meta={apiVersion:1,key:'fenglang_video',name:'风浪云视频',version:'2.1.2',author:{name:'TripsCoder'},icon:'text:FL',description:{en:'Video generation through the Fenglang Cloud API',zh:'通过风浪云接口生成视频'},website:'https://fenglang.cloud/',baseUrl:'https://fenglang.cloud/open/v1',auth:'api_key',models:['seedance-2.5'],fetchMode:'per_task',protocols:['openai_video'],modelDiscovery:{path:'/pricing',format:'fenglang_pricing',sourceUrl:source.url,sourceSha256:source.sha256},parameterInterfaces:{[id]:contract},usageSchema,
+const meta={apiVersion:1,key:'fenglang_video',name:'风浪云视频',version:'2.1.4',author:{name:'TripsCoder'},icon:'text:FL',description:{en:'Video generation through the Fenglang Cloud API',zh:'通过风浪云接口生成视频'},website:'https://fenglang.cloud/',baseUrl:'https://fenglang.cloud/open/v1',auth:'api_key',models:['seedance-2.5',...Object.keys(official.modelRules)],fetchMode:'per_task',protocols:['openai_video'],modelDiscovery:{path:'/pricing',format:'fenglang_video_catalog',sourceUrl:discoverySource.url,sourceSha256:discoverySource.sha256},parameterInterfaces:{[id]:contract,[official.id]:official},usageSchema,
+  usageProfiles:Object.entries(official.modelRules).map(([model,rule])=>({models:[model],schema:{tokens:{type:'number',unit:'token',description:{en:'Video generation token unit price',zh:'视频生成 Token 单价'}},resolution:{enum:rule.parameters.resolution.enum,description:{en:'Output video resolution',zh:'输出视频分辨率'}},video_input:{enum:['none','video'],description:{en:'Reference video input',zh:'参考视频输入'}}},examples:[{label:'720p · 4s',facts:{tokens:86400,resolution:'720p',video_input:'none'}}]})),
 };
 // The configuration UI consumes both the execution interface and its source
 // document list. Keep the document projection derived from the same contract.
 const projection = {
   key:meta.key,name:meta.name,baseURL:meta.baseUrl,docsURL:meta.website,
   models:{},interfaces:meta.parameterInterfaces,
-  documents:[{
-    id:contract.id,title:contract.title,method:contract.method,path:contract.path,
+  documents:Object.values(meta.parameterInterfaces).map(entry=>({
+    id:entry.id,title:entry.title,method:entry.method,path:entry.path,
     description:'Canonical channel parameters projected from the reviewed API document; the plugin driver owns upstream field encoding',
-    source:contract.source,
-    schema:{
-      type:'object',
-      properties:Object.fromEntries(Object.entries(contract.parameters).map(([name,rule])=>[name,rule.definition])),
-      required:Object.entries(contract.parameters).filter(([,rule])=>rule.required).map(([name])=>name),
-    },
-  }],
-  warnings:[...contract.pending],
+    source:entry.source,
+    schema:{type:'object',properties:Object.fromEntries(Object.entries(entry.parameters).map(([name,rule])=>[name,rule.definition])),required:Object.entries(entry.parameters).filter(([,rule])=>rule.required).map(([name])=>name)},
+  })),
+  warnings:[...contract.pending,...official.pending],
 };
 const catalogFile=new URL('../../pkg/modelconfig/fenglang_video.catalog.json',root);
 if (process.argv.includes('--sync-catalog')) fs.writeFileSync(catalogFile,JSON.stringify(projection,null,2)+'\n');
 if (check && JSON.stringify(JSON.parse(fs.readFileSync(catalogFile,'utf8')))!==JSON.stringify(projection)) throw new Error('Stale Fenglang catalog');
-const compiled='// Generated by build.mjs from reviewed Fenglang public documentation. Do not edit.\nexport const meta = '+JSON.stringify(meta,null,2)+';\n'+read('plugin.js').toString();
-const lock={format:'fenglang-video-sources/v1',policy:'../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#imported-parameter-policy',sources,readOnlyProbes:{ping:200,pricing:401,apiKeyUsed:false},modelDeclarations:{status:'documentation-only-not-account-discovery',static:meta.models,exactPublicIDs:documented.map(row=>row[0])},pending:contract.pending,securityReferences:['https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html'],securityControls:['TLS API credentials only on configured origin','Untrusted result URLs credentialless','Canonical authenticated fallback from host-pinned task ID','Host SSRF and cross-origin redirect stripping','No credentials in rendered response or failure text'],accountPricesImported:false,paidCalls:0};
-const manifest={format:'fenglang-video-build/v1',key:meta.key,version:meta.version,interface:id,inputs:Object.fromEntries(['build.mjs','plugin.js',...sources.map(item=>item.file)].map(name=>[name,digest(read(name))])),file:'fenglang_video.plugin.js',sha256:digest(compiled),status:'account-models-and-pricing-not-configured'};
+const compiled='// Generated by build.mjs from reviewed Fenglang public documentation. Do not edit.\nexport const meta = '+JSON.stringify(meta,null,2)+';\n'+read('plugin.js').toString()+'\n'+read('official.js').toString();
+const lock={format:'fenglang-video-sources/v1',policy:'../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#imported-parameter-policy',sources:[...sources,...officialSources,discoverySource],readOnlyProbes:{historicalPublicPricing:401,pricing:200,publicVideoCatalog:200,apiKeyUsed:true,officialModelAccessVerified:false},modelDeclarations:{status:'live-discovery-required-not-static-fallback',static:meta.models,exactPublicIDs:[...documented.map(row=>row[0]),...Object.keys(official.modelRules)]},pending:[...contract.pending,...official.pending],securityReferences:['https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html','https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html'],securityControls:['TLS API credentials only on configured origin','Untrusted result URLs credentialless','Canonical authenticated fallback from host-pinned task ID','Host SSRF and cross-origin redirect stripping','No credentials in rendered response or failure text'],accountPricesImported:false,paidCalls:0};
+const manifest={format:'fenglang-video-build/v1',key:meta.key,version:meta.version,interface:id,inputs:Object.fromEntries(['build.mjs','plugin.js','official.js','official-contract.mjs',discoverySource.file,...sources.map(item=>item.file),...officialSources.map(item=>item.file)].map(name=>[name,digest(read(name))])),file:'fenglang_video.plugin.js',sha256:digest(compiled),status:'account-models-and-pricing-not-configured'};
 for (const [name,value] of [['sources.lock.json',JSON.stringify(lock,null,2)+'\n'],['dist/fenglang_video.plugin.js',compiled],['dist/manifest.json',JSON.stringify(manifest,null,2)+'\n']]) {
   const file=new URL(name,root);
   if (check) { if(fs.readFileSync(file,'utf8')!==value) throw new Error('Stale artifact '+name); }

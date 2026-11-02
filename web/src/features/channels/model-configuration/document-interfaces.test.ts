@@ -26,6 +26,39 @@ const empty = (provider: string): Configuration => ({
 })
 
 describe('document interfaces and actual model IDs', () => {
+  it('selects the Fenglang official table for exact IDs and preserves existing saved interface choices', () => {
+    const catalog = JSON.parse(
+      readFileSync(
+        path.join(root, 'pkg/modelconfig/fenglang_video.catalog.json'),
+        'utf8'
+      )
+    ) as Catalog
+    const model = 'doubao-seedance-2-0-fast-260128-s'
+    const projected = projectDocumentInterfaces(
+      catalog,
+      [model, 'seedance-2.5'],
+      'video'
+    ) as Catalog
+    expect(projected.models[model].path).toBe(
+      '/api/v3/contents/generations/tasks'
+    )
+    expect(projected.models[model].parameters.resolution.enum).toEqual(['720p'])
+    expect(projected.models[model].parameters.resolution.required).toBe(true)
+    expect(projected.models['seedance-2.5'].path).toBe('/open/v1/videos')
+    const document = createSharedGroup(
+      empty(catalog.key),
+      projected,
+      [model],
+      'official'
+    )
+    expect(effectiveMode(document, model, 'text_video')?.input).toEqual({})
+    expect(
+      effectiveMode(document, model, 'text_video')?.parameters?.seconds
+        ?.definition
+    ).toHaveProperty('default', 4)
+    expect(catalog.models).toEqual({})
+    expect(catalog.documents).toHaveLength(2)
+  })
   it('matches backend save fixtures to actual UI-generated model and prompt rules', () => {
     const fixtures: Record<string, Configuration> = {}
     for (const [provider, model] of [

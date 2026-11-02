@@ -19,8 +19,9 @@ For commercial licensing, please contact support@quantumnous.com
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createSharedGroup, modeFromDocument } from './configuration'
@@ -100,6 +101,110 @@ function document(): Configuration {
 }
 
 describe('document to parameter configuration workflow', () => {
+  it.each([
+    ['doubao-seedance-2-5-260628', ['480p', '720p', '1080p']],
+    ['doubao-seedance-2-0-260128', ['480p', '720p', '1080p', '4k']],
+    ['doubao-seedance-2-0-fast-260128', ['480p', '720p']],
+    ['doubao-seedance-2-0-mini-260615', ['480p', '720p']],
+    ['doubao-seedance-2-5-260628-s', ['720p', '1080p']],
+    ['doubao-seedance-2-0-260128-s', ['720p', '1080p']],
+    ['doubao-seedance-2-0-fast-260128-s', ['720p']],
+    ['doubao-seedance-2-0-mini-260615-s', ['720p']],
+  ])(
+    'edits required resolution choices and defaults for %s without relaxing presence',
+    async (model, choices) => {
+      const id = String(model)
+      const expected = choices as string[]
+      const raw = JSON.parse(
+        readFileSync(
+          path.resolve('../pkg/modelconfig/fenglang_video.catalog.json'),
+          'utf8'
+        )
+      ) as Catalog
+      const projected = projectDocumentInterfaces(raw, [id], 'video') as Catalog
+      const draft = createSharedGroup(
+        {
+          format: 'channel-model-configuration/v1',
+          revision: 0,
+          provider: raw.key,
+          groups: {},
+          bindings: {},
+        },
+        projected,
+        [id],
+        'official'
+      )
+      draft.groups.official.modes.text_video.enabled = true
+      draft.bindings[id].text_video.enabled = true
+      let current = draft
+      function Harness() {
+        const [value, setValue] = useState(draft)
+        current = value
+        const mode = selectedParameterMode(value, id, 'official', 'text_video')
+        return (
+          <ParameterFields
+            mode={mode}
+            advanced
+            allowExclusion
+            onChange={(edited) =>
+              setValue(
+                applyParameterScope(
+                  value,
+                  [id],
+                  'official',
+                  'text_video',
+                  mode,
+                  edited
+                )
+              )
+            }
+          />
+        )
+      }
+      render(<Harness />)
+      const user = userEvent.setup()
+      for (const choice of expected) {
+        expect(
+          screen.getByRole('checkbox', {
+            name: new RegExp(`^resolution: ${choice}(?:\\s|$)`),
+          })
+        ).toBeChecked()
+      }
+      expect(
+        screen.queryByRole('checkbox', {
+          name: 'Include parameter: resolution',
+        })
+      ).not.toBeInTheDocument()
+      expect(
+        screen.getByTestId('required-parameter-prompt')
+      ).toBeInTheDocument()
+      expect(screen.getByTestId('required-parameter-model')).toBeInTheDocument()
+      const removed = expected.find((choice) => choice !== '720p')
+      if (removed) {
+        await user.click(
+          screen.getByRole('checkbox', {
+            name: new RegExp(`^resolution: ${removed}(?:\\s|$)`),
+          })
+        )
+      }
+      const box = screen.getByRole('checkbox', {
+        name: /^resolution: 720p(?:\s|$)/,
+      })
+      const field = box.closest('[data-slot="field"]') as HTMLElement
+      await user.click(within(field).getByRole('combobox'))
+      await user.click(
+        screen.getByRole('option', { name: /^720p$/ })
+      )
+      const saved = effectiveMode(current, id, 'text_video') as Mode
+      expect(saved.parameters?.resolution.required).toBe(true)
+      expect(saved.parameters?.resolution.enum).toEqual(
+        expected.filter((choice) => choice !== removed)
+      )
+      expect(saved.input.resolution).toBe('720p')
+      expect(saved.mapping?.resolution).toBe('resolution')
+      expect(parameterConfigurationIssues(current, projected, [id])).toEqual([])
+    }
+  )
   it('restores editable individual document rules with the actual model constraints', async () => {
     const providers = JSON.parse(
       readFileSync(path.resolve('../pkg/modelconfig/catalog.json'), 'utf8')

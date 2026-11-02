@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Seedance 官方协议对接文档</title>
+<style>
+  :root {
+    --bg: #0f1714;
+    --card: #16211d;
+    --line: #24322c;
+    --text: #e6efe9;
+    --muted: #9db0a7;
+    --accent: #62dfb1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 72px;
+    background: var(--bg); color: var(--text);
+    font: 15px/1.75 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  h2 {
+    font-size: 19px; margin: 34px 0 12px; padding-left: 10px;
+    border-left: 3px solid var(--accent);
+  }
+  h3 { font-size: 16px; margin: 22px 0 8px; color: var(--accent); }
+  p, li { color: #d3e0d9; }
+  code {
+    background: #1e2b26; padding: 1px 6px; border-radius: 4px;
+    font-family: ui-monospace, Consolas, monospace; font-size: 13px;
+  }
+  pre {
+    background: #121a17; border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.6;
+  }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #1b2723; color: var(--muted); font-weight: 600; }
+  .note {
+    border: 1px solid #2d4a3d; background: #16241e; border-radius: 10px;
+    padding: 12px 14px; margin: 14px 0; color: #cfe6da;
+  }
+  .note b { color: var(--accent); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Seedance 官方协议对接文档</h1>
+  <p class="sub">火山方舟「内容生成任务」协议 · 直连版 · 按 token 计费（预扣 + 多退少补）</p>
+
+  <div class="note">
+    <b>一句话说明</b>：本接口与火山方舟官方协议的路径、请求体、响应结构<b>逐字一致</b>，
+    已接入官方协议的代码通常只需替换 <code>Base URL</code> 与 <code>API Key</code> 就能跑通。
+  </div>
+
+  <h2>一、基本信息</h2>
+  <table>
+    <tr><th>项目</th><th>值</th></tr>
+    <tr><td>Base URL</td><td><code id="baseUrl">https://fenglang.cloud</code></td></tr>
+    <tr><td>鉴权</td><td><code>Authorization: Bearer &lt;你的 API Key&gt;</code></td></tr>
+    <tr><td>内容类型</td><td><code>Content-Type: application/json</code></td></tr>
+    <tr><td>建单</td><td><code>POST /api/v3/contents/generations/tasks</code></td></tr>
+    <tr><td>查单</td><td><code>GET /api/v3/contents/generations/tasks/{id}</code></td></tr>
+    <tr><td>计费</td><td>按 token 计费：提交时按估算预扣，完成后按实际用量多退少补（见第五节）</td></tr>
+  </table>
+  <p>API Key 在站内「开放 API 密钥」页创建，与 <code>/open/v1/*</code> 用的是同一批 Key。</p>
+
+  <h2>二、请求体字段</h2>
+  <table>
+    <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
+    <tr><td><code>model</code></td><td>string</td><td>是</td><td>官方模型名，见第四节</td></tr>
+    <tr><td><code>content</code></td><td>array</td><td>是</td><td>至少一个非空 <code>text</code> 条目，可附图片 / 视频 / 音频</td></tr>
+    <tr><td><code>resolution</code></td><td>string</td><td>是</td><td><code>480p</code> / <code>720p</code> / <code>1080p</code> / <code>4k</code>（视模型而定，见第四节）</td></tr>
+    <tr><td><code>duration</code></td><td>integer</td><td>否</td><td>秒数，省略默认 4；2.0 / 2.0 Fast 为 4–15，2.5 为 4–30</td></tr>
+    <tr><td><code>ratio</code></td><td>string</td><td>否</td><td>默认 <code>16:9</code>；可选 <code>9:16</code> / <code>1:1</code> / <code>21:9</code> / <code>4:3</code> / <code>3:4</code></td></tr>
+    <tr><td><code>seed</code></td><td>integer</td><td>否</td><td>随机种子，原样透传</td></tr>
+    <tr><td><code>generate_audio</code></td><td>boolean</td><td>否</td><td>是否生成音频，取决于模型能力</td></tr>
+    <tr><td><code>watermark</code></td><td>boolean</td><td>否</td><td>水印开关</td></tr>
+    <tr><td><code>return_last_frame</code></td><td>boolean</td><td>否</td><td>返回末帧</td></tr>
+    <tr><td><code>draft</code> / <code>output_format</code> / <code>priority</code> 等</td><td>—</td><td>否</td><td>按官方协议原样透传</td></tr>
+  </table>
+
+  <h3>content 条目结构</h3>
+  <table>
+    <tr><th>type</th><th>结构</th><th>可用 role</th></tr>
+    <tr><td><code>text</code></td><td><code>{"type":"text","text":"..."}</code></td><td>—</td></tr>
+    <tr><td><code>image_url</code></td><td><code>{"type":"image_url","image_url":{"url":"..."},"role":"reference_image"}</code></td><td><code>reference_image</code> / <code>first_frame</code> / <code>last_frame</code></td></tr>
+    <tr><td><code>video_url</code></td><td><code>{"type":"video_url","video_url":{"url":"..."},"role":"reference_video"}</code></td><td><code>reference_video</code></td></tr>
+    <tr><td><code>audio_url</code></td><td><code>{"type":"audio_url","audio_url":{"url":"..."},"role":"reference_audio"}</code></td><td><code>reference_audio</code></td></tr>
+  </table>
+  <p>素材请使用公网可访问的 URL。首尾帧各最多 1 张，且不能同时携带参考视频。</p>
+
+  <h2>三、调用示例</h2>
+  <pre><code>curl -X POST 'https://fenglang.cloud/api/v3/contents/generations/tasks' \
+  -H 'Authorization: Bearer sk-你的Key' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "doubao-seedance-2-5-260628",
+    "content": [{ "type": "text", "text": "清晨，阳光穿过森林，镜头缓慢向前" }],
+    "resolution": "720p",
+    "duration": 6,
+    "ratio": "16:9"
+  }'</code></pre>
+  <p>返回：</p>
+  <pre><code>{ "id": "官方协议任务号" }</code></pre>
+
+  <p>查询：</p>
+  <pre><code>curl 'https://fenglang.cloud/api/v3/contents/generations/tasks/官方协议任务号' \
+  -H 'Authorization: Bearer sk-你的Key'</code></pre>
+  <pre><code>{
+  "id": "官方协议任务号",
+  "model": "doubao-seedance-2-5-260628",
+  "status": "succeeded",
+  "resolution": "720p",
+  "duration": 6,
+  "ratio": "16:9",
+  "content": { "video_url": "https://..." },
+  "usage": { "completion_tokens": 93366, "total_tokens": 93366 },
+  "created_at": 1786700000,
+  "updated_at": 1786700120
+}</code></pre>
+
+  <div class="note">
+    <b>成片地址给你的是上游官链。</b>
+    <code>succeeded</code> 时 <code>content.video_url</code> 就是这条线的上游官方地址，
+    有效期约 <b>24 小时</b>（过期后直接打不开，不是我们这边鉴权的问题），
+    请在拿到后立即下载或转存到你自己的对象存储。
+    我们后台会另存一份用于站内播放（站内那个任务能长期打开），但那只是内部用途，不改变给你的地址。
+  </div>
+
+  <h2>四、支持模型</h2>
+  <table>
+    <tr><th>模型</th><th>可用分辨率</th><th>时长</th></tr>
+    <tr><td><code>doubao-seedance-2-0-260128</code></td><td>480p / 720p / 1080p / 4k</td><td>4–15 秒</td></tr>
+    <tr><td><code>doubao-seedance-2-0-fast-260128</code></td><td>480p / 720p</td><td>4–15 秒</td></tr>
+    <tr><td><code>doubao-seedance-2-0-mini-260615</code></td><td>480p / 720p</td><td>4–15 秒</td></tr>
+    <tr><td><code>doubao-seedance-2-5-260628</code></td><td>480p / 720p / 1080p</td><td>4–30 秒</td></tr>
+  </table>
+  <p><b>按模型各自支持的档位开。</b>上表就是这条线全部可用档位，
+  不在表里的「模型 × 档位」在建单前就会被拦下、不扣费（错误码 <code>invalid_resolution</code>）。
+  <code>4k</code> 只有 Seedance 2.0 有，2.5 最高到 1080p。</p>
+  <div class="note">
+    <b>两档折扣能开的档位不一样（受上游密钥分组限制）：</b>
+    <table>
+      <tr><th>模型标识</th><th>可用分辨率</th></tr>
+      <tr><td>75 折（原名，如 <code>doubao-seedance-2-0-260128</code>）</td>
+        <td>按上表全开（含 480p / 4k）</td></tr>
+      <tr><td>55 折（加后缀，如 <code>doubao-seedance-2-0-260128-s</code>）</td>
+        <td>720p / 1080p（这批 Key 的分组只到 1080p，<b>没有 480p / 4k</b>）</td></tr>
+    </table>
+    选了 55 折却填 480p 或 4k，会在建单前就报 <code>invalid_resolution</code>。
+  </div>
+
+  <h2>五、计费</h2>
+  <p><b>按 token 计费，单价以算力（⚡）标。</b><b>1M tokens = 100 万 token</b>。
+  以 Seedance 2.5 为例：无参考视频 <b>⚡700 / 1M tokens</b>，有参考视频 <b>⚡420 / 1M tokens</b>
+  （参考视频与生成视频的 token 一起计）。各模型、各档位的单价见下表；
+  720p 大约折合 <b>⚡15 / 秒</b>（原价，再乘该模型标识的折扣）。</p>
+  <p><b>最终扣费以实际消耗的 token 为准</b>：提交时先按估算预扣，完成后多退少补。
+  任务失败全额退回。</p>
+  <pre><code>token ≈ (输出秒数 + 参考视频秒数) × 宽 × 高 × 帧率 ÷ 1024
+      + 参考图张数 × 宽 × 高 ÷ 1024
+      + 参考音频秒数 × 宽 × 高 ÷ 1024
+费用（⚡） = token ÷ 1M × 单价（⚡/1M tokens） × 折扣</code></pre>
+  <p>帧率 24fps，宽高按 <code>resolution</code> 与 <code>ratio</code> 推（短边 = 480 / 720 / 1080 / 2160）。
+  参考图一张算一帧、参考音频每秒算一帧。本接口量不到参考视频 / 音频的时长，
+  <b>每段按 5 秒</b>计入估算；站内上传的按片段实际时长计入。</p>
+  <table>
+    <tr><th>模型</th><th>分辨率</th><th>每秒 token（16:9）</th><th>不含参考视频（⚡ / 1M tokens）</th><th>含参考视频（⚡ / 1M tokens）</th></tr>
+    <tr><td rowspan="4">Seedance 2.0</td><td>480p</td><td>9,608</td><td>460（约 4.4 ⚡/秒）</td><td>280（约 2.7 ⚡/秒）</td></tr>
+    <tr><td>720p</td><td>21,600</td><td>460（约 9.9 ⚡/秒）</td><td>280（约 6.1 ⚡/秒）</td></tr>
+    <tr><td>1080p</td><td>48,600</td><td>510（约 24.8 ⚡/秒）</td><td>310（约 15.1 ⚡/秒）</td></tr>
+    <tr><td>4k</td><td>194,400</td><td>260（约 50.5 ⚡/秒）</td><td>160（约 31.1 ⚡/秒）</td></tr>
+    <tr><td rowspan="2">Seedance 2.0 Fast</td><td>480p</td><td>9,608</td><td>370（约 3.6 ⚡/秒）</td><td>220（约 2.1 ⚡/秒）</td></tr>
+    <tr><td>720p</td><td>21,600</td><td>370（约 8.0 ⚡/秒）</td><td>220（约 4.8 ⚡/秒）</td></tr>
+    <tr><td rowspan="2">Seedance 2.0 Mini</td><td>480p</td><td>9,608</td><td>230（约 2.2 ⚡/秒）</td><td>140（约 1.4 ⚡/秒）</td></tr>
+    <tr><td>720p</td><td>21,600</td><td>230（约 5.0 ⚡/秒）</td><td>140（约 3.0 ⚡/秒）</td></tr>
+    <tr><td rowspan="3">Seedance 2.5</td><td>480p</td><td>9,608</td><td>700（约 6.7 ⚡/秒）</td><td>420（约 4.0 ⚡/秒）</td></tr>
+    <tr><td>720p</td><td>21,600</td><td>700（约 15.1 ⚡/秒）</td><td>420（约 9.1 ⚡/秒）</td></tr>
+    <tr><td>1080p</td><td>48,600</td><td>770（约 37.4 ⚡/秒）</td><td>460（约 22.4 ⚡/秒）</td></tr>
+  </table>
+  <p>表中「约 x ⚡/秒」只是按 <b>16:9</b> 把 token 单价换算成便于比较的数（原价，未乘折扣）；
+  换画面比例（1:1 / 4:3 / 21:9 等）时宽高变化，每秒 token 按同一公式变。
+  实际扣费 = token × 单价 × <b>折扣</b>，不再叠加其它折扣；带参考视频的单用「含参考视频」那一列。</p>
+  <p>账户扣的就是<b>算力</b>（⚡），<b>1 元 = 10 算力</b>。
+  例：2.5 的 720p、75 折、10 秒、不带参考素材 → token ≈ 216,000，
+  原价 216,000 ÷ 1M × 700 ≈ 151.2 ⚡，75 折后 ≈ 113.4 ⚡（11.34 元）。
+  提交时先按这个估算预扣，出片后按 <code>usage.total_tokens</code> 多退少补。</p>
+  <div class="note">
+    <b>分辨率按模型各自支持的档位开：</b>2.0 满血 = 480p / 720p / 1080p / 4k；
+    Fast 与 Mini = 480p / 720p；2.5 = 480p / 720p / 1080p（没有 4k）。
+    不在表里的「模型 × 档位」建单前直接拒（<code>invalid_resolution</code>）。
+    55 折（<code>-s</code>）这批 Key 的分组只到 1080p，选 55 折又填 480p 或 4k 同样会报
+    <code>invalid_resolution</code>。
+  </div>
+  <div class="note">
+    <b>按 token 计费：提交时先按估算预扣，完成后多退少补。</b>任务失败全额退回。
+  </div>
+  <div class="note">
+    <b>站内创作台同样可用</b>：这批官方模型已上架到「视频生成」页（卡片标签 75折 / 55折），
+    选中后右下角显示这一单的<b>预扣算力</b>（按估算 token，含参考图 / 视频 / 音频），
+    <b>余额不到这个数就不让提交</b>；出片后按实际 token 多退少补，与本站接口同一口径。
+  </div>
+
+  <h2>六、状态与错误</h2>
+  <table>
+    <tr><th>status</th><th>含义</th></tr>
+    <tr><td><code>queued</code></td><td>已入队，继续轮询</td></tr>
+    <tr><td><code>processing</code></td><td>生成中，继续轮询</td></tr>
+    <tr><td><code>succeeded</code></td><td>成功，读 <code>content.video_url</code>（<code>usage.total_tokens</code> 是结算依据：按它重算实际费用、多退少补）</td></tr>
+    <tr><td><code>failed</code></td><td>失败，读 <code>error.message</code></td></tr>
+  </table>
+  <p>错误形状与官方一致：</p>
+  <pre><code>{ "error": { "code": "invalid_resolution", "message": "模型 doubao-seedance-2-5-260628 没有 4k 这一档" } }</code></pre>
+  <table>
+    <tr><th>code</th><th>说明</th></tr>
+    <tr><td><code>invalid_model</code></td><td>缺少 model 或不支持</td></tr>
+    <tr><td><code>invalid_content</code></td><td>content 里没有非空 text，或结构不对</td></tr>
+    <tr><td><code>invalid_resolution</code></td><td>该模型没有这一档分辨率</td></tr>
+    <tr><td><code>invalid_role</code></td><td>role 与条目类型不匹配</td></tr>
+    <tr><td><code>content_policy</code></td><td>提示词未通过内容审核</td></tr>
+    <tr><td><code>insufficient_balance</code></td><td>余额不足</td></tr>
+    <tr><td><code>upstream_error</code></td><td>上游生成失败，message 里有原因</td></tr>
+  </table>
+
+  <h2>七、与 /open/v1 的区别</h2>
+  <table>
+    <tr><th></th><th>本接口（官方协议）</th><th>/open/v1/videos</th></tr>
+    <tr><td>协议</td><td>火山方舟官方</td><td>本站自有</td></tr>
+    <tr><td>计费</td><td>按 token（估算预扣 + 实际结算）</td><td>按秒 / 按条价目表</td></tr>
+    <tr><td>模型名</td><td>官方模型名</td><td>站内模型标识</td></tr>
+    <tr><td>适合</td><td>已有官方协议接入的存量系统</td><td>新接入、要价目透明与多线路兜底</td></tr>
+  </table>
+
+  <p class="sub" style="margin-top:34px">
+    文档与实现同步更新于 2026-10-31。接口字段若与官方协议有出入，以官方协议为准。
+  </p>
+</div>
+<!--
+  Base URL 固定写死为正式域名 https://fenglang.cloud（2026-10-31 用户给定），
+  不再按 location.origin 覆盖：从 IP 或内网地址打开这份文档，看到的也是对外正式域名。
+  换域名时改这三处：基本信息表的 #baseUrl、建单 curl、查单 curl。
+-->
+</body>
+</html>

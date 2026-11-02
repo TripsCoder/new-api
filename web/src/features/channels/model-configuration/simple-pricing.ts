@@ -28,6 +28,7 @@ export const CUSTOMER_BILLING_METHODS: Record<string, string> = {
   request_count: 'Per request',
   seconds: 'Per second',
   image_count: 'Per image',
+  tokens: 'Per 1M tokens',
 }
 export type CustomerPriceFields = {
   unit: string
@@ -150,9 +151,12 @@ export function readCustomerPrice(mode?: Mode): CustomerPriceFields {
   const match = mode?.billing?.expression
     .trim()
     .match(
-      /^(\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*\*\s*u\("(request_count|seconds|image_count)"\)$/i
+      /^(\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*\*\s*u\("(request_count|seconds|image_count|tokens)"\)(?:\s*\/\s*(1000000))?$/i
     )
   if (!match || mode?.billing?.currency !== 'USD') {
+    return { unit: '', value: '' }
+  }
+  if ((match[2] === 'tokens') !== (match[3] === '1000000')) {
     return { unit: '', value: '' }
   }
   return { unit: match[2], value: match[1] }
@@ -165,7 +169,7 @@ export function customerPriceError(
   }
   if (fields.resolutions) {
     const resolutions = fields.resolutions
-    if (!['seconds', 'request_count'].includes(fields.unit)) {
+    if (!['seconds', 'request_count', 'tokens'].includes(fields.unit)) {
       return 'Billing unit needs confirmation'
     }
     if (
@@ -200,13 +204,14 @@ export function applyCustomerPrice(
 ): Configuration {
   if (customerPriceError(fields)) return document
   const next = clone(document)
-  let expression = `${Number(fields.value)} * u("${fields.unit}")`
+  const scale = fields.unit === 'tokens' ? ' / 1000000' : ''
+  let expression = `${Number(fields.value)} * u("${fields.unit}")${scale}`
   if (fields.resolutions) {
     const resolutions = fields.resolutions
     const tiers = Object.keys(resolutions)
       .map(
         (resolution) =>
-          `lower(string(u("resolution"))) == ${JSON.stringify(resolution.toLowerCase())} ? tier(${JSON.stringify(resolution)}, ${Number(fields.resolutions?.[resolution])} * u("${fields.unit}")) : `
+          `lower(string(u("resolution"))) == ${JSON.stringify(resolution.toLowerCase())} ? tier(${JSON.stringify(resolution)}, ${Number(fields.resolutions?.[resolution])} * u("${fields.unit}")${scale}) : `
       )
       .join('')
     // A missing/unpriced resolution must fail evaluation before submission,

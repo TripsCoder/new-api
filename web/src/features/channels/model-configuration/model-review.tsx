@@ -61,6 +61,7 @@ const units: Record<string, string> = {
   image: '张',
   request_count: '次',
   request: '次',
+  tokens: '1M tokens',
 }
 function readable(value: unknown): string {
   if (value === undefined || value === null) return '未设置'

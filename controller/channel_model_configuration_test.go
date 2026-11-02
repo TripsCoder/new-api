@@ -104,20 +104,36 @@ func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 			var abilities []model.Ability
 			require.NoError(t, db.Where("channel_id = ?", channel.Id).Find(&abilities).Error)
 			assert.Len(t, abilities, 2)
-			if provider != "apipath_video" {
+			if provider != "apipath_video" && provider != "fenglang_video" {
 				return
 			}
 			// Unlike the projection fixture above, this envelope is captured from
 			// the real five-stage dialog's Save action and production API serializer.
-			serialized, err := os.ReadFile(filepath.Join("testdata", "apipath_video_ui_save.json"))
+			fixtureName, sourceFolder := "apipath_video_ui_save.json", "apipath-video"
+			if provider == "fenglang_video" {
+				fixtureName, sourceFolder, name = "fenglang_official_ui_save.json", "fenglang-video", "doubao-seedance-2-5-260628"
+			}
+			serialized, err := os.ReadFile(filepath.Join("testdata", fixtureName))
 			require.NoError(t, err)
 			var ui channelConfigurationSave
 			require.NoError(t, common.Unmarshal(serialized, &ui))
-			source, err := os.ReadFile("../plugin-sources/apipath-video/dist/apipath_video.plugin.js")
+			if provider == "fenglang_video" {
+				// The parameter editor can narrow required resolution choices and
+				// explicitly supply a default without making the field optional.
+				for _, mode := range ui.Configuration.Groups["dialog-0"].Modes {
+					resolution := mode.Parameters["resolution"]
+					resolution.Enum = []any{"720p", "1080p"}
+					mode.Parameters["resolution"] = resolution
+					mode.Input["resolution"] = "720p"
+				}
+				serialized, err = common.Marshal(ui)
+				require.NoError(t, err)
+			}
+			source, err := os.ReadFile(filepath.Join("..", "plugin-sources", sourceFolder, "dist", provider+".plugin.js"))
 			require.NoError(t, err)
 			compiled, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{})
 			require.NoError(t, err)
-			require.NoError(t, db.Model(&model.TaskPlugin{}).Where("key = ?", provider).Updates(map[string]any{"source": string(source), "source_hash": compiled.SourceSHA256}).Error)
+			require.NoError(t, db.Model(&model.TaskPlugin{}).Where("key = ?", provider).Updates(map[string]any{"source": string(source), "source_hash": compiled.SourceSHA256, "version": compiled.Meta.Version}).Error)
 			channel.Id += 100
 			channel.Models = ""
 			require.NoError(t, db.Create(&channel).Error)
@@ -133,6 +149,11 @@ func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, int64(1), readback.Revision)
 			assert.Equal(t, ui.Configuration.Groups, readback.Groups)
+			if provider == "fenglang_video" {
+				assert.Equal(t, `2 * u("tokens") / 1000000`, readback.Bindings[name]["text_video"].Billing.Expression)
+				assert.True(t, *readback.Groups["dialog-0"].Modes["text_video"].Parameters["resolution"].Required)
+				assert.False(t, *readback.Groups["dialog-0"].Modes["text_video"].Parameters["model"].Required)
+			}
 			expectedBindings, err := common.Marshal(ui.Configuration.Bindings)
 			require.NoError(t, err)
 			actualBindings, err := common.Marshal(readback.Bindings)
@@ -143,6 +164,13 @@ func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 			require.True(t, unified)
 			assert.EqualValues(t, 5, input["seconds"])
 			assert.Equal(t, "720p", input["resolution"])
+			if provider == "fenglang_video" {
+				withDefault, _, _, _, err := modelconfig.ResolveUnified(readback, name, "video_generate", map[string]any{"prompt": "Offline fixture", "seconds": 5}, false)
+				require.NoError(t, err)
+				assert.Equal(t, "720p", withDefault["resolution"])
+				_, _, _, _, err = modelconfig.ResolveUnified(readback, name, "video_generate", map[string]any{"prompt": "Offline fixture", "seconds": 5, "resolution": "480p"}, false)
+				require.Error(t, err)
+			}
 			require.NoError(t, db.First(&channel, channel.Id).Error)
 			assert.Equal(t, name, channel.Models)
 			// Reopen through the production read handler, including installed
@@ -171,6 +199,21 @@ func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 			reject.Request.Header.Set("Content-Type", "application/json")
 			SaveChannelModelConfiguration(reject)
 			require.Contains(t, rejectedRecorder.Body.String(), `"success":false`)
+			if provider == "fenglang_video" {
+				textMode.Mapping["prompt"] = "prompt"
+				textMode.Mapping["resolution"] = "@ignore"
+				invalidResolution, err := common.Marshal(ui)
+				require.NoError(t, err)
+				resolutionRecorder := httptest.NewRecorder()
+				resolutionContext, _ := gin.CreateTestContext(resolutionRecorder)
+				resolutionContext.Params = ctx.Params
+				resolutionContext.Set("id", 1)
+				resolutionContext.Request = httptest.NewRequest("PUT", "/api/channel/configuration", bytes.NewReader(invalidResolution))
+				resolutionContext.Request.Header.Set("Content-Type", "application/json")
+				SaveChannelModelConfiguration(resolutionContext)
+				assert.Contains(t, resolutionRecorder.Body.String(), `"success":false`)
+				assert.Contains(t, resolutionRecorder.Body.String(), "/resolution: required document rules must be retained")
+			}
 			unchanged, err := model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
 			require.NoError(t, err)
 			assert.Equal(t, readback, unchanged)

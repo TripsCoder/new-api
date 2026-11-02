@@ -43,6 +43,7 @@ import {
   acceptsStringArrayItems,
   parameterKeys,
   requiredParameter,
+  editableRequiredParameter,
   DURATION_ALIASES,
   numericParameter,
 } from './configuration'
@@ -114,7 +115,8 @@ export function ParameterFields(props: {
           parameter?.type ?? (Array.isArray(value) ? 'array' : typeof value)
         const readOnly =
           !props.referenceValues &&
-          (requiredParameter(props.mode, key) ||
+          ((requiredParameter(props.mode, key) &&
+            !editableRequiredParameter(props.mode, key)) ||
             parameter?.definition?.['x-scope-conflict'] === true ||
             (
               parameter?.definition?.['x-channel-parameter'] as
@@ -528,7 +530,7 @@ export function ParameterFields(props: {
                 </Button>
               )}
             </div>
-            {props.allowExclusion && (
+            {props.allowExclusion && !requiredParameter(props.mode, key) && (
               <label className='flex items-center gap-2 text-sm'>
                 <Checkbox
                   aria-label={`${t('Include parameter')}: ${key}`}
@@ -550,6 +552,7 @@ export function ParameterFields(props: {
             )}
             <fieldset disabled={!included} className='contents'>
               {parameter &&
+                !requiredParameter(props.mode, key) &&
                 key !== 'prompt' &&
                 (numericParameter(parameter) || type === 'string') && (
                   <AllowedValueFields
@@ -588,6 +591,7 @@ export function ParameterFields(props: {
               {control}
             </fieldset>
             {props.allowExclusion &&
+              !requiredParameter(props.mode, key) &&
               props.advanced &&
               parameter &&
               ['boolean', 'integer', 'number', 'string'].includes(

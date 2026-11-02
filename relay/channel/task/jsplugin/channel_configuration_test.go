@@ -20,8 +20,11 @@ func TestChannelConfigurationUpstreamDefaultsReachRealPlugin(t *testing.T) {
 	plugin, err := pluginruntime.CompilePlugin(string(source), pluginruntime.Options{})
 	require.NoError(t, err)
 	var template string
-	for key := range plugin.Meta.ParameterInterfaces {
-		template = key
+	for key, raw := range plugin.Meta.ParameterInterfaces {
+		if contract, ok := raw.(map[string]any); ok && contract["path"] == "/open/v1/videos" {
+			template = key
+			break
+		}
 	}
 	require.NotEmpty(t, template)
 	document := modelconfig.Empty("fenglang_video")

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -130,6 +131,68 @@ func TestFenglangPricingDiscovery(t *testing.T) {
 				assert.Equal(t, tc.want, ids)
 			}
 			assert.Equal(t, 1, calls)
+		})
+	}
+}
+
+func TestFenglangLiveVideoCatalogDiscovery(t *testing.T) {
+	live, err := os.ReadFile("../plugin-sources/fenglang-video/evidence/discovery-20261102-models.js.txt")
+	require.NoError(t, err)
+	meta := jsplugin.Meta{APIVersion: 1, Key: "fenglang_video", Name: "Fenglang", Version: "2.1.4", Author: jsplugin.AuthorMeta{Name: "Test"}, Models: []string{"never-add-static-model"}, FetchMode: "per_task", ModelDiscovery: &jsplugin.ModelDiscovery{Path: "/pricing", Format: "fenglang_video_catalog", SourceURL: "https://fenglang.cloud/js/models.js", SourceSHA256: strings.Repeat("a", 64)}}
+	for _, tc := range []struct {
+		name, catalog                string
+		pricingStatus, catalogStatus int
+		want                         []string
+		fail                         string
+	}{
+		{"live IDs exclude hidden and commented cards", `const VIDEO_CATALOG=[['official-live','Visible'],['legacy','Duplicate']/*,['comment-only','No']*/];const VIDEO_CATALOG_HIDDEN=[['hidden','No']];throw new Error('must not execute');`, 200, 200, []string{"legacy", "official-live"}, ""},
+		{"administrator-only card", `const VIDEO_CATALOG=[['admin-only','Admin','','',[],[],[],'',true],['public','Public','','',[],[],[],'',false]];`, 200, 200, []string{"legacy", "public"}, ""},
+		{"empty catalog", `const VIDEO_CATALOG=[];`, 200, 200, []string{"legacy"}, ""},
+		{"missing catalog", `const VIDEO_CATALOG_HIDDEN=[['hidden','No']];`, 200, 200, nil, "invalid model list"},
+		{"dynamic catalog", `const VIDEO_CATALOG=getModels();`, 200, 200, nil, "invalid model list"},
+		{"dynamic ID", `const VIDEO_CATALOG=[[getModel(),'No']];`, 200, 200, nil, "invalid model list"},
+		{"malformed script", `const VIDEO_CATALOG=[`, 200, 200, nil, "invalid model list"},
+		{"pricing authentication failure", `const VIDEO_CATALOG=[['must-not-fetch','No']];`, 401, 200, nil, "HTTP 401"},
+		{"catalog unavailable", `private upstream failure`, 200, 503, nil, "HTTP 503"},
+		{"reviewed supplier catalog", string(live), 200, 200, []string{"legacy", "seedance-2.5", "seedance-2.5-stable", "seedance-2.5-4k", "seedance-2.0", "seedance-2.0-fast", "seedance-2.0-mini", "minimax-h3", "wan3", "doubao-seedance-2-5-260628", "doubao-seedance-2-0-260128", "doubao-seedance-2-0-fast-260128", "doubao-seedance-2-0-mini-260615", "doubao-seedance-2-5-260628-s", "doubao-seedance-2-0-260128-s", "doubao-seedance-2-0-fast-260128-s", "doubao-seedance-2-0-mini-260615-s"}, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			catalogCalls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				switch r.URL.Path {
+				case "/open/v1/pricing":
+					assert.Equal(t, "Bearer secret-fixture", r.Header.Get("Authorization"))
+					w.WriteHeader(tc.pricingStatus)
+					_, _ = w.Write([]byte(`{"success":true,"models":{"video":["legacy"]}}`))
+				case "/js/models.js":
+					catalogCalls++
+					assert.Empty(t, r.Header.Get("Authorization"))
+					assert.Empty(t, r.Header.Get("X-API-Key"))
+					assert.Empty(t, r.Header.Get(constant.ChannelSelectionHeader))
+					w.WriteHeader(tc.catalogStatus)
+					_, _ = w.Write([]byte(tc.catalog))
+				default:
+					t.Errorf("Unexpected discovery path %s", r.URL.Path)
+					w.WriteHeader(404)
+				}
+			}))
+			defer server.Close()
+			base := server.URL + "/open/v1/"
+			ids, err := fetchTaskPluginUpstreamModels(&model.Channel{Type: constant.ChannelTypeTaskPlugin, Key: "secret-fixture", BaseURL: &base}, meta)
+			if tc.fail != "" {
+				require.ErrorContains(t, err, tc.fail)
+				assert.Nil(t, ids)
+				assert.NotContains(t, err.Error(), "secret-fixture")
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.want, ids)
+			}
+			if tc.pricingStatus == 200 {
+				assert.Equal(t, 1, catalogCalls)
+			} else {
+				assert.Zero(t, catalogCalls)
+			}
 		})
 	}
 }
