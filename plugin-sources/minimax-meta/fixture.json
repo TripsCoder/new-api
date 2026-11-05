@@ -3,43 +3,1039 @@
     {
       "name": "uniform 30-second submit converts to Metaso content",
       "hook": "buildSubmitRequest",
-      "args": [{"baseUrl":"https://metaso.cn","apiKey":"fixture-only","requestBody":{"model":"MiniMax-H3","prompt":"A quiet landscape","seconds":30,"aspect_ratio":"16:9","resolution":"2k","images":["https://fixtures.invalid/input.png"]}}],
+      "args": [
+        {
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape",
+            "seconds": 30,
+            "aspect_ratio": "16:9",
+            "resolution": "2k",
+            "images": [
+              "https://fixtures.invalid/input.png"
+            ]
+          }
+        }
+      ],
       "expected": {
-        "url":"https://metaso.cn/api/minimax/v2/video_generation","method":"POST",
-        "headers":{"Authorization":"Bearer fixture-only","Content-Type":"application/json","Accept":"application/json"},
-        "body":{"model":"MiniMax-H3","content":[{"type":"text","text":"A quiet landscape"},{"type":"image_url","role":"reference_image","image_url":{"url":"https://fixtures.invalid/input.png"}}],"resolution":"2K","duration":30,"ratio":"16:9"},
-        "action":"image_to_video"
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://fixtures.invalid/input.png"
+              }
+            }
+          ],
+          "resolution": "2K",
+          "duration": 30,
+          "ratio": "16:9"
+        },
+        "action": "image_to_video"
       }
     },
     {
-      "name":"30-second reservation remains consistent",
-      "hook":"extractUsage",
-      "args":[{"requestBody":{"prompt":"A quiet landscape","seconds":"30","resolution":"768p"}}],
-      "expected":{"seconds":30,"resolution":"768P","image_count_after_free":0,"input_video_seconds":0}
+      "name": "30-second reservation remains consistent",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A quiet landscape",
+            "seconds": "30",
+            "resolution": "768p"
+          }
+        }
+      ],
+      "expected": {
+        "seconds": 30,
+        "resolution": "768P",
+        "image_count_after_free": 0,
+        "reference_video_duration_seconds": 0
+      }
     },
     {
-      "name":"reject 31 seconds before submit",
-      "hook":"buildSubmitRequest",
-      "args":[{"requestBody":{"prompt":"A quiet landscape","seconds":31}}],
-      "expectedError":"seconds must be an integer between 4 and 30"
+      "name": "reject 31 seconds before submit",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A quiet landscape",
+            "seconds": 31
+          }
+        }
+      ],
+      "expectedError": "seconds must be an integer between 4 and 30"
     },
     {
-      "name":"reject fractional duration before reservation",
-      "hook":"extractUsage",
-      "args":[{"requestBody":{"prompt":"A quiet landscape","seconds":4.5}}],
-      "expectedError":"seconds must be an integer between 4 and 30"
+      "name": "reject fractional duration before reservation",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A quiet landscape",
+            "seconds": 4.5
+          }
+        }
+      ],
+      "expectedError": "seconds must be an integer between 4 and 30"
     },
     {
-      "name":"query URL preserves api base",
-      "hook":"buildQueryRequest",
-      "args":[{"baseUrl":"https://metaso.cn/api/","apiKey":"fixture-only","taskId":"task/id"}],
-      "expected":{"url":"https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fid","method":"GET","headers":{"Authorization":"Bearer fixture-only","Accept":"application/json"}}
+      "name": "query URL preserves api base",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "baseUrl": "https://metaso.cn/api/",
+          "apiKey": "fixture-only",
+          "taskId": "task/id"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fid",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Accept": "application/json"
+        }
+      }
     },
     {
-      "name":"completion reads 30-second task field",
-      "hook":"extractUsageOnComplete",
-      "args":[{},{},{"task":{"duration":30,"resolution":"768P"}}],
-      "expected":{"seconds":30,"resolution":"768P"}
+      "name": "completion reads 30-second task field",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {},
+        {
+          "task": {
+            "duration": 30,
+            "resolution": "768P"
+          }
+        }
+      ],
+      "expected": {
+        "seconds": 30,
+        "resolution": "768P"
+      }
+    },
+    {
+      "name": "1.2.0 wire baseline: defaults",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            }
+          ],
+          "resolution": "768P",
+          "duration": 4,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "1.2.0 wire baseline: 30s options",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape",
+            "seconds": 30,
+            "resolution": "2K",
+            "aspect_ratio": "16:9",
+            "callback_url": "https://fixtures.invalid/cb",
+            "aigc_watermark": false,
+            "context_ir_enabled": true,
+            "billing_policy": "default"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            }
+          ],
+          "resolution": "2K",
+          "duration": 30,
+          "ratio": "16:9",
+          "callback_url": "https://fixtures.invalid/cb",
+          "aigc_watermark": false,
+          "context_ir_enabled": true,
+          "billing_policy": "default"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "1.2.0 wire baseline: content video",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape",
+            "content": [
+              {
+                "type": "video_url",
+                "role": "reference_video",
+                "video_url": {
+                  "url": "https://fixtures.invalid/v.mp4"
+                }
+              }
+            ],
+            "video_durations": [
+              1.25
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://fixtures.invalid/v.mp4"
+              }
+            }
+          ],
+          "resolution": "768P",
+          "duration": 4,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "1.2.0 wire baseline: metadata video",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape",
+            "metadata": {
+              "metaso_content": [
+                {
+                  "type": "video_url",
+                  "role": "reference_video",
+                  "video_url": {
+                    "url": "https://fixtures.invalid/v.mp4"
+                  }
+                }
+              ]
+            },
+            "video_durations": [
+              1.25
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://fixtures.invalid/v.mp4"
+              }
+            }
+          ],
+          "resolution": "768P",
+          "duration": 4,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "1.2.0 wire baseline: repeated videos",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape",
+            "videos": [
+              "https://fixtures.invalid/v.mp4",
+              "https://fixtures.invalid/v.mp4"
+            ],
+            "video_durations": [
+              1.25,
+              2.5
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://fixtures.invalid/v.mp4"
+              }
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://fixtures.invalid/v.mp4"
+              }
+            }
+          ],
+          "resolution": "768P",
+          "duration": 4,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "1.2.0 wire baseline: mixed disjoint aliases",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape",
+            "content": [
+              {
+                "type": "video_url",
+                "role": "reference_video",
+                "video_url": {
+                  "url": "https://fixtures.invalid/v.mp4"
+                }
+              }
+            ],
+            "videos": [
+              "https://fixtures.invalid/v.mp4?b"
+            ],
+            "video_durations": [
+              1.25,
+              2.5,
+              3.75
+            ]
+          },
+          "files": [
+            {
+              "field": "reference_video",
+              "ref": "request_file:reference_video",
+              "mimeType": "video/mp4"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://fixtures.invalid/v.mp4"
+              }
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://fixtures.invalid/v.mp4?b"
+              }
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": {
+                  "__fileRef": "request_file:reference_video",
+                  "encoding": "dataUrl",
+                  "mimeType": "video/mp4",
+                  "maxBytes": 52428800
+                }
+              }
+            }
+          ],
+          "resolution": "768P",
+          "duration": 4,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "1.2.0 wire baseline: uploaded video",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape",
+            "video_durations": [
+              3.75
+            ]
+          },
+          "files": [
+            {
+              "field": "reference_video",
+              "ref": "request_file:reference_video",
+              "mimeType": "video/mp4"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": {
+                  "__fileRef": "request_file:reference_video",
+                  "encoding": "dataUrl",
+                  "mimeType": "video/mp4",
+                  "maxBytes": 52428800
+                }
+              }
+            }
+          ],
+          "resolution": "768P",
+          "duration": 4,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "1.2.0 wire baseline: multimodal",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "fixture-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "A quiet landscape",
+            "images": [
+              "https://fixtures.invalid/i.png"
+            ],
+            "videos": [
+              "https://fixtures.invalid/v.mp4"
+            ],
+            "audios": [
+              "https://fixtures.invalid/a.mp3"
+            ],
+            "video_durations": [
+              1.25
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer fixture-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "A quiet landscape"
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://fixtures.invalid/i.png"
+              }
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://fixtures.invalid/v.mp4"
+              }
+            },
+            {
+              "type": "audio_url",
+              "role": "reference_audio",
+              "audio_url": {
+                "url": "https://fixtures.invalid/a.mp3"
+              }
+            }
+          ],
+          "resolution": "768P",
+          "duration": 4,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "reference fractions",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4",
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              1.25,
+              2.5
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "seconds": 4,
+        "resolution": "768P",
+        "image_count_after_free": 0,
+        "reference_video_duration_seconds": 3.75
+      }
+    },
+    {
+      "name": "legacy ratios omit reference fact",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              1.25
+            ]
+          },
+          "usagePurpose": "billing_ratios"
+        }
+      ],
+      "expected": {
+        "seconds": 4,
+        "resolution": "768P",
+        "image_count_after_free": 0
+      }
+    },
+    {
+      "name": "zero actual input",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {},
+        {
+          "task": {
+            "duration": 8,
+            "resolution": "2K",
+            "usage": {
+              "input_seconds": 0
+            }
+          }
+        }
+      ],
+      "expected": {
+        "seconds": 8,
+        "resolution": "2K",
+        "reference_video_duration_seconds": 0
+      }
+    },
+    {
+      "name": "reference actual without output fields",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {},
+        {
+          "usage": {
+            "input_seconds": 2.5
+          }
+        }
+      ],
+      "expected": {
+        "reference_video_duration_seconds": 2.5
+      }
+    },
+    {
+      "name": "invalid actual retains frozen reference",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {},
+        {
+          "duration": 8,
+          "resolution": "2K",
+          "usage": {
+            "input_seconds": -1
+          }
+        }
+      ],
+      "expected": {
+        "seconds": 8,
+        "resolution": "2K"
+      }
+    },
+    {
+      "name": "missing all actual facts",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {},
+        {}
+      ],
+      "expected": null
+    },
+    {
+      "name": "missing reference actual",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {},
+        {
+          "duration": 8,
+          "resolution": "2K"
+        }
+      ],
+      "expected": {
+        "seconds": 8,
+        "resolution": "2K"
+      }
+    },
+    {
+      "name": "no reference empty vector",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "video_durations": []
+          }
+        }
+      ],
+      "expected": {
+        "seconds": 4,
+        "resolution": "768P",
+        "image_count_after_free": 0,
+        "reference_video_duration_seconds": 0
+      }
+    },
+    {
+      "name": "reject reference missing",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ]
+          }
+        }
+      ],
+      "expectedError": "video_durations must be an array"
+    },
+    {
+      "name": "reject reference empty",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": []
+          }
+        }
+      ],
+      "expectedError": "video_durations must match the final reference video count"
+    },
+    {
+      "name": "reject reference count mismatch",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              1,
+              2
+            ]
+          }
+        }
+      ],
+      "expectedError": "video_durations must match the final reference video count"
+    },
+    {
+      "name": "reject reference JSON string",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": "[1]"
+          }
+        }
+      ],
+      "expectedError": "video_durations must be an array"
+    },
+    {
+      "name": "reject reference invalid 0",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              0
+            ]
+          }
+        }
+      ],
+      "expectedError": "video_durations entries must be finite positive numbers no greater than 3600 seconds"
+    },
+    {
+      "name": "reject reference invalid -1",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              -1
+            ]
+          }
+        }
+      ],
+      "expectedError": "video_durations entries must be finite positive numbers no greater than 3600 seconds"
+    },
+    {
+      "name": "reject reference invalid 1",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              "1"
+            ]
+          }
+        }
+      ],
+      "expectedError": "video_durations entries must be finite positive numbers no greater than 3600 seconds"
+    },
+    {
+      "name": "reject reference invalid 3600.01",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              3600.01
+            ]
+          }
+        }
+      ],
+      "expectedError": "video_durations entries must be finite positive numbers no greater than 3600 seconds"
+    },
+    {
+      "name": "reject reference invalid null",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              null
+            ]
+          }
+        }
+      ],
+      "expectedError": "video_durations entries must be finite positive numbers no greater than 3600 seconds"
+    },
+    {
+      "name": "reject reference sum exceeds limit",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4",
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "video_durations": [
+              1800,
+              1801
+            ]
+          }
+        }
+      ],
+      "expectedError": "video_durations total must not exceed 3600 seconds"
+    },
+    {
+      "name": "reject reference overlapping aliases",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "videos": [
+              "https://fixtures.invalid/reference.mp4"
+            ],
+            "content": [
+              {
+                "type": "video_url",
+                "video_url": {
+                  "url": "https://fixtures.invalid/reference.mp4"
+                }
+              }
+            ],
+            "video_durations": [
+              1
+            ]
+          }
+        }
+      ],
+      "expectedError": "reference video aliases must not overlap when matching video_durations"
+    },
+    {
+      "name": "multipart parses billing array",
+      "hook": "protocols",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "body": {
+            "kind": "multipart",
+            "fields": {
+              "prompt": [
+                "A scene"
+              ],
+              "video_durations": [
+                "[1.25]"
+              ]
+            },
+            "files": [
+              {
+                "field": "reference_video",
+                "ref": "request_file:reference_video",
+                "mimeType": "video/mp4"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "MiniMax-H3",
+        "action": "text_to_video",
+        "requestBody": {
+          "prompt": "A scene",
+          "video_durations": [
+            1.25
+          ],
+          "model": "MiniMax-H3"
+        }
+      },
+      "path": [
+        "openai_video",
+        "decodeRequest"
+      ]
+    },
+    {
+      "name": "upload reference facts",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "requestBody": {
+            "prompt": "A scene",
+            "video_durations": [
+              1.25
+            ]
+          },
+          "files": [
+            {
+              "field": "reference_video",
+              "ref": "request_file:reference_video",
+              "mimeType": "video/mp4"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "seconds": 4,
+        "resolution": "768P",
+        "image_count_after_free": 0,
+        "reference_video_duration_seconds": 1.25
+      }
     }
-  ]
+  ],
+  "wireBaseline": {
+    "version": "1.2.0",
+    "sha256": "2eead5a52f8853441e441dd2251f2acafda473c45f06c324edab8d5a0026ab1e",
+    "cases": 8
+  }
 }

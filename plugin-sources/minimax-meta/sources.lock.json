@@ -1,6 +1,15 @@
 {
-  "reviewedOn": "2026-10-15",
-  "candidate": { "key": "minimax-meta", "version": "1.2.0", "models": ["MiniMax-H3"] },
+  "reviewedOn": "2026-11-05",
+  "candidate": {
+    "key": "minimax-meta",
+    "version": "1.3.0",
+    "models": [
+      "MiniMax-H3"
+    ],
+    "sha256": "1bcf1291312058a96ed42070b451836edb7f4ce74edbadde74523c42903e0dc4",
+    "previousVersion": "1.2.0",
+    "previousSha256": "2eead5a52f8853441e441dd2251f2acafda473c45f06c324edab8d5a0026ab1e"
+  },
   "official": {
     "guideUrl": "https://metaso.cn/minimax-h3/new-api-guide",
     "downloadUrl": "https://metaso.cn/minimax-h3/new-api-guide/minimax-h3-metaso.plugin.js",
@@ -23,9 +32,26 @@
     "2026-10-15: user confirmed Metaso added 30-second generation and authorized conversion using the pinned Yingce protocol source",
     "The published 1.1.0 plugin and guide still restrict duration to 4-15; 4-30 comes from the pinned Yingce source and user confirmation, not a claim that the public plugin changed",
     "Keep plugin key minimax-meta and model MiniMax-H3 only; do not introduce H3-Max",
-    "Keep existing output, polling, reservation and completion usage fields; no prices or new billing facts",
+    "2026-10-15 historical scope: kept usage fields and prices; reference usage naming and validation superseded by ADR-0130 on 2026-11-05",
     "profiles.json is the conservative host integration declaration: image references only; video/audio references and additional billing configuration are not automatically enabled",
-    "No verified upstream model-list endpoint; modelDiscovery is intentionally absent"
+    "No verified upstream model-list endpoint; modelDiscovery is intentionally absent",
+    "2026-11-05: ADR-0130 sections 4/5 (implementation adjustment) and t3-new-api-gate sections 2a/4 authorize plugin-only video_durations validation and reference_video_duration_seconds facts for the sole declared model MiniMax-H3; no mediaMetadata host dependency",
+    "Reference durations use the existing host second-unit ceiling of 3600 per entry and total; the prior plugin had no reference-duration ceiling. The output duration limit remains 30. This is a billing safety bound, not a verified vendor reference-media limit",
+    "Explicit duplicate video positions are retained; cross-alias deduplication, shadowed legacy video content and uploads across multiple video file fields are rejected when positional matching is ambiguous",
+    "Reference seconds never enter billing_ratios or supplier request bodies. Completion input_seconds must be a finite nonnegative number, including zero; missing or invalid reports omit the fact and preserve frozen submission usage",
+    "Candidate only: keep official installed snapshot and profiles.json unchanged. Prices and activation require separate authorization"
   ],
-  "verificationScope": "Offline Node 14/14, existing new-api image plugin lint and real Go-engine fixture 6/6, plus juhefuwu-generated request bridge 4/4 passed; no supplier credentials, paid generation, runtime installation or business database writes"
+  "verificationScope": "Node v24.13.0: node --test plugin-sources/minimax-meta/plugin.test.mjs; 23 tests and 35 shared fixture cases passed in Node, including 8 supplier descriptors captured from pre-change 1.2.0. Go/moejs fixture replay and host accounting regressions are pending supervisor execution. No management API, database writes, supplier calls, installation, activation or deployment",
+  "previousVerificationScope": {
+    "reviewedOn": "2026-10-15",
+    "version": "1.2.0",
+    "scope": "Offline Node 14/14, existing new-api image plugin lint and real Go-engine fixture 6/6, plus juhefuwu-generated request bridge 4/4 passed; no supplier credentials, paid generation, runtime installation or business database writes"
+  },
+  "basis": {
+    "adr": "../juhefuwu/docs/architecture/decisions/0130-reference-video-duration-billing.md#5",
+    "gate": "../juhefuwu/docs/delivery/reference-media-probe-efficiency-20261104/t3-new-api-gate.md",
+    "task": "T3b",
+    "baselineHeadReportedByUser": "10f4d41d6",
+    "gitUsed": false
+  }
 }

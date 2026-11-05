@@ -6,6 +6,8 @@
 // Only MiniMax-H3 is adapted here; discovery and H3-Max are not declared.
 const H3_MODEL = "MiniMax-H3";
 const DEFAULT_SECONDS = 4;
+// Host second-unit ceiling (MaxTaskDurationSeconds), not a vendor input limit.
+const MAX_REFERENCE_VIDEO_SECONDS = 3600;
 const DEFAULT_RESOLUTION = "768P";
 const DEFAULT_RATIO = "9:16";
 
@@ -36,7 +38,7 @@ export const meta = {
     en: "Metaso MiniMax H3 video generation with image, video and audio references",
     zh: "Metaso MiniMax H3 视频生成，支持图片、视频和音频参考素材",
   },
-  version: "1.2.0",
+  version: "1.3.0",
   author: { name: "Metaso" },
   channelTypes: [62],
   models: [H3_MODEL],
@@ -56,15 +58,15 @@ export const meta = {
       unit: "count",
       description: { en: "Additional reference image unit price", zh: "额外参考图片单价" },
     },
-    input_video_seconds: {
+    reference_video_duration_seconds: {
       type: "number",
       unit: "second",
       description: { en: "Reference video input unit price", zh: "参考视频输入单价" },
     },
   },
   usageExamples: [
-    { label: "768P 4s", facts: { seconds: 4, resolution: "768P", image_count_after_free: 0, input_video_seconds: 0 } },
-    { label: "2K 8s with input video", facts: { seconds: 8, resolution: "2K", image_count_after_free: 2, input_video_seconds: 12 } },
+    { label: "768P 4s", facts: { seconds: 4, resolution: "768P", image_count_after_free: 0, reference_video_duration_seconds: 0 } },
+    { label: "2K 8s with input video", facts: { seconds: 8, resolution: "2K", image_count_after_free: 2, reference_video_duration_seconds: 12 } },
   ],
   protocols: [{ name: "openai_responses", supports: ["stream", "sync", "background"] }, "openai_video"],
 };
@@ -155,11 +157,15 @@ function appendUniqueMedia(content, item, knownContent) {
     const previous = existing[type] && existing[type].url !== undefined ? existing[type].url : existing[type];
     return (typeof previous === "string" ? trimmed(previous) : previous && previous.__fileRef) === identity;
   });
+  if (duplicate && type === "video_url") throw new Error("reference video aliases must not overlap when matching video_durations");
   if (!duplicate) content.push(item);
 }
 
 function buildH3Content(req, files) {
   const metadata = metadataOf(req);
+  if (Array.isArray(req && req.content) && Array.isArray(metadata.metaso_content) && contentHasType(metadata.metaso_content, "video_url")) {
+    throw new Error("content and metadata.metaso_content cannot both supply reference videos");
+  }
   const supplied = Array.isArray(req && req.content) ? req.content : Array.isArray(metadata.metaso_content) ? metadata.metaso_content : [];
   const content = [];
   let hasText = false;
@@ -247,23 +253,51 @@ function actionForContent(content) {
   return "text_to_video";
 }
 
-function imageCountAfterFree(req, files) {
-  const content = buildH3Content(req, files);
-  let count = 0;
-  for (const item of content) {
-    if (item && item.type === "image_url") count += 1;
+// Match the final supplier order without deduplicating explicit repeated videos.
+function referenceVideoDuration(req, content, files) {
+  const videos = content.filter(function (item) { return item && item.type === "video_url"; });
+  let uploadField;
+  const uploadRefs = [];
+  for (const file of files) {
+    if (!FILE_FIELDS[file.field] || FILE_FIELDS[file.field].type !== "video_url") continue;
+    // The host iterates a Go map of file fields; only order within one field is stable.
+    if (uploadField && uploadField !== file.field) throw new Error("reference video upload fields have ambiguous order");
+    if (!trimmed(file.ref) || uploadRefs.includes(file.ref)) throw new Error("reference video upload refs must be unique");
+    uploadField = file.field;
+    uploadRefs.push(file.ref);
   }
-  return Math.max(0, count - 5);
+  for (const video of videos) {
+    const value = video.video_url && video.video_url.url !== undefined ? video.video_url.url : video.video_url;
+    if (typeof value === "string" && trimmed(value)) continue;
+    if (value && uploadRefs.includes(value.__fileRef)) continue;
+    throw new Error("reference videos must have a URL or an uploaded file ref");
+  }
+  const durations = req.video_durations;
+  if (durations === undefined && videos.length === 0) return 0;
+  if (!Array.isArray(durations)) throw new Error("video_durations must be an array");
+  if (durations.length !== videos.length) throw new Error("video_durations must match the final reference video count");
+  let total = 0;
+  for (const duration of durations) {
+    if (typeof duration !== "number" || !Number.isFinite(duration) || duration <= 0 || duration > MAX_REFERENCE_VIDEO_SECONDS) {
+      throw new Error("video_durations entries must be finite positive numbers no greater than 3600 seconds");
+    }
+    total += duration;
+  }
+  if (!Number.isFinite(total) || total > MAX_REFERENCE_VIDEO_SECONDS) throw new Error("video_durations total must not exceed 3600 seconds");
+  return total;
 }
 
-function inputVideoSeconds(ctx) {
-  const videos = ctx && ctx.mediaMetadata && Array.isArray(ctx.mediaMetadata.videos) ? ctx.mediaMetadata.videos : [];
-  let total = 0;
-  for (const video of videos) {
-    const duration = Number(video && video.durationSeconds);
-    if (Number.isFinite(duration) && duration > 0) total += duration;
+// Explicit legacy content can contain arbitrary vendor extensions. Strip gateway
+// billing fields even there, without mutating the request shared between hooks.
+function withoutReferenceBillingFields(value) {
+  if (Array.isArray(value)) return value.map(withoutReferenceBillingFields);
+  if (!value || typeof value !== "object") return value;
+  const result = {};
+  for (const key of Object.keys(value)) {
+    if (["video_durations", "reference_video_duration_seconds", "input_video_seconds"].includes(key)) continue;
+    Object.defineProperty(result, key, { value: withoutReferenceBillingFields(value[key]), enumerable: true, writable: true, configurable: true });
   }
-  return total;
+  return result;
 }
 
 function copyOptionalFields(req, body) {
@@ -272,17 +306,17 @@ function copyOptionalFields(req, body) {
   }
 }
 
-function buildH3Body(req, files) {
+function buildH3Body(req, content) {
   const spec = outputSpec(req);
   const body = {
     model: H3_MODEL,
-    content: buildH3Content(req, files),
+    content: content,
     resolution: spec.resolution,
     duration: durationOf(req),
     ratio: spec.ratio,
   };
   copyOptionalFields(req, body);
-  return body;
+  return withoutReferenceBillingFields(body);
 }
 
 function taskFromResponse(body) {
@@ -363,6 +397,7 @@ function metasoAPIBase(baseUrl) {
 export function buildSubmitRequest(ctx) {
   const req = ctx.requestBody || {};
   const content = buildH3Content(req, ctx.files || []);
+  referenceVideoDuration(req, content, ctx.files || []);
   return {
     url: metasoAPIBase(ctx.baseUrl) + "/minimax/v2/video_generation",
     method: "POST",
@@ -371,7 +406,7 @@ export function buildSubmitRequest(ctx) {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: buildH3Body(req, ctx.files || []),
+    body: buildH3Body(req, content),
     action: actionForContent(content),
   };
 }
@@ -401,12 +436,17 @@ export function parseTaskResult(_ctx, body) {
 export function extractUsage(ctx) {
   const req = ctx.requestBody || {};
   const spec = outputSpec(req);
-  return {
+  const content = buildH3Content(req, ctx.files || []);
+  const referenceSeconds = referenceVideoDuration(req, content, ctx.files || []);
+  const facts = {
     seconds: durationOf(req),
     resolution: spec.resolution,
-    image_count_after_free: imageCountAfterFree(req, ctx.files || []),
-    input_video_seconds: inputVideoSeconds(ctx),
+    image_count_after_free: Math.max(0, content.filter(function (item) { return item && item.type === "image_url"; }).length - 5),
   };
+  // Legacy pricing multiplies positive numeric facts; reference input is additive
+  // only in task expressions (ADR-0130), never a legacy multiplier.
+  if (ctx.usagePurpose !== "billing_ratios") facts.reference_video_duration_seconds = referenceSeconds;
+  return facts;
 }
 
 export function extractMediaSources(ctx) {
@@ -425,22 +465,20 @@ export function extractMediaSources(ctx) {
   return { videos: videos };
 }
 
-function inputVideoSecondsFromResponse(body) {
-  const task = taskFromResponse(body);
-  const usage = objectValue(task.usage);
-  const duration = Number(usage.input_seconds !== undefined ? usage.input_seconds : usage.inputVideoSeconds);
-  return Number.isFinite(duration) && duration > 0 ? duration : 0;
-}
-
 export function extractUsageOnComplete(_task, _taskResult, body) {
   const task = taskFromResponse(body);
   const duration = Number(task.duration);
   const resolution = trimmed(task.resolution);
-  if (!Number.isInteger(duration) || duration <= 0 || !resolution) return null;
-  const facts = { seconds: duration, resolution: resolution };
-  const inputSeconds = inputVideoSecondsFromResponse(body);
-  if (inputSeconds > 0) facts.input_video_seconds = inputSeconds;
-  return facts;
+  const facts = {};
+  if (Number.isInteger(duration) && duration > 0 && resolution) {
+    facts.seconds = duration;
+    facts.resolution = resolution;
+  }
+  const inputSeconds = objectValue(task.usage).input_seconds;
+  if (typeof inputSeconds === "number" && Number.isFinite(inputSeconds) && inputSeconds >= 0) {
+    facts.reference_video_duration_seconds = inputSeconds;
+  }
+  return Object.keys(facts).length ? facts : null;
 }
 
 export function listArtifacts(task) {
@@ -483,7 +521,7 @@ function decodeOpenAiVideo(ctx) {
   for (const file of ctx.body.files || []) {
     if (!FILE_FIELDS[file.field]) throw new Error("unexpected MiniMax-Meta file field: " + file.field);
   }
-  for (const field of ["content", "images", "videos", "audios"]) {
+  for (const field of ["content", "images", "videos", "audios", "video_durations"]) {
     if (req[field] === undefined) continue;
     try {
       req[field] = JSON.parse(req[field]);
