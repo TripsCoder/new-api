@@ -1,14 +1,15 @@
 {
   "format": "apipath-video-build/v1",
   "key": "apipath_video",
-  "version": "2.1.0",
+  "version": "2.1.2",
   "inputs": {
-    "build.mjs": "e99632b9d951c7b882b58745d03ae62c1b5664a07944c93f85e02dbfeaa9887a",
-    "apipath-runtime.js": "90cd587fe079891d351f0ecdbf128ddd131f7307aa16a7f956fa76067cd59685",
+    "build.mjs": "9f3a4419c3db8b9dd21f02f7a42cbcc26709c62f22821e9b259c571001e5b60b",
+    "apipath-runtime.js": "9d9cb5ded6d584abd28c4345d7abbe09fcc7c9011f048017037b3d0c09b15645",
     "evidence/video-docs.json": "5ea1c9baf64e45e68c3447bba4e5c67b52743cac2f8cfafe3bdb764e23aca846",
     "../media-providers/six-v2/runtime.js": "0022d68d6a932405951af492d05fb159c603f4d1277320ed6a02409ddf727a9b",
-    "../media-providers/six-v2/interface-runtime.js": "e65656e13684c8959ec8aeb65dc2f082644cd1dd593dd2943dcd00b3ead76ddb"
+    "../media-providers/six-v2/interface-runtime.js": "e65656e13684c8959ec8aeb65dc2f082644cd1dd593dd2943dcd00b3ead76ddb",
+    "evidence/video-output-contract.json": "9938896e885d4156a04d79ba34ce748a044923149e4d401f732f82431e372d03"
   },
   "file": "apipath_video.plugin.js",
-  "sha256": "9ea473cd4be270ffe9c08eaa5659e39f976e32d1735495ae155120ae5264635e"
+  "sha256": "02478458415596866acd270b8d2b0aaad337767a166ee5d715cc47cddb982192"
 }

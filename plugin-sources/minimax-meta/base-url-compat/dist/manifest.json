@@ -1,0 +1,15 @@
+{
+  "format": "minimax-meta-base-url-compat/v1",
+  "key": "minimax-meta",
+  "version": "1.2.2",
+  "upstreamVersion": "1.2.1",
+  "upstreamSHA256": "6d2378921eaf7bb234938b7204f707cc00f2a27dfad97c1ee58eb660d2808eb5",
+  "provenance": "Exact locally active 1.2.1 source, also matched the investigated production source; retained without modifying it",
+  "inputs": {
+    "upstream-1.2.1.plugin.js": "6d2378921eaf7bb234938b7204f707cc00f2a27dfad97c1ee58eb660d2808eb5",
+    "build.mjs": "778daecacb9c8dbd6512d04b08e763677e3b6b55f974624383157474b9893c58"
+  },
+  "file": "minimax-meta.plugin.js",
+  "sha256": "eef9e8e235410694ea5367f94145e94acb8d9110e59f1e71c3a9874c1583d69f",
+  "scope": "Only version identity and submit/query API Base normalization; input, usage, price, auth, result and download behavior stay unchanged"
+}

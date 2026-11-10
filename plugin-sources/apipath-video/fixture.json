@@ -10,6 +10,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -36,6 +37,860 @@
       }
     },
     {
+      "name": "submit auth raw host header",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "unused-key",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance2.0-mini-720-GK",
+          "prompt": "Offline fixture"
+        }
+      }
+    },
+    {
+      "name": "poll auth raw host header",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "unused-key",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/tasks/offline_task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit auth complete header",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Bearer offline-only",
+          "apiKey": "unused-key",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance2.0-mini-720-GK",
+          "prompt": "Offline fixture"
+        }
+      }
+    },
+    {
+      "name": "poll auth complete header",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Bearer offline-only",
+          "apiKey": "unused-key",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/tasks/offline_task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit auth mixed case and outer spaces",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "  bEaReR offline-only  ",
+          "apiKey": "unused-key",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance2.0-mini-720-GK",
+          "prompt": "Offline fixture"
+        }
+      }
+    },
+    {
+      "name": "poll auth mixed case and outer spaces",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "  bEaReR offline-only  ",
+          "apiKey": "unused-key",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/tasks/offline_task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit auth legacy raw key",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance2.0-mini-720-GK",
+          "prompt": "Offline fixture"
+        }
+      }
+    },
+    {
+      "name": "poll auth legacy raw key",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/tasks/offline_task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit auth legacy complete key",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "",
+          "apiKey": "Bearer offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/video/generations",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "model": "Seedance2.0-mini-720-GK",
+          "prompt": "Offline fixture"
+        }
+      }
+    },
+    {
+      "name": "poll auth legacy complete key",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Seedance2.0-mini-720-GK",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "",
+          "apiKey": "Bearer offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/tasks/offline_task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 11",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "",
+          "apiKey": "",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 12",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "",
+          "apiKey": "",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 13",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Bearer ",
+          "apiKey": "valid-fallback-must-not-hide-invalid-header",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 14",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Bearer ",
+          "apiKey": "valid-fallback-must-not-hide-invalid-header",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 15",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Bearer Bearer offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 16",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Bearer Bearer offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 17",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Basic offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 18",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Basic offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 19",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only\r\nX-Injected: yes",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 20",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only\r\nX-Injected: yes",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 21",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "\n",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 22",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "\n",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 23",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "",
+          "apiKey": "offline-only\n",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 24",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "",
+          "apiKey": "offline-only\n",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 25",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Bearer\toffline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 26",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "Bearer\toffline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildSubmitRequest rejects invalid auth 27",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only\u0000",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
+      "name": "buildQueryRequest rejects invalid auth 28",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "seedance-2.5-YZ",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only\u0000",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "offline_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expectedError": "channel API key is missing or invalid"
+    },
+    {
       "name": "known values reach canonical JSON wire fields",
       "hook": "buildSubmitRequest",
       "args": [
@@ -44,6 +899,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -90,6 +946,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -146,6 +1003,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -188,6 +1046,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -229,6 +1088,7 @@
           "upstreamModel": "dola2.5",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -264,6 +1124,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -300,6 +1161,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -336,6 +1198,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -359,6 +1222,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -382,6 +1246,7 @@
           "upstreamModel": "seedance-2.0-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -418,6 +1283,7 @@
           "upstreamModel": "seedance-2.0-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -454,6 +1320,7 @@
           "upstreamModel": "seedance-2.0-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -477,6 +1344,7 @@
           "upstreamModel": "seedance-2.0-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -500,6 +1368,7 @@
           "upstreamModel": "seedance-2.0-Fast-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -536,6 +1405,7 @@
           "upstreamModel": "seedance-2.0-Fast-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -572,6 +1442,7 @@
           "upstreamModel": "seedance-2.0-Fast-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -595,6 +1466,7 @@
           "upstreamModel": "seedance-2.0-Fast-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -618,6 +1490,7 @@
           "upstreamModel": "seedance-2-0-mini",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -654,6 +1527,7 @@
           "upstreamModel": "seedance-2-0-mini",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -690,6 +1564,7 @@
           "upstreamModel": "seedance-2-0-mini",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -713,6 +1588,7 @@
           "upstreamModel": "seedance-2-0-mini",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -736,6 +1612,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -772,6 +1649,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -808,6 +1686,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -844,6 +1723,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -880,6 +1760,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -916,6 +1797,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -952,6 +1834,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -988,6 +1871,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1024,6 +1908,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1060,6 +1945,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1096,6 +1982,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1132,6 +2019,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1168,6 +2056,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1191,6 +2080,7 @@
           "upstreamModel": "seedance2-0-低价",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1214,6 +2104,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1250,6 +2141,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1286,6 +2178,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1322,6 +2215,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1358,6 +2252,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1394,6 +2289,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1430,6 +2326,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1466,6 +2363,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1502,6 +2400,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1538,6 +2437,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1574,6 +2474,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1610,6 +2511,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1646,6 +2548,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1669,6 +2572,7 @@
           "upstreamModel": "MiniMax-H3-720P-特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1692,6 +2596,7 @@
           "upstreamModel": "minimax-h3-官K质量",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1728,6 +2633,7 @@
           "upstreamModel": "minimax-h3-官K质量",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1764,6 +2670,7 @@
           "upstreamModel": "minimax-h3-官K质量",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1787,6 +2694,7 @@
           "upstreamModel": "minimax-h3-官K质量",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1810,6 +2718,7 @@
           "upstreamModel": "h3-768",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1846,6 +2755,7 @@
           "upstreamModel": "h3-768",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1882,6 +2792,7 @@
           "upstreamModel": "h3-768",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1905,6 +2816,7 @@
           "upstreamModel": "h3-768",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1928,6 +2840,7 @@
           "upstreamModel": "h3-2k",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -1964,6 +2877,7 @@
           "upstreamModel": "h3-2k",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2000,6 +2914,7 @@
           "upstreamModel": "h3-2k",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2023,6 +2938,7 @@
           "upstreamModel": "h3-2k",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2046,6 +2962,7 @@
           "upstreamModel": "Grok-imagine-15-特价特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2082,6 +2999,7 @@
           "upstreamModel": "Grok-imagine-15-特价特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2118,6 +3036,7 @@
           "upstreamModel": "Grok-imagine-15-特价特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2141,6 +3060,7 @@
           "upstreamModel": "Grok-imagine-15-特价特惠",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2164,6 +3084,7 @@
           "upstreamModel": "Seedance2.0-mini-720-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2200,6 +3121,7 @@
           "upstreamModel": "Seedance2.0-mini-720-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2236,6 +3158,7 @@
           "upstreamModel": "Seedance2.0-mini-720-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2259,6 +3182,7 @@
           "upstreamModel": "Seedance2.0-mini-720-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2282,6 +3206,7 @@
           "upstreamModel": "Seedance-2.0-mini-480-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2318,6 +3243,7 @@
           "upstreamModel": "Seedance-2.0-mini-480-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2354,6 +3280,7 @@
           "upstreamModel": "Seedance-2.0-mini-480-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2377,6 +3304,7 @@
           "upstreamModel": "Seedance-2.0-mini-480-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2400,6 +3328,7 @@
           "upstreamModel": "Seedance-2.0-fast-720-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2436,6 +3365,7 @@
           "upstreamModel": "Seedance-2.0-fast-720-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2472,6 +3402,7 @@
           "upstreamModel": "Seedance-2.0-fast-720-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2495,6 +3426,7 @@
           "upstreamModel": "Seedance-2.0-fast-720-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2518,6 +3450,7 @@
           "upstreamModel": "Seedance-2.0-fast-480-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2554,6 +3487,7 @@
           "upstreamModel": "Seedance-2.0-fast-480-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2590,6 +3524,7 @@
           "upstreamModel": "Seedance-2.0-fast-480-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2613,6 +3548,7 @@
           "upstreamModel": "Seedance-2.0-fast-480-GK",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2636,6 +3572,7 @@
           "upstreamModel": "seedance2-5-特惠-1080p",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2672,6 +3609,7 @@
           "upstreamModel": "seedance2-5-特惠-1080p",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2708,6 +3646,7 @@
           "upstreamModel": "seedance2-5-特惠-1080p",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2731,6 +3670,7 @@
           "upstreamModel": "seedance2-5-特惠-1080p",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2754,6 +3694,7 @@
           "upstreamModel": "dola2.5",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2790,6 +3731,7 @@
           "upstreamModel": "dola2.5",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2826,6 +3768,7 @@
           "upstreamModel": "dola2.5",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2862,6 +3805,7 @@
           "upstreamModel": "dola2.5",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2885,6 +3829,7 @@
           "upstreamModel": "dola2.5",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2908,6 +3853,7 @@
           "upstreamModel": "SD2.0",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2944,6 +3890,7 @@
           "upstreamModel": "SD2.0",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -2980,6 +3927,7 @@
           "upstreamModel": "SD2.0",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3003,6 +3951,7 @@
           "upstreamModel": "SD2.0",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3026,6 +3975,7 @@
           "upstreamModel": "dola2.0",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3062,6 +4012,7 @@
           "upstreamModel": "dola2.0",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3098,6 +4049,7 @@
           "upstreamModel": "dola2.0",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3121,6 +4073,7 @@
           "upstreamModel": "dola2.0",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3144,6 +4097,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3167,6 +4121,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3190,6 +4145,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3213,6 +4169,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3236,6 +4193,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3259,6 +4217,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3282,6 +4241,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3305,6 +4265,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3328,6 +4289,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3369,6 +4331,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3394,6 +4357,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3419,6 +4383,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3442,6 +4407,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3484,6 +4450,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3515,6 +4482,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3541,6 +4509,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3572,7 +4541,7 @@
         },
         "state": {
           "protocolTemplate": "interface:784e5344ec29295f",
-          "pluginVersion": "2.1.0",
+          "pluginVersion": "2.1.2",
           "configurationRevision": 0,
           "operation": "video_generate",
           "query": "/v1/tasks/"
@@ -3588,6 +4557,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3600,7 +4570,7 @@
           "taskId": "a/b",
           "state": {
             "protocolTemplate": "interface:784e5344ec29295f",
-            "pluginVersion": "2.1.0",
+            "pluginVersion": "2.1.2",
             "configurationRevision": 0,
             "operation": "video_generate",
             "query": "/v1/tasks/"
@@ -3625,6 +4595,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3653,6 +4624,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3683,6 +4655,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3713,7 +4686,7 @@
         },
         "state": {
           "protocolTemplate": "interface:784e5344ec29295f",
-          "pluginVersion": "2.1.0",
+          "pluginVersion": "2.1.2",
           "configurationRevision": 0,
           "operation": "video_generate",
           "query": "/v1/tasks/"
@@ -3734,6 +4707,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3763,6 +4737,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3792,6 +4767,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3821,6 +4797,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3850,6 +4827,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3879,6 +4857,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3909,6 +4888,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3942,6 +4922,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3970,6 +4951,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -3998,6 +4980,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -4022,6 +5005,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -4050,6 +5034,7 @@
           "upstreamModel": "seedance-2.5-YZ",
           "publicTaskId": "offline_public_task",
           "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
           "apiKey": "offline-only",
           "requestBody": {
             "operation": "video_generate",
@@ -4110,6 +5095,2138 @@
         "openai_video",
         "render"
       ]
+    },
+    {
+      "name": "original Muse completed response retains nested video",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "wrapped original completed response retains nested video",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "observed videos array is usable without video_url",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "videos": [
+              {
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "nested video takes precedence over a legacy stale URL",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "url": "https://cdn.example/stale.mp4"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "legacy top-level video_url remains supported",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "succeeded",
+          "video_url": "https://cdn.example/video.mp4"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "nested terminal status succeeded",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "nested terminal status completed",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "completed",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "nested terminal status success",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "success",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "nested terminal status done",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "done",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "incomplete nested output remains unknown null",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": null,
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "incomplete output cannot list artifacts null",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": null,
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "incomplete nested output remains unknown {}",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {},
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "incomplete output cannot list artifacts {}",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {},
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "incomplete nested output remains unknown []",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": [],
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "incomplete output cannot list artifacts []",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": [],
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "incomplete nested output remains unknown {\"thumbnail\":\"https://cdn.example/video.mp4\"}",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4"
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "incomplete output cannot list artifacts {\"thumbnail\":\"https://cdn.example/video.mp4\"}",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4"
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "incomplete nested output remains unknown {\"videos\":[]}",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "videos": []
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "incomplete output cannot list artifacts {\"videos\":[]}",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "videos": []
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "incomplete nested output remains unknown {\"video_url\":99}",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "video_url": 99
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "incomplete output cannot list artifacts {\"video_url\":99}",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "video_url": 99
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "incomplete nested output remains unknown {\"videos\":[null,\"invalid\",{}]}",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "videos": [
+              null,
+              "invalid",
+              {}
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "incomplete output cannot list artifacts {\"videos\":[null,\"invalid\",{}]}",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "videos": [
+                null,
+                "invalid",
+                {}
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "unsafe nested result remains unknown javascript:alert(1)",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "video_url": "javascript:alert(1)",
+            "videos": [
+              {
+                "url": "javascript:alert(1)"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "unsafe nested result cannot download javascript:alert(1)",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "video_url": "javascript:alert(1)",
+              "videos": [
+                {
+                  "url": "javascript:alert(1)"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expectedError": "artifact_not_found"
+    },
+    {
+      "name": "unsafe nested result remains unknown data:video/mp4;base64,AA==",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "video_url": "data:video/mp4;base64,AA==",
+            "videos": [
+              {
+                "url": "data:video/mp4;base64,AA=="
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "unsafe nested result cannot download data:video/mp4;base64,AA==",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "video_url": "data:video/mp4;base64,AA==",
+              "videos": [
+                {
+                  "url": "data:video/mp4;base64,AA=="
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expectedError": "artifact_not_found"
+    },
+    {
+      "name": "unsafe nested result remains unknown file:///video.mp4",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "video_url": "file:///video.mp4",
+            "videos": [
+              {
+                "url": "file:///video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "unsafe nested result cannot download file:///video.mp4",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "video_url": "file:///video.mp4",
+              "videos": [
+                {
+                  "url": "file:///video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expectedError": "artifact_not_found"
+    },
+    {
+      "name": "unsafe nested result remains unknown https://user:password@cdn.example/video.mp4",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "video_url": "https://user:password@cdn.example/video.mp4",
+            "videos": [
+              {
+                "url": "https://user:password@cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "unsafe nested result cannot download https://user:password@cdn.example/video.mp4",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "video_url": "https://user:password@cdn.example/video.mp4",
+              "videos": [
+                {
+                  "url": "https://user:password@cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expectedError": "artifact_not_found"
+    },
+    {
+      "name": "unsafe nested result remains unknown https://cdn.example/a b.mp4",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "video_url": "https://cdn.example/a b.mp4",
+            "videos": [
+              {
+                "url": "https://cdn.example/a b.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "UNKNOWN",
+        "reason": "completed video task has no documented output URL"
+      }
+    },
+    {
+      "name": "unsafe nested result cannot download https://cdn.example/a b.mp4",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "video_url": "https://cdn.example/a b.mp4",
+              "videos": [
+                {
+                  "url": "https://cdn.example/a b.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expectedError": "artifact_not_found"
+    },
+    {
+      "name": "invalid first candidate does not hide a valid videos entry",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "video_url": "javascript:invalid",
+            "videos": [
+              null,
+              {
+                "url": "file:///invalid"
+              },
+              {
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/video.mp4"
+      }
+    },
+    {
+      "name": "terminal failure with nested stale video failed",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "failed",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "error": {
+            "message": "provider terminal failure"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "provider terminal failure"
+      }
+    },
+    {
+      "name": "failed task never lists nested stale video failed",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "FAILURE",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "failed",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task",
+            "error": {
+              "message": "provider terminal failure"
+            }
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "terminal failure with nested stale video error",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "error",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "error": {
+            "message": "provider terminal failure"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "provider terminal failure"
+      }
+    },
+    {
+      "name": "failed task never lists nested stale video error",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "FAILURE",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "error",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task",
+            "error": {
+              "message": "provider terminal failure"
+            }
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "terminal failure with nested stale video expired",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "expired",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "error": {
+            "message": "provider terminal failure"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "provider terminal failure"
+      }
+    },
+    {
+      "name": "failed task never lists nested stale video expired",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "FAILURE",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "expired",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task",
+            "error": {
+              "message": "provider terminal failure"
+            }
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "terminal failure with nested stale video cancelled",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "cancelled",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "error": {
+            "message": "provider terminal failure"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "provider terminal failure"
+      }
+    },
+    {
+      "name": "failed task never lists nested stale video cancelled",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "FAILURE",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "cancelled",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task",
+            "error": {
+              "message": "provider terminal failure"
+            }
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "terminal failure with nested stale video canceled",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "canceled",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "error": {
+            "message": "provider terminal failure"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "provider terminal failure"
+      }
+    },
+    {
+      "name": "failed task never lists nested stale video canceled",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "FAILURE",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "canceled",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task",
+            "error": {
+              "message": "provider terminal failure"
+            }
+          }
+        }
+      ],
+      "expected": []
+    },
+    {
+      "name": "processing never becomes success from a stale nested URL",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "processing",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "progress": 50
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "50%"
+      }
+    },
+    {
+      "name": "explicit failure cannot become success from nested output",
+      "hook": "parseTaskResult",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "success": false,
+          "error": {
+            "message": "provider rejected"
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "provider rejected"
+      }
+    },
+    {
+      "name": "immediate successful submission uses nested video",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "statusCode": 200,
+          "body": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "upstream_task",
+        "taskData": {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task",
+          "id": "upstream_task"
+        },
+        "state": {
+          "protocolTemplate": "interface:784e5344ec29295f",
+          "pluginVersion": "2.1.2",
+          "configurationRevision": 0,
+          "operation": "video_generate",
+          "query": "/v1/tasks/"
+        },
+        "immediate": {
+          "status": "SUCCESS",
+          "progress": "100%",
+          "url": "https://cdn.example/video.mp4"
+        }
+      }
+    },
+    {
+      "name": "success lists nested video artifact",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "action": "video_generate",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          }
+        }
+      ],
+      "expected": [
+        {
+          "key": "video",
+          "type": "video",
+          "mimeType": "video/mp4"
+        }
+      ]
+    },
+    {
+      "name": "nested content GET keeps credentials out of CDN request",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          },
+          "apiKey": "offline-only",
+          "authHeader": "Bearer offline-only",
+          "clientRequest": {
+            "method": "GET"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/video.mp4",
+        "method": "GET",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "nested content HEAD keeps credentials out of CDN request",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "artifactKey": "video",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task"
+          },
+          "apiKey": "offline-only",
+          "authHeader": "Bearer offline-only",
+          "clientRequest": {
+            "method": "HEAD"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/video.mp4",
+        "method": "HEAD",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "nested result renderer exposes URL only",
+      "hook": "protocols",
+      "args": [
+        {},
+        {
+          "status": "SUCCESS",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task",
+            "authorization": "private"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/video.mp4"
+      },
+      "path": [
+        "openai_video",
+        "render"
+      ]
+    },
+    {
+      "name": "nested failure renderer does not expose stale video",
+      "hook": "protocols",
+      "args": [
+        {},
+        {
+          "status": "FAILURE",
+          "data": {
+            "created_at": "2026-11-06T10:20:56Z",
+            "estimated_cost": 0.3,
+            "model_code": "Muse-Video-720-10S",
+            "output": {
+              "thumbnail": "https://cdn.example/video.mp4",
+              "video_url": "https://cdn.example/video.mp4",
+              "videos": [
+                {
+                  "thumbnail": "https://cdn.example/video.mp4",
+                  "url": "https://cdn.example/video.mp4"
+                }
+              ]
+            },
+            "poll_url": "/v1/tasks/upstream_task",
+            "status": "succeeded",
+            "task_no": "upstream_task",
+            "type": "video",
+            "upstream_task_id": "provider_task",
+            "error": {
+              "message": "provider rejected"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "error": {
+          "code": "video_generation_failed",
+          "message": "provider rejected"
+        }
+      },
+      "path": [
+        "openai_video",
+        "render"
+      ]
+    },
+    {
+      "name": "nested result cost is not invented actual usage",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          }
+        },
+        {
+          "status": "SUCCESS"
+        },
+        {
+          "created_at": "2026-11-06T10:20:56Z",
+          "estimated_cost": 0.3,
+          "model_code": "Muse-Video-720-10S",
+          "output": {
+            "thumbnail": "https://cdn.example/video.mp4",
+            "video_url": "https://cdn.example/video.mp4",
+            "videos": [
+              {
+                "thumbnail": "https://cdn.example/video.mp4",
+                "url": "https://cdn.example/video.mp4"
+              }
+            ]
+          },
+          "poll_url": "/v1/tasks/upstream_task",
+          "status": "succeeded",
+          "task_no": "upstream_task",
+          "type": "video",
+          "upstream_task_id": "provider_task"
+        }
+      ],
+      "expected": {}
+    },
+    {
+      "name": "previous plugin state queries the original task without resubmitting",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "Muse-Video-720-10S",
+          "publicTaskId": "offline_public_task",
+          "baseUrl": "https://supplier.example/v1",
+          "authHeader": "offline-only",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "input": {
+              "prompt": "Offline fixture"
+            },
+            "uploads": []
+          },
+          "taskId": "upstream_task",
+          "state": {
+            "protocolTemplate": "interface:784e5344ec29295f",
+            "pluginVersion": "2.1.1",
+            "configurationRevision": 0,
+            "operation": "video_generate",
+            "query": "/v1/tasks/"
+          }
+        }
+      ],
+      "expected": {
+        "url": "https://supplier.example/v1/tasks/upstream_task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
     }
   ]
 }

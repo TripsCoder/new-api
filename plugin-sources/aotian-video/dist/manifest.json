@@ -1,15 +1,15 @@
 {
   "format": "aotian-video-build/v1",
   "key": "aotian_video",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "interface": "interface:ac205b7903df54b7",
   "inputs": {
-    "build.mjs": "9ff4c2b99b38703db2c9195030ad2fb5f4316d89ebd3c0e21afad24593c2a8c4",
-    "plugin.js": "4893140d16a6c3bf53d699004aa16ce79fe0fabea44617887c5a872638d4e2f9",
+    "build.mjs": "d7c038f891a4b3a29d18b3e71d05bd8e0ef597718b69d13105e2538f597e05b3",
+    "plugin.js": "65abc69117c1031fa18026bf6557ded83cf64f6b1790fe93a9e7fc642a3eeb37",
     "evidence/docs.html": "4b2a4c41c0cb348467d3aa60494cd694b0a4ef7708c04bd602a93496edba187a",
     "evidence/Aotian-SKILL.md": "3321d3491be077cef8f2ef248fff38ee793aaf357b81585c3106b02e952b23f0"
   },
   "file": "aotian_video.plugin.js",
-  "sha256": "574bcce1f1e6b2eb88c22c89812adef971d8208e4039c766ed63b751d4dcd6a6",
+  "sha256": "6cce81b6eeb86790c76dcc15e2a0d07b24e3d4821b0a4deac53fb1c8b5e168ca",
   "status": "account-models-and-pricing-not-configured"
 }

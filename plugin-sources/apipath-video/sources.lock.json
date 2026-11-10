@@ -9,6 +9,13 @@
       "scope": "Published video records only; not authenticated account discovery"
     }
   ],
+  "responseEvidence": {
+    "file": "evidence/video-output-contract.json",
+    "sha256": "9938896e885d4156a04d79ba34ce748a044923149e4d401f732f82431e372d03",
+    "readAt": "2026-11-06",
+    "url": "https://online.apipath.top/app/api-docs",
+    "scope": "Reviewed Create Video including Muse-Video-720-10S and Task Query. The public query example is processing with result:null; it does not specify a completed output shape. Request catalog and model limits are not refreshed by this response-only fix."
+  },
   "modelDeclarations": {
     "status": "published-documentation-only",
     "exactIDs": [

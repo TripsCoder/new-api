@@ -1,0 +1,31 @@
+{
+  "format": "apipath-video-output-contract/v1",
+  "reviewedAt": "2026-11-06",
+  "documentation": {
+    "url": "https://online.apipath.top/app/api-docs",
+    "create": "POST /v1/video/generations",
+    "query": "GET /v1/tasks/{task_no}",
+    "scope": "Reviewed Create Video including Muse-Video-720-10S and Task Query. The public query example is processing with result:null; it does not specify a completed output shape. Request catalog and model limits are not refreshed by this response-only fix."
+  },
+  "observedResponse": {
+    "source": "Read-only original Muse-Video-720-10S task response and matching successful-response poll warnings; private evidence remains outside the repository",
+    "outputPaths": ["output.video_url", "output.videos[].url"],
+    "sanitizedSample": {
+      "created_at": "2026-11-06T10:20:56Z",
+      "estimated_cost": 0.3,
+      "model_code": "Muse-Video-720-10S",
+      "output": {
+        "thumbnail": "https://cdn.example/video.mp4",
+        "video_url": "https://cdn.example/video.mp4",
+        "videos": [{"thumbnail": "https://cdn.example/video.mp4", "url": "https://cdn.example/video.mp4"}]
+      },
+      "poll_url": "/v1/tasks/upstream_task",
+      "status": "succeeded",
+      "task_no": "upstream_task",
+      "type": "video",
+      "upstream_task_id": "provider_task"
+    }
+  },
+  "paidCalls": 0,
+  "billing": "estimated_cost is not actual usage or an actual charge; existing usage extraction stays unchanged"
+}

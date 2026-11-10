@@ -3,7 +3,7 @@ export const meta = {
   "apiVersion": 1,
   "key": "aotian_video",
   "name": "AoTian Video",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "author": {
     "name": "TripsCoder"
   },
@@ -339,6 +339,14 @@ export const meta = {
         "zh": "视频生成单价"
       }
     },
+    "seconds": {
+      "type": "number",
+      "unit": "second",
+      "description": {
+        "en": "Video generation unit price",
+        "zh": "视频生成单价"
+      }
+    },
     "resolution": {
       "enum": [
         "480p",
@@ -505,12 +513,14 @@ export function extractUsage(ctx) {
   // Only the effective request selects the pricing tier. Do not infer one from
   // pixel dimensions, ignored fields, metadata or an unspecified default.
   const resolution=input.resolution?.trim().toLowerCase();
-  return {request_count:1,...(meta.usageSchema.resolution.enum.includes(resolution)?{resolution}:{})};
+  // Reuse the validated duration sent upstream; do not invent an omitted value.
+  return {request_count:1,...(input.seconds!==undefined?{seconds:input.seconds}:{}),...(meta.usageSchema.resolution.enum.includes(resolution)?{resolution}:{})};
 }
 
 export function extractUsageOnComplete() {
   // No documented general actual-output-duration field. Never infer usage from
   // echoed request seconds, filenames, model names or monetary deductions.
+  // The host retains frozen submission seconds when completion omits them.
   return {};
 }
 

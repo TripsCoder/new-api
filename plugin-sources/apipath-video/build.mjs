@@ -7,6 +7,8 @@ const sha = value => crypto.createHash('sha256').update(value).digest('hex');
 const check = process.argv.includes('--check');
 const sourceText = read('evidence/video-docs.json');
 const docs = JSON.parse(sourceText);
+const outputEvidenceFile = 'evidence/video-output-contract.json';
+const outputEvidence = JSON.parse(read(outputEvidenceFile));
 const source = {url:'https://online.apipath.top/api/api-docs',sha256:sha(sourceText),readAt:'2026-11-02',scope:'Published video records only; not authenticated account discovery'};
 const id = 'interface:' + sha('apipath_video:POST:/v1/video/generations').slice(0,16);
 const aliases = {
@@ -74,14 +76,15 @@ contract.pending=[
 const {codec,...definition}=contract;
 definition.modelRules=Object.fromEntries(Object.entries(modelRules).map(([name,{codec,...rule}])=>[name,rule]));
 const usageSchema={request_count:{type:'number',unit:'count',description:{en:'Video generation unit price',zh:'视频生成单价'}},seconds:{type:'number',unit:'second',description:{en:'Video generation unit price',zh:'视频生成单价'}},resolution:{enum:[...new Set(docs.flatMap(d=>d.content.parameters.find(p=>p.name==='resolution')?.enum || []))],description:{en:'Requested video resolution',zh:'请求视频分辨率'}}};
-const meta={apiVersion:1,key:'apipath_video',name:'APIPath 视频',version:'2.1.0',author:{name:'TripsCoder'},icon:'text:AP',description:{en:'Video generation through the APIPath API',zh:'通过 APIPath 接口生成视频'},website:'https://online.apipath.top/app/api-docs',baseUrl:'https://online.apipath.top',auth:'api_key',models:docs.map(d=>d.model_code),fetchMode:'per_task',protocols:['openai_video'],modelDiscovery:{path:'/v1/models',format:'openai',sourceUrl:source.url,sourceSha256:source.sha256},parameterInterfaces:{[id]:definition},usageSchema};
+const meta={apiVersion:1,key:'apipath_video',name:'APIPath 视频',version:'2.1.2',author:{name:'TripsCoder'},icon:'text:AP',description:{en:'Video generation through the APIPath API',zh:'通过 APIPath 接口生成视频'},website:'https://online.apipath.top/app/api-docs',baseUrl:'https://online.apipath.top',auth:'api_key',models:docs.map(d=>d.model_code),fetchMode:'per_task',protocols:['openai_video'],modelDiscovery:{path:'/v1/models',format:'openai',sourceUrl:source.url,sourceSha256:source.sha256},parameterInterfaces:{[id]:definition},usageSchema};
 const provider={key:meta.key,name:meta.name,baseUrl:meta.baseUrl,models:{},interfaces:{[id]:contract}};
 const catalog={key:meta.key,name:meta.name,baseURL:meta.baseUrl,docsURL:meta.website,models:{},interfaces:meta.parameterInterfaces,
   documents:[{id,title:contract.title,method:contract.method,path:contract.path,description:'Canonical request parameters from published APIPath video records',source,schema:{type:'object',properties:Object.fromEntries(Object.entries(contract.parameters).map(([key,p])=>[key,p.definition])),required:Object.entries(contract.parameters).filter(([,p])=>p.required).map(([key])=>key)}}],warnings:contract.pending};
-const inputs=['build.mjs','apipath-runtime.js','evidence/video-docs.json','../media-providers/six-v2/runtime.js','../media-providers/six-v2/interface-runtime.js'];
-const compiled='// Generated from reviewed APIPath documents; shared video runtime remains unchanged.\nconst PROVIDER = '+JSON.stringify(provider,null,2)+';\nexport const meta = '+JSON.stringify(meta,null,2)+';\n'+inputs.slice(3).map(read).join('\n')+'\n'+read('apipath-runtime.js');
+const reusedRuntime=['../media-providers/six-v2/runtime.js','../media-providers/six-v2/interface-runtime.js'];
+const inputs=['build.mjs','apipath-runtime.js','evidence/video-docs.json',...reusedRuntime,outputEvidenceFile];
+const compiled='// Generated from reviewed APIPath documents; shared video runtime remains unchanged.\nconst PROVIDER = '+JSON.stringify(provider,null,2)+';\nexport const meta = '+JSON.stringify(meta,null,2)+';\n'+reusedRuntime.map(read).join('\n')+'\n'+read('apipath-runtime.js');
 const manifest={format:'apipath-video-build/v1',key:meta.key,version:meta.version,inputs:Object.fromEntries(inputs.map(file=>[file,sha(read(file))])),file:'apipath_video.plugin.js',sha256:sha(compiled)};
-const lock={format:'apipath-video-sources/v1',policy:'../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#imported-parameter-policy',sources:[source],modelDeclarations:{status:'published-documentation-only',exactIDs:meta.models},reusedRuntime:inputs.slice(3),pending:contract.pending,paidCalls:0,accountPricesImported:false};
+const lock={format:'apipath-video-sources/v1',policy:'../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#imported-parameter-policy',sources:[source],responseEvidence:{file:outputEvidenceFile,sha256:sha(read(outputEvidenceFile)),readAt:outputEvidence.reviewedAt,url:outputEvidence.documentation.url,scope:outputEvidence.documentation.scope},modelDeclarations:{status:'published-documentation-only',exactIDs:meta.models},reusedRuntime,pending:contract.pending,paidCalls:0,accountPricesImported:false};
 for(const [name,value]of [['../../pkg/modelconfig/apipath_video.catalog.json',catalog],['sources.lock.json',lock],['dist/manifest.json',manifest],['dist/apipath_video.plugin.js',compiled]]){
   const file=new URL(name,root),content=typeof value==='string'?value:JSON.stringify(value,null,2)+'\n';
   if(check){if(read(name)!==content)throw new Error('Stale artifact '+name);}else{fs.mkdirSync(new URL('./',file),{recursive:true});fs.writeFileSync(file,content);}

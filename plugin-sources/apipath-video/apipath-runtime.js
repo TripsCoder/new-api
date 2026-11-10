@@ -1,5 +1,17 @@
 // Keep canonical field validation, request encoding, usage extraction and
 // credentialless artifact downloads in the existing shared interface runtime.
+// APIPath requires a complete Bearer header. Vendor api_key contexts may carry
+// a raw authHeader; normalize here without changing other providers' auth.
+auth = function(ctx) {
+  const header = typeof ctx.authHeader === 'string' ? ctx.authHeader : '';
+  const credential = header.trim() ? header : (typeof ctx.apiKey === 'string' ? ctx.apiKey : '');
+  // Validate before trimming so a trailing newline cannot hide header injection.
+  if (/[\u0000-\u001f\u007f]/.test(header) || /[\u0000-\u001f\u007f]/.test(credential)) fail('channel API key is missing or invalid');
+  const token = credential.trim().replace(/^Bearer(?: +|$)/i, '');
+  if (!token || /\s/.test(token)) fail('channel API key is missing or invalid');
+  return { Authorization: 'Bearer ' + token, Accept: 'application/json' };
+};
+
 const sharedDocumentNormalization = normalizeDocumentInterface;
 normalizeDocumentInterface = function(ctx,p,body) {
   const input=copy(body.input);
@@ -31,6 +43,23 @@ extractUsage=function(ctx){
   // rather than inventing a resolution category or a zero charge.
   if(facts.resolution!==undefined&&!meta.usageSchema.resolution.enum.includes(facts.resolution))delete facts.resolution;
   return facts;
+};
+
+// APIPath task responses put video results in output. Reuse this resolver for
+// polling, artifact listing, content requests and public rendering.
+const sharedVideoURL = videoURL;
+videoURL = function(raw) {
+  const body = unwrap(raw);
+  const output = body.output;
+  if (object(output)) {
+    if (safeMediaURL(output.video_url)) return output.video_url;
+    if (Array.isArray(output.videos)) {
+      for (const video of output.videos) {
+        if (object(video) && safeMediaURL(video.url)) return video.url;
+      }
+    }
+  }
+  return sharedVideoURL(body);
 };
 
 function apipathTask(body) {

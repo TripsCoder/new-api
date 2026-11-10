@@ -45,7 +45,7 @@ const contract = {
   ],
 };
 const meta = {
-  apiVersion:1,key:'aotian_video',name:'AoTian Video',version:'2.1.1',author:{name:'TripsCoder'},icon:'text:AT',
+  apiVersion:1,key:'aotian_video',name:'AoTian Video',version:'2.1.2',author:{name:'TripsCoder'},icon:'text:AT',
   description:{en:'Video generation through the AoTian video API',zh:'通过 AoTian 视频接口生成视频'},
   website:'https://aotianzz.xyz/docs#endpoints',baseUrl:'https://aotianzz.xyz',auth:'api_key',
   // API v1 requires a static model. This exact ID is explicitly named in the
@@ -53,10 +53,11 @@ const meta = {
   models:['sh-seedance-2.5-720p'],fetchMode:'per_task',protocols:['openai_video'],
   modelDiscovery:{path:'/v1/models',format:'openai',sourceUrl:sources[0].url,sourceSha256:sources[0].sha256},
   parameterInterfaces:{[id]:contract},
-  // One completed video request is a known quantity. The provider has not
-  // documented general actual-duration usage, so do not invent second billing.
+  // Requested seconds support configured per-second pricing. This is not a
+  // claim that the provider reports measured output duration on completion.
   usageSchema:{
     request_count:{type:'number',unit:'count',description:{en:'Video generation unit price',zh:'视频生成单价'}},
+    seconds:{type:'number',unit:'second',description:{en:'Video generation unit price',zh:'视频生成单价'}},
     // Pricing selectors from documented examples and configured H3 tiers, not
     // a declaration that every upstream model supports all these resolutions.
     resolution:{enum:['480p','720p','768p','1080p','1440p','2k'],description:{en:'Video resolution',zh:'视频分辨率'}},

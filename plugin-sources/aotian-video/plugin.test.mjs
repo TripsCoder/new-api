@@ -51,9 +51,18 @@ for(const status of ['failed','failure','cancelled','canceled'])add('terminal fa
 add('unknown is not running or successful','parseTaskResult',[{}, {status:'new_status'}],{status:'UNKNOWN',reason:'未识别上游任务状态'});
 add('completed without URL is not successful','parseTaskResult',[{}, {status:'completed'}],{status:'UNKNOWN',reason:'完成响应缺少有效视频 URL'});
 add('measured duration is not invented','extractUsageOnComplete',[{}, {status:'SUCCESS'}, {seconds:5,cost:0.1}],{});
-add('request count excludes ignored billing multipliers','extractUsage',[ctx({seconds:6,n:20})],{request_count:1});
+add('request count excludes ignored billing multipliers','extractUsage',[ctx({seconds:6,n:20})],{request_count:1,seconds:6});
+add('affected Wan request exposes five numeric seconds','extractUsage',[{...ctx({seconds:'5',resolution:'720p',size:'16:9'}),upstreamModel:'wan3.0-prime-720p'}],{request_count:1,seconds:5,resolution:'720p'});
+for (const input of [{duration:6},{duration_seconds:'6'},{seconds:'6',duration:6}]) {
+  add('billing normalizes duration aliases '+JSON.stringify(input),'extractUsage',[ctx(input)],{request_count:1,seconds:6});
+}
+for (const seconds of [1,3600]) add('billing duration boundary '+seconds,'extractUsage',[ctx({seconds})],{request_count:1,seconds});
+for (const seconds of [0,-1,3601,5.5,'5s',false,null,9007199254740992]) add('billing rejects unsafe seconds '+String(seconds),'extractUsage',[ctx({seconds})],null,'seconds');
+add('billing rejects conflicting duration aliases','extractUsage',[ctx({seconds:5,duration:6})],null,'别名值冲突');
+add('billing does not infer duration from metadata or model','extractUsage',[{...ctx({metadata:{seconds:5},n:10}),upstreamModel:'video-5s'}],{request_count:1});
+add('multipart billing uses the same seconds as submission','extractUsage',[upload],{request_count:1,seconds:5});
 for (const resolution of ['480p','720p','768p','1080p','1440p','2k']) {
-  add('resolution is available to saved tiered pricing: '+resolution,'extractUsage',[ctx({seconds:8,resolution})],{request_count:1,resolution});
+  add('resolution is available to saved tiered pricing: '+resolution,'extractUsage',[ctx({seconds:8,resolution})],{request_count:1,seconds:8,resolution});
 }
 add('billing resolution canonicalizes case without changing the upstream tier','extractUsage',[ctx({resolution:'768P'})],{request_count:1,resolution:'768p'});
 add('billing keeps 2k and 1440p as separate declared values','buildSubmitRequest',[ctx({resolution:'2k'})],descriptor({resolution:'2k'}));
@@ -70,6 +79,8 @@ for(const entry of cases) {
   assert.equal(JSON.stringify(args),before,entry.name+' must not mutate hook arguments');
 }
 assert.equal(plugin.meta.models.length,1);
+assert.equal(plugin.meta.usageSchema.seconds.type,'number');
+assert.equal(plugin.meta.usageSchema.seconds.unit,'second');
 assert.equal(plugin.meta.parameterInterfaces[id].parameters.resolution.definition.enum,undefined);
 assert.equal(plugin.meta.parameterInterfaces[id].parameters.seconds.definition.default,undefined);
 const manifest=JSON.parse(fs.readFileSync(new URL('./dist/manifest.json',import.meta.url)));

@@ -1,0 +1,3288 @@
+{
+  "unixNow": 1,
+  "cases": [
+    {
+      "name": "submit Base \"https://metaso.cn\"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn\" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn\" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit Base \"https://metaso.cn/\"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn/\" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn/\" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit Base \"https://metaso.cn///\"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn///",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn///\" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn///",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn///\" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn///",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit Base \"https://metaso.cn/api\"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn/api\" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn/api\" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit Base \"https://metaso.cn/api/\"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn/api/\" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \"https://metaso.cn/api/\" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit Base \" https://metaso.cn/api/// \"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": " https://metaso.cn/api/// ",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \" https://metaso.cn/api/// \" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": " https://metaso.cn/api/// ",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \" https://metaso.cn/api/// \" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": " https://metaso.cn/api/// ",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit Base \"https://proxy.example/prefix/api/\"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://proxy.example/prefix/api/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://proxy.example/prefix/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \"https://proxy.example/prefix/api/\" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://proxy.example/prefix/api/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "https://proxy.example/prefix/api/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \"https://proxy.example/prefix/api/\" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://proxy.example/prefix/api/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "https://proxy.example/prefix/api/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit Base \"https://proxy.example/custom/\"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://proxy.example/custom/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://proxy.example/custom/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \"https://proxy.example/custom/\" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://proxy.example/custom/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "https://proxy.example/custom/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \"https://proxy.example/custom/\" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://proxy.example/custom/",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "https://proxy.example/custom/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "submit Base \"http://localhost:3000\"",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "http://localhost:3000",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "http://localhost:3000/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "query Base \"http://localhost:3000\" same-task",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "http://localhost:3000",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "same-task"
+        }
+      ],
+      "expected": {
+        "url": "http://localhost:3000/api/minimax/v2/query/video_generation/same-task",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "query Base \"http://localhost:3000\" task/a b?",
+      "hook": "buildQueryRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "http://localhost:3000",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": [],
+          "taskId": "task/a b?"
+        }
+      ],
+      "expected": {
+        "url": "http://localhost:3000/api/minimax/v2/query/video_generation/task%2Fa%20b%3F",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Accept": "application/json"
+        }
+      }
+    },
+    {
+      "name": "unchanged body 480p/5/9:16",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 480p/5/9:16",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "480p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 480p/5/16:9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "16:9"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 480p/5/16:9",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "480p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 480p/30/9:16",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 30,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 30,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 480p/30/9:16",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 30,
+            "resolution": "480p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 30,
+        "resolution": "480p",
+        "duration_band": "16-30s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 480p/30/16:9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 30,
+            "resolution": "480p",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 30,
+          "ratio": "16:9"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 480p/30/16:9",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 30,
+            "resolution": "480p",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 30,
+        "resolution": "480p",
+        "duration_band": "16-30s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 768P/5/9:16",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "768P",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "768P",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 768P/5/9:16",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "768P",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "768P",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 768P/5/16:9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "768P",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "768P",
+          "duration": 5,
+          "ratio": "16:9"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 768P/5/16:9",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "768P",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "768P",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 768P/30/9:16",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 30,
+            "resolution": "768P",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "768P",
+          "duration": 30,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 768P/30/9:16",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 30,
+            "resolution": "768P",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 30,
+        "resolution": "768P",
+        "duration_band": "16-30s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 768P/30/16:9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 30,
+            "resolution": "768P",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "768P",
+          "duration": 30,
+          "ratio": "16:9"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 768P/30/16:9",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 30,
+            "resolution": "768P",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 30,
+        "resolution": "768P",
+        "duration_band": "16-30s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 1080p/5/9:16",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "1080p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "1080p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 1080p/5/9:16",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "1080p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "1080p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 1080p/5/16:9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "1080p",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "1080p",
+          "duration": 5,
+          "ratio": "16:9"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 1080p/5/16:9",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "1080p",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "1080p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 1080p/15/9:16",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 15,
+            "resolution": "1080p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "1080p",
+          "duration": 15,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 1080p/15/9:16",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 15,
+            "resolution": "1080p",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 15,
+        "resolution": "1080p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 1080p/15/16:9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 15,
+            "resolution": "1080p",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "1080p",
+          "duration": 15,
+          "ratio": "16:9"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 1080p/15/16:9",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 15,
+            "resolution": "1080p",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 15,
+        "resolution": "1080p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 2K/5/9:16",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "2K",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "2K",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 2K/5/9:16",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "2K",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "2K",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 2K/5/16:9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "2K",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "2K",
+          "duration": 5,
+          "ratio": "16:9"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 2K/5/16:9",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "2K",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "2K",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 2K/15/9:16",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 15,
+            "resolution": "2K",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "2K",
+          "duration": 15,
+          "ratio": "9:16"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 2K/15/9:16",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 15,
+            "resolution": "2K",
+            "ratio": "9:16"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 15,
+        "resolution": "2K",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged body 2K/15/16:9",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 15,
+            "resolution": "2K",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "2K",
+          "duration": 15,
+          "ratio": "16:9"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged usage 2K/15/16:9",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 15,
+            "resolution": "2K",
+            "ratio": "16:9"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 15,
+        "resolution": "2K",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged image buildSubmitRequest",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "image_to_video"
+      }
+    },
+    {
+      "name": "unchanged image extractUsage",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "480p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged image extractMediaSources",
+      "hook": "extractMediaSources",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "videos": []
+      }
+    },
+    {
+      "name": "unchanged extra images buildSubmitRequest",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "image_to_video"
+      }
+    },
+    {
+      "name": "unchanged extra images extractUsage",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "480p",
+        "duration_band": "4-15s",
+        "input_images": 2,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged extra images extractMediaSources",
+      "hook": "extractMediaSources",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "videos": []
+      }
+    },
+    {
+      "name": "unchanged reference video buildSubmitRequest",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "video_url",
+                "role": "reference_video",
+                "video_url": {
+                  "url": "https://cdn.example/reference.mp4"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://cdn.example/reference.mp4"
+              }
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "unchanged reference video extractUsage",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "video_url",
+                "role": "reference_video",
+                "video_url": {
+                  "url": "https://cdn.example/reference.mp4"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "480p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 15
+      }
+    },
+    {
+      "name": "unchanged reference video extractMediaSources",
+      "hook": "extractMediaSources",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "video_url",
+                "role": "reference_video",
+                "video_url": {
+                  "url": "https://cdn.example/reference.mp4"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "videos": [
+          {
+            "url": "https://cdn.example/reference.mp4"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unchanged reference audio buildSubmitRequest",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "audio_url",
+                "role": "reference_audio",
+                "audio_url": {
+                  "url": "https://cdn.example/reference.mp3"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            },
+            {
+              "type": "audio_url",
+              "role": "reference_audio",
+              "audio_url": {
+                "url": "https://cdn.example/reference.mp3"
+              }
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "unchanged reference audio extractUsage",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "audio_url",
+                "role": "reference_audio",
+                "audio_url": {
+                  "url": "https://cdn.example/reference.mp3"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "480p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged reference audio extractMediaSources",
+      "hook": "extractMediaSources",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "audio_url",
+                "role": "reference_audio",
+                "audio_url": {
+                  "url": "https://cdn.example/reference.mp3"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "videos": []
+      }
+    },
+    {
+      "name": "unchanged mixed references buildSubmitRequest",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "video_url",
+                "role": "reference_video",
+                "video_url": {
+                  "url": "https://cdn.example/reference.mp4"
+                }
+              },
+              {
+                "type": "audio_url",
+                "role": "reference_audio",
+                "audio_url": {
+                  "url": "https://cdn.example/reference.mp3"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            },
+            {
+              "type": "image_url",
+              "role": "reference_image",
+              "image_url": {
+                "url": "https://cdn.example/image.png"
+              }
+            },
+            {
+              "type": "video_url",
+              "role": "reference_video",
+              "video_url": {
+                "url": "https://cdn.example/reference.mp4"
+              }
+            },
+            {
+              "type": "audio_url",
+              "role": "reference_audio",
+              "audio_url": {
+                "url": "https://cdn.example/reference.mp3"
+              }
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16"
+        },
+        "action": "multimodal_to_video"
+      }
+    },
+    {
+      "name": "unchanged mixed references extractUsage",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "video_url",
+                "role": "reference_video",
+                "video_url": {
+                  "url": "https://cdn.example/reference.mp4"
+                }
+              },
+              {
+                "type": "audio_url",
+                "role": "reference_audio",
+                "audio_url": {
+                  "url": "https://cdn.example/reference.mp3"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "480p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 15
+      }
+    },
+    {
+      "name": "unchanged mixed references extractMediaSources",
+      "hook": "extractMediaSources",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "content": [
+              {
+                "type": "image_url",
+                "role": "reference_image",
+                "image_url": {
+                  "url": "https://cdn.example/image.png"
+                }
+              },
+              {
+                "type": "video_url",
+                "role": "reference_video",
+                "video_url": {
+                  "url": "https://cdn.example/reference.mp4"
+                }
+              },
+              {
+                "type": "audio_url",
+                "role": "reference_audio",
+                "audio_url": {
+                  "url": "https://cdn.example/reference.mp3"
+                }
+              }
+            ]
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "videos": [
+          {
+            "url": "https://cdn.example/reference.mp4"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unchanged optional fields buildSubmitRequest",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "aigc_watermark": false,
+            "context_ir_enabled": false,
+            "callback_url": "https://callback.example/status",
+            "billing_policy": "fixture"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "url": "https://metaso.cn/api/minimax/v2/video_generation",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer offline-only",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "body": {
+          "model": "MiniMax-H3",
+          "content": [
+            {
+              "type": "text",
+              "text": "offline fixture"
+            }
+          ],
+          "resolution": "480p",
+          "duration": 5,
+          "ratio": "9:16",
+          "callback_url": "https://callback.example/status",
+          "aigc_watermark": false,
+          "context_ir_enabled": false,
+          "billing_policy": "fixture"
+        },
+        "action": "text_to_video"
+      }
+    },
+    {
+      "name": "unchanged optional fields extractUsage",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "aigc_watermark": false,
+            "context_ir_enabled": false,
+            "callback_url": "https://callback.example/status",
+            "billing_policy": "fixture"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "seconds": 5,
+        "resolution": "480p",
+        "duration_band": "4-15s",
+        "input_images": 0,
+        "input_video_seconds": 0
+      }
+    },
+    {
+      "name": "unchanged optional fields extractMediaSources",
+      "hook": "extractMediaSources",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn/api",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "model": "MiniMax-H3",
+            "prompt": "offline fixture",
+            "seconds": 5,
+            "resolution": "480p",
+            "ratio": "9:16",
+            "aigc_watermark": false,
+            "context_ir_enabled": false,
+            "callback_url": "https://callback.example/status",
+            "billing_policy": "fixture"
+          },
+          "files": []
+        }
+      ],
+      "expected": {
+        "videos": []
+      }
+    },
+    {
+      "name": "unchanged invalid input buildSubmitRequest {\"resolution\":\"4K\"}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "prompt": "offline",
+            "seconds": 5,
+            "resolution": "4K"
+          }
+        }
+      ],
+      "expectedError": "resolution must be 480p, 768P, 1080p or 2K"
+    },
+    {
+      "name": "unchanged invalid input extractUsage {\"resolution\":\"4K\"}",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "prompt": "offline",
+            "seconds": 5,
+            "resolution": "4K"
+          }
+        }
+      ],
+      "expectedError": "resolution must be 480p, 768P, 1080p or 2K"
+    },
+    {
+      "name": "unchanged invalid input buildSubmitRequest {\"resolution\":\"2K\",\"seconds\":16}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "prompt": "offline",
+            "seconds": 16,
+            "resolution": "2K"
+          }
+        }
+      ],
+      "expectedError": "seconds must be an integer between 4 and 15 for 2K"
+    },
+    {
+      "name": "unchanged invalid input extractUsage {\"resolution\":\"2K\",\"seconds\":16}",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "prompt": "offline",
+            "seconds": 16,
+            "resolution": "2K"
+          }
+        }
+      ],
+      "expectedError": "seconds must be an integer between 4 and 15 for 2K"
+    },
+    {
+      "name": "unchanged invalid input buildSubmitRequest {\"resolution\":\"480p\",\"seconds\":31}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "prompt": "offline",
+            "seconds": 31,
+            "resolution": "480p"
+          }
+        }
+      ],
+      "expectedError": "seconds must be an integer between 4 and 30 for 480p"
+    },
+    {
+      "name": "unchanged invalid input extractUsage {\"resolution\":\"480p\",\"seconds\":31}",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "prompt": "offline",
+            "seconds": 31,
+            "resolution": "480p"
+          }
+        }
+      ],
+      "expectedError": "seconds must be an integer between 4 and 30 for 480p"
+    },
+    {
+      "name": "unchanged invalid input buildSubmitRequest {\"seconds\":3}",
+      "hook": "buildSubmitRequest",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "prompt": "offline",
+            "seconds": 3,
+            "resolution": "480p"
+          }
+        }
+      ],
+      "expectedError": "seconds must be an integer between 4 and 30 for 480p"
+    },
+    {
+      "name": "unchanged invalid input extractUsage {\"seconds\":3}",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "baseUrl": "https://metaso.cn",
+          "apiKey": "offline-only",
+          "requestBody": {
+            "prompt": "offline",
+            "seconds": 3,
+            "resolution": "480p"
+          }
+        }
+      ],
+      "expectedError": "seconds must be an integer between 4 and 30 for 480p"
+    },
+    {
+      "name": "unchanged poll succeeded",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "task": {
+            "id": "original-task",
+            "status": "succeeded",
+            "duration": 5,
+            "resolution": "480p",
+            "content": {
+              "url": "https://cdn.example/result.mp4"
+            },
+            "usage": {
+              "input_seconds": 0
+            }
+          }
+        }
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "progress": "100%",
+        "url": "https://cdn.example/result.mp4",
+        "taskId": "original-task"
+      }
+    },
+    {
+      "name": "unchanged poll failed",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "task": {
+            "id": "original-task",
+            "status": "failed",
+            "error": {
+              "message": "provider rejected"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "status": "FAILURE",
+        "progress": "100%",
+        "reason": "provider rejected",
+        "taskId": "original-task"
+      }
+    },
+    {
+      "name": "unchanged poll running",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "task": {
+            "id": "original-task",
+            "status": "running"
+          }
+        }
+      ],
+      "expected": {
+        "status": "IN_PROGRESS",
+        "progress": "50%",
+        "taskId": "original-task"
+      }
+    },
+    {
+      "name": "unchanged poll queued",
+      "hook": "parseTaskResult",
+      "args": [
+        {},
+        {
+          "task": {
+            "id": "original-task",
+            "status": "queued"
+          }
+        }
+      ],
+      "expected": {
+        "status": "QUEUED",
+        "progress": "0%",
+        "taskId": "original-task"
+      }
+    },
+    {
+      "name": "unchanged submit receipt",
+      "hook": "parseSubmitResponse",
+      "args": [
+        {},
+        {
+          "body": {
+            "task_id": "original-task"
+          }
+        }
+      ],
+      "expected": {
+        "taskId": "original-task",
+        "taskData": {
+          "task_id": "original-task"
+        }
+      }
+    },
+    {
+      "name": "unchanged completed usage",
+      "hook": "extractUsageOnComplete",
+      "args": [
+        {},
+        {
+          "task": {
+            "id": "original-task",
+            "status": "succeeded",
+            "duration": 5,
+            "resolution": "480p",
+            "content": {
+              "url": "https://cdn.example/result.mp4"
+            },
+            "usage": {
+              "input_seconds": 0
+            }
+          }
+        }
+      ],
+      "expected": null
+    },
+    {
+      "name": "unchanged artifacts",
+      "hook": "listArtifacts",
+      "args": [
+        {
+          "status": "SUCCESS",
+          "data": {
+            "task": {
+              "id": "original-task",
+              "status": "succeeded",
+              "duration": 5,
+              "resolution": "480p",
+              "content": {
+                "url": "https://cdn.example/result.mp4"
+              },
+              "usage": {
+                "input_seconds": 0
+              }
+            }
+          }
+        }
+      ],
+      "expected": [
+        {
+          "key": "video",
+          "type": "video",
+          "mimeType": "video/mp4"
+        }
+      ]
+    },
+    {
+      "name": "unchanged credentialless content GET",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "data": {
+            "task": {
+              "id": "original-task",
+              "status": "succeeded",
+              "duration": 5,
+              "resolution": "480p",
+              "content": {
+                "url": "https://cdn.example/result.mp4"
+              },
+              "usage": {
+                "input_seconds": 0
+              }
+            }
+          },
+          "clientRequest": {
+            "method": "GET"
+          },
+          "apiKey": "offline-only"
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/result.mp4",
+        "method": "GET",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "unchanged credentialless content HEAD",
+      "hook": "buildContentRequest",
+      "args": [
+        {
+          "data": {
+            "task": {
+              "id": "original-task",
+              "status": "succeeded",
+              "duration": 5,
+              "resolution": "480p",
+              "content": {
+                "url": "https://cdn.example/result.mp4"
+              },
+              "usage": {
+                "input_seconds": 0
+              }
+            }
+          },
+          "clientRequest": {
+            "method": "HEAD"
+          },
+          "apiKey": "offline-only"
+        }
+      ],
+      "expected": {
+        "url": "https://cdn.example/result.mp4",
+        "method": "HEAD",
+        "credentialless": true
+      }
+    },
+    {
+      "name": "unchanged OpenAI decoder",
+      "hook": "protocols",
+      "args": [
+        {
+          "model": "MiniMax-H3",
+          "body": {
+            "kind": "json",
+            "value": {
+              "model": "MiniMax-H3",
+              "prompt": "offline",
+              "seconds": 5,
+              "resolution": "480p"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "kind": "submit",
+        "model": "MiniMax-H3",
+        "action": "text_to_video",
+        "requestBody": {
+          "model": "MiniMax-H3",
+          "prompt": "offline",
+          "seconds": 5,
+          "resolution": "480p"
+        }
+      },
+      "path": [
+        "openai_video",
+        "decodeRequest"
+      ]
+    }
+  ]
+}

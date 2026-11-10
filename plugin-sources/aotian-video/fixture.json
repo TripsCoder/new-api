@@ -1301,7 +1301,464 @@
         }
       ],
       "expected": {
+        "request_count": 1,
+        "seconds": 6
+      }
+    },
+    {
+      "name": "affected Wan request exposes five numeric seconds",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "wan3.0-prime-720p",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": "5",
+              "resolution": "720p",
+              "size": "16:9"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 5,
+        "resolution": "720p"
+      }
+    },
+    {
+      "name": "billing normalizes duration aliases {\"duration\":6}",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "duration": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 6
+      }
+    },
+    {
+      "name": "billing normalizes duration aliases {\"duration_seconds\":\"6\"}",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "duration_seconds": "6"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 6
+      }
+    },
+    {
+      "name": "billing normalizes duration aliases {\"seconds\":\"6\",\"duration\":6}",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": "6",
+              "duration": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 6
+      }
+    },
+    {
+      "name": "billing duration boundary 1",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 1
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 1
+      }
+    },
+    {
+      "name": "billing duration boundary 3600",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 3600
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 3600
+      }
+    },
+    {
+      "name": "billing rejects unsafe seconds 0",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 0
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "billing rejects unsafe seconds -1",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": -1
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "billing rejects unsafe seconds 3601",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 3601
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "billing rejects unsafe seconds 5.5",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5.5
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "billing rejects unsafe seconds 5s",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": "5s"
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "billing rejects unsafe seconds false",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": false
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "billing rejects unsafe seconds null",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": null
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "billing rejects unsafe seconds 9007199254740992",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 9007199254740992
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "seconds"
+    },
+    {
+      "name": "billing rejects conflicting duration aliases",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5,
+              "duration": 6
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expectedError": "别名值冲突"
+    },
+    {
+      "name": "billing does not infer duration from metadata or model",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "video-5s",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "metadata": {
+                "seconds": 5
+              },
+              "n": 10
+            },
+            "uploads": []
+          }
+        }
+      ],
+      "expected": {
         "request_count": 1
+      }
+    },
+    {
+      "name": "multipart billing uses the same seconds as submission",
+      "hook": "extractUsage",
+      "args": [
+        {
+          "model": "client-alias",
+          "upstreamModel": "new-account-video-id",
+          "baseUrl": "https://supplier.example/v1",
+          "apiKey": "fixture-only",
+          "publicTaskId": "task_public",
+          "files": [
+            {
+              "ref": "request_file:input_reference",
+              "field": "input_reference",
+              "filename": "reference.png",
+              "mimeType": "image/png",
+              "size": 100
+            }
+          ],
+          "requestBody": {
+            "operation": "video_generate",
+            "protocolTemplate": "interface:ac205b7903df54b7",
+            "input": {
+              "prompt": "Fixture",
+              "seconds": 5,
+              "size": "9:16"
+            },
+            "uploads": [
+              {
+                "ref": "request_file:input_reference",
+                "field": "input_reference",
+                "filename": "reference.png",
+                "mimeType": "image/png",
+                "size": 100
+              }
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "request_count": 1,
+        "seconds": 5
       }
     },
     {
@@ -1329,6 +1786,7 @@
       ],
       "expected": {
         "request_count": 1,
+        "seconds": 8,
         "resolution": "480p"
       }
     },
@@ -1357,6 +1815,7 @@
       ],
       "expected": {
         "request_count": 1,
+        "seconds": 8,
         "resolution": "720p"
       }
     },
@@ -1385,6 +1844,7 @@
       ],
       "expected": {
         "request_count": 1,
+        "seconds": 8,
         "resolution": "768p"
       }
     },
@@ -1413,6 +1873,7 @@
       ],
       "expected": {
         "request_count": 1,
+        "seconds": 8,
         "resolution": "1080p"
       }
     },
@@ -1441,6 +1902,7 @@
       ],
       "expected": {
         "request_count": 1,
+        "seconds": 8,
         "resolution": "1440p"
       }
     },
@@ -1469,6 +1931,7 @@
       ],
       "expected": {
         "request_count": 1,
+        "seconds": 8,
         "resolution": "2k"
       }
     },
