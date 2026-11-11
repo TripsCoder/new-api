@@ -250,6 +250,28 @@ export const VIDEO_CAPABILITY_VIEWS = [
 export function capabilityMode(key: string): string {
   return key === 'first_frame' ? 'frames' : key
 }
+
+function frameChoices(mode: Mode | undefined): {
+  firstFrameReference: boolean
+  lastFrame: boolean
+} {
+  if (!mode?.enabled) return { firstFrameReference: false, lastFrame: false }
+  const firstFrameReference = mode.capabilities?.firstFrameReference
+  if (firstFrameReference !== undefined) {
+    return {
+      firstFrameReference,
+      lastFrame: mode.capabilities?.lastFrame === true,
+    }
+  }
+  // Older configurations stored a standalone first-frame choice as a rejection
+  // of the tail field. The rejection may be inherited from the shared group.
+  const firstOnly =
+    mode.mapping?.end_image_url === '@reject' ||
+    (mode.capabilities?.firstFrame === true &&
+      mode.capabilities.lastFrame !== true)
+  return { firstFrameReference: firstOnly, lastFrame: !firstOnly }
+}
+
 export function applyIndependentCapability(
   document: Configuration,
   catalog: Catalog,
@@ -259,31 +281,58 @@ export function applyIndependentCapability(
   enabled: boolean
 ): Configuration {
   const actual = capabilityMode(key)
+  const frames =
+    actual === 'frames'
+      ? new Map(
+          models.map((name) => {
+            const choices = frameChoices(
+              effectiveMode(document, name, 'frames')
+            )
+            if (key === 'first_frame') choices.firstFrameReference = enabled
+            else choices.lastFrame = enabled
+            return [name, choices] as const
+          })
+        )
+      : undefined
   const next = applyModeChoice(
     document,
     catalog,
     models,
     groupId,
     actual,
-    enabled
+    frames
+      ? [...frames.values()].some(
+          (choice) => choice.firstFrameReference || choice.lastFrame
+        )
+      : enabled
   )
-  if ((key === 'first_frame' || key === 'frames') && enabled) {
-    const firstOnly = key === 'first_frame'
-    for (const model of models) {
-      const binding = next.bindings[model]?.frames
-      if (!binding) continue
-      const documented = catalog.models[model]
-      const original = documented?.modes.frames
-        ? modeFromDocument(documented, 'frames')
-        : undefined
-      binding.mapping = { ...binding.mapping }
-      for (const field of ['end_image_url', 'last_frame']) {
-        if (firstOnly) binding.mapping[field] = '@reject'
-        else if (original?.mapping?.[field]) {
-          binding.mapping[field] = original.mapping[field]
-        } else delete binding.mapping[field]
-      }
+  for (const [name, choice] of frames ?? []) {
+    const binding = next.bindings[name].frames
+    binding.enabled = choice.firstFrameReference || choice.lastFrame
+    const frame = effectiveMode(next, name, 'frames')
+    if (
+      key !== 'frames' ||
+      !enabled ||
+      frame?.mapping?.end_image_url !== '@reject'
+    ) {
+      continue
     }
+
+    // Undo the legacy first-only guard when explicitly enabling a frame pair.
+    // Leave all other mappings, including custom tail mappings, untouched.
+    const documented = catalog.models[name]
+    const source = documented?.modes.frames
+      ? modeFromDocument(documented, 'frames')
+      : undefined
+    const inherited = next.groups[binding.groupId].modes.frames.mapping
+    const mapping = { ...binding.mapping }
+    for (const field of ['end_image_url', 'last_frame']) {
+      if (frame.mapping?.[field] !== '@reject') continue
+      if (source?.mapping?.[field]) mapping[field] = source.mapping[field]
+      else if (inherited?.[field] === '@reject') mapping[field] = field
+      else delete mapping[field]
+    }
+    binding.mapping = mapping
   }
   // Combined video+audio is an internal request classification, not an extra UI choice.
   const combined = models.filter(
@@ -319,18 +368,24 @@ export function applyIndependentCapability(
   }
   for (const name of models) {
     const frame = effectiveMode(next, name, 'frames')
-    const first = !!frame?.enabled
-    const last =
-      first && next.bindings[name]?.frames?.mapping?.end_image_url !== '@reject'
+    const choice = frames?.get(name) ?? frameChoices(frame)
+    const first = choice.firstFrameReference || choice.lastFrame
     const allowed = {
       images: !!effectiveMode(next, name, 'image_video')?.enabled || first,
       videos: !!effectiveMode(next, name, 'video_ref')?.enabled,
       audios: !!effectiveMode(next, name, 'audio_ref')?.enabled,
       firstFrame: first,
-      lastFrame: last,
+      lastFrame: choice.lastFrame,
     }
     for (const [mode, binding] of Object.entries(next.bindings[name] ?? {})) {
-      if (!mode.endsWith('image')) binding.capabilities = clone(allowed)
+      if (mode.endsWith('image')) continue
+      binding.capabilities = { ...allowed }
+      if (
+        mode === 'frames' &&
+        (frames || frame?.capabilities?.firstFrameReference !== undefined)
+      ) {
+        binding.capabilities.firstFrameReference = choice.firstFrameReference
+      }
     }
   }
   return next
@@ -346,10 +401,10 @@ export function capabilityEnabled(
   if (!mode?.enabled) return false
   if (key === 'first_frame' || key === 'frames') {
     return models.some((name) => {
-      if (!effectiveMode(document, name, 'frames')?.enabled) return false
-      const firstOnly =
-        document.bindings[name]?.frames?.mapping?.end_image_url === '@reject'
-      return key === 'first_frame' ? firstOnly : !firstOnly
+      const choice = frameChoices(effectiveMode(document, name, 'frames'))
+      return key === 'first_frame'
+        ? choice.firstFrameReference
+        : choice.lastFrame
     })
   }
   return true

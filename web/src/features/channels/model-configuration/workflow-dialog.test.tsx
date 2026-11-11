@@ -1769,6 +1769,50 @@ describe('actual channel workflow dialog', () => {
       expect(selected).not.toBeChecked()
     }
   })
+  it.each([false, true])(
+    'keeps both frame options checked and cancels them independently (pair first: %s)',
+    async (pairFirst) => {
+      const frameCatalog = structuredClone(catalog)
+      frameCatalog.models.A.modes.frames = { required: [] }
+      frameCatalog.models.A.capabilities = {
+        firstFrame: true,
+        lastFrame: true,
+        multipleReferences: true,
+      }
+      const initial = createSharedGroup(baseline, frameCatalog, ['A'], 'frame')
+      function Harness() {
+        const [draft, setDraft] = useState(initial)
+        return (
+          <FunctionChoice
+            draft={draft}
+            catalog={frameCatalog}
+            selected={['A']}
+            groupId='frame'
+            kind='video'
+            onKind={vi.fn()}
+            onChange={setDraft}
+          />
+        )
+      }
+      render(<Harness />)
+      const first = screen.getByRole('checkbox', {
+        name: /^First-frame reference/,
+      })
+      const pair = screen.getByRole('checkbox', {
+        name: /^Use first and last frames/,
+      })
+      const [a, b] = pairFirst ? [pair, first] : [first, pair]
+      await userEvent.click(a)
+      await userEvent.click(b)
+      expect(first).toBeChecked()
+      expect(pair).toBeChecked()
+      await userEvent.click(a)
+      expect(a).not.toBeChecked()
+      expect(b).toBeChecked()
+      await userEvent.click(b)
+      expect(b).not.toBeChecked()
+    }
+  )
   it('opens individual settings in a separate dialog and cancels without changing the outer draft', async () => {
     mount('old')
     await advanceToParameters()

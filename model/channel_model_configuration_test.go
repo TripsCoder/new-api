@@ -29,10 +29,26 @@ func TestChannelModelConfigurationRevisionsAndCredentialProtection(t *testing.T)
 	require.Equal(t, int64(1), saved.Revision)
 	_, err = SaveChannelModelConfiguration(context.Background(), 41, 1, d, 0)
 	require.ErrorIs(t, err, ErrModelConfigurationConflict)
-	saved.Groups["second"] = modelconfig.Group{Name: "two", Modes: map[string]modelconfig.Mode{}}
+	saved.Groups["second"] = modelconfig.Group{Name: "two", Modes: map[string]modelconfig.Mode{
+		"frames": {Enabled: true, Input: map[string]any{}},
+	}}
+	standalone := false
+	saved.Bindings["original"] = map[string]modelconfig.Binding{
+		"frames": {GroupID: "second", Capabilities: &modelconfig.InputCapabilities{
+			Images: true, FirstFrame: true, LastFrame: true, FirstFrameReference: &standalone,
+		}},
+	}
 	saved, err = SaveChannelModelConfiguration(context.Background(), 41, 1, saved, 1)
 	require.NoError(t, err)
 	require.Equal(t, int64(2), saved.Revision)
+	latest, err := GetChannelModelConfiguration(context.Background(), 41, 0)
+	require.NoError(t, err)
+	frames := latest.Bindings["original"]["frames"].Capabilities
+	require.NotNil(t, frames)
+	require.True(t, frames.FirstFrame)
+	require.True(t, frames.LastFrame)
+	require.NotNil(t, frames.FirstFrameReference)
+	require.False(t, *frames.FirstFrameReference)
 	old, err := GetChannelModelConfiguration(context.Background(), 41, 1)
 	require.NoError(t, err)
 	require.Empty(t, old.Groups)

@@ -115,9 +115,12 @@ describe('channel workflow scope and capabilities', () => {
       true
     )
     expect(effectiveMode(doc, 'unknown', 'frames')?.enabled).toBe(true)
-    expect(
-      effectiveMode(doc, 'unknown', 'frames')?.mapping?.end_image_url
-    ).toBe('@reject')
+    expect(effectiveMode(doc, 'unknown', 'frames')?.capabilities).toMatchObject(
+      {
+        firstFrame: true,
+        lastFrame: false,
+      }
+    )
   })
   it('uses the actual response difference, retaining all missing entries until explicit removal', () => {
     expect(missingExisting(['A'], ['A', 'B', 'C'], true)).toEqual(['B', 'C'])
@@ -313,40 +316,47 @@ describe('independent material configuration', () => {
       expect(doc.bindings.B).toEqual(original.bindings.B)
     }
   )
-  it('switches between frame input styles without forcing reference images or text video', () => {
-    let doc = createSharedGroup(empty(), catalog, ['A'], 'g')
-    doc = applyIndependentCapability(
-      doc,
-      catalog,
+  it('adds frame pairs to a legacy first-frame-only model and keeps both after reopening', () => {
+    const frameCatalog = structuredClone(catalog)
+    const model = frameCatalog.models.A
+    model.modes.frames = { required: [] }
+    model.parameters.start_image_url = { type: 'string' }
+    model.parameters.end_image_url = { type: 'string' }
+    const original = createSharedGroup(empty(), frameCatalog, ['A', 'B'], 'g')
+    const shared = original.groups.g.modes.frames
+    shared.enabled = true
+    shared.mapping = {
+      ...shared.mapping,
+      end_image_url: '@reject',
+      last_frame: '@reject',
+    }
+    original.bindings.A.frames.enabled = true
+    expect(capabilityEnabled(original, ['A'], 'g', 'first_frame')).toBe(true)
+    expect(capabilityEnabled(original, ['A'], 'g', 'frames')).toBe(false)
+
+    const draft = applyIndependentCapability(
+      original,
+      frameCatalog,
       ['A'],
       'g',
-      'text_video',
-      false
-    )
-    doc = applyIndependentCapability(doc, catalog, ['A'], 'g', 'frames', true)
-    expect(capabilityEnabled(doc, ['A'], 'g', 'frames')).toBe(true)
-    expect(capabilityEnabled(doc, ['A'], 'g', 'first_frame')).toBe(false)
-    doc = applyIndependentCapability(
-      doc,
-      catalog,
-      ['A'],
-      'g',
-      'first_frame',
+      'frames',
       true
     )
-    expect(capabilityEnabled(doc, ['A'], 'g', 'first_frame')).toBe(true)
-    expect(capabilityEnabled(doc, ['A'], 'g', 'frames')).toBe(false)
-    expect(capabilityEnabled(doc, ['A'], 'g', 'image_video')).toBe(false)
-    expect(capabilityEnabled(doc, ['A'], 'g', 'text_video')).toBe(false)
-    doc = applyIndependentCapability(
-      doc,
-      catalog,
+    const reopened = createSharedGroup(
+      readConfiguration(parseSafe(JSON.stringify(draft)), draft.provider),
+      frameCatalog,
       ['A'],
-      'g',
-      'first_frame',
-      false
+      'reopened'
     )
-    expect(effectiveMode(doc, 'A', 'frames')?.enabled).toBe(false)
+    expect(capabilityEnabled(reopened, ['A'], 'reopened', 'first_frame')).toBe(
+      true
+    )
+    expect(capabilityEnabled(reopened, ['A'], 'reopened', 'frames')).toBe(true)
+    expect(effectiveMode(reopened, 'A', 'frames')?.mapping?.end_image_url).toBe(
+      'end_image_url'
+    )
+    expect(effectiveMode(reopened, 'A', 'image_video')?.enabled).toBe(false)
+    expect(reopened.bindings.B).toEqual(original.bindings.B)
   })
   it.each(['image first', 'text disabled first'])(
     'keeps reference images independent from text-to-video with %s',

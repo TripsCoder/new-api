@@ -54,6 +54,7 @@ export type InputCapabilities = {
   audios: boolean
   firstFrame?: boolean
   lastFrame?: boolean
+  firstFrameReference?: boolean
 }
 export type Mode = {
   strictMapping?: boolean

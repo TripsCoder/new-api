@@ -76,6 +76,9 @@ type InputCapabilities struct {
 	Audios     bool `json:"audios"`
 	FirstFrame bool `json:"firstFrame,omitempty"`
 	LastFrame  bool `json:"lastFrame,omitempty"`
+	// The standalone first-frame choice is separate from FirstFrame, which
+	// also permits the first image of a frame pair.
+	FirstFrameReference *bool `json:"firstFrameReference,omitempty"`
 }
 type Mode struct {
 	StrictMapping bool                 `json:"strictMapping,omitempty"`
