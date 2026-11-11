@@ -12,12 +12,14 @@ const source=sources[0];
 const discoverySource={file:'evidence/discovery-20261102-models.js.txt',url:'https://fenglang.cloud/js/models.js',sha256:digest(read('evidence/discovery-20261102-models.js.txt')),readAt:'2026-11-02',status:'live-public-video-catalog'};
 const officialSources=[['official.html','https://fenglang.cloud/docs/seedance-official.html'],['models.js','https://fenglang.cloud/js/models.js'],['openapi.js','https://fenglang.cloud/js/openapi.js']].map(([file,url])=>({file:'evidence/official-20261102-'+file+'.txt',url,sha256:digest(read('evidence/official-20261102-'+file+'.txt')),readAt:'2026-11-02',status:'public-documentation'}));
 officialSources.push({file:'evidence/ark-create-20261102.md.txt',url:'https://ark.volcengine.com/region:cn-beijing/docs/create-video-generation-task-api.md',sha256:digest(read('evidence/ark-create-20261102.md.txt')),readAt:'2026-11-02',status:'official-protocol-reference'});
-const official=officialContract(officialSources[0],digest);
+const corporateSource={file:'evidence/official-20261111-models.js.txt',url:'https://fenglang.cloud/js/models.js',sha256:digest(read('evidence/official-20261111-models.js.txt')),readAt:'2026-11-11',status:'public-documentation'};
+const official=officialContract(officialSources[0],digest,corporateSource);
 for(const rule of Object.values(official.modelRules)) {
   rule.parameters.priority.source=officialSources[3];
 }
-for(const model of Object.keys(official.modelRules)) if(!read(officialSources[1].file).toString().includes("['"+model+"',")) throw new Error('Missing reviewed official ID '+model);
-for(const rule of Object.values(official.modelRules)) for(const field of ['images','videos','audios']) rule.parameters[field].source=officialSources[1];
+for(const model of Object.keys(official.modelRules)) if(!read(model.endsWith('-corp')?corporateSource.file:officialSources[1].file).toString().includes("['"+model+"',")) throw new Error('Missing reviewed official ID '+model);
+for(const [model,rule] of Object.entries(official.modelRules)) for(const field of ['images','videos','audios']) rule.parameters[field].source=model.endsWith('-corp')?corporateSource:officialSources[1];
+officialSources.push(corporateSource);
 const parameter=(type,vendorFields,capabilities,description,extra={})=>({type,required:false,description,source,definition:{type,description,'x-channel-parameter':{vendorFields,capabilities,requiredIn:[],status:'documented'},...extra}});
 const refs=(field,capabilities)=>parameter('array',[field],capabilities,'公网 HTTPS 素材 URL 数组',{items:{type:'string',format:'uri'}});
 const parameters={
@@ -84,7 +86,7 @@ for (const [model,rule] of Object.entries(modelRules)) {
 // Usage labels describe pricing dimensions, not per-model request candidates.
 // Each request still passes the exact modelRules above before usage extraction.
 const usageSchema={request_count:{type:'number',unit:'count',description:{en:'Video generation unit price',zh:'视频生成单价'}},seconds:{type:'number',unit:'second',description:{en:'Video generation unit price',zh:'视频生成单价'}},resolution:{enum:[...new Set(documented.flatMap(([, , , values])=>values))],description:{en:'Requested video resolution',zh:'请求视频分辨率'}}};
-const meta={apiVersion:1,key:'fenglang_video',name:'风浪云视频',version:'2.1.4',author:{name:'TripsCoder'},icon:'text:FL',description:{en:'Video generation through the Fenglang Cloud API',zh:'通过风浪云接口生成视频'},website:'https://fenglang.cloud/',baseUrl:'https://fenglang.cloud/open/v1',auth:'api_key',models:['seedance-2.5',...Object.keys(official.modelRules)],fetchMode:'per_task',protocols:['openai_video'],modelDiscovery:{path:'/pricing',format:'fenglang_video_catalog',sourceUrl:discoverySource.url,sourceSha256:discoverySource.sha256},parameterInterfaces:{[id]:contract,[official.id]:official},usageSchema,
+const meta={apiVersion:1,key:'fenglang_video',name:'风浪云视频',version:'2.1.5',author:{name:'TripsCoder'},icon:'text:FL',description:{en:'Video generation through the Fenglang Cloud API',zh:'通过风浪云接口生成视频'},website:'https://fenglang.cloud/',baseUrl:'https://fenglang.cloud/open/v1',auth:'api_key',models:['seedance-2.5',...Object.keys(official.modelRules)],fetchMode:'per_task',protocols:['openai_video'],modelDiscovery:{path:'/pricing',format:'fenglang_video_catalog',sourceUrl:discoverySource.url,sourceSha256:discoverySource.sha256},parameterInterfaces:{[id]:contract,[official.id]:official},usageSchema,
   usageProfiles:Object.entries(official.modelRules).map(([model,rule])=>({models:[model],schema:{tokens:{type:'number',unit:'token',description:{en:'Video generation token unit price',zh:'视频生成 Token 单价'}},resolution:{enum:rule.parameters.resolution.enum,description:{en:'Output video resolution',zh:'输出视频分辨率'}},video_input:{enum:['none','video'],description:{en:'Reference video input',zh:'参考视频输入'}}},examples:[{label:'720p · 4s',facts:{tokens:86400,resolution:'720p',video_input:'none'}}]})),
 };
 // The configuration UI consumes both the execution interface and its source

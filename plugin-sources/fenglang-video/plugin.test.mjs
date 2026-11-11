@@ -62,6 +62,24 @@ const officialID=Object.keys(plugin.meta.parameterInterfaces).find(key=>plugin.m
 const official=(input={},model='doubao-seedance-2-5-260628')=>({...ctx({resolution:'720p',...input},model),requestBody:{...ctx({resolution:'720p',...input},model).requestBody,protocolTemplate:officialID}});
 const officialBody={model:'doubao-seedance-2-5-260628',content:[{type:'text',text:'Fixture'}],resolution:'720p'};
 const officialDescriptor=body=>({...descriptor(),url:'https://supplier.example/api/v3/contents/generations/tasks',body:{...officialBody,...body}});
+for (const [base, tiers, maximum] of [
+  ['doubao-seedance-2-0-260128', ['480p','720p','1080p','4k'], 15],
+  ['doubao-seedance-2-0-fast-260128', ['480p','720p'], 15],
+  ['doubao-seedance-2-0-mini-260615', ['480p','720p'], 15],
+  ['doubao-seedance-2-5-260628', ['480p','720p','1080p'], 30],
+]) {
+  const model = base + '-corp';
+  const rule = plugin.meta.parameterInterfaces[officialID].modelRules[model];
+  assert.ok(rule, 'missing documented corporate model '+model);
+  assert.deepEqual(Array.from(rule.parameters.resolution.enum), tiers);
+  assert.equal(rule.parameters.seconds.minimum, 4);
+  assert.equal(rule.parameters.seconds.maximum, maximum);
+  assert.equal(rule.parameters.resolution.source.readAt, '2026-11-11');
+  add('corporate wire ID preserved '+model,'buildSubmitRequest',[official({resolution:tiers[0],seconds:maximum},model)],officialDescriptor({model,resolution:tiers[0],duration:maximum}));
+  add('corporate duration limited '+model,'buildSubmitRequest',[official({seconds:maximum+1},model)],null,'seconds');
+  add('corporate resolution limited '+model,'buildSubmitRequest',[official({resolution:'8k'},model)],null,'resolution');
+}
+assert.equal(plugin.meta.parameterInterfaces[officialID].modelRules['doubao-seedance-2-5-260628-corp-unknown'],undefined);
 add('official omission does not inject supplier defaults','buildSubmitRequest',[official()],officialDescriptor({}));
 add('official scalars preserve explicit false and zero','buildSubmitRequest',[official({duration:6,ratio:'1:1',seed:0,generate_audio:false,watermark:false,return_last_frame:false,draft:false,priority:0,output_format:'mov',unknown:'ignored'})],officialDescriptor({duration:6,ratio:'1:1',seed:0,generate_audio:false,watermark:false,return_last_frame:false,draft:false,priority:0,output_format:'mov'}));
 add('official exact -s ID is not rewritten','buildSubmitRequest',[official({},'doubao-seedance-2-5-260628-s')],officialDescriptor({model:'doubao-seedance-2-5-260628-s'}));
@@ -128,7 +146,7 @@ try {
     fs.mkdirSync(path.join(provider,'evidence'),{recursive:true});
     fs.mkdirSync(path.join(provider,'dist'),{recursive:true});
     fs.mkdirSync(path.join(root,'pkg/modelconfig'),{recursive:true});
-    for(const name of ['build.mjs','plugin.js','official.js','official-contract.mjs','evidence/discovery-20261102-models.js.txt','evidence/openapi.js.txt','evidence/models.js.txt','evidence/official-20261102-official.html.txt','evidence/official-20261102-models.js.txt','evidence/official-20261102-openapi.js.txt','evidence/ark-create-20261102.md.txt']) {
+    for(const name of ['build.mjs','plugin.js','official.js','official-contract.mjs','evidence/discovery-20261102-models.js.txt','evidence/openapi.js.txt','evidence/models.js.txt','evidence/official-20261102-official.html.txt','evidence/official-20261102-models.js.txt','evidence/official-20261102-openapi.js.txt','evidence/ark-create-20261102.md.txt','evidence/official-20261111-models.js.txt']) {
       const value=fs.readFileSync(new URL(name,import.meta.url),'utf8').replace(/\r\n/g,'\n').replace(/\n/g,newline);
       fs.writeFileSync(path.join(provider,name),value);
     }

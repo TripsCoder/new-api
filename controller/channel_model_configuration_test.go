@@ -22,6 +22,15 @@ import (
 )
 
 func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
+	testReviewedVideoUIModelConfigurationSave(t, false)
+}
+
+func TestReviewedFenglangCorpUIModelConfigurationSave(t *testing.T) {
+	testReviewedVideoUIModelConfigurationSave(t, true)
+}
+
+func testReviewedVideoUIModelConfigurationSave(t *testing.T, corporate bool) {
+	t.Helper()
 	previousDB, previousRegistry, previousCache := model.DB, jsplugin.DefaultRegistry, common.MemoryCacheEnabled
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	require.NoError(t, err)
@@ -35,6 +44,9 @@ func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 	fixtures := map[string]modelconfig.Document{}
 	require.NoError(t, common.Unmarshal(raw, &fixtures))
 	for index, provider := range []string{"aotian_video", "fenglang_video", "apipath_video"} {
+		if corporate && provider != "fenglang_video" {
+			continue
+		}
 		t.Run(provider, func(t *testing.T) {
 			document := fixtures[provider]
 			require.Len(t, document.Bindings, 1)
@@ -112,6 +124,9 @@ func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 			fixtureName, sourceFolder := "apipath_video_ui_save.json", "apipath-video"
 			if provider == "fenglang_video" {
 				fixtureName, sourceFolder, name = "fenglang_official_ui_save.json", "fenglang-video", "doubao-seedance-2-5-260628"
+				if corporate {
+					fixtureName, name = "fenglang_corp_ui_save.json", name+"-corp"
+				}
 			}
 			serialized, err := os.ReadFile(filepath.Join("testdata", fixtureName))
 			require.NoError(t, err)

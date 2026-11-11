@@ -2980,7 +2980,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "相关项目",
     "footer.defaultCopyright": "版权所有。",
-    "footer.new\u0061pi.projectAttributionSuffix": "版权所有，由项目贡献者设计与开发。",
+    "footer.newapi.projectAttributionSuffix": "版权所有，由项目贡献者设计与开发。",
     "For 4 to 10 seconds, set minimum 4 and maximum 10. The documented number type still applies.": "4～10秒时，最小值填4、最大值填10；整数或小数类型仍按文档。",
     "For 5 or 10 seconds, enter 5,10. Do not enter units or a range here.": "只能选5秒或10秒时填5,10；这里不填单位或区间。",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "高级自定义渠道仅对 /v1/responses 且不做协议转换的路由生效。",
@@ -7802,6 +7802,17 @@
     "Zhipu": "智谱",
     "Zhipu GLM": "智谱GLM",
     "Zhipu V4": "智谱 V4",
-    "Zoom": "缩放"
+    "Zoom": "缩放",
+    "Saved parameter configuration": "已保存的参数配置",
+    "These models have saved parameters. Fetching models updates the model list; it does not reset saved parameters.": "以下模型保留着历史参数配置。读取模型列表只更新型号，不会重置已保存的参数。",
+    "Preview parameter refresh from documentation": "预览按当前插件文档刷新参数",
+    "Refresh replaces parameter rules, field mappings and defaults for the selected models, including disabled functions. Prices, enabled functions and interface confirmations are preserved. Changes are applied to the draft and take effect only after saving.": "刷新将替换所选模型的参数规则、字段映射和默认值，包含已关闭的功能。保留价格、功能启停和接口确认状态；应用到草稿后，仍需正常保存才会生效。",
+    "Missing matching documentation; these functions will be kept unchanged": "缺少对应型号的文档规则，以下功能保留原配置",
+    "No parameter changes to apply": "没有需要应用的参数变更",
+    "Parameter rules": "参数规则",
+    "View rules": "查看规则",
+    "Keep saved parameters": "保留原参数",
+    "Apply refresh to draft": "应用刷新到草稿",
+    "Only generic interface fields are available; model-specific specifications are not documented for these models": "以下型号只有通用接口字段，当前插件文档尚未登记其专用规格"
   }
 }

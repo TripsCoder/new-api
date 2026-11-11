@@ -1,0 +1,2684 @@
+/**
+ * 视频模型能力表。
+ * 数据来源：https://srdzsr.top/app/docs
+ * 注意：不要在代码里写死单价，费用预估由用户在「设置」中填写单价后计算。
+ */
+
+export const ASPECT_RATIOS = [
+  { value: '16:9', label: '16:9 横屏', hint: '适合风景、场景片' },
+  { value: '9:16', label: '9:16 竖屏', hint: '适合短视频、人物特写' },
+  { value: '1:1', label: '1:1 方形', hint: '适合商品、头像式构图' },
+  { value: '4:3', label: '4:3', hint: '偏复古的横向画幅' },
+  { value: '3:4', label: '3:4', hint: '偏复古的竖向画幅' },
+  { value: '21:9', label: '21:9 宽银幕', hint: '电影感超宽画幅' },
+  { value: '9:21', label: '9:21 竖幕', hint: '电影感超宽竖屏' },
+];
+
+/** 首帧/参考图场景可让模型跟随素材比例 */
+export const ADAPTIVE_RATIO = { value: 'adaptive', label: 'adaptive 跟随素材', hint: '按首帧或参考图的比例输出' };
+
+/**
+ * 各档位对应的实际像素（仅用于界面提示，提交流程默认只传 resolution）
+ *
+ * 实测记录 —— 这张表用的是「拿 16:9 的短边当边长」的算法，对非 16:9 比例并不准。
+ * 平台真正做的是：**保持 16:9 档位的像素总量，再按比例重新分配**。
+ * 实测成片量出来的值：
+ *   1:1 + 720p → 960x960   （本表记 720x720）
+ *   4:3 + 720p → 1112x834  （本表记 960x720）
+ * 规律：16:9 / 9:16 用标准分辨率，其余比例 k = ceil(sqrt(面积/(宽比×高比)))、
+ * 边长取偶。按这条规则重算可同时命中上面两个实测值。
+ *
+ * 所以将来若要改成只传 size（文档中优先级最高的字段），
+ * **必须先用上面这组真值替换本表**，否则面积只有一半多点，等于压低画质。
+ */
+const SIZE_TABLE = {
+  // 768p 是 MiniMax H3 的档位（只有这一档，4–15 秒）—— 与上游一样写小写
+  '16:9': { '480p': '854x480', '720p': '1280x720', '1080p': '1920x1080', '4k': '3840x2160', '768p': '1366x768', '2k': '2560x1440' },
+  '9:16': { '480p': '480x854', '720p': '720x1280', '1080p': '1080x1920', '4k': '2160x3840', '768p': '768x1366', '2k': '1440x2560' },
+  '1:1': { '480p': '480x480', '720p': '720x720', '1080p': '1080x1080', '4k': '2160x2160', '768p': '768x768', '2k': '1440x1440' },
+  '4:3': { '480p': '640x480', '720p': '960x720', '1080p': '1440x1080', '4k': '2880x2160', '768p': '1024x768', '2k': '1920x1440' },
+  '3:4': { '480p': '480x640', '720p': '720x960', '1080p': '1080x1440', '4k': '2160x2880', '768p': '768x1024', '2k': '1440x1920' },
+  '21:9': { '480p': '1120x480', '720p': '1680x720', '1080p': '2520x1080', '4k': '5040x2160' },
+  // 9:21 = 21:9 的竖幕镜像，档位像素一致、宽高对调
+  '9:21': { '480p': '480x1120', '720p': '720x1680', '1080p': '1080x2520', '4k': '2160x5040' },
+};
+
+export function expectedSize(aspectRatio, resolution) {
+  return SIZE_TABLE[aspectRatio]?.[resolution] || '';
+}
+
+/**
+ * 提交 size 字段要用的真实像素值。
+ *
+ * 为什么不直接用 SIZE_TABLE：那张表对非 16:9 比例是错的（见上面的实测记录）。
+ * 平台实际做法是「保持 16:9 档位的总像素量，再按比例重新分配，边长取偶」，
+ * 这里就按这条规则现算：
+ *   k = ceil(sqrt(16:9 档位总像素 / (宽比 × 高比)))，宽 = 宽比×k、高 = 高比×k，各自取偶。
+ *
+ * 自检（与实测值一致）：
+ *   1:1 + 720p → 960x960 ✓　4:3 + 720p → 1112x834 ✓
+ *
+ * 16:9 / 9:16 直接返回标准分辨率（这两个比例的档位就是标准像素）。
+ */
+export function exactSize(aspectRatio, resolution) {
+  const std = SIZE_TABLE[aspectRatio]?.[resolution];
+  if (std && (aspectRatio === '16:9' || aspectRatio === '9:16')) return std;
+
+  const base = SIZE_TABLE['16:9']?.[resolution];
+  if (!base) return '';
+  const [a, b] = String(aspectRatio).split(':').map(Number);
+  if (!a || !b) return '';
+
+  const area = base.split('x').map(Number).reduce((x, y) => x * y, 1);
+  const k = Math.ceil(Math.sqrt(area / (a * b)));
+  const even = (n) => Math.max(2, Math.round(n / 2) * 2);
+  return `${even(a * k)}x${even(b * k)}`;
+}
+
+/** 生成方式。参考生视频排第一也是默认项（product 决定），其余按使用频率排 */
+export const MODES = [
+  { id: 'reference', label: '参考生视频', desc: '按顺序提供参考图 / 参考视频 / 参考音频' },
+  { id: 't2v', label: '文生视频', desc: '只靠提示词生成，不需要任何素材' },
+  { id: 'i2v', label: '图生视频' },
+  { id: 'firstlast', label: '首尾帧', desc: '给出开头与结尾两张图，模型补全中间的运动' },
+];
+
+/**
+ * 官转（官方协议）任务类型 —— 带参考视频时三选一，**默认参考生视频**（2026-11-03 用户改口径：
+ * 「用户不选择，默认是视频参考模式」）。
+ *
+ * 为什么默认值必须是显式的 `reference`、而不是留空：官方文档写明，不传
+ * `omni_reference_task_type` 等于 `auto`，模型按提示词意图自己判成
+ * reference / edit / extend 三种之一，而 `edit` 会把 `duration` 强制成 -1、
+ * 输出时长**自动等于输入视频**。客户选 4 秒、传 3 秒参考视频、上游却出 10 秒
+ * （并照 10 秒扣 token）就是这条路径出来的。
+ * 所以「不选 = 默认」可以，但发出去的字段永远是三个明确值之一。
+ *
+ * 与服务端 server/official.js 的 officialBodyFromPayload 一一对应，改这里要两边一起改。
+ */
+export const OFFICIAL_TASK_TYPES = [
+  {
+    id: 'reference',
+    label: '参考生视频',
+    desc: '参考素材当作风格 / 主体参考，按你选的秒数出片',
+  },
+  {
+    id: 'edit',
+    label: '视频编辑',
+    desc: '改原视频的画面或对象；比例与时长自动跟随原视频（比例强制 adaptive、时长 -1）',
+  },
+  {
+    id: 'extend',
+    label: '视频延长',
+    desc: '把原视频向前 / 向后延长；比例跟随原视频，时长按你选的秒数',
+  },
+];
+
+/**
+ * 视频模型目录 —— 顺序即卡片顺序（2026-11-07 的两条要求：
+ * 「wan3 增加 极致性价比 特稳定 高并发 标签，放到 seedance2.5 的后面」+
+ * 「2.5条生模型 放到minimax后面」，于是顺序是
+ * 2.5 → wan3 → 特稳 → 2.0 → 2.0-fast → 2.0-mini → minimax-h3 → 条生 → …）：
+ *   · `seedance-2.5`（480P / 720P / 1080P，4–30 秒）
+ *   · `wan3`（480P / 720P / 1080P，4–30 秒）—— XUHost 的 `官转1wan3`，2026-10-28 上架；
+ *     2026-11-07 挪到 2.5 后面，标签 `极致性价比 · 特稳定 · 高并发`
+ *   · `seedance-2.0`（480P / 720P / 1080P，4–15 秒；4K 已于 2026-10-20 停止售）
+ *   · `seedance-2.0-fast` / `seedance-2.0-mini`（480P / 720P，4–15 秒）
+ *   · `minimax-h3`（768P，4–15 秒）——
+ *     2026-10-27 用户要求换线：云上/srdz 那台 `minimax-video-h3`（768P / 2K）下架，
+ *     改用 **H3 专用 Key** 的这台，**只 768P、0.042 元/秒**（2026-11-05 用户调价，⚡0.42/s）
+ *   · `seedance-2.5-pervideo`（720P，4–30 秒，**按条 5.5 元**）—— 条生卡，
+ *     2026-11-06 上架，2026-11-07 挪到 minimax 之后
+ *   —— 除条生按条外，其余都**按秒**，Seedance 几张的价 = 云上官方美元价 × 8.4。
+ * 2026-10-20 用户要求下架两批（卡片都收进 VIDEO_CATALOG_HIDDEN，价目照留）：
+ *   · `minimax-h3-ch1`（易红那台，768P / 0.06 元每秒）；
+ *   · `wan3.0-video` / `wan3.0-video-prime`（易红那条线，全部按秒；价目照留）；
+ *     `kling-omni-4.0` 同批下架，**价目 2026-11-04 按用户要求整条删掉**（两边一起删）。
+ * 2026-10-19 起**按条的卡全部下架**：
+ *   · `grok-imagine-video-1.5-preview` / `seedance-2.5-Muse` / `seedance-2.0-coke` /
+ *     Burger / chovy 都收进隐藏表；`seedance-2.5-Ultra`「暂时下架」但没浪费 ——
+ *     它是 `seedance-2.5` 720P 的静默兜底线路（云上不通且 ≥25 秒才用），用户无感。
+ * **按条计费以后不再接新型号**（用户 2026-10-18 定）。
+ *
+ * 为什么合并：网关那边的型号名是「一条线路 + 一个档位」的粒度，直接铺到界面上就是十几个卡片，
+ * 用户在不同线路之间挑全靠猜。所以按「整模型」摆卡，清晰度交给「清晰度」下拉，
+ * 真正提交给网关时再按档位换成真实型号名
+ * （映射见下面的 VIDEO_MODEL_ROUTES，服务端同一份在 server/videoModels.js）。
+ *
+ *   · `seedance-2.5` —— 主线路云上，云上余额不足 / 繁忙时后台静默转 srdz 备用线
+ *     （2026-10-19 起易红与即梦那几条腿已停，见 server/videoLines.js）；
+ *     换线不改价：价按云上官方美元价 × 8.4 收（现 480p **0.295** / 720p 0.396 / 1080p **1.32**；
+ *     480p 于 2026-10-26 单独提价、1080p 于 2026-10-28 单独下调，两者都不再等于 ×8.4 的结果）。
+ * 线路优先级（模型 + 档位 → 多条线路，失败自动换下一条）只配在服务端
+ * `server/videoLines.js` 的 `VIDEO_LINE_GROUPS`（价在服务端 `ca_video_prices` 表里），
+ * 前端只管摆卡与算价。
+ * 老标识（`seedance2.5-ch1`、`seedance2.0-ch1`、`seedance2.5满血版`、
+ * `ov-seedance2.5-ch1`、`ov-seedance-2.5`）都在别名表里，老任务、老短剧、
+ * 老调用方照常能提交、能算价（统一按 2.5 的价）。
+ *
+ * 行格式与以前一样：
+ *   [型号名（提交给网关的 model）, 显示名, 标签, 网关原文描述, 档位, [最短秒, 最长秒],
+ *    [参考图, 参考视频, 参考音频], 可选的能力集合]
+ *
+ * **隐藏不等于封禁**：老任务、老短剧项目、开放 API 里存着的真实型号名照常能提交
+ * （服务端对映射表外的型号名原样透传），只是界面上不再摆出来；定价表（PRICE_SNAPSHOT）
+ * 2026-10-16 起**只按前台模型 + 分辨率**列价，不再为这些后台型号名逐台标价。
+ * 网关的 `GET /v1/models` 里还有个 `f-sd2.5-3`，但 `/api/pricing` 没有它的计价表达式 ——
+ * 定价无从下手，所以**一直不上架**（没价就不卖，免得出现"未计价白送"）。
+ */
+const VIDEO_CATALOG = [
+  /*
+   * ── 2026-10-18 用户定：按云上那套型号**重新整合上线** ──────────────────
+   * 价一律 = 云上官方美元价 × 8.4（见 PRICE_SNAPSHOT）。
+   *
+   * Seedance 2.5：三档、4–30 秒。线路 **srdz → 云上 → xh**（2026-10-25 起，见
+   * server/videoLines.js；cnd / v6k / shuiku 已下线），换线不改价：
+   * 480p 0.295（2026-10-26 提价）/ 720p 0.396 / 1080p 1.32（2026-10-28 下调）元每秒。
+   * 参考素材：参考图 + 参考视频 + 参考音频；首帧 / 尾帧与参考素材互斥。
+   * 参考视频 2026-10-19 **开放**（云上与 srdz 都支持 10 个、合计 ≤30 秒），
+   * 所以预设从 `no-refvideo` 改成不限制。`[30, 10, 10]` 是槽位**数量**。
+   */
+  // 标签位（第三列）2026-10-17 起默认留空 —— 用户要求模型卡上不再挂「推荐 / 省钱」这类角标
+  ['seedance-2.5', 'Seedance 2.5', '', '480P / 720P / 1080P 可选 4~30秒 30图10视频10音频', ['480p', '720p', '1080p'], [4, 30], [30, 10, 10], ''],
+  /*
+   * ★ 2026-10-31 用户要求：**Seedance2.5 特稳**，摆在 `seedance-2.5` 旁边 ★
+   *
+   *   原话：「把官转75折的 480p 接口打包成一个新的站内模型叫 Seedance2.5 特稳，
+   *          定价 0.56/s，只支持 720p，加标签 高并发 特稳定 不限量，
+   *          支持 30/0/10，不支持参考视频，放到站内模型 seedance2.5 的边上」。
+   *
+   * 要点：
+   *   · 标识 `seedance-2.5-stable`：与站内卡 `seedance-2.5` 同一风格，只加 `-stable`
+   *     区分（用户明确「不要单独搞 doubao- 这种」）；
+   *   · 它**不是**官方价目表里的名字，所以前端不按 token 计价、
+   *     服务端扣费走按秒价目（**0.55 元/秒**，2026-11-01 由 0.56 下调；见 wallet.js 与 ca_video_prices）；
+   *   · 底层是 sd-官转主 Key（原 75 折组）的 **480p** 通道，交付前拉伸成 720p
+   *     （线路组写 `upscaleFrom: '480p'`，见 server/videoLines.js）；
+   *   · 对客只摆 720p 一档；槽位 `[30, 0, 10]` = 30 图 / **不收参考视频** / 10 音频，
+   *     所以 features 用 `no-refvideo`（与官方卡一样，其余开关全开）；
+   *   · 时长 4–30 秒，与 2.5 一致。
+   */
+  ['seedance-2.5-stable', 'Seedance 2.5 特稳', '高并发 · 特稳定 · 不限量', '720P 可选 4~30秒 30图10音频 · 不支持参考视频', ['720p'], [4, 30], [30, 0, 10], 'no-refvideo'],
+  /*
+   * 条生卡（`seedance-2.5-pervideo`）2026-11-07 再次挪位：用户要求「2.5条生模型 放到 minimax 后面」，
+   * 卡片已搬到 `minimax-h3` 之后，说明与价目注释随卡片一起搬走。
+   */
+  /*
+   * `seedance-2.5-4k`（Seedance 2.5 4k重绘）—— 2026-11-05 用户要求「模型去掉」：
+   * 卡片行已删除，服务端线路组里的同名键也一并删了，所以模型广场与接口都不会再出现它。
+   */
+  /*
+   * ★ 2026-10-25 用户定：**Seedance 2.5 备用卡（`seedance2.5-备用`）撤出市场** ★
+   *
+   * 原话：「把下架的 seedance2.5-备用 也作为跟 xh 一样的拉伸模型，放到 seedance2.5 的队列里，
+   * 优先级放到 xh 后面，这个模型从市场中删除。**这里只需要它的 480 部分**，
+   * 其他是通过一样的拉伸策略出来」。
+   *
+   * 所以这张卡不再出现在卡片列表里（搬到下面的 VIDEO_CATALOG_HIDDEN）：
+   *   · 它的 **480p 腿**（即梦 `ov-seedance-2.5-480p-nv`）现在是 `seedance-2.5` 三档的
+   *     末位兜底腿，排在 xh 之后；720p / 1080p 的单降级提交、归档时本地拉伸到位；
+   *   · 720p / 1080p 的即梦真名不再使用；
+   *   · 价目（PRICE_SNAPSHOT 那行）与真名映射保留 —— 老任务回显、重算、对账要用。
+   */
+  /*
+   * ★ 2026-10-25 用户定：**v6k 永久下线，不再使用** ★
+   *
+   * 2026-10-24 接的那张管理员测试卡 `seedance-2.5-v6k`（v6k.top 上的
+   * `TTseadanco2.5-480/720`）整张撤掉：线路组已从 server/videoLines.js 删除，
+   * 卡片搬到下面的 VIDEO_CATALOG_HIDDEN，真名映射留在 server/videoModels.js 的
+   * HIDDEN_VIDEO_ROUTES（老任务回显与重算要用）。价目（PRICE_SNAPSHOT 里那行）保留。
+   * 恢复：把隐藏表里那行剪回来，并在 server/videoLines.js 补回 `'seedance-2.5-v6k'` 组。
+   */
+  /*
+   * ★ 2026-10-25 用户定：**shuikule 整站撤出 —— sk903 / sk900 有质量问题，永不再用** ★
+   *
+   * 当天早些时候这两条腿还并进过 `seedance-2.5` 的 720p（lw 第一、900 第二），
+   * 随后用户定性质量不合格，**两条腿整条删掉**（见 server/videoLines.js 里那段注释）。
+   * 所以：
+   *   · 前端不再有它们的卡片与档位，MODEL_SECONDS_CHOICES 里的枚举也没了；
+   *   · `sd-2.5-lw-按次720p` / `seedance2.5-900` 只留在 HIDDEN_VIDEO_ROUTES 与价目里，
+   *     给 2026-10-25 之前的老任务回显与重算用。
+   *
+   * 连带撤掉的还有「20–30 秒任选 + 提示词补尾 + 出片后裁剪」那套（用户反馈上游模型
+   * 不吃这种指令，成片不会按裁剪要求收尾），所以 MODEL_SECONDS_FREE 也一并去掉了。
+   */
+  /*
+   * ★ 2026-10-25 用户定：**simplefuture 的特价按条模型撤掉，不需要了** ★
+   *
+   * 当天刚接的测试卡 `seedance2.5-sf-fast`（simplefuture.zone 的
+   * 「特价Seedance2.5主推快速线路」，720P、按条 4.90 元）整张撤掉：线路组已从
+   * server/videoLines.js 删除，卡片搬到下面的 VIDEO_CATALOG_HIDDEN，
+   * 真名映射留在 server/videoModels.js 的 HIDDEN_VIDEO_ROUTES，
+   * 按条价（PRICE_SNAPSHOT.upstreamPerTask 里那行）保留，老任务重算与对账要用。
+   * 恢复：把隐藏表里那行剪回来，并在 server/videoLines.js 补回线路组。
+   */
+  /*
+   * Seedance 2.0：**四档全开、按秒计费**（2026-10-18 用户：「按云上重新整合」，
+   * 早期那套按条 2.8 / 易红 coke 已整个撤掉）——
+   * 480P 0.212 / 720P 0.280 / 1080P 1.008 元每秒，4–15 秒（上游文档口径）。
+   * **2026-10-20 用户要求去掉 4K**：卡片上不再有这一档（4K 的价目仍留在下面
+   * PRICE_SNAPSHOT 里，老任务回显与重算要用）。
+   * 云上那台支持参考视频（3 段），所以不挂任何限制预设。
+   */
+  ['seedance-2.0', 'Seedance 2.0', '', '480P / 720P / 1080P 可选 4~15秒 9图3视频3音频', ['480p', '720p', '1080p'], [4, 15], [9, 3, 3], ''],
+  /*
+   * Seedance 2.0 Fast / Mini：2026-10-18 重新上线（此前分别按要求下架过）。
+   * 只走云上、按秒：fast 480P 0.188 / 720P 0.242；mini 480P **0.128**（2026-11-05 调价）/ 720P 0.208。
+   * 两档（480P / 720P）、4–15 秒（上游文档口径），素材口径与 2.0 一致。
+   */
+  ['seedance-2.0-fast', 'Seedance 2.0 Fast', '', '480P / 720P 可选 4~15秒 9图3视频3音频', ['480p', '720p'], [4, 15], [9, 3, 3], ''],
+  ['seedance-2.0-mini', 'Seedance 2.0 Mini', '', '480P / 720P 可选 4~15秒 9图3视频3音频', ['480p', '720p'], [4, 15], [9, 3, 3], ''],
+  /*
+   * wan3 这张卡 2026-11-07 又挪了一次：按用户要求「模型广场中 wan3 增加 极致性价比 特稳定 高并发 标签，
+   * 放到 seedance2.5 的后面」，卡片已搬到 `seedance-2.5` 之后（第 2 张），说明与线路注释随卡片一起搬走。
+   */
+  /*
+   * ★ Wan 3.0（XUHost 的 `官转1wan3`，2026-10-28 上架）★
+   *
+   * 卡片位置改过两次：
+   *   · 2026-11-07 用户要求「模型广场中 wan3 增加 极致性价比 特稳定 高并发 标签，
+   *     放到 seedance2.5 的后面」→ 曾经紧跟 `seedance-2.5`、带那套标签；
+   *   · **2026-11-08 用户要求「把 wan3 还是放到 minimax 前面，把上面的
+   *     极致性价比 · 特稳定 · 高并发 标签去掉」** → 卡片摆回 `minimax-h3` 之前，
+   *     第三列标签位**留空**（回到 2026-10-17 起的默认口径：卡片上不挂角标）。
+   *     现在的顺序是：… 2.0 → 2.0 Fast → 2.0 Mini → **Wan 3.0** → MiniMax H3 → 条生…。
+   *
+   *   2026-10-28 上架原话：「上架一个 wan3 模型 https://xuhost.top/#/models 的，
+   *   还是 xh 一样的密钥，支持 480 和 720，480 的收 0.112/s，720 的收 0.142/s」。
+   *
+   * 档位：480P / 720P（XUHost 的 `官转1wan3`）+ 1080P（qsqs 的 `W3-WAN3-1080P`，0.285/s，
+   * 该渠道不进后台渠道页 —— 2026-11-04 用户要求）。
+   * 时长站内 4–30 秒（上游 duration 2–30，最短 4 秒是全站产品口径）。
+   * 素材口径 **10 图 / 5 参考视频 / 5 参考音频（合计 ≤20）**：
+   *   · 三类素材都走 XUHost 的 `input_asset_ids`（先换素材 ID 再提交，见 server/xuhost.js）；
+   *   · 参考视频 2026-10-28 起适配层已开（`saveAsset` 按 `kind: video` 换 ID），
+   *     上限与上游目录一致（v1.4.5 文档 §3.2）。
+   * 原生带声音（上游 `enableSound` 默认开），所以「生成音频」开关保留。
+   * 参考素材存在时适配层会发 `mode: '全能参考'`，该型号的 mode 是严格枚举。
+   *
+   *（服务端 `server/videoLines.js` 的 `'wan3'` 线路组键序不用动：它本来就在 `minimax-h3` 之前，
+   *  这次只调卡片位置；`/open/v1/pricing` 的清单顺序以那份键序为准。）
+   */
+  ['wan3', 'Wan 3.0', '', '480P / 720P / 1080P 可选 4~30秒 10图5视频5音频', ['480p', '720p', '1080p'], [4, 30], [10, 5, 5], 'wan3'],
+  /*
+   * ★ MiniMax H3 卡的来历（两次换线，都保持同一张卡、同一价）★
+   *
+   * 2026-10-27：「将现在的 miniMax 模型下架，换成 MiniMax H3 专用 Key 的 API，
+   *             只支持 768P 定价 0.112/s」→ 云上那台 `minimax-video-h3` 下架，
+   *             卡片搬进下面的 VIDEO_CATALOG_HIDDEN，价目留在 PRICE_SNAPSHOT；
+   * 同日提价：「基础价格提高到 0.1185/s」→ 当天为 0.1185 元/秒。
+   * 2026-10-28：「miniMax 基础价格调整为 0.098」→ 当日起 0.098 元/秒；
+ * 2026-10-30：「minimax 0.98 改成 0.72」→ 当天 0.072 元/秒；
+ * 2026-11-05：「miniMax 改到 0.052/s」→ 同日再调「基础调为 0.042/s」→ **现行价 0.042 元/秒（⚡0.42/s）**。
+   * 2026-10-28：「把我的 runninghub 工作流接到目前的 miniMax 768p 里，
+   *             原来的 miniMax API 去掉」→ 即梦那条 API 下线，
+   *             这张卡背后换成 **RunningHub 的 AI 应用**
+   *             （webappId 2100805688183312386，密钥分组 `runninghub`，
+   *              协议与节点映射见 server/runninghub.js）。
+   *
+   *   对客可见的一切都没变：`minimax-h3`、768P、**4–15 秒**、9 图、0.042 元/秒（2026-11-05 调价）。
+   *   上游不吃生成音频 / 水印 / 种子 / 输出格式，预设 `minimax`；
+   *   RunningHub 的工作流内部固定 768P（没有分辨率节点），所以这张卡只能有 768P。
+   *   时长 4 秒起是**产品口径**（即梦那台上游其实 1–15，实测 4 秒单 200、1 秒单也 200）。
+   */
+  ['minimax-h3', 'MiniMax H3', '', '768P 可选 4~15秒 9图', ['768p'], [4, 15], [9, 0, 0], 'minimax'],
+  /*
+   * ★ 2026-11-06 用户要求：**Seedance 2.5 条生**（`seedance-2.5-pervideo`）★
+   *
+   * 原话：「在特稳前面增加一个站内模型，seedance2.5 的条生，基础定价 6 元/条，
+   *        720p，支持 30/10/10；srdz 的 720、by-30（拉伸）、xtu-2.5 作为它的供货矩阵」。
+   * 位置改过几次：特稳前面 → 特稳后面 → **2026-11-07 最终：minimax 后面**
+   * （用户原话「2.5条生模型 放到minimax后面」），所以卡片紧跟在 `minimax-h3` 之后。
+   *
+   *   · **按条计费**：价在 PRICE_SNAPSHOT.upstreamPerTask（**5.5 元/条**，与秒数无关；
+   *     2026-11-07 由 6 元下调），与服务端 wallet.js 的 VIDEO_UPSTREAM_CNY_PER_TASK 同一份；
+   *   · 只卖 720p，**时长可选 4–30 秒**（用户澄清「不是固定 30s，时间是可选的」）：
+   *     各条供货腿按自己的范围接单 —— srdz 4–30、qs 5–30、xh 4–27、xtu-2.5 5–30；
+   *     **by-30 只支持 30 秒**（上游型号名里写死），所以它只接 30 秒的单；
+   *   · 槽位 `[30, 10, 10]`；供货腿见 server/videoLines.js，配置页单独归一类「2.5-720条生」。
+   */
+  ['seedance-2.5-pervideo', 'Seedance 2.5 条生', '', '720P 可选 4~30秒 30图10视频10音频 · 按条5.5元', ['720p'], [4, 30], [30, 10, 10], ''],
+  /*
+   * ★ 2026-11-08 用户要求：**Seedance2.0 fast 条生900**（`seedance-2.0-fast-pervideo`）★
+   *
+   * 原话：「接一下 https://9yapi.shop/docs/ 这个平台的 DB-SD-2.0-Fast 900 固定15s。
+   *        放到 Seedance 2.5 条生 后面 叫 Seedance2.0 fast 条生900 。
+   *        720p 9/0/0 参数支持 ，定价 1.5/条」。
+   *
+   *   · 位置：紧跟在 `seedance-2.5-pervideo` 之后，与服务端线路组同名同序；
+   *   · **固定 15 秒**：`[15, 15]` → 前端滑块 min === max，显示「固定 15 秒」；
+   *   · 素材 `[9, 0, 0]`：9 张参考图，**不收参考视频 / 参考音频**，
+   *     预设用 `no-firstlast-audio`（上游也没有首尾帧通道）；
+   *   · **按条 1.5 元**：价在下面的 `PRICE_SNAPSHOT.upstreamPerTask`，
+   *     与服务端 wallet.js 的 `VIDEO_UPSTREAM_CNY_PER_TASK` 同一份。
+   */
+  /*
+   * 标签（2026-11-08 用户要求）：「极致性价比 特稳定 高并发」——
+   * 与 wan3 同一套角标写法（中点分隔），卡片和模型广场共用第 3 列。
+   */
+  ['seedance-2.0-fast-pervideo', 'Seedance2.0 fast 条生900', '极致性价比 · 特稳定 · 高并发', '720P 固定 15 秒 9图，不支持视频、音频或首尾帧 · 按条1.5元', ['720p'], [15, 15], [9, 0, 0], 'no-refmedia'],
+  /*
+   * ★ 2026-11-08 用户要求：**Seedance2.5 条生-plus**（`seedance-2.5-pervideo-plus`）★
+   *
+   * 原话：「接入一下 这个渠道的 DB-SD-2.5-plus   叫 Seedance2.5 条生-plus
+   *        收费 3.5/条 放到 fast 900后面」。
+   *
+   *   · 位置：紧跟 `seedance-2.0-fast-pervideo`（fast 900）之后，与服务端线路组同序；
+   *   · **固定 30 秒**：`[30, 30]` → 时长控件锁死 30 秒；
+   *   · 素材 `[9, 0, 0]`：9 图、**不收参考视频 / 音频**，也没有首尾帧（预设 `no-firstlast-audio`）；
+   *   · **按条 3.5 元**（上游 2.5 元/条），价在 PRICE_SNAPSHOT.upstreamPerTask 与 wallet.js 同一份。
+   */
+  ['seedance-2.5-pervideo-plus', 'Seedance2.5 条生-plus', '', '720P 固定 30 秒 9图，不支持视频、音频或首尾帧 · 按条3.5元', ['720p'], [30, 30], [9, 0, 0], 'no-refmedia'],
+  /*
+   * ★ 2026-10-30 用户要求：**sd-官key 的官方模型也摆到创作台** ★
+   *   原话：「官key模型也要放置到创作台可以使用」。
+   *
+   * 这四张卡走**火山官方协议**（`/api/v3/contents/generations/tasks`），
+   * 与上面那些按秒的卡最大的不同是**计价方式**：
+   *   · 按**实际 Token** 结算（官方 `usage.total_tokens`），不是按秒也不是按条；
+   *   · 建单时**固定预扣 50 万 token 的价**（2026-11-04 起，余额不够这个预扣就不让提交），
+   *     结束后按实际 Token 多退少补；
+   *   · 我们只做折扣转化（现行 72 折这一把 Key），token 数不做任何处理。
+   * 所以「预计消耗」由 `officialPriceOf` 现算（见下方 official 段），
+   * 不出现在 PRICE_SNAPSHOT 的任何一张元/秒、元/条表里。
+   *
+   * 标识直接用**官方模型名**（提交时原样透传，见 server/videoLines.js 的同名线路组），
+   * 卡片上再翻译成人话（`Seedance 2.5 · 官方`）。
+   * 档位按官方价目表：2.0 有 4K，Fast / Mini 只有 480P / 720P，2.5 没有 4K。
+   */
+  /*
+   * 每台一张卡，**标识就是官方原名、一律 72 折**。
+   * 2026-11-05 用户要求「把站内的官转 55 折永久下架，代码不保留，只保留一个 72 折」——
+   * 原先那四张带 `-s` 的 48 折卡已整组删除（线路、价目、折扣、后缀折叠一并去掉）。
+   *
+   * 档位（2026-10-30 用户要求「按上游 API 支持的分辨率写全，不要只是 720p」，
+   * 依据上游 Seedance 官方任务协议页）：
+   *   · 模型能力：2.0 = 480p/720p/1080p/4k；Fast / Mini = 480p/720p；2.5 = 480p/720p/1080p
+   *   · 分组能力：72 折那把 Key 是全分辨率分组，模型支持的全开
+   * 服务端线路表（server/videoLines.js）必须与这里逐个对上，否则会「界面上有档、
+   * 提交时说没有腿」。改一处要两边一起改。
+   */
+  /*
+   * 摆放顺序（2026-10-30 用户要求，与模型广场一致）：2.5 → 2.0 → Fast → Mini。
+   * 数组顺序就是卡片顺序，别按 id 字母重排。
+   */
+  ['doubao-seedance-2-5-260628', 'Seedance 2.5', '72折', '按秒计费 · 480P-1080P · 30图10视频10音频', ['480p', '720p', '1080p'], [4, 30], [30, 10, 10], ''],
+  ['doubao-seedance-2-0-260128', 'Seedance 2.0', '72折', '按秒计费 · 480P-4K · 9图3视频3音频', ['480p', '720p', '1080p', '4k'], [4, 15], [9, 3, 3], ''],
+  ['doubao-seedance-2-0-fast-260128', 'Seedance 2.0 Fast', '72折', '按秒计费 · 480P/720P · 9图3视频3音频', ['480p', '720p'], [4, 15], [9, 3, 3], ''],
+  ['doubao-seedance-2-0-mini-260615', 'Seedance 2.0 Mini', '72折', '按秒计费 · 480P/720P · 9图3视频3音频', ['480p', '720p'], [4, 15], [9, 3, 3], ''],
+  /*
+   * ★ 对公官转（2026-11-10 用户定：「增设 对公官转 和 SD官转 平级，将官转-75折上线，
+   *   底层跟 72 折是一样的，但是高亮显示标签 对公。72 折上面有小标签注明：对私」）★
+   *
+   * 标识 = 官方原名 + `-corp`，提交时由服务端剥回原名发给上游（同一个模型、同一把 Key），
+   * 区别只有**对客折扣 75 折**。四款与对私那组一一对应，档位与素材能力照搬。
+   * **这一组全面开放**（个人、对公都能用）；72 折对私那组只给个人账号（对公账号看不到也用不了）。
+   */
+  ['doubao-seedance-2-5-260628-corp', 'Seedance 2.5', '75折', '按秒计费 · 480P-1080P · 30图10视频10音频', ['480p', '720p', '1080p'], [4, 30], [30, 10, 10], ''],
+  ['doubao-seedance-2-0-260128-corp', 'Seedance 2.0', '75折', '按秒计费 · 480P-4K · 9图3视频3音频', ['480p', '720p', '1080p', '4k'], [4, 15], [9, 3, 3], ''],
+  ['doubao-seedance-2-0-fast-260128-corp', 'Seedance 2.0 Fast', '75折', '按秒计费 · 480P/720P · 9图3视频3音频', ['480p', '720p'], [4, 15], [9, 3, 3], ''],
+  ['doubao-seedance-2-0-mini-260615-corp', 'Seedance 2.0 Mini', '75折', '按秒计费 · 480P/720P · 9图3视频3音频', ['480p', '720p'], [4, 15], [9, 3, 3], ''],
+  /*
+   * ── 2026-10-23 用户要求**下架**：`seedance-2.5-xuhost`（XUHost 那张管理员测试卡）──
+   * 当天接入、补位进 `seedance-2.5` 的线路矩阵之后，测试卡就没必要留了：
+   * XUHost 现在是 `seedance-2.5` 480p / 720p 的一条腿（排在 srdz 之前）。
+   * 卡片搬到下面的 VIDEO_CATALOG_HIDDEN；服务端线路组同步剪掉
+   * （见 server/videoLines.js 的下架注释）。
+   * 价目（PRICE_SNAPSHOT 的 0.2 / 0.27）与真名映射都留着 —— 老任务回显与重算要用。
+   * 恢复：把隐藏表里那行剪回这里，并在 server/videoLines.js 补回 `'seedance-2.5-xuhost'` 组。
+   *
+   * 原说明（接入时的口径，恢复时照用）：
+   *   · 第 9 位 `true` = adminOnly，过滤统一在 visibleVideoModels() 里做；
+   *   · 5~30 秒 —— 4 秒的单在排线阶段就会被 `seconds` 剔除；
+   *   · 只有 480P / 720P 两档（目录里没有 1080p 报价，别加）；
+   *   · 参考素材只收站内素材 ID（见 server/xuhost.js）；
+   *   · 没有首尾帧语义 —— features 用 `no-firstlast`。
+   */
+  /*
+   * `minimax-h3-ch1`（易红那台 768P / 0.06 元每秒的独立模型）**2026-10-20 用户要求下架**：
+   * 卡片搬到下面的 VIDEO_CATALOG_HIDDEN，价目与真名映射保留（老任务回显/重算要用）。
+   * 恢复：把隐藏表里那行剪回这里，并在 server/videoLines.js 补回线路组。
+   */
+  /*
+   * ── 2026-10-20 用户要求下架：Wan 3.0 两台与 Kling Omni 4.0（都只在易红那条线，按秒）──
+   * 三张卡搬到下面的 VIDEO_CATALOG_HIDDEN，价目（PRICE_SNAPSHOT）与服务端 wallet.js
+   * 都保留，老任务回显与重算照常算得出钱；真名 = 对外标识本身，不用另配映射。
+   * 恢复：把那三行剪回这里，并在 server/videoLines.js 补回三个线路组。
+   *
+   * 原说明（接入时的口径，恢复时照用）：
+   *   · Wan 3.0（2026-10-17 接入）：请求体与 Seedance 不是一套 —— 参考素材走 `media[]`
+   *     （首帧 / 尾帧 / 参考图 / 参考视频 / 参考音频都是里面一个对象），画幅叫 `ratio`
+   *     （含 adaptive），分辨率必须大写 480P / 720P / 1080P，收口在 server/fyccc.js 的
+   *     wanMediaPayload。普通版参考图 ≤10、参考音频 ≤5、**不支持参考视频**；
+   *     Prime 在此基础上放开参考视频（≤5 段、合计 ≤15 秒）；时长 2–30 秒整数。
+   *   · Kling Omni 4.0（2026-10-18 接入）：只有 720P 一档、3–30 秒整数；
+   *     参考图 ≤10、参考音频 ≤3，**不收参考视频与首尾帧**；图生视频走「参考生视频」挂图
+   *     （上游只认参考图数组 image_urls，不认单张首帧）。
+   */
+  /*
+   * ── 2026-10-19 用户定：按条的卡**全部下架**，卡片都搬进 VIDEO_CATALOG_HIDDEN ──
+   * 按条 = 与时长无关，出片即收这一笔（价在 PRICE_SNAPSHOT.upstreamPerTask）。
+   *   · `grok-imagine-video-1.5-preview`（易红）：**1.5 元/条**，固定 15 秒，
+   *     480P / 720P / 1080P 三档同价；首帧单张或多图（≤7）二选一，不收尾帧/视频/音频。
+   *   · `seedance-2.5-Muse`（7.9 元/条）与 `seedance-2.0-coke`（2.8 元/条）早已下架。
+   *   · `seedance-2.5-Ultra`（7.9 元/条）「暂时下架」，但没消失 —— 它是
+   *     `seedance-2.5` 720P 的静默兜底腿（云上不通且 ≥25 秒才用，见 server/videoLines.js），
+   *     用户看到的模型与按秒价都不变。
+   * 价目与映射都留着，老任务重算与对账照常算得出钱。
+   */
+  /*
+   * ── 2026-10-20 用户要求**下架**：`seedance-2.5-test`（xkwuai 测试站那张管理员卡）──
+   * 当天上线当天按掉 —— 站方通道不干活（qy 回 `Upstream access forbidden`，
+   * doubao 回「可用额度已耗尽」，都是它自己上游的问题），换型号、充值都绕不过去。
+   * 卡片已从下面这张表剪掉，服务端线路组同步剪掉（见 server/videoLines.js 的下架注释）。
+   *
+   * **`adminOnly` 这个机制留着**（目录行的第 9 个字段）：
+   * MODELS 里照常带标记，视频页的卡片（videoModelCards）、模型广场、
+   * 短剧的模型下拉、API 接入的白名单都走 visibleVideoModels() ——
+   * 下次再加「只给管理员看」的卡，把这行加回来、第 9 位写 true 即可，五个入口自动跟着走。
+   * 价目（PRICE_SNAPSHOT.upstreamPerTask 的 1 元/条）也留着，老任务重算用得上。
+   */
+];
+
+/**
+ * 对外型号 → 真实上游型号（按档位）。
+ * **服务端同一份表在 server/videoModels.js，改这里必须两边一起改**，
+ * 否则会出现「界面按一个档位算价、提交与扣费按另一个档位」。
+ */
+export const VIDEO_MODEL_ROUTES = {
+  /*
+   * 合并模型（2026-10-17）：`seedance-2.5` 对外只有一张卡，**主线路是云上**
+   * （真名 = 标识本身，一个名字管所有档位，不在这张表里、原样透传）；
+   * 下面记的是**即梦分组**那一侧按档位分的真名 —— 云上繁忙切过去时服务端按它换名
+   * （服务端线路组在 server/videoLines.js 的 VIDEO_LINE_GROUPS）：
+   *   2.5  480p → ov-seedance-2.5-480p、720p → ov-seedance-2.5-720p-nv、
+   *        1080p → 官转-seedance2.5 1080p（上游是中文 + 空格，原样提交）
+   * 前端用它做两件事：老任务里存的真实型号名折回卡片、价目查不到时的兜底。
+   */
+  'seedance-2.5': {
+    '480p': 'ov-seedance-2.5-480p',
+    '720p': 'ov-seedance-2.5-720p-nv',
+    '1080p': '官转-seedance2.5 1080p',
+  },
+  /*
+   * ★ 2026-10-22：备用卡（即梦分组）自己那张表 ★
+   * 与服务端 server/videoLines.js 的 `'seedance2.5-备用'` 一一对应。
+   * 1080p 走即梦的**官转线** `官转-seedance2.5 1080p`（上游型号名是中文 + 空格，
+   * 原样提交，别改写）；它在上面主卡那张表里也出现过，那是主卡当年走即梦时的历史兜底名，
+   * 这里才是现在的归属。
+   */
+  'seedance2.5-备用': {
+    '480p': 'ov-seedance-2.5-480p-nv',
+    // 2026-10-24 用户要求：720p 换成 `-sr` 这一档（服务端线路组同步改）
+    '720p': 'ov-seedance-2.5-720p-nv-sr',
+    '1080p': '官转-seedance2.5 1080p',
+  },
+  /*
+   * ★ 2026-10-24：v6k 测试卡（管理员专属）★
+   * 与服务端 server/videoLines.js 的 `'seedance-2.5-v6k'` 一一对应；
+   * 上游是转售的 TTseadanco2.5，型号名逐字照抄（注意 `TTseadanco` 比 cnd 的多一个 a）。
+   */
+  'seedance-2.5-v6k': {
+    '480p': 'TTseadanco2.5-480',
+    '720p': 'TTseadanco2.5-720',
+  },
+  /*
+   * ★ 2026-10-23：XUHost（`seedance-2.5-xuhost`，**卡片当天已下架**）★
+   * 映射**必须留着**：老任务、老草稿里存的就是这个标识，折不回真名就显示成
+   * 上游型号名、重算还会判「未计价」。两个档位都提交同一个 `model_key`
+   * （`Seedance2.5`，2026-11-06 按 v1.4.10 目录换的；老名字 `官转1seedance2.5`
+   * 已被上游置为暂不可用），档位走参数里的 `params.resolution`，不在型号名上分档。
+   * 上游名大小写**原样提交，别改写**。
+   */
+  'seedance-2.5-xuhost': {
+    '480p': 'Seedance2.5',
+    '720p': 'Seedance2.5',
+  },
+  /*
+   * 2026-10-18 起 `seedance-2.0` / `-fast` / `-mini` 都改走云上，**对外标识就是云上真名**
+   * （一个名字管所有档位，档位走 resolution），所以不在这张表里、原样透传。
+   * 早期那套「2.0 走易红 coke / fast 走 cm-…-15s / mini 走易红 Muse」的映射已删掉，
+   * 老任务里存的那些真名仍能回显（服务端 HIDDEN_VIDEO_ROUTES 里留着）。
+   */
+  /*
+   * MiniMax H3：只 768p 一档、0.042 元/秒（2026-11-05 调价）、**4–15 秒**、9 图。
+   * 映射必须留着 —— 对外标识与历史真名不同，折不回去就显示成上游型号名、重算还会判「未计价」。
+   *
+   * 2026-10-28 起实际出片的通道换成 RunningHub 的 AI 应用
+   * （webappId 2100805688183312386，见 server/runninghub.js），
+   * 这里登记的老真名 `MiniMax-H3` 只是**为了让老任务与老草稿仍能折回 `minimax-h3`**。
+   */
+  'minimax-h3': {
+    '768p': 'MiniMax-H3',
+  },
+  /*
+   * `minimax-h3-ch1`（易红那台独立模型）：**2026-10-20 已下架**，卡片在
+   * VIDEO_CATALOG_HIDDEN 里。映射必须留着 —— 老任务、老草稿里存的就是这个标识，
+   * 折不回真名就显示成上游型号名、重算还会判「未计价」。
+   * 注意 `-ch1` 只是我们自己的叫法，上游真名是 `minimax H3`（中间空格、没有 ch1）。
+   */
+  'minimax-h3-ch1': {
+    '768p': 'minimax H3',
+  },
+  /*
+   * 2026-10-18 按条那张 Coke（**当天上线又按要求下线**，卡片在 VIDEO_CATALOG_HIDDEN）：
+   * 真名是易红的 `seedance2.0 coke`（720P 一档）。映射留着，老任务回显与重算才认得出它。
+   * Muse 的真名与标识相同，直接原样透传，不用列在这里。
+   */
+  'seedance-2.0-coke': {
+    '720p': 'seedance2.0 coke',
+  },
+  /*
+   * 2026-10-19 的 Ultra（卡片已收起，现在是 `seedance-2.5` 720P 的静默兜底腿）：
+   * 易红真名是 `seedance2.5 Ultra`（中间普通空格），对外标识 `seedance-2.5-Ultra`，
+   * 两者不同名，映射留着 —— 万一有任务记录里存了真名，展示与重算还能认出来。
+   */
+  'seedance-2.5-Ultra': {
+    '720p': 'seedance2.5 Ultra',
+  },
+};
+
+/**
+ * 兼容别名：老标识 → 规范标识（与服务端 server/videoModels.js 的 VIDEO_MODEL_ALIASES 同一份）。
+ *
+ * 2026-10-16 把对外标识从 `seedance2.5满血版` 换成了 `seedance-2.5`。
+ * 老名字不能丢：老任务、老短剧项目、开放 API 客户的脚本里存的都是它 ——
+ * 少了这张表，前端会按「未计价」给老任务算价（服务端照样扣），展示与实扣就对不上了。
+ */
+const VIDEO_MODEL_ALIASES = {
+  /*
+   * 2026-10-17 合并口径（与服务端 server/videoModels.js 同一份）：
+   * `Seedance 2.5` / `Seedance 2.0` 各只剩一张卡（云上为主、繁忙时转即梦），
+   * 即梦线那两张卡（`seedance2.5-ch1` / `seedance2.0-ch1`）不再是独立模型，
+   * 统一当别名归并到合并模型；`seedance2.5满血版` 是更老的名字，同样归到 2.5。
+   * OV 那张卡（`ov-seedance2.5-ch1` 与改名前的 `ov-seedance-2.5`）2026-10-17 下架，
+   * 也归并到 `seedance-2.5`：老草稿、老脚本照常能提交，价按 2.5 那张卡算。
+   *
+   * 2026-11-04 用户定：别名照旧受理，只是**对外文档不再列它们**。
+   */
+  'seedance2.5满血版': 'seedance-2.5',
+  'seedance2.5-ch1': 'seedance-2.5',
+  'seedance2.0-ch1': 'seedance-2.0',
+  'ov-seedance2.5-ch1': 'seedance-2.5',
+  'ov-seedance-2.5': 'seedance-2.5',
+};
+
+/** 别名归并（大小写不敏感）：老标识 → 规范标识；不是别名就原样返回 */
+export function canonicalVideoModel(modelId) {
+  const name = String(modelId ?? '').trim();
+  if (!name) return '';
+  const key = Object.keys(VIDEO_MODEL_ALIASES).find((k) => k.toLowerCase() === name.toLowerCase());
+  return key ? VIDEO_MODEL_ALIASES[key] : name;
+}
+
+/** 档位名大小写不敏感查表（与服务端 wallet.js 同一口径） */
+function pickTier(map, tier) {
+  if (!map) return '';
+  const key = String(tier ?? '').trim();
+  if (!key) return '';
+  if (map[key]) return map[key];
+  const hit = Object.keys(map).find((name) => name.toLowerCase() === key.toLowerCase());
+  return hit ? map[hit] : '';
+}
+
+/**
+ * 对外型号 + 档位 → 真实型号名；映射表外的型号原样返回（老任务与直传型号照常可用）。
+ *
+ * 查表前先归并别名：老标识 `seedance2.5满血版` 与 `seedance-2.5` 必须算到同一台型号上，
+ * 否则老任务/老短剧会把价算成「未计价」。
+ */
+export function realVideoModel(modelId, tier) {
+  const canonical = canonicalVideoModel(modelId);
+  const id = Object.keys(VIDEO_MODEL_ROUTES).find((m) => m.toLowerCase() === canonical.toLowerCase());
+  return pickTier(VIDEO_MODEL_ROUTES[id], tier) || String(modelId ?? '');
+}
+
+/**
+ * 历史真实型号的兜底归属（与服务端 server/videoModels.js 的 LEGACY_REAL_MODELS 同一份）：
+ * OV 卡下架 / 平替换台后留下的名字，老任务里还存着，折价时统一归到 `seedance-2.5`。
+ */
+const VIDEO_LEGACY_REAL_MODELS = {
+  'ov-seedance-2.5-480p-nv': 'seedance-2.5',
+  'ov-seedance-2.5-720p-nv-sr': 'seedance-2.5',
+  '特价seedance-2.5-nv-480p': 'seedance-2.5',
+  'mg-seedance-2.5-720p-nv': 'seedance-2.5',
+};
+
+/** 真实型号名 → 它所属的对外型号（老任务记录里存的是真实型号，展示时要认得出来） */
+function exposedIdOf(modelId) {
+  const name = String(modelId ?? '').toLowerCase();
+  const hit = Object.entries(VIDEO_MODEL_ROUTES).find(([, map]) =>
+    Object.values(map).some((real) => real.toLowerCase() === name));
+  if (hit) return hit[0];
+  return VIDEO_LEGACY_REAL_MODELS[name] || '';
+}
+
+/**
+ * 暂时隐藏的型号 —— 原样留着，就是为了想恢复时能直接搬回去。
+ * 恢复某一条：把那行剪到上面的 VIDEO_CATALOG，并从两边映射表里删掉它所属的那条
+ * （a / c / c1 三条线用到的真实型号仍在映射表里，所以不在这张表里）。
+ */
+export const VIDEO_CATALOG_HIDDEN = [
+  /*
+   * 2026-10-25 用户定：`seedance2.5-备用` **撤出市场**（线路组已从 server/videoLines.js 删除）。
+   * 它的 480p 腿搬进了 `seedance-2.5` **720p 档**的末位（xh 之后），交付前拉伸成 720p；
+   * 480p / 1080p 两档不挂它（用户定「这个备用 API 只处理 720」）。
+   * 价目在 PRICE_SNAPSHOT 保留、真名映射在 VIDEO_MODEL_ROUTES 保留 —— 老任务回显与重算要用。
+   * 恢复（用户当前明确不恢复）：把这行剪回 VIDEO_CATALOG，并在 server/videoLines.js 补回 `'seedance2.5-备用'` 组。
+   */
+  ['seedance2.5-备用', 'seedance2.5-备用', '', '480P / 720P / 1080P 可选 4~30秒 30图10视频10音频', ['480p', '720p', '1080p'], [4, 30], [30, 10, 10], ''],
+  /*
+   * 2026-10-23 用户要求下架：XUHost 那张管理员测试卡 `seedance-2.5-xuhost`。
+   * 它对接的上游型号 `官转1seedance2.5` 现在已经是 `seedance-2.5` 480p / 720p 的一条腿
+   * （排在 srdz 之前），单独一张测试卡没意义了。
+   * 价目（PRICE_SNAPSHOT 的 0.2 / 0.27）与真名映射（VIDEO_MODEL_ROUTES）都保留 ——
+   * 老任务回显与重算要用。恢复：把这行剪回 VIDEO_CATALOG，并在
+   * server/videoLines.js 补回 `'seedance-2.5-xuhost'` 那个线路组。
+   */
+  ['seedance-2.5-xuhost', 'Seedance 2.5 · XUHost', '官转', '480P / 720P 可选 5~30秒 16图', ['480p', '720p'], [5, 30], [16, 0, 0], 'no-firstlast-audio', true],
+  /*
+   * 2026-10-25 用户定：**v6k 永久下线，不再使用**（`seedance-2.5-v6k` 管理员测试卡）。
+   * 线路组已从 server/videoLines.js 整组删除，真名映射在 server/videoModels.js 的
+   * HIDDEN_VIDEO_ROUTES，价目在 PRICE_SNAPSHOT 保留 —— 老任务回显与重算要用。
+   * 恢复：把这行剪回 VIDEO_CATALOG，并在 server/videoLines.js 补回线路组。
+   */
+  ['seedance-2.5-v6k', 'Seedance 2.5 · v6k 测试', '', '480P / 720P 可选 5~30秒 9图', ['480p', '720p'], [5, 30], [9, 0, 0], 'no-firstlast-audio', true],
+  /*
+   * 2026-10-25 用户定：**simplefuture 的特价按条模型撤掉，不需要了**。
+   * 线路组已从 server/videoLines.js 整组删除，真名映射在 server/videoModels.js 的
+   * HIDDEN_VIDEO_ROUTES，按条价在 PRICE_SNAPSHOT 保留 —— 老任务回显与对账要用。
+   * 恢复：把这行剪回 VIDEO_CATALOG，并在 server/videoLines.js 补回线路组。
+   */
+  ['seedance2.5-sf-fast', 'Seedance 2.5 · 特价快速线（测试）', '按条', '720P 可选 5~30秒 9图 按条', ['720p'], [5, 30], [9, 0, 0], 'no-firstlast-audio', true],
+  /*
+   * 2026-10-20 用户要求下架：易红那台 `minimax-h3-ch1`（独立模型，只有 768P、0.06 元/秒）。
+   * 真名是 `minimax H3`（不带 ch1）；价目在 PRICE_SNAPSHOT 与服务端 wallet.js 都保留，
+   * 老任务回显与重算照常算得出钱。恢复时把这行剪回 VIDEO_CATALOG，
+   * 并在 server/videoLines.js 的线路组里补回 `'minimax-h3-ch1'`。
+   */
+  ['minimax-h3-ch1', 'MiniMax H3-ch1', '', '768P 可选 4~15秒 9图', ['768p'], [4, 15], [9, 0, 0], 'minimax'],
+  /*
+   * 2026-10-20 用户要求下架：Wan 3.0 两台与 Kling Omni 4.0（都只在易红那条线、按秒）。
+   * 价目在 PRICE_SNAPSHOT 与服务端 wallet.js 都保留，老任务回显与重算照常算得出钱；
+   * 三者真名 = 对外标识本身，不用另配映射。
+   * 恢复：把这三行剪回 VIDEO_CATALOG，并在 server/videoLines.js 补回三个线路组（注释里有原样）。
+   */
+  ['wan3.0-video', 'Wan 3.0 Video', '', '480P / 720P / 1080P 可选 2~30秒 10图5音频', ['480p', '720p', '1080p'], [2, 30], [10, 0, 5], 'wan'],
+  ['wan3.0-video-prime', 'Wan 3.0 Video Prime', '', '480P / 720P / 1080P 可选 2~30秒 10图5视频5音频', ['480p', '720p', '1080p'], [2, 30], [10, 5, 5], 'wan-prime'],
+  ['kling-omni-4.0', 'Kling Omni 4.0', '', '720P 可选 3~30秒 10图3音频', ['720p'], [3, 30], [10, 0, 3], 'no-firstlast'],
+  // ---- 480P（按秒计费）----
+  ['h-sd2.5-480p-1', 'Seedance 2.5 480P · h1', '最省', '支持30图0视频10音频 原生过人脸 按秒计费 自由时长', ['480p'], [4, 30], [30, 0, 10]],
+  ['b-sd2.5-480p', 'Seedance 2.5 480P · b', 'TX国模', 'TX国模，官方，支持4-30秒、30图10视频10音频参考 不卡脸', ['480p'], [4, 30], [30, 10, 10]],
+  ['d-sd2.5-480p', 'Seedance 2.5 480P · d', '', '速度稳定快：满血全参视频不加钱 30图-10视频-10音频 不卡脸 可选4到30秒', ['480p'], [4, 30], [30, 10, 10]],
+  ['f-sd2.5-1', 'Seedance 2.5 · f1（多档）', '多档', '2.5模型支持480/720/1080，30图10视频10音频，视频参考翻倍', ['480p', '720p', '1080p'], [4, 30], [30, 10, 10]],
+  // ---- 720P（按秒计费）----
+  ['e-sd2.5-720p-1', 'Seedance 2.5 720P · e1', '福利', '全参满血 30图 10音频 10视频 原生人脸 支持4~30秒 国庆福利', ['720p'], [4, 30], [30, 10, 10]],
+  ['h-sd2.5-720p-1', 'Seedance 2.5 720P · h1', '原生人脸', '支持4~30秒 720P 原生过人脸 按秒计费', ['720p'], [4, 30], [30, 0, 10]],
+  ['e-sd2.5-720p', 'Seedance 2.5 720P · e', '', '火山官方限时折扣 2.5 30图10视频10音频参考 时长4-30秒', ['720p'], [4, 30], [30, 10, 10]],
+  ['f-sd2.5-2', 'Seedance 2.5 · f2（多档）', '增强', '画质增强；过真人脸；30 图 0 视频 10 音频', ['720p', '1080p'], [4, 30], [30, 0, 10]],
+  ['b-sd2.5-720p', 'Seedance 2.5 720P · b', 'TX国模', 'TX国模，官方，支持4-30秒、30图10视频10音频参考 不卡脸', ['720p'], [4, 30], [30, 10, 10]],
+  ['d-sd2.5-720p', 'Seedance 2.5 720P · d', '', '速度稳定快：满血全参视频不加钱 30图-10视频-10音频 不卡脸 可选4到30秒', ['720p'], [4, 30], [30, 10, 10]],
+  // ---- 1080P（按秒计费）----
+  ['e-sd2.5-1080p', 'Seedance 2.5 1080P · e', '', '火山官方限时折扣 2.5 30图10视频10音频参考 时长4-30秒', ['1080p'], [4, 30], [30, 10, 10]],
+  ['b-sd2.5-1080p', 'Seedance 2.5 1080P · b', 'TX国模', 'TX国模，官方，支持4-30秒、30图10视频10音频参考 不卡脸', ['1080p'], [4, 30], [30, 10, 10]],
+  // ---- 按条计费（与时长无关，价格按「条」算）----
+  ['a-sd2.0-720p-2', 'Seedance 2.0 720P · 933', '按条', '933原生 不卡脸 选择5~15秒', ['720p'], [5, 15], [9, 3, 3], 'no-format'],
+  ['a-sd2.0-720p-3', 'Seedance 2.0 720P · 满血933', '按条', '满血933，不卡人脸，5 10 15', ['720p'], [5, 15], [9, 3, 3], 'no-format'],
+  ['f-sd2.5-4', 'Seedance 2.5 · f4（多档）', '按条', '满血/4-30秒/30图10视频10音频', ['480p', '720p', '1080p'], [4, 30], [30, 10, 10]],
+  /*
+   * ---- 2026-10-27 用户要求下架：`minimax-video-h3`（云上 / srdz 那台）----
+   * 同一天第五张卡换成 **H3 专用 Key** 的 `minimax-h3`（只 768P、当时 0.052 元/秒，现 0.042），
+   * 这台（768P / 2K、5–15 秒）整卡收起。
+   * 恢复要动三处：
+   *   ① 把下面这行剪回上面的 VIDEO_CATALOG；
+   *   ② `server/videoLines.js` 补回线路组
+   *      `'minimax-video-h3': { '768p': [{ scope: 'srdz', model: 'minimax-video-h3' }],
+   *                             '2k':   [{ scope: 'srdz', model: 'minimax-video-h3' }] }`；
+   *   ③ 真名与标识相同（云上就叫 `minimax-video-h3`），映射在服务端
+   *      HIDDEN_VIDEO_ROUTES 里留着，恢复时把那行删掉即可。
+   * 价目一直留着（PRICE_SNAPSHOT 里 768p 0.0264 / 2k 0.128），
+   * 老任务回显、重算与对账要用；上游能力与 `minimax-h3` 相同（预设 `minimax`）。
+   */
+  ['minimax-video-h3', 'MiniMax H3', '', '768P / 2K 可选 5~15秒 9图', ['768p', '2k'], [5, 15], [9, 0, 0], 'minimax'],
+  /*
+   * ---- 按条型号（易红）----
+   * 2026-10-19 用户定：按条的卡**全部下架**，六张全收在这里。
+   *   · Grok 1.5 元/条（固定 15 秒，三档同价）—— 当天直接下架；
+   *   · Muse 2026-10-18 重新上架、2026-10-19 又下架；
+   *   · Ultra 2026-10-19 上线当天又「暂时下架」，但它没浪费：现在是
+   *     `seedance-2.5` 720P 的静默兜底腿（云上不通且 ≥25 秒才用，
+   *     见 server/videoLines.js 的 720p 那段），用户看到的模型与价格都不变；
+   *   · coke 2.8 元/条是 2026-10-18 下线的。
+   * 这里现在是 grok / Muse / Burger / chovy / coke / Ultra 六台。
+   * 恢复某一条要动三处，全部对齐才算上架：
+   *   ① 把对应那行剪回上面的 VIDEO_CATALOG；
+   *   ② `server/videoLines.js` 里对应线路组剪回去（注释里备着原样代码；
+   *      Ultra 还要把 720P 里那条 `quiet: true` 的腿删掉，否则同一条线会排两次）；
+   *   ③ `server/videoModels.js` 的 HIDDEN_VIDEO_ROUTES 里那一段删掉（Ultra 现在没有，
+   *      它靠 LEGACY_REAL_MODELS 折价，恢复独立卡片时把那条也删掉）。
+   * **价目**：PRICE_SNAPSHOT.upstreamPerTask 与 server/wallet.js 的
+   * VIDEO_UPSTREAM_CNY_PER_TASK 里只剩 chovy 3.7 / coke 2.8 / Ultra 7.9 / 2.5-test 1
+   * 四行（2026-11-04 按用户要求把 Muse / grok / Burger 三行整条删掉），
+   * 老任务重算、退款对账照常算得出钱；被删的那三台重跑会判「未计价」（不扣费）。
+   * 恢复它们时要把价目行补回来。
+   */
+  ['grok-imagine-video-1.5-preview', 'Grok Imagine Video 1.5', '按条', '480P / 720P / 1080P 固定 15 秒，按条计费 7图', ['480p', '720p', '1080p'], [15, 15], [7, 0, 0], 'no-firstlast-audio'],
+  ['seedance-2.5-Ultra', 'Seedance 2.5 Ultra', '按条', '720P 可选 10~30 秒，按条计费 14图10音频', ['720p'], [10, 30], [14, 0, 10], 'no-firstlast'],
+  ['seedance-2.5-Muse', 'Seedance 2.5 Muse', '按条', '720P 固定 30 秒，按条计费 9图', ['720p'], [30, 30], [9, 0, 0], 'muse'],
+  ['seedance2.5 Burger', 'Seedance 2.5 Burger', '按条', '720P 固定 30 秒，按条计费 30图10音频', ['720p'], [30, 30], [30, 0, 10], 'no-firstlast'],
+  ['seedance2.5 chovy', 'Seedance 2.5 chovy', '按条', '720P 固定 30 秒，按条计费 9图，出片很慢', ['720p'], [30, 30], [9, 0, 0], 'muse'],
+  ['seedance-2.0-coke', 'Seedance 2.0 Coke', '按条', '720P 固定 15 秒，按条计费 9图', ['720p'], [15, 15], [9, 0, 0], 'no-firstlast'],
+  /*
+   * ★ 2026-11-10 用户要求：**视频高清（超分）**，管理员按用户开通后才出现 ★
+   *
+   * 原话：「把这个 https://hub.ll2.cn/pricing 打包成超分服务：720p 0.02/s、
+   *        1080 0.03/s、2k 0.04/s、4k 0.07/s 这样定价，没有折扣……
+   *        开启后能看到：视频高清 这个栏位，放在 视频生成 下方。
+   *        里面就一张卡片，标注的是这个价格 和大致时间」。
+   *
+   *   · 位置：创作台「视频生成」页里的**分组页签**，排在站内模型那一组之后（见 app.js）；
+   *   · 四档按输出档位、按源片秒数收费，**不打折**（服务端 charge 走 exact）；
+   *   · 卡片描述里写清价格与大致时间（用户要求「标注的是这个价格和大致时间」）；
+   *   · 秒数范围 `[1, 60]`：**与上游一致**（2026-11-10 用户确认，上游计费示例全是 60s）；
+   *     传给上游的是「源片时长」，真实秒数以服务端 ffprobe 探测为准。
+   */
+  [
+    'video-hd',
+    '视频高清',
+    '超分',
+    '720P 0.03元/秒 · 1080P 0.03元/秒 · 2K 0.04元/秒 · 4K 0.07元/秒 · 源片 1~60 秒',
+    ['720p', '1080p', '2k', '4k'],
+    [1, 60],
+    [0, 1, 0],
+    'hd',
+  ],
+];
+
+/** 能力集合：音频 / 水印 / 种子 / 输出格式 / 参考音频 / 参考视频。上游不认的那些写在模型上，前端就不发 */
+const FEATURES_FULL = { audio: true, watermark: true, seed: true, outputFormat: true, refAudio: true, refVideo: true };
+const FEATURES_NO_FORMAT = { ...FEATURES_FULL, outputFormat: false };
+/**
+ * 线路不接参考视频的预设。2026-10-19 起 Seedance 2.5 已开放参考视频（云上与 srdz 都支持），
+ * 这个预设现在没有在售型号在用，留给以后明确不收视频的型号 ——
+ * 参考视频槽位可以照挂，提交前由 materials.js 的 validate 拦下并提示。
+ * 与 maxRefVideos 是两件事：后者是**槽位数量**，refVideo 是**能不能提交**。
+ */
+const FEATURES_NO_REFVIDEO = { ...FEATURES_FULL, refVideo: false };
+/**
+ * MiniMax H3：上游不吃「生成音频 / 水印 / 种子 / 输出格式」这几样
+ * （老线路就为它摘过这些字段，见 server/legacy/upstream-ysapi.cfd.js 的 MODEL_EXCLUDED_FIELDS），
+ * 前端对应的开关一律置灰 / 隐藏，免得用户开着开关却看不到任何效果。
+ * 参考音频与参考视频也先给 false（这条线没实测过），槽位数量同样是 0，见目录行。
+ */
+const FEATURES_MINIMAX = {
+  audio: false,
+  watermark: false,
+  seed: false,
+  outputFormat: false,
+  refAudio: false,
+  refVideo: false,
+};
+/**
+ * 2026-10-17 接入的两台按条型号（Muse / Burger）：上游文档写明**不支持首尾帧**，
+ * 所以除了关掉参考视频，还要把「首帧/尾帧」这两种生成方式从卡片上摘掉，
+ * 免得用户挂好图提交才被上游拒。
+ */
+const FEATURES_NO_FIRSTLAST = { ...FEATURES_FULL, refVideo: false, firstLast: false };
+/**
+ * 2026-10-18 接入的 Grok Imagine Video（易红，按条）：只吃图（首帧单张或多图），
+ * 不收参考视频、参考音频，也没有首尾帧 —— 所以在 no-firstlast 上再把参考音频关掉。
+ */
+const FEATURES_NO_FIRSTLAST_AUDIO = { ...FEATURES_NO_FIRSTLAST, refAudio: false };
+/**
+ * ★ 2026-11-08：9y 的两张条生卡（`seedance-2.0-fast-pervideo` / `seedance-2.5-pervideo-plus`）★
+ *
+ * 与 `no-firstlast-audio` 一样（无首尾帧、不收参考视频 / 参考音频），**额外把「生成音频」关掉**：
+ * 上游 `DB-SD-2.0-Fast` / `DB-SD-2.5-plus` 连 `generate_audio` 都不收，
+ * 传了会回 400「仅支持文字及参考图片，请勿传入视频、音频或其他参数」
+ * （2026-11-08 用户踩过：从别的模型切过来，「生成音频」还开着就提交了）。
+ * 关掉之后界面上那个开关直接置灰，`buildPayload()` 里 `model.features.audio` 为假，
+ * 也就不会再往 payload 里塞 `generate_audio`。
+ */
+const FEATURES_NO_REFMEDIA = { ...FEATURES_NO_FIRSTLAST_AUDIO, audio: false };
+/**
+ * ★ 2026-11-10：视频高清（超分，`video-hd`）★
+ *
+ * 这一栏不是「生成」，是**把客户上传的一条片高清**：所以只要参考视频槽（1 条），
+ * 图片 / 音频 / 首尾帧 / 生成音频 / 水印 / 种子 / 输出格式全关 ——
+ * 这些开了也没用，上游只认「源片 + 目标档位」。
+ */
+const FEATURES_HD = { ...FEATURES_NO_REFMEDIA, refVideo: true };
+const FEATURES_MUSE = { ...FEATURES_NO_FIRSTLAST, refAudio: false };
+/**
+ * 万相 3.0 两台（2026-10-17）：上游只认 prompt / seconds / resolution / ratio / media，
+ * 我们这几个开关（生成音频 / 水印 / 种子 / 输出格式）一概不发，界面上就别摆出来。
+ * 普通版不吃参考视频，Prime 吃 —— 所以分成两个预设。
+ */
+const FEATURES_WAN = {
+  ...FEATURES_FULL,
+  audio: false,
+  watermark: false,
+  seed: false,
+  outputFormat: false,
+  refVideo: false,
+};
+const FEATURES_WAN_PRIME = { ...FEATURES_WAN, refVideo: true };
+/**
+ * Wan 3.0（XUHost 的 `官转1wan3`，2026-10-28 上架）：
+ * 上游只认 `params` 里的 ratio / resolution / duration / enableSound / mode，
+ * **不吃水印 / 种子 / 输出格式**，这三样在卡片上置灰；
+ * 原生声音默认开，所以「生成音频」保留（适配层会转成 `enableSound: on/off`）；
+ * 参考音频 5 段、参考视频 5 段都开着（v1.4.5 文档 §3.2 的上游上限）。
+ */
+const FEATURES_WAN3 = {
+  audio: true,
+  watermark: false,
+  seed: false,
+  outputFormat: false,
+  refAudio: true,
+  refVideo: true,
+  /** 没有首帧 / 尾帧通道（上游只有参考素材 ID） */
+  firstLast: false,
+};
+
+/** 目录行第 8 位填这里的预设名；不填就是 FEATURES_FULL */
+const FEATURE_PRESETS = {
+  'no-format': FEATURES_NO_FORMAT,
+  'no-refvideo': FEATURES_NO_REFVIDEO,
+  'no-firstlast': FEATURES_NO_FIRSTLAST,
+  'no-firstlast-audio': FEATURES_NO_FIRSTLAST_AUDIO,
+  // 2026-11-08：9y 条生卡专用（无参考视频/音频、无首尾帧、**且不生成音频**）
+  'no-refmedia': FEATURES_NO_REFMEDIA,
+  muse: FEATURES_MUSE,
+  minimax: FEATURES_MINIMAX,
+  wan: FEATURES_WAN,
+  'wan-prime': FEATURES_WAN_PRIME,
+  wan3: FEATURES_WAN3,
+  // 2026-11-10：视频高清（超分）专用
+  hd: FEATURES_HD,
+};
+
+/**
+ * 只支持部分画幅的型号（2026-10-17）：上游文档把比例写死了，别的档位发过去直接 400。
+ *   Muse  ：16:9 / 9:16（`ratio` 字段）
+ *   Burger：16:9 / 9:16 / 1:1 / 4:3 / 3:4 / 21:9（`aspect_ratio` 字段）
+ * 声明了 ratios 的型号也不会出现「跟随素材（adaptive）」那一档 —— 上游不认这个值。
+ */
+const MODEL_RATIOS = {
+  // 易红那台按条型号（2026-10-18 重新上架，排在卡片最后）：只认这两档画幅
+  'seedance-2.5-Muse': ['16:9', '9:16'],
+  /*
+   * 2026-10-25：shuikule 已不单独成卡（900 的腿并进 `seedance-2.5` 720p，
+   * special2 1080P 删除），它们的画幅收窄条目随之去掉 ——
+   * 主卡照旧六档全开，那条腿自己只认 16:9 / 9:16 / 1:1 是上游的事，
+   * 排线时不会把不支持的画幅塞给它（它接的是已经在主卡上选好的请求）。
+   */
+  // 2026-10-19 换上的 Ultra：站方说明「ratio 建议 16:9 或 9:16」，只摆这两档最稳
+  'seedance-2.5-Ultra': ['16:9', '9:16'],
+  /*
+   * 2026-10-18 接入的两台易红型号，画幅都是站方说明里写死的枚举。
+   *   · Kling Omni 4.0：四档；
+   *   · Grok Imagine Video：七档（比常规多 2:3 / 3:2）。
+   */
+  'kling-omni-4.0': ['1:1', '16:9', '9:16', '21:9'],
+  'grok-imagine-video-1.5-preview': ['16:9', '9:16', '1:1', '4:3', '3:4', '2:3', '3:2'],
+  // 2026-10-18：`seedance-2.0-mini` 已改走云上（按秒），画幅不再收窄，条目删掉
+  'seedance2.5 Burger': ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'],
+  // chovy 六档都收，但不传按 16:9；上游说明里还提醒「成片画幅可能与所选不同」
+  'seedance2.5 chovy': ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'],
+  // 万相 3.0 两台：五档主流画幅（上游另外还吃 adaptive，见下面 app.js 的放行判断）
+  'wan3.0-video': ['16:9', '9:16', '1:1', '4:3', '3:4'],
+  'wan3.0-video-prime': ['16:9', '9:16', '1:1', '4:3', '3:4'],
+  /*
+   * sd-官key（2026-10-30）：火山官方协议的 `ratio` 是**严格枚举**
+   * （16:9 / 9:16 / 1:1 / 21:9 / 4:3 / 3:4），多一档就 400；
+   * 也没有 `adaptive`（跟随素材）这个值，所以这几张卡固定六档。
+   */
+  'doubao-seedance-2-5-260628': ['16:9', '9:16', '1:1', '21:9', '4:3', '3:4'],
+  // 2026-10-31：Seedance 2.5 特稳同样走官方协议，画幅枚举与 2.5 那张一致
+  'seedance-2.5-stable': ['16:9', '9:16', '1:1', '21:9', '4:3', '3:4'],
+  // `seedance-2.5-4k` 已于 2026-11-05 下架，画幅表不再登记它
+  'doubao-seedance-2-0-260128': ['16:9', '9:16', '1:1', '21:9', '4:3', '3:4'],
+  'doubao-seedance-2-0-fast-260128': ['16:9', '9:16', '1:1', '21:9', '4:3', '3:4'],
+  'doubao-seedance-2-0-mini-260615': ['16:9', '9:16', '1:1', '21:9', '4:3', '3:4'],
+};
+
+/**
+ * 画幅支持 `adaptive`（跟随素材）的型号 —— 声明了 ratios 也照样放行。
+ * 万相 3.0 两台的 `ratio` 枚举里就有 adaptive，首帧 / 参考图场景跟素材走更自然。
+ */
+export const ADAPTIVE_MODELS = new Set(['wan3.0-video', 'wan3.0-video-prime']);
+
+/**
+ * 生成方式按型号**额外收窄**（默认由 preset 决定）。
+ *
+ * `kling-omni-4.0`：上游只认参考图数组 `image_urls`，**不认单张首帧 `input_reference`**，
+ * 所以不给「图生视频」（那条路会让挂在首帧槽的图被摘掉、白等一条纯文生）。
+ * 要用图就选「参考生视频」，图走 image_urls。
+ */
+/**
+ * 时长只能取固定几个值的型号（2026-10-24）。
+ *
+ * 多数模型是范围（minSeconds–maxSeconds 之间随便填），但个别上游是**枚举**：
+ * 只认 5 / 10 / 15 / 30 这类固定档，填 8、12、20 会被 400 拒。
+ * 有这一项的型号，生成页的时长控件会吸附到最近的一档（见 app.js 的 snapSeconds）。
+ */
+const MODEL_SECONDS_CHOICES = {
+  /*
+   * 2026-10-25：shuikule 的两张卡已撤，这里的枚举条目随之清空。
+   * 表格与 `MODEL_SECONDS_CHOICES[id]` 的取值逻辑保留 ——
+   * 以后再有枚举型时长的新型号，往这里加一行即可。
+   */
+};
+
+const MODEL_MODES = {
+  'kling-omni-4.0': ['t2v', 'reference'],
+  /*
+   * 2026-10-19 上的 Ultra 同理：只认参考图数组 `image_urls`，不认单张首帧
+   * `input_reference`（提交前会被剔掉，等于白等一条纯文生）。
+   */
+  'seedance-2.5-Ultra': ['t2v', 'reference'],
+  /*
+   * XUHost 的 `官转1seedance2.5`（2026-10-23）：上游只有 `input_asset_ids`（参考素材 ID），
+   * **没有单张首帧字段** —— 选「图生视频」时首帧图会被适配层丢掉，等于白等一条纯文生。
+   * 所以只留「文生视频 / 参考生视频」两种。
+   */
+  'seedance-2.5-xuhost': ['t2v', 'reference'],
+  /*
+   * Wan 3.0（`官转1wan3`，2026-10-28）：上游只有参考素材 ID，**没有单张首帧字段** ——
+   * 选「图生视频」时首帧图会被适配层拒掉（等于白等一条纯文生），所以只留
+   * 「文生视频 / 参考生视频」两种；首尾帧同理不给（preset 里 firstLast 也关掉了）。
+   */
+  wan3: ['t2v', 'reference'],
+  /*
+   * MiniMax H3（2026-10-31 用户明确：「我的 miniMax 只支持参考生视频」）：
+   * 背后是 RunningHub 的「双采参考生视频」工作流，只有九个图槽 ——
+   * **没有首帧 / 尾帧通道，也没有纯文生分支**（纯文生单会跑到音频条件节点才失败）。
+   * 所以卡片上只留这一种生成方式，切到这张卡时素材面板直接出参考图槽；
+   * 提交前 app.js 的 validate 还会再拦一次「没传图」的单，服务端 /api/videos 也兜一层。
+   */
+  'minimax-h3': ['reference'],
+  /*
+   * 2026-10-25：shuikule 不再单独成卡（见 MODELS 里那段下架注释），
+   * 它的 `t2v / reference` 口径现在由 `seedance-2.5` 主卡承载 ——
+   * 主卡本来就四模式全开，排到那条腿时按上面的素材限制过滤。
+   */
+  /*
+   * v6k 测试卡（2026-10-24）：**不再收窄**，按预设走 t2v / i2v / reference 三种。
+   * 首帧图（input_reference）与参考图（reference_image_urls）统一并进上游的 `images` 数组，
+   * 顺序 = 图片1、图片2…（见 server/fyccc.js 的 isV6kLine 分支）。
+   */
+};
+
+export const MODELS = VIDEO_CATALOG.map(
+  ([id, name, tag, desc, tiers, seconds, refs, features, adminOnly]) => {
+    const preset = FEATURE_PRESETS[features] || FEATURES_FULL;
+    /*
+     * 时长档 / 画幅 / 生成方式这几张表都按**官方原名**存，
+     * 对公卡带 `-corp` 后缀，查表时先折回原名（2026-11-10）。
+     * 这里不用 officialBaseId()：那个函数声明在本文件靠后，模块初始化阶段还取不到（TDZ）。
+     */
+    const lookupId = String(id).toLowerCase().endsWith('-corp') ? id.slice(0, -5) : id;
+    return {
+      id,
+      name,
+      tag,
+      desc,
+      /*
+       * 只给管理员看的卡（2026-10-20 起只有 `seedance-2.5-test` 一张）：
+       * 这里只做标记，过滤统一在 visibleVideoModels() 里做 ——
+       * 五个渲染入口都走那一个函数，免得漏一处就把测试卡摆给普通用户。
+       */
+      adminOnly: Boolean(adminOnly),
+      minSeconds: seconds[0],
+      maxSeconds: seconds[1],
+      // 枚举型时长（只有个别型号有）：界面吸附到这几档，见 app.js 的 snapSeconds
+      secondsChoices: MODEL_SECONDS_CHOICES[lookupId] || null,
+      resolutions: tiers,
+      ratios: MODEL_RATIOS[lookupId],
+      // 固定时长的按条型号（30 秒）没有首尾帧，生成方式只有文生 / 图生 / 参考
+      modes:
+        MODEL_MODES[lookupId] ||
+        (preset.firstLast === false ? ['t2v', 'i2v', 'reference'] : ['t2v', 'i2v', 'firstlast', 'reference']),
+      maxRefImages: refs[0],
+      maxRefVideos: refs[1],
+      maxRefAudios: refs[2],
+      features: preset,
+    };
+  },
+);
+
+/**
+ * 表单默认选中的型号：2026-10-17 起是合并后的 `seedance-2.5`（标着「推荐」那张，
+ * 默认档位 720P，见 app.js 的初始 state）—— 主走云上、余额不足静默转 srdz，档位齐
+ * （480P / 720P / 1080P 都有），价按云上美元价 × 8.4（换线不改价）：720P 0.396 元每秒。
+ * 改这一行就能换默认值（草稿与历史参数会覆盖它）。
+ */
+export const DEFAULT_MODEL_ID = 'seedance-2.5';
+
+/* ==================================================================== *
+ * 云上**独有**三台的价：**只维护官方美元价，人民币现算**（用户 2026-10-17 定）
+ *
+ *   元 = 美元 × 6（汇率）× 1.4（毛利） = × 8.4，四舍五入到三位小数
+ *   样板（用户给的）：720P $0.0472 × 8.4 = 0.39648 → **0.396**
+ *   2026-10-21 用户把倍率从 9 改成 8.4（毛利 1.5 → 1.4），视频与图片同口径。
+ *
+ * 为什么这么写：这条线**不进 `ca_video_prices`**（用户把库里那批行删了），
+ * 官方价目表一改就整条线一起动，所以代码里只留美元数，换算只写一遍。
+ * 合并后的 `seedance-2.5` / `seedance-2.0` 不按这个公式（它们按即梦那张卡的价收）。
+ * 服务端 server/wallet.js 的 `cnyFromUsd` 是同一套口径 —— **改汇率或毛利要两边一起改**。
+ * ==================================================================== */
+const USD_TO_CNY_RATE = 6;
+const CLOUD_PRICE_MARKUP = 1.4;
+/** 美元 → 元（三位小数，与服务端 cnyFromUsd 一致） */
+const cnyFromUsd = (usd) => Math.round(Number(usd) * USD_TO_CNY_RATE * CLOUD_PRICE_MARKUP * 1000) / 1000;
+/** 一张档位表整表换算：{ 档位: 美元 } → { 档位: 元 } */
+const cnyTiers = (usdTiers) =>
+  Object.fromEntries(Object.entries(usdTiers).map(([tier, usd]) => [tier, cnyFromUsd(usd)]));
+
+/**
+ * 云上那几台的官方美元价（美元/秒，官方价目表）。
+ * `seedance-2.5` / `seedance-2.0` 不在这里 —— 它们有备用线路、价与线路解耦，
+ * 人民币价直接写在上面的 `PRICE_SNAPSHOT.upstreamPerSecond` 里（同服务端 wallet.js）。
+ * 只走云上一条线的这几台只维护美元数、人民币按 ×8.4 现算（cnyFromUsd）。
+ *
+ * **2026-10-27 现状**：`minimax-video-h3`（云上 H3）已按要求下架，美元数**留着** ——
+ * 老任务的回显、重算与退款对账仍按它折价，新单不会再按这台算。
+ */
+const CLOUD_VIDEO_USD = {
+  /*
+   * 云上官方价目表（2026-10-18 用户截图）：只维护美元价，人民币 = ×6×1.4（×8.4）。
+   * `seedance-2.5` / `seedance-2.0` 不在这张表里 —— 它们有备用线路，
+   * 价与线路解耦，直接写在 PRICE_SNAPSHOT.upstreamPerSecond。
+   * 2026-10-19 另接的 `minimax-h3-ch1`（易红）是**单独的模型**，价直接写在元/秒表里。
+   * 新上架的 `minimax-h3`（H3 专用 Key）同理：价是用户给定的元/秒，写在上面的元/秒表。
+   */
+  'seedance-2.0-fast': { '480p': 0.0224, '720p': 0.0288 },
+  /*
+   * 2026-11-05 价格沿革：0.161 → 0.122 → 恢复 0.161 → **再降到 0.128 元/秒**。
+   * 与服务端 wallet.js 的 CLOUD_VIDEO_USD_PER_SECOND 同一份：
+   * 0.0152 × 8.4 = 0.12768 → 0.128（720p 不动，0.208）。
+   */
+  'seedance-2.0-mini': { '480p': 0.0152, '720p': 0.0248 },
+  'minimax-video-h3': { '768p': 0.0264, '2k': 0.128 },
+};
+
+/** 云上七张图片的官方美元价（官方价目表 USD/张） */
+const CLOUD_IMAGE_USD = {
+  'gpt-image-2.5': { '1K': 0.01, '2K': 0.02, '4K': 0.04 },
+  'gpt-image-2': { '1K': 0.013, '2K': 0.016, '4K': 0.02 },
+  'doubao-seedream-5.0': { '2K': 0.0144, '3K': 0.018, '4K': 0.018 },
+  'doubao-seedream-5.0-pro': { '1K': 0.012, '1.5K': 0.0128, '2K': 0.0136 },
+  'gemini-3.2-flash-image': { '1K': 0.013, '2K': 0.013, '4K': 0.018 },
+  'gemini-3.1-flash-image': { '512': 0.013, '1K': 0.013, '2K': 0.013, '4K': 0.018 },
+  'gemini-3-pro-image': { '1K': 0.0128, '2K': 0.0144, '4K': 0.0176 },
+};
+
+/**
+ * 单价快照（**元**，上游网关原价），抄自 https://api.fyccc.cn/api/pricing。
+ *
+ * 官方明确要求「价格会调整，请勿把单价写死在代码里」，所以这里**不作为结算依据**：
+ * 仅用于界面上的费用预估默认值。正常情况以下发的服务端价目表（pricingOverride.*）为准，
+ * 服务端调价后前台自动跟着变，不会两边对不上。
+ *
+ * 服务端那边（2026-10-18 起、2026-10-21 把倍率改成 8.4）：线上七个视频模型
+ * **一律 = 云上官方美元价 × 8.4、全部按秒**
+ * （`seedance-2.5` / `seedance-2.0` 有备用线路，人民币价直接写在元/秒表；
+ * Fast / Mini / H3 只走云上，只维护美元数、人民币现算），
+ * 这样「换哪条线路出片都不改价」能靠同一份基准价保证。
+ * 所以这份快照只在「还没拉到 /api/pricing」时顶一小会儿。
+ *
+ * 键的写法（2026-10-16 起统一）：这张快照与服务端 wallet.js **同一个口径** ——
+ * 键都是**前台模型名**（`seedance-2.5`…），一行管一个档位。
+ * 原先按后台真实型号名（`ov-seedance-2.5-720p-nv`、`a-sd2.5-720p`…）逐台列价的那批已删，
+ * 只保留「跟前台一致的 模型 + 分辨率」。
+ *
+ * 两个时刻要分清：
+ *   · upstreamToCny —— 网关原价 → 元的换算，网关本来就按人民币计价，所以是 1；
+ *   · markup / discount —— **恒为 1**（2026-10-16 起定价就是「表里那个价」，没有倍率）。
+ *     两行留着只为兼容：服务端下发的也是 1。
+ *
+ * 当前口径（2026-10-17 定）：**表里那个价就是用户实付价**，任何账号都不打折。
+ * 例：720p 0.64 → 0.64 元/秒。
+ */
+export const PRICE_SNAPSHOT = {
+  date: '2026-10-17',
+  upstreamToCny: 1,
+  /*
+   * 图片价目表 → 元的换算。2026-10-16 图片换到 gpt-image 系后也按人民币报价，
+   * 所以恒为 1（字段名是历史包袱，不带 usd 的新名字前端老代码不认）。
+   */
+  usdToCny: 1,
+  markup: 1,
+  discount: 1,
+  /**
+   * 按秒计费：{ 前台模型: { 档位: 元/秒 } } —— 与服务端 server/wallet.js 的
+   * VIDEO_UPSTREAM_CNY_PER_SECOND 是同一份**基准价**，键**也都是前台模型名**。
+   * **这个数就是用户实付价**（没有倍率、也没有折扣）。
+   * 2026-10-21 用户定：**一律 = 云上官方美元价 × 8.4**（见 PRICE_SNAPSHOT 里的说明），
+   * 全部按秒：
+   *   seedance-2.5        480p 0.318 / 720p 0.385 / 1080p 1.32（720p 为 2026-11-05 调价）
+   *   seedance-2.0        480p 0.235 / 720p 0.315 / 1080p 1.008 / 4k 4.166（2026-11-04 调价）
+   *   fast / mini        由 CLOUD_VIDEO_USD 现算（见下面那张表）
+   *   minimax-h3         768p **0.098**（2026-10-27 用户给定、2026-10-28 调为 0.098，H3 专用 Key 那条线）
+   *   wan3               480p **0.152** / 720p **0.172**（2026-11-07 提价；XUHost 的 `官转1wan3`）
+   *   minimax-h3-ch1     768p 0.06（易红那台，单独模型，已下架但价目留着）
+   * 2026-10-27 起云上那台 `minimax-video-h3` 已下架，价目仍留着（老任务重算要用）。
+   */
+  upstreamPerSecond: {
+    /*
+     * 合并模型 2.5 / 2.0：**价按云上官方美元价 × 8.4**，与走哪条线路无关
+     * （2.5 现在是 srdz → 云上 → xh，换线不改价，所以这里一行管全部线路）。
+     *   2.5：现价 0.318 / 0.385 / 1.32（720p 于 2026-11-05 由 0.405 再降）
+     *   2.0：现价 0.235 / 0.315 / 1.008 / 4.166（2026-11-04 用户调价；4k 档 2026-10-20 起停售）
+     * 注意 2.0 的 `4k` 于 2026-10-20 停止售（卡片与线路组都没这一档了），
+     * 价目**保留**：老 4K 任务回显、重算与对账还要用它。
+     */
+    // 1080p：2026-10-28 用户要求由 1.68 下调为 1.32 元/秒
+    // 2026-11-04 起用户调价：480p 0.295 → **0.318**、720p 0.396 → **0.405**（1080p 不变）
+    // 2026-11-05：720p 再降 0.405 → **0.385**
+   'seedance-2.5': { '480p': 0.318, '720p': 0.385, '1080p': 1.32 },
+    /*
+     * ★ 2026-10-31 用户定：**Seedance 2.5 特稳**（`seedance-2.5-stable`）★
+     * 只卖 720p，**0.55 元/秒**（2026-11-01 由 0.56 下调）；底层是 sd-官转主 Key 的 480p 通道（拉伸交付），
+     * 与服务端 wallet.js 的 `'seedance-2.5-stable'` 同一份，改一处要两边一起改。
+     */
+    'seedance-2.5-stable': { '720p': 0.55 },
+    /*
+     * ★ 2026-11-10 用户定：**视频高清（超分）**（`video-hd`）★
+     * 720p 0.03 / 1080p 0.03 / 2k 0.04 / 4k 0.07 元每秒，**没有折扣**；
+     * （720p 先定 0.02，用户当天改为 0.03。）
+     * 与服务端 wallet.js 的 `'video-hd'` 同一份，改一处要两边一起改。
+     */
+    'video-hd': { '720p': 0.03, '1080p': 0.03, '2k': 0.04, '4k': 0.07 },
+    // `seedance-2.5-4k`（4k重绘）已于 2026-11-05 下架，这一份显示价随之删除
+    // （服务端 wallet.js 与 ca_video_prices 里那行保留，供老订单重算）
+    /*
+     * ★ 2026-10-22 用户要求：Seedance 2.5 备用卡（即梦分组），
+     * 480p 0.42 / 720p 0.64 / **1080p 1.386** 元每秒（1080p 当天新加，走即梦官转线），
+     * 与主卡分开标价。
+     * 与服务端 wallet.js 的 `'seedance2.5-备用'` 同一份，改一处要两边一起改。
+     */
+    'seedance2.5-备用': { '480p': 0.42, '720p': 0.64, '1080p': 1.386 },
+    /*
+     * ★ 2026-10-23：XUHost（`seedance-2.5-xuhost`，**卡片当天已下架**）★
+     * 价目**留着**给老任务重算与退款对账 —— 这个标识现在已经不在 VIDEO_CATALOG 里，
+     * 新单不会再按它算价（型号已是 `seedance-2.5` 的一条腿）。
+     * 与服务端 wallet.js 的 `'seedance-2.5-xuhost'` 同一份，改一处要两边一起改。
+     */
+    'seedance-2.5-xuhost': { '480p': 0.2, '720p': 0.27 },
+    /*
+     * ★ 2026-10-24：v6k 测试卡（`seedance-2.5-v6k`，管理员专属）★
+     * 先按主卡同档价收，与服务端 wallet.js 的 `'seedance-2.5-v6k'` 同一份。
+     */
+    'seedance-2.5-v6k': { '480p': 0.269, '720p': 0.396 },
+    // 2026-11-04 起用户调价：480p 0.212 → **0.235**、720p 0.280 → **0.315**（1080p / 4k 不动）
+    'seedance-2.0': { '480p': 0.235, '720p': 0.315, '1080p': 1.008, '4k': 4.166 },
+    /*
+     * 万相 3.0 两台（2026-10-17，易红那条线，按秒）：上游积分 × 7.3 再 **+0.08/秒**。
+     *   video       480P 0.15 / 720P 0.28 / 1080P 0.33  → +0.08 → 0.23 / 0.36 / 0.41
+     *   video-prime 480P 0.27 / 720P 0.34 / 1080P 0.36  → +0.08 → 0.35 / 0.42 / 0.44
+     * 2026-10-20 用户要求下架（卡片在 VIDEO_CATALOG_HIDDEN）：价目留着，老任务重算要用。
+     */
+    'wan3.0-video': { '480p': 0.23, '720p': 0.36, '1080p': 0.41 },
+    'wan3.0-video-prime': { '480p': 0.35, '720p': 0.42, '1080p': 0.44 },
+    /*
+     * Kling Omni 4.0 于 2026-10-20 下架；**价目 2026-11-04 按用户要求删除**
+     * （原话：「这些去掉吧」——旧型号的行不要留在价目表里）。
+     * 与服务端 server/wallet.js 同一份，两边一起删了；老任务重跑判「未计价」（不扣费）。
+     */
+    /*
+     * MiniMax H3-ch1（2026-10-19 新接，易红那台）：**单独的模型**，跟云上的
+     * `minimax-video-h3` 无关。只有 768P；上游 $0.0048/秒 ≈ 0.035 元，
+     * 对客 **0.06 元/秒**（用户给定）。
+     */
+    'minimax-h3-ch1': { '768p': 0.06 },
+    /*
+     * ★ 2026-10-27 用户定：MiniMax H3（H3 专用 Key 那条线，真名 `MiniMax-H3`）★
+     * 只 768P 一档，对客 **0.042 元/秒**（界面显示 ⚡0.42/s）。
+     * 价格沿革：10-27 定 0.112 → 同日 0.1185 → 10-28 调成 0.098 →
+     * 10-30「0.98 改成 0.72」= 0.072 → 2026-11-05「改到 0.052/s」= 0.052 →
+     * **2026-11-05 当天再调为 0.042/s**。
+     * 这个数是直接给定的元/秒，**不按美元 ×8.4 换算**，所以写在这里而不进 CLOUD_VIDEO_USD。
+     * 与服务端 server/wallet.js 的 `'minimax-h3'` 同一份，改一处要两边一起改。
+     */
+    'minimax-h3': { '768p': 0.042 },
+   /*
+    * ★ 2026-10-28 用户要求：**上架 Wan 3.0（XUHost 的 `官转1wan3`）** ★
+    * 2026-10-30 用户要求提价：480p **0.122** / 720p **0.152** 元每秒
+    * （用户直接给定的价，**不按美元 ×8.4 换算**；原价 0.112 / 0.142 作废）。
+    * 与 `xh` 腿共用同一把 Key（密钥分组 `xuhost`），但独立成卡、独立计价。
+    * 与服务端 server/wallet.js 的 `'wan3'` 同一份，改一处要两边一起改；
+    * 真正生效的是库里 `ca_video_prices` 的那两行。
+    */
+   /*
+    * 2026-11-04：新增 **1080p 0.285 元/秒**（用户给定报价，只走 qsqs 的 `W3-WAN3-1080P`
+    * 一条腿，渠道 `qs-wan3-1080` 不进配置页）。与服务端 wallet.js 同一份。
+    * 2026-11-07 提价：480p **0.152** / 720p **0.172**（原 0.122 / 0.152；1080p 不动）。
+    */
+   'wan3': { '480p': 0.152, '720p': 0.172, '1080p': 0.285 },
+    /*
+     * —— 云上那几台（Fast / Mini）：由官方美元价现算（×8.4，三位小数）——
+     *   Fast 480P 0.188 / 720P 0.242    Mini 480P 0.128 / 720P 0.208（2026-11-05 调价）
+     * 美元数在 CLOUD_VIDEO_USD，换算在 cnyFromUsd。
+     * 原云上 H3（`minimax-video-h3`，768P 0.222 / 2K 1.075）**2026-10-27 已下架**，
+     * 美元数仍留在 CLOUD_VIDEO_USD 里当老任务的兜底价，新单不会再按它算。
+     * 2026-10-18 用户定「一律按云上美元价 × 倍数」后（10-21 倍率改为 8.4），**它们一律按秒**，不在下面按条表里
+     * （Fast/Mini 曾在那天短暂按条 3.8 / 1.9，已随口径统一去掉）。
+     */
+    ...Object.fromEntries(Object.entries(CLOUD_VIDEO_USD).map(([id, usdTiers]) => [id, cnyTiers(usdTiers)])),
+  },
+  /**
+   * 按条计费（与时长无关）：{ 前台模型: { 档位: 元/条 } }。
+   *
+   * 2026-10-19 起**按条的卡全部下架**，这张表暂时没有在售条目，价目只留
+   * 给老任务重算与对账（2026-11-04 按用户要求删掉了 Muse / grok / Burger 三行，
+   * 它们彻底不在价目表里了；剩下这几行是仍在对账用的）：
+   *   `seedance-2.5-Ultra` **7.9 元/条**（2026-10-19 暂时下架，改为 2.5 720P 的静默兜底腿）
+   *   `seedance-2.0-coke` **2.8 元/条**（2026-10-18 当天上线又按要求下线）
+   *   `seedance2.5 chovy` 3.7（固定 30 秒 / 720P）
+   *
+   * 2026-10-18 用户定「一律 = 云上官方美元价 × 倍数」之后（10-21 倍率改为 8.4），
+   * **云上那批全部按秒**（2.0 / 2.0 Fast / 2.0 Mini / H3），
+   * 价由 CLOUD_VIDEO_USD ×8.4 现算，不在这张表里。
+   * 同一（模型，档位）**不能两张表都有**：前端按条查先命中按条表，会盖掉按秒价 ——
+   * 所以按条的 2.0 单独用 `seedance-2.0-coke` 这个标识，不占 `seedance-2.0`。
+   * 服务端同一份在 server/wallet.js 的 `VIDEO_UPSTREAM_CNY_PER_TASK`，改一处要两边一起改。
+   */
+  upstreamPerTask: {
+    /*
+     * ★ 2026-11-06 用户定：**Seedance 2.5 条生**（`seedance-2.5-pervideo`）★
+     * 720p、时长 4–30 秒可选，**5.5 元/条**（与秒数无关；2026-11-07 由 6 元下调）。
+     * 与服务端 wallet.js 的 `VIDEO_UPSTREAM_CNY_PER_TASK` 同一份，改一处要两边一起改。
+     */
+    'seedance-2.5-pervideo': { '720p': 5.5 },
+    /*
+     * 2026-11-08：**Seedance2.0 fast 条生900**（`seedance-2.0-fast-pervideo`）
+     * 只 720p、固定 15 秒、**1.5 元/条**（上游 9yapi 的 `DB-SD-2.0-Fast` 进价 1 元/条）。
+     * 与服务端 wallet.js 的 `VIDEO_UPSTREAM_CNY_PER_TASK` 同一份，改一处要两边一起改。
+     */
+    'seedance-2.0-fast-pervideo': { '720p': 1.5 },
+    /*
+     * 2026-11-08：**Seedance2.5 条生-plus**（`seedance-2.5-pervideo-plus`）
+     * 只 720p、固定 30 秒、**3.5 元/条**（上游 9yapi 的 `DB-SD-2.5-plus` 进价 2.5 元/条）。
+     * 与服务端 wallet.js 的 `VIDEO_UPSTREAM_CNY_PER_TASK` 同一份，改一处要两边一起改。
+     */
+    'seedance-2.5-pervideo-plus': { '720p': 3.5 },
+    /*
+     * 2026-10-25：shuikule 的两张按条卡撤掉（900 并入 `seedance-2.5` 720p 的一条腿、
+     * special2 1080P 删除），所以这里不再有它们的按条价 ——
+     * 那条腿走主卡的按秒价（`seedance-2.5` 720P 0.396 元/秒）。
+     */
+    /*
+     * 2026-10-25：simplefuture 的「特价Seedance2.5主推快速线路」（管理员测试卡，720P、按条）。
+     * **49 算力/次 = 4.90 元/条**；同日已下线（用户：「不需要了」），价目留着给老任务对账。
+     * 与 wallet.js 同一份，改一处要两边一起改。
+     */
+    'seedance2.5-sf-fast': { '720p': 4.9 },
+    // 2026-10-19 用户给的价：易红 `seedance2.5 Ultra`，720P、10–30 秒同一个价
+    'seedance-2.5-Ultra': { '720p': 7.9 },
+    // 2026-10-18 用户给的价：易红 coke、固定 15 秒、9 图（与时长无关）
+    // 卡片当天又按要求下线了，价留着 —— 老任务重算、退款对账要用
+    'seedance-2.0-coke': { '720p': 2.8 },
+    /*
+     * 2026-11-04 用户要求删掉「旧行」（原话：「这些去掉吧」）：
+     * `seedance-2.5-Muse`（7.9 元/条）、`grok-imagine-video-1.5-preview`（1.5 元/条）、
+     * `seedance2.5 Burger`（3.6 元/条）—— 都是 2026-10-19 就下架的型号，
+     * 留着只会被价目接口原样带出去。与服务端 server/wallet.js 同一份，两边一起删了。
+     */
+    // 2026-10-17：上游积分 3.0 → +0.7 → 3.7 元/条
+    'seedance2.5 chovy': { '720p': 3.7 },
+    /*
+     * 2026-10-20 当天上线又下架的**测试卡** `seedance-2.5-test`（线路 xkwuai）：
+     * 720P、固定 5 秒、1.00 元/条。卡片与线路组都已撤，**价目留着** ——
+     * 与其它下架型号同一口径，万一有任务记录要重算/对账，别判成「未计价」。
+     * 服务端同一份在 server/wallet.js 的 VIDEO_UPSTREAM_CNY_PER_TASK。
+     */
+    'seedance-2.5-test': { '720p': 1 },
+  },
+};
+
+/* ==================================================================== *
+ * 图片模型
+ *
+ * 标识就是上游原名，**不加 `-ch1` 后缀**；价 = 官方美元价 × 8.4。
+ * 早先那批 12 个型号（走的是已停用线路）已全部撤下，价目留在两张表末尾，
+ * 只为历史任务重算与退款对账。
+ *
+ * 上架清单与服务端 server/wallet.js 的 EXPOSED_IMAGE_MODELS **必须一致**：
+ * 后端管「能不能提交、怎么计价、用哪把 Key」，这张表管「界面上摆哪几张卡」。
+ * ==================================================================== */
+
+/** 图片接口通用比例（文档里各模型列出的档位都从这里取） */
+const RATIOS_11 = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '9:21', '21:9'];
+/** GPT-image 系：15 档（无 auto） */
+const RATIOS_15 = [...RATIOS_11, '4:1', '1:4', '8:1', '1:8'];
+/* 下面三组比例是 Nano Banana / Seedream 系用的（2026-10-17 又随云上那条线上架了，
+ * 档位、参考图上限与比例仍按当时抄的上游文档）。 */
+/** Nano Banana 2：14 档（无 9:21、无 auto） */
+const RATIOS_NANO2 = [...RATIOS_11.filter((r) => r !== '9:21'), '4:1', '1:4', '8:1', '1:8'];
+/** Nano Banana Pro：10 档 */
+const RATIOS_NANO_PRO = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
+/** Seedream 系：9 档（pro 与 5.0 相同） */
+const RATIOS_SEEDREAM = ['1:1', '4:3', '3:4', '16:9', '9:16', '3:2', '2:3', '21:9', '9:21'];
+/**
+ * GPT-image 系：15 档（2026-10-20 按 srdz 文档抄的，**没有 auto**）。
+ * 注意与上面的 RATIOS_15 不是同一组：这组没有 4:1 / 1:4 / 8:1 / 1:8，
+ * 换成 1:2 / 2:1 / 1:3 / 3:1 那四个。
+ */
+const RATIOS_GPT = [
+  '1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4',
+  '9:16', '16:9', '21:9', '9:21', '1:2', '2:1', '1:3', '3:1',
+];
+
+/*
+ * 各档位能用的**像素尺寸**（GPT-image 2 系官方列表；4K 只有 16:9 与 9:16，
+ * 其余比例在 4K 下退到 2K 的同比例尺寸 —— 上游不认的一律不发）。
+ * 单张卡可以用 `pixelSizes` 覆盖（如 codex-MAX 只认 1024x1024 / 1536x1024 / …）。
+ */
+const PIXEL_SIZES = {
+  '1K': {
+    '1:1': '1024x1024',
+    '3:2': '1536x1024',
+    '2:3': '1024x1536',
+    '16:9': '1536x864',
+    '9:16': '864x1536',
+    '4:3': '1536x1152',
+    '3:4': '1152x1536',
+  },
+  '2K': {
+    '1:1': '2048x2048',
+    '3:2': '2048x1536',
+    '2:3': '1536x2048',
+    '16:9': '2048x1152',
+    '9:16': '1152x2048',
+    '4:3': '2048x1536',
+    '3:4': '1536x2048',
+  },
+  '4K': {
+    '1:1': '2048x2048',
+    '3:2': '2048x1536',
+    '2:3': '1536x2048',
+    '16:9': '3840x2160',
+    '9:16': '2160x3840',
+    '4:3': '2048x1536',
+    '3:4': '1536x2048',
+  },
+};
+
+/*
+ * 「档位 + 比例 → 像素尺寸」的换算**不在前端做**（2026-10-25 改口径）。
+ *
+ * 起因：GPT Image 系与 Seedream 系**只认 `size` 里的宽高**，`aspect_ratio` 会被上游
+ * 静默丢掉（实测 doubao 只发 `size: "2K"` → 出 2048x2048 方图），
+ * 所以「选了 16:9、出来 1:1」。
+ *
+ * 换算放在服务端 `server/imageSizes.js` 里做（`withPixelSize`），提交前统一改写入参，
+ * 这样**站内提交与开放 API 走同一条路**，不会出现「页面修好了、API 还是方图」。
+ * 前端照旧只发档位字符串 + aspect_ratio，计费口径（按档位）也就完全不变。
+ */
+
+/** 按「档位 + 画面比例」取像素尺寸；取不到就退到该档的 1:1，再不行给空串。 */
+export function pixelSizeOf(tier, ratio, card) {
+  const table = (card && card.pixelSizes) || PIXEL_SIZES;
+  const row = table[tier] || {};
+  return row[ratio] || row['1:1'] || Object.values(row)[0] || '';
+}
+
+/*
+ * 画质档：文档里各模型的档位不同，所以写在模型自己身上（qualityList），
+ * 不再是「全模型共用一张表 + 一个 qualityAuto 开关」。
+ */
+const QUALITY_BASE = [
+  { value: 'auto', label: 'auto 自动', hint: '由模型自己决定，等同不传' },
+  { value: 'low', label: 'low 基础', hint: '基础档，最便宜' },
+  { value: 'medium', label: 'medium 中', hint: '基础价 +¥0.0096/张' },
+  { value: 'high', label: 'high 高', hint: '基础价 +¥0.0144/张' },
+];
+/** gpt-image-2.5 多出的两档（部分线路支持，没线路时上游回 400 capability_unsupported） */
+const QUALITY_EXTRA = [
+  { value: 'xhigh', label: 'xhigh 超高', hint: '基础价 +¥0.0192/张（部分线路）' },
+  { value: 'max', label: 'max 极致', hint: '基础价 +¥0.024/张（部分线路）' },
+];
+
+/** 兼容旧引用：图片画质档（现在以各模型的 qualityList 为准） */
+export const IMAGE_QUALITIES = QUALITY_BASE;
+
+/*
+ * 在售的七张图片卡（顺序即界面顺序，第一张也是默认与兜底的那张）。
+ *
+ * 2026-10-20 起整套换成 **srdz 那条线**的 7 个型号（用户当天要求：不再走易红，
+ * 与视频 srdz 腿用同一个地址、同一把 Key；价 = 官方美元 × 8.4）。
+ * 标识就用上游型号名，不加后缀（见 server/wallet.js 的 EXPOSED_IMAGE_MODELS，
+ * 改一处要两边一起改）。
+ *
+ * 四条注意：
+ *   1. `sizeMode` 现在**全部是 'tier'**：前端只发档位字符串
+ *      （GPT 的 1K/2K/4K、Seedream 的 2K/3K/4K、Nano 2 的 512…）。
+ *      **比例不由前端算**：GPT 与 Seedream 这两个家族不认 `aspect_ratio`，
+ *      服务端在提交前把「档位 + 比例」换成像素尺寸（`server/imageSizes.js` 的
+ *      `withPixelSize`），所以站内与开放 API 走的是同一套换算。
+ *   2. `sendAspect` 全部为 true：`aspect_ratio` 照发（Nano 三兄弟原生就靠它出比例；
+ *      GPT / Seedream 那边被忽略也不冲突，换站还能用）。
+ *   3. 档位名**照文档写**：Nano Banana 2 最低档是 `512` 而不是 `0.5K`，
+ *      Seedream 5.0 没有 1K，Pro 是 1K / 1.5K / 2K —— 写错上游直接 400。
+ *   4. 不发 `output_format`：交付格式由上游默认（PNG），保存时按返回内容落扩展名
+ *      （见 server/images.js 的 extOf）。
+ */
+export const IMAGE_MODELS = [
+  /*
+   * ★ 2026-11-03 下架 GPT Image 2.5 / GPT Image 2 ★
+   *
+   * 用户要求：「把两个 gpt 的图片生成模型下架」。两张卡从界面清单里删掉，
+   * 服务端 `EXPOSED_IMAGE_MODELS`（server/wallet.js）同步删掉 —— 那边管准入与计价，
+   * 两处**必须一致**，只删一边会出现「卡片没了但还能提交」或「卡还在但提交被拒」。
+   *
+   * 价目（`IMAGE_UPSTREAM_CNY_PER_IMAGE`）**保留**：老任务重算、退款对账还要用；
+   * 老草稿里带 `gpt-image-2.5` / `gpt-image-2` 的，`getImageModel()` 认不出会落到
+   * 清单里的第一张卡（现为 `doubao-seedream-5.0-lite`），不会把表单卡死。
+   *
+   * 恢复：把下面两个对象原样放回数组开头，并在 server/wallet.js 的
+   * EXPOSED_IMAGE_MODELS 里补回这两个 id 即可。
+   *
+   *   { id: 'gpt-image-2.5', name: 'GPT Image 2.5', desc: '1K / 2K，最多 16 张参考图；纯文生图会自动走备用线路',
+   *     tiers: ['1K', '2K'], maxRefImages: 16, qualityList: [],
+   *     features: { quality: false, maxN: 1, background: false } }
+   *   { id: 'gpt-image-2', name: 'GPT Image 2', desc: '1K / 2K / 4K，画质四档，最多 4 张参考图',
+   *     tiers: ['1K', '2K', '4K'], maxRefImages: 4, qualityList: QUALITY_BASE,
+   *     features: { quality: true, maxN: 1, background: true } }
+   *   两者共同字段：sizeMode: 'tier'、sendAspect: true、ratios: RATIOS_GPT、
+   *   formats: ['png']、defaultFormat: 'png'。
+   */
+  {
+    /*
+     * ★ 2026-11-01 改名 `doubao-seedream-5.0` → `doubao-seedream-5.0-lite` ★
+     * 用户口径：「模型名要标注一致，现在没有 Doubao-Seedream-5.0，只有 Doubao-Seedream-5.0-lite」——
+     * 上游与文档都带 `-lite`。同一天按站方新价目表去掉 4K（只剩 2K / 3K）。
+     * 老名字服务端仍然受理（见 server/wallet.js 的 IMAGE_MODEL_ALIASES），
+     * 报价、拆单、任务记录都会折成新名字。
+     */
+    id: 'doubao-seedream-5.0-lite',
+    name: 'Doubao Seedream 5.0 Lite',
+    desc: '2K / 3K（没有 1K / 4K），最多 14 张参考图',
+    tiers: ['2K', '3K'],
+    // 档位照旧发字符串；比例由服务端换算进 size（见 server/imageSizes.js 的 withPixelSize）
+    sizeMode: 'tier',
+    sendAspect: true,
+    ratios: RATIOS_SEEDREAM,
+    // 上游文档：多图参考最多 14 张；组图靠 sequential_image_generation（本站暂不开）
+    maxRefImages: 14,
+    qualityList: [],
+    formats: ['png'],
+    defaultFormat: 'png',
+    features: { quality: false, maxN: 1, watermark: true },
+  },
+  {
+    id: 'doubao-seedream-5.0-pro',
+    name: 'Doubao Seedream 5.0 Pro',
+    desc: '1K / 1.5K / 2K，最多 10 张参考图，固定单张',
+    tiers: ['1K', '1.5K', '2K'],
+    // 同上：比例由服务端换算进 size，前端只发档位 + aspect_ratio
+    sizeMode: 'tier',
+    sendAspect: true,
+    ratios: RATIOS_SEEDREAM,
+    // 上游文档：多图参考最多 10 张，不支持组图（固定 1 张）
+    maxRefImages: 10,
+    qualityList: [],
+    formats: ['png'],
+    defaultFormat: 'png',
+    features: { quality: false, maxN: 1, watermark: true },
+  },
+  /*
+   * ★ 2026-11-01 下架 `gemini-3.2-flash-image`（原卡片名 Nano Banana 2.1）★
+   * 用户拿新站图片型号文档对账：「站内就这个 [6 个] 这些，其他的线路是备用，
+   * 如果不是这些的，备用也不用接这个」—— 上游只有 nano-banana-2（gemini-3.1-flash-image）
+   * 与 nano-banana-pro（gemini-3-pro-image），没有 3.2 这张，所以从清单里删掉。
+   * 价目快照里那一行**保留**（老任务重算、退款对账要用），服务端同步删了准入与备用映射，
+   * 见 server/wallet.js 的 EXPOSED_IMAGE_MODELS 与 server/images.js。
+   */
+  {
+    id: 'gemini-3.1-flash-image',
+    name: 'Nano Banana 2',
+    desc: '512 / 1K / 2K / 4K，最多 14 张参考图，单价最低',
+    tiers: ['512', '1K', '2K', '4K'],
+    sizeMode: 'tier',
+    sendAspect: true,
+    ratios: RATIOS_NANO2,
+    // 上游文档：14 张参考图；最低档写成 `512`（**不是 0.5K**，写错会被拒）
+    maxRefImages: 14,
+    qualityList: [],
+    formats: ['png'],
+    defaultFormat: 'png',
+    features: { quality: false, maxN: 1 },
+  },
+  {
+    id: 'gemini-3-pro-image',
+    name: 'Nano Banana Pro',
+    desc: '1K / 2K / 4K，最多 14 张参考图，画面最细',
+    tiers: ['1K', '2K', '4K'],
+    sizeMode: 'tier',
+    sendAspect: true,
+    ratios: RATIOS_NANO_PRO,
+    // 上游文档：14 张参考图；比例 10 档，不传时跟随参考图
+    maxRefImages: 14,
+    qualityList: [],
+    formats: ['png'],
+    defaultFormat: 'png',
+    features: { quality: false, maxN: 1 },
+  },
+];
+
+/*
+ * 图片型号的旧标识 → 现用标识（2026-11-01：`doubao-seedream-5.0` 改名 `-lite`）。
+ * 服务端也留了同一份别名（server/wallet.js 的 IMAGE_MODEL_ALIASES），两边口径一致：
+ * 老任务、老草稿里存的旧名字照样能取到卡片、显示成新卡的名字。
+ * 放在 IMAGE_MODELS 之后、getImageModel 之前，避免模块初始化期出现 TDZ。
+ */
+const IMAGE_MODEL_ALIASES = {
+  'doubao-seedream-5.0': 'doubao-seedream-5.0-lite',
+};
+
+/**
+ * 按标识取图片模型卡。
+ *
+ * 认不出来（老草稿里的 `gpt-image-2.5`、已下架的 gemini / doubao）会落到**第一张卡**：
+ * 这是有意为之 —— 老草稿的参数要能回填出来继续用，不能把表单卡在空状态。
+ * 代价是提交时会用第一张卡的标识，与草稿里存的那个不是同一个名字（三款同价，
+ * 不会多扣钱），所以界面上「模型」那一栏会如实显示成兜底后的那张卡。
+ */
+export function getImageModel(id) {
+  // 改名的旧标识先折成新标识（2026-11-01 `doubao-seedream-5.0` → `-lite`），
+  // 否则老草稿会掉到第一张卡、连档位都跟着变
+  const want = IMAGE_MODEL_ALIASES[String(id || '').toLowerCase()] || id;
+  return IMAGE_MODELS.find((m) => m.id === want) || IMAGE_MODELS[0];
+}
+
+/**
+ * 图片单价快照（**元/张**，上游原价），与 server/wallet.js 的
+ * IMAGE_UPSTREAM_CNY_PER_IMAGE / IMAGE_QUALITY_ADD 逐项一致 —— 改一处要两边一起改。
+ *
+ * 官方明确要求不要写死单价，这里只作为界面预估的默认值：
+ * 正常情况用启动时拉回来的服务端价目表（pricingOverride.image），
+ * 拉不到（离线预览）才退回这份快照。
+ *
+ * 2026-10-17 起在售的 12 张全部走易红那条线，价 = 上游「积分」+0.02；
+ * 老的云上七张与 sunburst 留着只为老任务重算时不至于判成「未计价」。
+ */
+export const IMAGE_PRICE_SNAPSHOT = {
+  date: '2026-10-17',
+  // 图片也按人民币报价，所以这里是 1（字段名沿用 usdToCny，见 PRICE_SNAPSHOT 同处注释）
+  usdToCny: 1,
+  /** 画质档加价（元/张，按模型；2.5 系比 2 多 xhigh / max 两档） */
+  qualityAdd: {
+    'gpt-image-2': { auto: 0, low: 0, medium: 0.0096, high: 0.0144 },
+    'gpt-image-2.5': { auto: 0, low: 0, medium: 0.0096, high: 0.0144, xhigh: 0.0192, max: 0.024 },
+    'gpt-image-2.5-flare': { auto: 0, low: 0, medium: 0.0096, high: 0.0144, xhigh: 0.0192, max: 0.024 },
+    'gpt-image-2.5-sunburst': { auto: 0, low: 0, medium: 0.0096, high: 0.0144, xhigh: 0.0192, max: 0.024 },
+  },
+  /** 各模型各档位基础价（元/张；不传 quality、或 auto / low） */
+  base: {
+    /*
+     * 老型号（云上那条线七张，2026-10-17 已全部撤下）：价还留着，
+     * 只为历史任务重算时不至于判成「未计价」。
+     */
+    ...Object.fromEntries(Object.entries(CLOUD_IMAGE_USD).map(([id, usdTiers]) => [id, cnyTiers(usdTiers)])),
+    /*
+     * 在售 12 个（易红那条线）：底档价 = 上游「积分」+0.02，
+     * **每提高一档分辨率 +0.02**（2026-10-17 用户定：原来同价的档位要拉开）；
+     * 价目本身是区间的（gpt-image-2 / codex 系）按下限→中→上限，不再额外加价。
+     * 与 server/wallet.js 的 LEGACY_IMAGE_CNY_PER_IMAGE 逐项一致，改一处要两边一起改。
+     */
+    // 原来同价的档位（2026-10-17 用户定）：底价不动，每提一档分辨率 +0.02
+    'gemini-3-pro-image-preview': { '1K': 0.14, '2K': 0.16, '4K': 0.18 },
+    'gemini-3.1-flash-image-preview': { '0.5K': 0.1, '1K': 0.12, '2K': 0.14, '4K': 0.16 },
+    'gemini-nano-banana-2.1': { '1K': 0.11, '2K': 0.13, '4K': 0.15 },
+    'gpt-image-2': { '1K': 0.05, '2K': 0.08, '4K': 0.11 },
+    'gpt-image-2-1K-4K': { '1K': 0.05, '2K': 0.08, '4K': 0.11 },
+    'gpt-image-2-codex': { '1K': 0.18, '2K': 0.21 },
+    'gpt-image-2-codex-MAX': { '1K': 0.26, '2K': 0.32 },
+    'gpt-image-2-stable': { '1K': 0.1, '2K': 0.12, '4K': 0.14 },
+    'gpt-image-2.5-flare': { '1K': 0.1, '2K': 0.12, '4K': 0.14 },
+    'gpt-image-2.5-flare-stable': { '1K': 0.15, '2K': 0.17, '4K': 0.19 },
+    'gpt-image-2.5-sunburst': { '1K': 0.1, '2K': 0.12, '4K': 0.14 },
+    'gpt-image-2.5-sunburst-stable': { '1K': 0.15, '2K': 0.17, '4K': 0.19 },
+    /*
+     * 在售七张（2026-10-20 起走 srdz）：官方美元 × 8.4（汇率 6 × 毛利 1.4；
+     * 10-20 定的是 ×9，10-21 用户把倍率改成 8.4），
+     * 与 server/wallet.js 的 SRDZ_IMAGE_USD_PER_IMAGE 逐项一致，改一处要两边一起改。
+     * **放在最后**：`gpt-image-2` / `gpt-image-2.5` 与上面的老价目重名，必须盖住。
+     */
+    /*
+     * ★ 2026-11-01 换新价目（用户贴的站方美元表 × 8.4，三位小数）★
+     *   gpt-image-2.5  $0.02 / $0.025                                          → 0.168 / 0.21
+     *   gpt-image-2    $0.017 / $0.02 / $0.025                                 → 0.143 / 0.168 / 0.21
+     *   seedream-lite  $0.018 / $0.02                                          → 0.151 / 0.168
+     *   seedream-pro   $0.015 / $0.016 / $0.017                                → 0.126 / 0.134 / 0.143
+     *   nano banana 2  $0.014 / $0.015 / $0.017 / $0.021                        → 0.118 / 0.126 / 0.143 / 0.176
+     *   nano banana pro $0.016 / $0.018 / $0.022                               → 0.134 / 0.151 / 0.185
+     * 注意 `gpt-image-2.5` 与 `-lite` 都少了 4K（表里不出这一档 = 选到就判未计价）。
+     */
+    'gpt-image-2.5': { '1K': 0.168, '2K': 0.21 },
+    'gpt-image-2': { '1K': 0.143, '2K': 0.168, '4K': 0.21 },
+    'doubao-seedream-5.0-lite': { '2K': 0.151, '3K': 0.168 },
+    'doubao-seedream-5.0-pro': { '1K': 0.126, '1.5K': 0.134, '2K': 0.143 },
+    'gemini-3.1-flash-image': { '512': 0.118, '1K': 0.126, '2K': 0.143, '4K': 0.176 },
+    'gemini-3-pro-image': { '1K': 0.134, '2K': 0.151, '4K': 0.185 },
+    /*
+     * 历史行（只为老草稿/老任务估算，卡片已下架或改名）：
+     *   · `doubao-seedream-5.0` —— 2026-11-01 改名前；
+     *   · `gemini-3.2-flash-image` —— 2026-11-01 下架。
+     */
+    'doubao-seedream-5.0': { '2K': 0.121, '3K': 0.134, '4K': 0.134 },
+    'gemini-3.2-flash-image': { '1K': 0.101, '2K': 0.114, '4K': 0.141 },
+  },
+};
+
+/*
+ * 服务端价目表（/api/pricing）。
+ *
+ * 界面上算「预计消耗」必须跟真正扣费同一套数字，否则用户会看到"预估 3 元、扣了 5 元"。
+ * 启动时拉一次塞进来，拉不到就退回上面两份快照（数字是一样的，只是可能过期）。
+ */
+let pricingOverride = null;
+
+/* ==================================================================== *
+ * sd-官key（2026-10-30）：官方协议按实际 Token 计费
+ *
+ * 与上面的「元/秒」「元/条」两张表不是一套：
+ *   费用 = 实际 tokens ÷ 1M × 官方单价（元 / 1M tokens，界面上按算力 ⚡ 标） × 渠道折扣
+ * 预扣固定、成功与否以结算为准（2026-11-04）：提交时固定预扣 50 万 token 的价，
+ * 出片后按实际用量多退少补；`officialEstimate` 的估算只用于界面展示。
+ * 预估用**火山方舟官方公式**（RunningHub / LiblibTV 那类站也是这套）：
+ *   token ≈ (输入视频秒 + 输出秒) × 宽 × 高 × 帧率 ÷ 1024
+ * **短边跟着档位走**（480 / 720 / 1080 / 2160）：720p、24fps 下 16:9 是 21,600 token/秒，
+ * 1080p 约 48,600，4K 约 194,400；同一档位下比例变了数也跟着变。
+ *
+ * 数据源是 `/api/pricing` 的 `official` 段（与服务端 server/officialPricing.js 同一份），
+ * 拉不到（离线预览）时才退回下面这份快照 —— 数字必须与服务端一致，否则预估价与实扣打架。
+ * ==================================================================== */
+const OFFICIAL_PRICE_SNAPSHOT = {
+  /*
+   * 档位与单价照上游文档抄（与 server/officialPricing.js 完全一致）：
+   *   2.0 = 480p/720p/1080p/4k；Fast / Mini = 480p/720p；2.5 = 480p/720p/1080p
+   * 每档两列 `[不含视频参考, 含视频参考]`：带参考视频整单取第二列，不拆 token。
+   * 2.0 的 4K 单价原文就低于它自己的 1080p，照录不改。
+   */
+  prices: {
+    'doubao-seedance-2-0-260128': {
+      '480p': [46, 28],
+      '720p': [46, 28],
+      '1080p': [51, 31],
+      '4k': [26, 16],
+    },
+    'doubao-seedance-2-0-fast-260128': {
+      '480p': [37, 22],
+      '720p': [37, 22],
+    },
+    'doubao-seedance-2-0-mini-260615': {
+      '480p': [23, 14],
+      '720p': [23, 14],
+    },
+    'doubao-seedance-2-5-260628': {
+      '480p': [70, 42],
+      '720p': [70, 42],
+      '1080p': [77, 46],
+    },
+  },
+  /*
+   * 官方 token 估算公式的参数（火山方舟《模型价格》）：
+   *   token ≈ (输入视频秒 + 输出秒) × 宽 × 高 × fps ÷ 1024
+   * `shortSides` 是档位 → 短边像素，估哪个档用哪个短边（不能一律按 720）。
+   */
+  tokenFormula: {
+    fps: 24,
+    shortSide: 720,
+    shortSides: { '480p': 480, '720p': 720, '1080p': 1080, '4k': 2160 },
+  },
+  /*
+   * 对私 72 折、对公 75 折（2026-11-10）：两个数分别给两条线用，
+   * 服务端 officialPricing.js 的 OFFICIAL_DISCOUNT / OFFICIAL_CORP_DISCOUNT 是同一份口径。
+   */
+  discount: { 'sd-official-75': 0.72, corp: 0.75 },
+};
+
+/** 对公线的标识后缀（与服务端 officialPricing.js 的 OFFICIAL_CORP_SUFFIX 一致） */
+const OFFICIAL_CORP_SUFFIX = '-corp';
+
+/** 这个标识是不是对公线（只看后缀） */
+export function isCorpOfficialModel(modelId) {
+  return String(modelId ?? '').trim().toLowerCase().endsWith(OFFICIAL_CORP_SUFFIX);
+}
+
+/** 这个标识属于哪条线：'corp' 对公 / 'private' 对私 */
+export function officialAudienceOf(modelId) {
+  return isCorpOfficialModel(modelId) ? 'corp' : 'private';
+}
+
+/** 官方模型标识 → 上游原名（剥掉对公后缀；价目表按原名存） */
+function officialBaseId(modelId) {
+  const raw = String(modelId ?? '').trim();
+  return isCorpOfficialModel(raw) ? raw.slice(0, raw.length - OFFICIAL_CORP_SUFFIX.length) : raw;
+}
+
+let officialPricing = null;
+
+export function setOfficialPricing(value) {
+  if (value && typeof value === 'object' && value.prices) officialPricing = value;
+  return officialPricing;
+}
+
+/**
+ * 这个标识是不是官方协议模型（创作台按它切到 Token 计价、按它分「站内模型 / SD-官转」两个页签）。
+ *
+ * 2026-11-02 收紧：只认**官方价目快照里的那四个型号**，
+ * 不再拿服务端下发的 `pricing.official.prices` 的键当判据。原因：
+ * 特稳（`seedance-2.5-stable`）与 72 折官方卡共用同一个上游型号
+ * `doubao-seedance-2-5-260628`，价目里一旦混进站内卡的名字，它就会被算进「SD-官转」页签；
+ * 点页签时 `state.model` 换到该组第一张卡 —— 于是「切到 72 折」实际提交的还是特稳。
+ */
+export function isOfficialModel(modelId) {
+  const id = officialBaseId(modelId);
+  return Boolean(id && Object.prototype.hasOwnProperty.call(OFFICIAL_PRICE_SNAPSHOT.prices, id));
+}
+
+/**
+ * 官方模型某一档的计价参数：`{ unitPrice, perSecondTokens, discount }`；认不出返回 null。
+ *
+ * 折扣取在售那一档（72 折），与那把 Key 一致，
+ * 所以界面预估与服务端预扣是同一个数；最终以 `usage.total_tokens` 结算（多退少补）。
+ */
+/**
+ * 画面比例 + 档位 → 输出像素（短边按档位取：480 / 720 / 1080 / 2160）。
+ * 与服务端 `officialFrameSize` 同一套算法，改动要两边一起改。
+ */
+function officialFrameSize(ratio, formula, tier) {
+  const key = String(tier ?? '').trim().toLowerCase();
+  const shortSide = Number(formula?.shortSides?.[key]) || Number(formula?.shortSide) || 720;
+  const [w, h] = String(ratio || '16:9')
+    .split(':')
+    .map((n) => Number(n));
+  const rw = Number.isFinite(w) && w > 0 ? w : 16;
+  const rh = Number.isFinite(h) && h > 0 ? h : 9;
+  const even = (n) => Math.max(2, Math.round(n / 2) * 2);
+  return rw >= rh
+    ? { width: even((shortSide * rw) / rh), height: shortSide }
+    : { width: shortSide, height: even((shortSide * rh) / rw) };
+}
+
+export function officialPriceOf(modelId, tier, ratio, withVideoRef = false) {
+  const src = officialPricing || OFFICIAL_PRICE_SNAPSHOT;
+  // 价目表按**上游模型名**存，在售标识就是这四个原名
+  const row = src.prices?.[officialBaseId(modelId)];
+  if (!row) return null;
+  const key = String(tier ?? '').trim().toLowerCase();
+  const hit = Object.keys(row).find((t) => t.toLowerCase() === key);
+  if (!hit) return null;
+  const raw = row[hit];
+  /*
+   * 单价每档两列 `[不含视频参考, 含视频参考]`（2026-11-03 用户按上游价目表恢复）：
+   * 带参考视频取第二列（整单一个价，不拆 token），否则取第一列；
+   * 单值格式两处都取它。单位是**元 / 百万 token**，估算出 token 后乘它算钱。
+   */
+  const picked = Array.isArray(raw) ? (withVideoRef ? raw[1] ?? raw[0] : raw[0]) : raw;
+  const unitPrice = Number(picked) || 0;
+  if (!(unitPrice > 0)) return null;
+  /*
+   * 每秒 token 用**官方估算公式**现算：(宽 × 高 × 帧率) ÷ 1024。
+   * 短边按这一档取、宽高按比例推 —— 换了档位（1080p / 4k）或换了比例，这个数都跟着变。
+   */
+  const formula = src.tokenFormula || OFFICIAL_PRICE_SNAPSHOT.tokenFormula;
+  const { width, height } = officialFrameSize(ratio, formula, hit);
+  const perSecondTokens = Math.round((width * height * (Number(formula?.fps) || 24)) / 1024);
+  // 单帧 token = 宽 × 高 ÷ 1024：参考图一张算一帧、参考音频一秒算一帧（与服务端一致）
+  const frameTokens = (width * height) / 1024;
+  // 折扣跟标识走：对公 75 折、对私 72 折（2026-11-10），与服务端 officialDiscountOf 同口径
+  const discount = isCorpOfficialModel(modelId)
+    ? Number(src.discount?.corp) || 0.75
+    : Number(src.discount?.['sd-official-75']) || 0.72;
+  return { unitPrice, perSecondTokens, frameTokens, discount };
+}
+
+/**
+ * 官方模型这一单的预估（2026-10-31 用户定「按实际消耗的 Token」）：
+ *
+ *   token = (输出秒数 + 参考视频秒数) × 每秒 token
+ *         + 参考图张数 × 单帧 token
+ *         + 参考音频秒数 × 单帧 token
+ *   金额  = token ÷ 100万 × 官方单价 × 该标识自己的折扣，四舍五入到分
+ *
+ * 与服务端 `estimateOfficialTokens` / `officialCostOf` 同一套式子，两边同源：
+ * 提交时按这个数预扣，成功后由服务端按上游 `usage.total_tokens` 多退少补。
+ *
+ * 返回 `{ tokens, cost, perSecond, seconds, discount }`；认不出返回 null。
+ */
+export function officialEstimate({
+  model,
+  tier,
+  seconds,
+  ratio,
+  inputVideoSeconds = 0,
+  refImages = 0,
+  inputAudioSeconds = 0,
+  withVideoRef = false,
+} = {}) {
+  const videoRef = Boolean(withVideoRef) || Number(inputVideoSeconds) > 0;
+  const info = officialPriceOf(model, tier, ratio, videoRef);
+  if (!info) return null;
+  const outputSecs = Math.max(1, Math.min(30, Math.round(Number(seconds) || 1)));
+  const inputSecs = Math.max(0, Math.min(60, Number(inputVideoSeconds) || 0));
+  const audioSecs = Math.max(0, Math.min(60, Number(inputAudioSeconds) || 0));
+  const imageCount = Math.max(0, Math.min(30, Math.round(Number(refImages) || 0)));
+  const tokens = Math.round(
+    (inputSecs + outputSecs) * info.perSecondTokens + (imageCount + audioSecs) * info.frameTokens,
+  );
+  const perSecond =
+    Math.round(((info.perSecondTokens / 1_000_000) * info.unitPrice * info.discount) * 10000) / 10000;
+  return {
+    tokens,
+    cost: Math.round(((tokens / 1_000_000) * info.unitPrice * info.discount) * 100) / 100,
+    perSecond,
+    seconds: outputSecs + inputSecs,
+    discount: info.discount,
+  };
+}
+
+/*
+ * ★ 固定预扣（2026-11-04 用户定）★
+ *
+ * 原话：「官key 的预扣，现在目前是按预估预扣，现在固定为该模型的 50w token 的单价
+ * 作为预扣。防止客户薅羊毛。……预估还是那个预估，只是预扣变化。」
+ *
+ *   · 预估照旧 = `officialEstimate`（界面摆的那个数，出片后按实际 token 多退少补）；
+ *   · 预扣 = **50 万 token × 官方单价 × 折扣**，与单子多大、选几秒无关；
+ *   · 余额不够这个预扣数就不让提交（见 app.js 的 ensureBalance）。
+ *
+ * 单价取这一单实际适用的那一列（带参考视频取「含视频参考」），与服务端
+ * officialPricing.js 的 OFFICIAL_PREPAY_TOKENS / officialPrepayCostOf 是同一个数。
+ */
+export const OFFICIAL_PREPAY_TOKENS = 500000;
+
+/** 这一单的固定预扣金额（元）；该模型/档位没有官方价目时返回 null */
+export function officialPrepayOf({ model, tier, ratio, withVideoRef = false } = {}) {
+  const info = officialPriceOf(model, tier, ratio, Boolean(withVideoRef));
+  if (!info) return null;
+  return Math.round(((OFFICIAL_PREPAY_TOKENS / 1_000_000) * info.unitPrice * info.discount) * 100) / 100;
+}
+
+export function setPricing(pricing) {
+  if (pricing && typeof pricing === 'object') pricingOverride = pricing;
+  return pricingOverride;
+}
+
+/* ==================================================================== *
+ * 算力：对外统一的计价单位，1 人民币 = 10 算力。
+ * 服务端（余额 / 流水 / 扣费）仍以元存储与结算，界面显示一律折算成算力。
+ * ==================================================================== */
+export const CREDIT_PER_CNY = 10;
+
+/** 元 → 算力（界面显示用；服务端下发 creditPerCny 时以后者为准） */
+export function toCredits(yuan) {
+  const per = Number(pricingOverride?.creditPerCny) > 0 ? Number(pricingOverride.creditPerCny) : CREDIT_PER_CNY;
+  return Math.round((Number(yuan) || 0) * per * 100) / 100;
+}
+
+/** 元 → 算力文本（去掉多余的 0，直接拼单位） */
+export function fmtCredits(yuan) {
+  return String(toCredits(yuan));
+}
+
+/**
+ * 全站统一的算力显示：图标 + 数值（如 ⚡120）。
+ * 除了「充值记录」（保留人民币计价）与支付宝支付场景，所有金额一律用它。
+ */
+export const CREDIT_MARK = '⚡';
+export function credits(yuan) {
+  return `${CREDIT_MARK}${fmtCredits(yuan)}`;
+}
+
+/**
+ * 按条计费型号的**标价写法**（2026-10-18 用户定）：`⚡38（¥3.80/条）`。
+ *
+ * 为什么单写一个函数：按条的价没有「每秒」这个维度，只挂一个算力数字看不出计价单位，
+ * 用户会以为它跟按秒的一样能靠时长调节。所以括号里固定补上单价（¥ + 两位小数 + /条），
+ * 算力那一段照旧保留，与全站口径一致（按秒的也是「⚡6.4（¥0.64）」）。
+ * 只用于**单价**展示（生成页的预计消耗、模型广场的价目行）；总额仍是纯算力数。
+ */
+export function perTaskCost(yuan) {
+  const value = Number(yuan) || 0;
+  return `${credits(value)}（¥${value.toFixed(2)}/条）`;
+}
+
+/*
+ * 2026-10-17 起**取消会员制**：原来的 vipFlag / setVipFlag / vipFactor /
+ * vipRate / isVip / vipRechargeCny / vipRateLabel 七个出口全部删除。
+ *
+ * 2026-10-19 起 discount **不再恒为 1**：管理员可以在「用户管理」里给单个账号设
+ * 专属折扣（0.8 / 0.85 / 0.9 / 0.92 / 0.95 / 0.98 几档，2026-10-24 加了前两档），服务端按账号下发，
+ * 下面的 priceOfVideo / priceOfImage 会乘它 —— 与 wallet.charge() 打折同源，
+ * 所以预估价与实扣始终是同一个数。没有折扣的账号拿到的仍是 1。
+ */
+
+export function pricingDate() {
+  return pricingOverride?.date || PRICE_SNAPSHOT.date;
+}
+
+/*
+ * 渠道模型（一口价）。
+ *
+ * 它是另一条线路上的模型：固定 30 秒 / 720P、按条收费、必须带参考图，
+ * 所以不走上面那张按秒的价目表，由 /api/pricing 的 channel 段单独带回来。
+ * 模型广场按它出一张卡；「API 接入」的模型白名单里用它带后缀的 keyModel 区分
+ * （渠道的模型名与按秒的 seedance-2.5 同名）。
+ */
+let channelOverride = null;
+
+export function setChannel(channel) {
+  if (channel && typeof channel === 'object') channelOverride = channel;
+  return channelOverride;
+}
+
+export function channelModel() {
+  return channelOverride;
+}
+
+/**
+ * 渠道视频那张卡的标识。
+ *
+ * 2026-10-16 用户定：渠道视频**不再单开一个菜单**，合并进「视频生成」页当一张模型卡
+ * （显示名固定 `seedance-2.5 · 按条计费`，见下面的 channelCard）。当天又按要求整块暂时下线，
+ * 所以现在由 CHANNEL_VIDEO_ENABLED 关着；打开那个开关它就按下面这套在生成页里出现。
+ * 它不在 VIDEO_CATALOG 里 ——
+ * 那张表是「按秒的整模型」目录，会进模型广场与开放 API 的模型白名单；渠道是另一条线路、
+ * 另一套计费（一口价）与另一个提交接口，混进去会让广场多出一张重复的卡、白名单里多一个假型号。
+ */
+export const CHANNEL_MODEL_ID = 'channel-seedance-2.5';
+
+/**
+ * 渠道视频总开关（**整块下线**用这一个常量）。
+ *
+ * 2026-10-16 用户定：渠道视频暂时不要了 —— 顶栏不再有它的菜单（见 public/index.html），
+ * 「视频生成」页也不摆那张卡，模型广场里那张渠道卡一并收掉。
+ *
+ * **2026-10-19 彻底下线**：上游已经没有这个模型，`.env` 的 `CHANNEL_VIDEO_*`
+ * 配置已撤掉、`config.channelVideo` 不再给默认地址与令牌（`isChannelVideoConfigured()`
+ * 恒为 false），开放 API 的 `/open/v1/channel-videos` 与 `/channel-videos/spec`
+ * 两个端点也已删除。站内这套代码与 `public/js/channel.js` 只是留档，
+ * 重新上线需要同时补回 env 与开放 API 两个端点。
+ */
+export const CHANNEL_VIDEO_ENABLED = false;
+
+/**
+ * 渠道视频卡（规格是渠道规定的，用户不能选）：模型 seedance-2.5、固定 30 秒、720P、
+ * 最多 9 张参考图、一口价按条计费（价在 .env 的 CHANNEL_VIDEO_PRICE，当前 1.99 元/条）。
+ *
+ * 数据源是 /api/pricing 的 channel 段（app.js 启动时 setChannel 注入）。返回 null 有两种情形：
+ *   · 总开关关着（CHANNEL_VIDEO_ENABLED，界面就不摆这张卡）；
+ *   · 没拉到价目、或服务端没配渠道令牌（configured === false）—— 同样不摆，
+ *     免得点进去、填完才发现渠道不可用。
+ *
+ * 字段与 MODELS 的卡片同形，好让视频页那套（模型卡、时长/清晰度收放、素材槽位、
+ * 校验、预计消耗）原样复用；`isChannel` 是给 app.js 分流用的标记（提交走
+ * /api/channel-videos、价格取一口价）。
+ */
+export function channelCard() {
+  if (!CHANNEL_VIDEO_ENABLED) return null;
+  const c = channelOverride;
+  if (!c || c.configured === false) return null;
+  const seconds = Number(c.seconds) || 30;
+  const resolution = String(c.resolution || '720p');
+  const maxImages = Number(c.maxImages) || 9;
+  return {
+    id: CHANNEL_MODEL_ID,
+    name: 'seedance-2.5 · 按条计费',
+    desc: `固定 ${seconds} 秒 / ${resolutionLabel(null, resolution)} / ${maxImages} 张图以内，按条计费`,
+    minSeconds: seconds,
+    maxSeconds: seconds,
+    resolutions: [resolution],
+    // 画面比例由渠道规定（服务端 CHANNEL_RATIOS），比主表单少几档；没拿到就不限制
+    ratios: Array.isArray(c.ratios) && c.ratios.length ? c.ratios : undefined,
+    // 渠道只吃「提示词 + 参考图」，所以只有参考生视频这一种生成方式
+    modes: ['reference'],
+    maxRefImages: maxImages,
+    maxRefVideos: 0,
+    maxRefAudios: 0,
+    features: {
+      audio: false,
+      watermark: false,
+      seed: false,
+      outputFormat: false,
+      refAudio: false,
+      refVideo: false,
+    },
+    isChannel: true,
+  };
+}
+
+/**
+ * 管理员视图开关（2026-10-20）。
+ *
+ * 有些卡**只给管理员看**（当前只有 `seedance-2.5-test`），但所有渲染入口都不能各自
+ * 去读 `auth.user`：视频页、模型广场、短剧下拉、API 白名单四个地方都要同一份判断，
+ * 漏一处就会把测试卡摆给普通用户。所以角色由 app.js 在启动与登录态变化时调
+ * `setAdminView(auth.user?.role === 'admin')` 注入一次，其余模块统一走 visibleVideoModels()。
+ *
+ * 默认 false：登录态还没拿到时按普通用户处理 —— 宁可管理员晚一格看到测试卡，
+ * 也不能让它在未登录的那一瞬间漏出来。
+ */
+let adminView = false;
+
+export function setAdminView(value) {
+  adminView = Boolean(value);
+  return adminView;
+}
+
+/** 当前是不是管理员视角（模型广场据此决定要不要摆「下架 / 上架」按钮） */
+export function isAdminView() {
+  return adminView;
+}
+
+/*
+ * 管理员临时下架的模型（2026-10-23 用户要求）。
+ *
+ * 状态存在服务端 ca_model_flags，随 `GET /api/pricing` 的 `retiredModels` 一起下发，
+ * 由 app.js 在启动与每次拉价目时调 setModelStates() 注入。这里只存一份标识集合：
+ *   · 普通用户：卡片直接不摆（visibleVideoModels 过滤掉）；
+ *   · 管理员：卡片照旧摆出来，带「已下架」标记与「重新上架」按钮 ——
+ *     不摆就没地方点回来。
+ * 已有任务、短剧草稿里存着的老标识仍能回显：getModel / priceOf* 走的是 MODELS，
+ * 只是不再出现在可选列表里。
+ */
+let retiredModels = new Set();
+
+export function setModelStates(list) {
+  const next = new Set();
+  for (const id of Array.isArray(list) ? list : []) {
+    const key = String(id || '').trim().toLowerCase();
+    if (key) next.add(key);
+  }
+  retiredModels = next;
+  return next;
+}
+
+/** 这个模型是不是被临时下架了 */
+export function isModelRetired(id) {
+  const key = String(id ?? '').trim().toLowerCase();
+  return key ? retiredModels.has(key) : false;
+}
+
+/*
+ * 维护中的模型（2026-11-04 用户要求）。
+ *
+ * 「维护中」与「下架」是两件事：
+ *   · 下架：卡片对普通用户**消失**（visibleVideoModels 过滤掉）；
+ *   · 维护中：卡片**照旧摆出来**，只是不能再提交。
+ * 状态同样存在服务端 ca_model_flags，随 `GET /api/pricing` 的 `maintenanceModels` 下发，
+ * 由 app.js 注入。服务端才是最终闸门（提交会回 `MODEL_MAINTENANCE`），
+ * 这里只负责把卡片标灰、拦住点击与提前给提示。
+ */
+let maintenanceModels = new Set();
+
+/** 维护中的对客文案（与服务端 `MODEL_MAINTENANCE_MESSAGE` 一字不差） */
+export const MODEL_MAINTENANCE_MESSAGE = '本模型暂时维护无法使用，恢复时间请关注群聊公告。';
+
+export function setModelMaintenanceStates(list) {
+  const next = new Set();
+  for (const id of Array.isArray(list) ? list : []) {
+    const key = String(id || '').trim().toLowerCase();
+    if (key) next.add(key);
+  }
+  maintenanceModels = next;
+  return next;
+}
+
+/** 这个模型是不是「维护中」（卡片照旧展示、不能提交） */
+export function isModelUnderMaintenance(id) {
+  const key = String(id ?? '').trim().toLowerCase();
+  return key ? maintenanceModels.has(key) : false;
+}
+
+
+
+/*
+ * 账号标签（2026-11-10）：对公只摆 75 折 `-corp` 那组，个人只摆 72 折原名那组。
+ *
+ * 状态随 `GET /api/pricing` 的 `customerType` 下发，由 app.js 注入。
+ * 这里只负责摆哪条线；服务端在 `/api/videos` 与 `/api/v3` 另有闸门，不靠前端。
+ * 「特稳」等站内模型不是官方标识，`isOfficialModel` 判不出来，两条线都照常显示。
+ */
+let customerType = 'private';
+
+/**
+ * 账号标签（2026-11-10）：'corp' 对公 / 'private' 个人。
+ * 由 `GET /api/pricing` 的 customerType 注入；决定创作台摆哪条官转线。
+ */
+export function setCustomerType(value) {
+  customerType = String(value || '').trim().toLowerCase() === 'corp' ? 'corp' : 'private';
+  return customerType;
+}
+
+export function getCustomerType() {
+  return customerType;
+}
+
+/*
+ * 视频高清（超分，2026-11-10 用户要求）：**按用户开通**，不是人人有。
+ *
+ * 状态随 `GET /api/pricing` 的 `videoHd` 下发，由 app.js 注入；
+ * 没开就不摆那个栏位、也不进「视频生成」之外的地方。
+ * 这只是界面开关 —— 真正能不能提交由服务端 `/api/videos` 判（未开 403 VIDEO_HD_DISABLED）。
+ */
+let videoHdEnabled = false;
+
+export function setVideoHdEnabled(value) {
+  videoHdEnabled = Boolean(value);
+  return videoHdEnabled;
+}
+
+export function getVideoHdEnabled() {
+  return videoHdEnabled;
+}
+
+/** 这个标识是不是「视频高清」（超分） */
+export function isVideoHdModel(id) {
+  return (
+    String(id ?? '')
+      .trim()
+      .toLowerCase() === 'video-hd'
+  );
+}
+
+/**
+ * 当前角色能看到的视频模型。
+ * 非管理员：隐藏 adminOnly 的卡 + 隐藏已下架的卡；管理员：全摆出来（自己能看到并恢复）。
+ *
+ * 官转两条线（2026-11-10）：
+ *   · **对公官转（`-corp`，75 折）全面开放** —— 谁都能用；
+ *   · 72 折对私（原名）只给**个人**账号：对公账号看不到也用不了。
+ */
+export function visibleVideoModels() {
+  const base = adminView ? MODELS : MODELS.filter((m) => !m.adminOnly);
+  if (adminView) return base;
+  const list = base.filter((m) => !isModelRetired(m.id));
+  return list.filter((m) => {
+    /*
+     * 视频高清（2026-11-10 用户要求「模型广场里也不用显示视频高清卡片和 tab 了，就在文档显示可以」）：
+     * **创作台 / 广场一律不摆这张卡** —— 这个能力只走开放 API，
+     * 说明放在「开放 API 文档 → 视频高清」那个页签里。
+     * 卡仍留在 VIDEO_CATALOG 里（价目快照、`getModel()` 都还要用），只是永远不可见。
+     */
+    if (isVideoHdModel(m.id)) return false;
+    if (!isOfficialModel(m.id)) return true;
+    // 对公线全面开放；72 折对私对「对公」账号隐藏
+    if (officialAudienceOf(m.id) === 'corp') return true;
+    return customerType !== 'corp';
+  });
+}
+
+/**
+ * 站内**其它页面**用的视频模型（2026-10-30）：短剧、无限画布、模型广场、
+ * 「API 接入」白名单都走这里 —— 与创作台的区别只有一条：
+ * **不含 sd-官key 的官方协议卡**。
+ *
+ * 为什么：那四张卡按**实际 Token** 结算，只有创作台（`/api/videos` 的官方分支）
+ * 会预扣 + 多退少补；短剧批量、画布、代跑走的是按秒价目表，
+ * 摆出来会变成"选得到、价不对"，不如不在这些入口给。
+ */
+export function siteVideoModels() {
+  /*
+   * 视频高清（2026-11-10）单独一个栏位、按用户开通，**不进**短剧 / 画布 / 广场 / 白名单：
+   * 那些入口走的是「选模型 + 选素材生成」，与「上传一条片做高清」不是同一件事。
+   */
+  return visibleVideoModels().filter((m) => !isOfficialModel(m.id) && !isVideoHdModel(m.id));
+}
+
+/** 「视频生成」页要摆的模型卡：按时价的整模型（MODELS）+ 渠道那张（渠道没配置时不摆） */
+export function videoModelCards() {
+  const channel = channelCard();
+  const list = visibleVideoModels();
+  return channel ? [...list, channel] : [...list];
+}
+
+/**
+ * 对外价倍率：服务端下发的为准，拉不到时用快照 —— **两边都是 1**。
+ * 2026-10-16 起定价没有倍率了，这个函数留着只为兼容：万一某台服务端还没更新、
+ * 仍下发 4，界面会跟着显示成它那一套，不至于两边对不上。新口径下它等于 1。
+ */
+function markup() {
+  const value = Number(pricingOverride?.markup);
+  return Number.isFinite(value) && value > 0 ? value : PRICE_SNAPSHOT.markup;
+}
+
+/**
+ * 折扣：服务端按**当前账号**下发的专属折扣（2026-10-19 起）。
+ * 1 = 没折扣；0.8 / 0.85 / 0.9 / 0.92 / 0.95 / 0.98 是管理员单独设的几档。
+ * 广场靠它决定要不要显示「专属X折」标签与划掉的原价：≥1 就只显示一个价。
+ */
+function discount() {
+  const value = Number(pricingOverride?.discount);
+  if (!Number.isFinite(value) || value <= 0) return PRICE_SNAPSHOT.discount;
+  return Math.min(1, value);
+}
+
+/** 给「模型广场」用的折扣值：≥1 表示没打折 */
+export function pricingDiscount() {
+  return discount();
+}
+
+/** 网关原价 → 元：下发值优先（正常就是 1，网关按人民币计价） */
+function upstreamRate() {
+  const value = Number(pricingOverride?.upstreamToCny);
+  return Number.isFinite(value) && value > 0 ? value : PRICE_SNAPSHOT.upstreamToCny;
+}
+
+/**
+ * 视频单价（**元/秒**）：表里的价 × 换算（恒 1）× 倍率（恒 1）—— 就是用户实付价。
+ * 名字里的「base」是历史原因（原先它指不含折扣的「基础价」）；现在广场不再有划掉的
+ * 原价，展示与算钱用的是同一个数（日常算钱用 priceOfVideo 也行）。
+ * 按条计费的型号不走这里（它没有「每秒」的概念），见 basePriceOfVideoTask。
+ */
+export function basePriceOfVideo(modelId, tier) {
+  /*
+   * sd-官key（2026-10-30）：官方协议按 Token 计费，价目表里没有它们的行。
+   * 这里折算成「元/秒」给**还没接 perToken 的旧入口**用（短剧分镜、无限画布、模型广场）：
+   *   每秒单价 = 每秒 tokens ÷ 100万 × 官方单价 × 折扣
+   * 与创作台的预估是同一个公式，所以「单价 × 秒数」和那边的总额对得上。
+   */
+  const official = officialPriceOf(modelId, tier);
+  if (official) {
+    return (official.perSecondTokens / 1_000_000) * official.unitPrice * official.discount;
+  }
+  const table = pricingOverride?.video || PRICE_SNAPSHOT.upstreamPerSecond;
+  /*
+   * 查价两层，与后端 wallet.js 的 videoCost / videoPrices.js 的 videoUnitPrice 同口径：
+   *   ① 先按**前台模型名**查（`seedance-2.5`、`ov-seedance-2.5`）—— 服务端那张定价表
+   *      ca_video_prices 的行就是「前台模型 + 档位」，改价改的是这一层；先归并老标识别名。
+   *   ② 查不到再按**真实型号名**查 —— 2026-10-16 定价表精简后这层只为「老页面缓存里
+   *      还带着后台型号名」这种情况留的兼容；表里已不再有那些行，新缓存一律走 ①。
+   *
+   * 档位名大小写不敏感（与图片价目表同一套 pickName；服务端查表也是这个口径）。
+   * 大小写没对上就判「未计价」的话，界面会显示 0 元而服务端照常扣费。
+   */
+  const canonical = canonicalVideoModel(modelId);
+  /*
+   * 第三层：传进来的是**真实型号名**（老任务、直传）时，先折回它所属的前台模型再查 ——
+   * 与服务端 wallet.js 的 exposedModelOfReal 同一口径，免得界面显示 0 元、服务端照常扣。
+   */
+  const exposed = exposedIdOf(canonical);
+  const price =
+    pickName(table?.[canonical], tier) ??
+    pickName(table?.[exposed], tier) ??
+    pickName(table?.[realVideoModel(exposed || canonical, tier)], tier);
+  return price == null ? null : price * upstreamRate() * markup();
+}
+
+/**
+ * 视频基础价（**元/条**）：按条计费的型号用这个 —— 出片即收这一笔，与时长无关。
+ * 表里没有就是按秒计费的型号，返回 null（调用方去查 basePriceOfVideo）。
+ */
+export function basePriceOfVideoTask(modelId, tier) {
+  const table = pricingOverride?.videoTask || PRICE_SNAPSHOT.upstreamPerTask;
+  // 与 basePriceOfVideo 同样的查法（前台模型名 → 历史真实型号折回 → 真实型号映射）
+  const canonical = canonicalVideoModel(modelId);
+  const exposed = exposedIdOf(canonical);
+  const price =
+    pickName(table?.[canonical], tier) ??
+    pickName(table?.[exposed], tier) ??
+    pickName(table?.[realVideoModel(exposed || canonical, tier)], tier);
+  return price == null ? null : price * upstreamRate() * markup();
+}
+
+/**
+ * **可调价**的（模型 + 档位）清单（2026-11-04 「用户管理 → 调价」弹窗用）。
+ *
+ * 用户当次口径：「我们系统里不要有这些东西，站的就是模型广场的站内模型」。
+ * 所以**不能遍历价目表的键**（那里面躺着一堆内部/已下架的型号：
+ * grok / kling / Muse / Burger / chovy / `seedance-2.5-v6k` / `seedance-2.5-Muse` …
+ * 它们是老任务重算与线路别名用的，站内根本没有这张卡）。
+ *
+ * 这里只认一个来源：`siteVideoModels()` —— 就是「视频生成」页与模型广场那几张卡
+ * （服务端对应 `server/videoModels.js` 的 `PUBLIC_VIDEO_MODELS`）。档位取卡片自己的
+ * `resolutions`，再剔掉价目表里查不到价的那一档（查不到说明它不会被扣费）。
+ */
+export function pricedVideoTiers() {
+  const out = [];
+  for (const model of siteVideoModels()) {
+    // 渠道卡是一口价（不走这张价目表）、管理员专属卡不给客户调
+    if (model.isChannel || model.adminOnly) continue;
+    const tiers = (model.resolutions || []).filter(
+      (tier) =>
+        basePriceOfVideo(model.id, tier) != null || basePriceOfVideoTask(model.id, tier) != null,
+    );
+    if (!tiers.length) continue;
+    out.push({
+      model: model.id,
+      name: model.name || model.id,
+      tiers: tiers.map((tier) => ({ tier, perTask: basePriceOfVideoTask(model.id, tier) != null })),
+    });
+  }
+  return out;
+}
+
+/**
+ * 专属调价（2026-11-04 用户要求：
+ * 「管理员可以对用户做内部调价。在用户管理里，针对站内某个模型，某个分辨率
+ *   进行设定最终价格。可以随时取消。」＋「调价就是最终价格，不会跟折扣产生联动，
+ *   调价只能调站内模型。」）
+ *
+ * 查这个账号在（模型 + 档位）上的**最终价**：
+ *   · 命中就直接返回它 —— **不乘 discount()**，服务端那边 charge 走的也是 exact；
+ *   · 官方协议模型不吃这张表：官方按 token 结算，没有「元/秒」这种单价，
+ *     服务端也只对站内价目表里的档位放开调价，这里用同一口径挡一下；
+ *   · 没调过价返回 null，调用方回落「基准价 × 折扣」。
+ */
+function customVideoPrice(kind, modelId, tier) {
+  const table = pricingOverride?.userPrices?.[kind];
+  if (!table) return null;
+  if (officialPriceOf(modelId, tier)) return null;
+  const canonical = canonicalVideoModel(modelId);
+  const exposed = exposedIdOf(canonical);
+  const price =
+    pickName(table?.[canonical], tier) ??
+    pickName(table?.[exposed], tier) ??
+    pickName(table?.[realVideoModel(exposed || canonical, tier)], tier);
+  return price == null ? null : Number(price);
+}
+
+/**
+ * 视频最终价（元/秒）：专属调价优先；否则单价 × 折扣（恒 1）—— 与实际扣费同一个数。
+ * 价目表里没有这一档时返回 null（界面显示「未计价」）。
+ */
+export function priceOfVideo(modelId, tier) {
+  const custom = customVideoPrice('perSecond', modelId, tier);
+  if (custom != null && custom > 0) return custom;
+  const base = basePriceOfVideo(modelId, tier);
+  if (base == null) return null;
+  /*
+   * 官方协议模型（2026-10-30）：服务端扣费走 `exact`（金额已含渠道折扣、不叠账号折扣），
+   * 所以这里也不能乘 `discount()`，否则界面预估会比实扣低一截。
+   */
+  if (officialPriceOf(modelId, tier)) return base;
+  return base * discount();
+}
+
+/** 视频最终价（元/条）：口径同上，只是基价按「条」算；专属调价同样优先且不叠折扣 */
+export function priceOfVideoTask(modelId, tier) {
+  const custom = customVideoPrice('perTask', modelId, tier);
+  if (custom != null && custom > 0) return custom;
+  const base = basePriceOfVideoTask(modelId, tier);
+  return base == null ? null : base * discount();
+}
+
+/** 档位 / 画质名大小写不敏感查表（服务端也是这么查的，两边口径一致） */
+function pickName(table, key) {
+  if (!table) return undefined;
+  const k = String(key ?? '');
+  if (table[k] !== undefined) return table[k];
+  const hit = Object.keys(table).find((name) => name.toLowerCase() === k.toLowerCase());
+  return hit ? table[hit] : undefined;
+}
+
+/** 图片单价（元/张，含画质加价；表里的数就是用户实付价） */
+export function basePriceOfImage(modelId, tier, quality) {
+  const src = pricingOverride?.image || IMAGE_PRICE_SNAPSHOT;
+  const rate = pricingOverride?.usdToCny || IMAGE_PRICE_SNAPSHOT.usdToCny;
+  const base = pickName((src.base || IMAGE_PRICE_SNAPSHOT.base)[modelId], tier);
+  if (base == null) return null;
+  const add = pickName((src.qualityAdd || IMAGE_PRICE_SNAPSHOT.qualityAdd)[modelId], quality) || 0;
+  return (base + add) * rate * markup();
+}
+
+/** 图片最终价（元/张，含画质加价；折扣恒 1）。没有价目时返回 null */
+export function priceOfImage(modelId, tier, quality) {
+  const base = basePriceOfImage(modelId, tier, quality);
+  return base == null ? null : base * discount();
+}
+
+/**
+ * 渠道一口价最终价（元/条）：一口价**不参与促销折扣**（服务端 channelVideoCost 原样收），
+ * 也不参与任何折扣 —— 2026-10-17 起没有会员制，一口价就是实付价。
+ * 接口保留，调用方照旧。
+ */
+export function priceOfChannel(price) {
+  return price;
+}
+
+const roundTo = (n, m) => Math.max(m, Math.round(n / m) * m);
+
+/**
+ * 按「档位 + 比例」算出实际像素尺寸。
+ * 官方建议一律用像素写 size（写档位字符串在部分模型上会落到更低档计价），
+ * 所以这里把档位换算成像素，并按各模型的约束（倍数、边长、总像素上下限、最短边）夹紧。
+ */
+export function computeImageSize(model, tier, ratio) {
+  const base = model?.tierBases?.[tier];
+  const [rw, rh] = String(ratio || '1:1').split(':').map(Number);
+  if (!base || !rw || !rh) return '';
+
+  const c = model.constraints || {};
+  const m = c.multiple || 8;
+  const r = rw / rh;
+
+  let w = roundTo(r >= 1 ? base : base * r, m);
+  let h = roundTo(r >= 1 ? base / r : base, m);
+
+  const scale = (k) => {
+    w = roundTo(w * k, m);
+    h = roundTo(h * k, m);
+  };
+
+  // 先满足下限，再满足上限
+  if (c.minPixels && w * h < c.minPixels) scale(Math.sqrt(c.minPixels / (w * h)) + 0.001);
+  if (c.minShortSide && Math.min(w, h) < c.minShortSide) {
+    scale(c.minShortSide / Math.min(w, h) + 0.001);
+  }
+  if (c.maxSide && Math.max(w, h) > c.maxSide) scale(c.maxSide / Math.max(w, h));
+  if (c.maxPixels && w * h > c.maxPixels) scale(Math.sqrt(c.maxPixels / (w * h)));
+
+  return `${w}x${h}`;
+}
+
+/** 图片任务的数量上限 */
+export function maxImagesOf(model) {
+  return model?.features?.maxN || 1;
+}
+
+/**
+ * 按调用名取视频模型。
+ *
+ * 老任务记录、老短剧项目里存的是**真实型号名**（a-sd2.5-720p、c-sd2.5-480p-1…），
+ * 认不出来就会掉到 MODELS[0]，那样「历史参数回填」会悄悄变成另一个模型。
+ * 所以这里多一层反查：真实型号名归到它所属的对外模型。
+ */
+export function getModel(id) {
+  /*
+   * 渠道卡不在 MODELS 里（见 CHANNEL_MODEL_ID 的说明），单独认一次 ——
+   * 否则它在视频页会被 getModel 兜到 MODELS[0]，界面上高亮的是渠道卡、
+   * 校验与提交却按另一张卡走，是要出事的。
+   */
+  if (String(id ?? '') === CHANNEL_MODEL_ID) return channelCard() || MODELS[0];
+  // 老标识 / 大小写先归并一次：老草稿与老短剧项目里存的是 `seedance2.5满血版`，
+  // 归并后能直接命中现在这张卡片，而不是靠 MODELS[0] 兜底
+  // 2026-11-05：55 折下架后不再有 `-s` 折扣后缀，标识原样 trim
+  const want = canonicalVideoModel(String(id ?? '').trim());
+  const direct = MODELS.find((m) => m.id === want);
+  if (direct) return direct;
+  const exposed = exposedIdOf(want);
+  return MODELS.find((m) => m.id === exposed) || MODELS[0];
+}
+
+/**
+ * 界面上要显示的**型号名**（任务卡片、任务详情、灵感作品卡、短剧分镜参数都走这里）。
+ *
+ * 任务里存的是提交时那个型号标识（对外整模型的标识是 `seedance-2.5`，
+ * 直接摆出来就会跟模型卡片上的显示名（`Seedance 2.5`）对不上，所以统一在这里翻一次：
+ *   · 对外型号标识 / 图片型号标识 → 卡片上的显示名；
+ *   · 真实上游型号（换线前的老任务、隐藏线路）→ 归到它所属的对外显示名；
+ *   · 实在认不出来 → 原样显示，宁可不翻译，也不要乱贴一个名字上去
+ *     （注意不能用 getModel 兜底，它认不出来会返回 MODELS[0]，会把老任务标成在售型号）。
+ */
+/*
+ * 型号名里重复的同一段后缀（2026-11-03 用户报「2.0 变成 2.0 fast / fast-fast」）：
+ * 任务上带着 `seedance-2.0-fast-fast` 这种脏串时，卡片标题会原样吐出来。
+ * 与服务端 `collapseRepeatedModelSuffix` 同一口径：只把结尾连续重复的同一段后缀
+ * （-fast / -mini / -pro / -hd / -s）收成一个，别的字符不动。
+ */
+function collapseRepeatedModelSuffix(modelId) {
+  const name = String(modelId ?? '').trim();
+  if (!name) return '';
+  return name.replace(/-(fast|mini|pro|hd|s)(?:-\1)+$/i, '-$1');
+}
+
+export function modelLabel(id) {
+  const rawId = String(id ?? '').trim();
+  if (!rawId) return '';
+  /*
+   * 2026-11-03 用户硬规定：**客户用什么模型就显示什么模型** ——
+   * 不许改变、替换、用备用名或别的名字。
+   *
+   * 所以**精确命中卡片 id 时直接用那张卡**，不再先做别名归并 / 后缀折叠
+   * （那些会把 `seedance-2.0` 认成 `seedance-2.0-fast`，界面就冒出 Fast）。
+   * 认不出（老任务的上游真名、历史脏串）才走下面的兼容逻辑，那是兜底，不是改名。
+   */
+  const exact =
+    MODELS.find((m) => m.id === rawId) || IMAGE_MODELS.find((m) => m.id === rawId) || null;
+  // 认不出时才折叠历史脏串的重复后缀（`seedance-2.0-fast-fast`）
+  const want = exact ? rawId : collapseRepeatedModelSuffix(rawId);
+  if (!want) return '';
+  // 老标识先归并到规范名：老任务里的 `seedance2.5满血版` 也要显示成卡片上的 `Seedance 2.5`
+  const canonical = exact ? exact.id : canonicalVideoModel(want);
+  /*
+   * 历史标识 `seedance2.5-备用`（2026-10-25 撤市，现在只是 `seedance-2.5` 的末位腿）：
+   * 老任务里还存着这串，界面上不能冒出「备用」二字 —— 统一按主卡名显示。
+   */
+  if (canonical === 'seedance2.5-备用') return 'Seedance 2.5';
+  let cardId = canonical;
+  let imageId = IMAGE_MODEL_ALIASES[String(canonical).toLowerCase()] || canonical;
+  // 精确命中时直接就是那张卡（2026-11-03：不改名、不换成别名卡）
+  let card = exact || MODELS.find((m) => m.id === cardId) || IMAGE_MODELS.find((m) => m.id === imageId);
+  /*
+   * 尾巴上挂了一个 `-s`、但那不是官方折扣标识（2026-11-02）：
+   * 站内卡被上游回执的池名污染过，历史任务里躺着 `seedance-2.5-stable-s` 这种串 ——
+   * 它既不是 48 折卡、也认不出是哪张卡，于是原样吐在任务标题上。
+   * 剥掉这一层再认一次，能认出来就按那张卡显示（宁可显示特稳，也不会露这种内部串）。
+   */
+  if (!card && /-s$/i.test(cardId)) {
+    const base = officialBaseId(cardId);
+    const baseImage = IMAGE_MODEL_ALIASES[String(base).toLowerCase()] || base;
+    const baseCard = MODELS.find((m) => m.id === base) || IMAGE_MODELS.find((m) => m.id === baseImage);
+    if (baseCard) {
+      cardId = base;
+      imageId = baseImage;
+      card = baseCard;
+    }
+  }
+  /*
+   * 官方 key 的模型要跟站内按秒的同名 Seedance 分开（2026-10-30 用户要求「加个后缀」）：
+   * 任务卡、任务详情、调用记录里一律显示成「Seedance 2.0 Mini · 官key72折」，
+   * 站内按秒的那几条不带后缀。2026-11-05 起只剩 72 折这一档，
+   * 只在**显示层**加，模型标识与计价都不动。
+   */
+  if (card) {
+    if (!isOfficialModel(card.id)) return card.name;
+    /*
+     * 2026-11-10 修：官方卡的后缀要按**哪条线**分开写。
+     *
+     * 用户报：「当我选择的是 75 折，右侧任务栏还是显示 72 折」——
+     * 原来这里一律拼「官key72折」，对公（`-corp`，75 折）的单也被标成 72 折，
+     * 一眼看上去像是选错了卡。现在对公写「官key75折」，对私仍是「官key72折」。
+     */
+    const audience = officialAudienceOf(card.id) === 'corp' ? '官key75折' : '官key72折';
+    return `${card.name} · ${audience}`;
+  }
+  const exposed = exposedIdOf(canonical);
+  const named = MODELS.find((m) => m.id === exposed)?.name;
+  if (named) return named;
+  /*
+   * 认不出的**内部型号串**不再原样吐到界面上（2026-11-03 用户要求「先把这个名字隐藏」）：
+   * 卡片上裸露 `seedance-2.0-fast-fast` 比什么都不显示更糟。返回空串，
+   * 调用方（任务卡/详情）会回落成「未知模型」；只有客户自己填的普通名字才原样返回。
+   */
+  return /seedance|doubao|官转/i.test(want) ? '' : want;
+}
+
+/**
+ * 该模型支持的画面比例档位。
+ * 模型声明了 ratios 就只返回这几档；没声明的沿用全部档位。
+ * 界面（主表单、短剧默认值、分镜弹窗）一律走这里，别直接用 ASPECT_RATIOS，
+ * 否则会给用户摆出上游根本不支持的画幅。
+ */
+export function ratiosOf(modelOrId) {
+  const model = typeof modelOrId === 'string' ? getModel(modelOrId) : modelOrId;
+  const allow = Array.isArray(model?.ratios) && model.ratios.length ? model.ratios : null;
+  if (!allow) return ASPECT_RATIOS;
+  const list = ASPECT_RATIOS.filter((r) => allow.includes(r.value));
+  return list.length ? list : ASPECT_RATIOS;
+}
+
+export function modeLabel(id) {
+  return MODES.find((m) => m.id === id)?.label || id;
+}
+
+export function resolutionLabel(model, value) {
+  if (!value) return '—';
+  /* 4K / 2K 这类档位本身就是「数字 + K」，不能再按 P 拼（2026-10-17 云上线带了 2K 档，
+   * 以前只判 4K，2K 会被拼成「2P」） */
+  if (/^\d+\s*k$/i.test(String(value).trim())) return `${parseInt(value, 10)}K`;
+  return `${parseInt(value, 10)}P`;
+}
+
+/**
+ * 当前模型在该模式下需要哪些素材。
+ *
+ * 数字是**槽位数量**（决定面板摆几个位置），另有 `refVideo` 表示**参考视频能不能提交** ——
+ * 两者是分开的：Seedance 2.5 挂着 10 个槽位却不许提交，2.0 挂 3 个且可以提交。
+ * 与素材面板的对接见 public/js/materials.js 的 setPlan / validate。
+ */
+/**
+ * 参考音频 / 参考视频的**单段时长上限**（秒），按前台模型给：
+ *   · 2026-10-28 用户要求：「fast 和 mini 的参考音频视频不能超过 15s」；
+ *   · 2026-10-29 用户要求：「2.5 中 参考音频和视频 2-30 秒，不要超过 30 秒」。
+ *
+ * 这三张卡的成片时长本身就封顶 15 / 30 秒，上游对参考素材也按同一个数收；
+ * 其它型号（2.0 / H3 / wan3）上游口径不同，素材面板照旧不限时长。
+ *
+ * 素材面板（materials.js）拿这个数当**单段上限**，同时也当**同类合计上限**
+ * （视频合计 ≤ 这个数、音频合计 ≤ 这个数），单段下限统一 2 秒；
+ * 最终提交前还有一道 mediaLimits.js 的复核（画布节点、站内提交共用）。
+ * 时长由 materials.js 在挂上时用 `<video>/<audio>` 元数据读出来，
+ * 读不到（跨域、格式坏）就不拦 —— 宁可让上游去判，也别误伤正常素材。
+ */
+const REF_MEDIA_MAX_SECONDS = {
+  'seedance-2.5': 30,
+  'seedance-2.0-fast': 15,
+  'seedance-2.0-mini': 15,
+  /*
+   * sd-官key（2026-10-30）：官方协议的参考素材口径跟成片时长同源 ——
+   * 2.5 上限 30 秒、2.0 系 15 秒；官方模型标识就是官方模型名，所以按 id 各挂一份。
+   */
+  'doubao-seedance-2-5-260628': 30,
+  'doubao-seedance-2-0-260128': 15,
+  'doubao-seedance-2-0-fast-260128': 15,
+  'doubao-seedance-2-0-mini-260615': 15,
+};
+
+export function materialPlan(model, mode) {
+  switch (mode) {
+    case 'i2v':
+      return { first: true, last: false, refImages: 0, refVideos: 0, refAudios: 0 };
+    case 'firstlast':
+      return { first: true, last: true, refImages: 0, refVideos: 0, refAudios: 0 };
+    case 'reference':
+      return {
+        first: false,
+        last: false,
+        refImages: model.maxRefImages,
+        refVideos: model.maxRefVideos,
+        refAudios: model.features.refAudio ? model.maxRefAudios : 0,
+        refVideo: model.features.refVideo !== false,
+        // 参考素材单段时长上限（0 = 不限），见上面 REF_MEDIA_MAX_SECONDS
+        refMediaMaxSeconds: REF_MEDIA_MAX_SECONDS[model.id] || 0,
+      };
+    default:
+      return { first: false, last: false, refImages: 0, refVideos: 0, refAudios: 0 };
+  }
+}

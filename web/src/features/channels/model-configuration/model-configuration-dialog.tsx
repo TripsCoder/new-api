@@ -77,6 +77,7 @@ import {
   projectDocumentInterfaces,
   interfaceReference,
 } from './document-interfaces'
+import { DocumentRefreshPanel } from './document-refresh-panel'
 import { IndividualModelDialog } from './individual-model-dialog'
 import { MappingPreview } from './mapping-preview'
 import { ModelReview } from './model-review'
@@ -1092,6 +1093,12 @@ export function ModelConfigurationDialog(props: {
                   )}
                 </TabsContent>
               </Tabs>
+              <DocumentRefreshPanel
+                document={draft}
+                catalog={catalog}
+                models={scopeModels}
+                onChange={setDraft}
+              />
             </section>
           )}
           {draft && catalog && step === 1 && (

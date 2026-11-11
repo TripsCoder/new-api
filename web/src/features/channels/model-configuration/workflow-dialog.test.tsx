@@ -433,10 +433,48 @@ describe('actual channel workflow dialog', () => {
       message: 'fixture',
     })
   })
+  it('previews historical parameters from the new-model entry and applies only to the draft', async () => {
+    baseline.groups.original.modes.text_video.parameters = {
+      ...baseline.groups.original.modes.text_video.parameters,
+      resolution: { type: 'string', enum: ['1080p'] },
+    }
+    baseline.groups.original.modes.text_video.input.resolution = '1080p'
+    const saved = structuredClone(baseline)
+    mount('B,C,old', false)
+    const panel = await screen.findByRole('region', {
+      name: 'Saved parameter configuration',
+    })
+    expect(within(panel).getByText('A')).toBeInTheDocument()
+    await userEvent.click(
+      within(panel).getByRole('button', {
+        name: 'Preview parameter refresh from documentation',
+      })
+    )
+    expect(within(panel).getByRole('table')).toBeInTheDocument()
+    expect(mocks.save).not.toHaveBeenCalled()
+    await userEvent.click(
+      within(panel).getByRole('button', {
+        name: 'Apply refresh to draft',
+      })
+    )
+    expect(baseline).toEqual(saved)
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(mocks.check).not.toHaveBeenCalled()
+    expect(mocks.tryCall).not.toHaveBeenCalled()
+    await userEvent.click(
+      within(panel).getByRole('button', {
+        name: 'Preview parameter refresh from documentation',
+      })
+    )
+    expect(
+      within(panel).getByText('No parameter changes to apply')
+    ).toBeInTheDocument()
+  })
   it.each([
     ['aotian_video', 'seedance2.0'],
     ['fenglang_video', 'seedance-2.5'],
     ['fenglang_video', 'doubao-seedance-2-5-260628'],
+    ['fenglang_video', 'doubao-seedance-2-5-260628-corp'],
     ['apipath_video', 'seedance-2.5-YZ'],
   ])(
     'opens the complete %s/%s configuration workflow with its generated catalog',
@@ -562,9 +600,15 @@ describe('actual channel workflow dialog', () => {
           )
           const serialized = JSON.stringify(put.mock.calls[0][1])
           const payload = JSON.parse(serialized)
+          let fixture = 'apipath_video'
+          if (model.startsWith('doubao-seedance-')) {
+            fixture = model.endsWith('-corp')
+              ? 'fenglang_corp'
+              : 'fenglang_official'
+          }
           const target = path.resolve(
             '..',
-            `controller/testdata/${model.startsWith('doubao-seedance-') ? 'fenglang_official' : 'apipath_video'}_ui_save.json`
+            `controller/testdata/${fixture}_ui_save.json`
           )
           if (
             (model.startsWith('doubao-seedance-')

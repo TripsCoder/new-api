@@ -4389,6 +4389,518 @@
             "Reference file dimensions, bytes and duration require supplier media inspection; no paid request has verified model permissions or outputs"
           ]
         },
+        "doubao-seedance-2-0-260128-corp": {
+          "id": "interface:50d8a4ba97672fd1",
+          "title": "sd-官key · 官方协议",
+          "kind": "video",
+          "method": "POST",
+          "path": "/api/v3/contents/generations/tasks",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "file": "evidence/official-20261111-models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+            "readAt": "2026-11-11",
+            "status": "public-documentation"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "官方协议模型 ID",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "官方协议模型 ID",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].text"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "resolution": {
+              "type": "string",
+              "required": true,
+              "description": "输出分辨率",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出分辨率",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "480p",
+                  "720p",
+                  "1080p",
+                  "4k"
+                ]
+              },
+              "enum": [
+                "480p",
+                "720p",
+                "1080p",
+                "4k"
+              ]
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "输出视频时长",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "输出视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 4,
+                "maximum": 15,
+                "default": 4
+              },
+              "minimum": 4,
+              "maximum": 15
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1",
+                  "21:9",
+                  "4:3",
+                  "3:4"
+                ],
+                "default": "16:9"
+              }
+            },
+            "seed": {
+              "type": "integer",
+              "required": false,
+              "description": "随机种子",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "随机种子",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seed"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "watermark": {
+              "type": "boolean",
+              "required": false,
+              "description": "添加水印",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "添加水印",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "watermark"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "return_last_frame": {
+              "type": "boolean",
+              "required": false,
+              "description": "返回尾帧",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "返回尾帧",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "return_last_frame"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "priority": {
+              "type": "integer",
+              "required": false,
+              "description": "执行优先级",
+              "source": {
+                "file": "evidence/ark-create-20261102.md.txt",
+                "url": "https://ark.volcengine.com/region:cn-beijing/docs/create-video-generation-task-api.md",
+                "sha256": "a779514c668fc18272275f07351034078e5aeec9da98cb1352b11a083751f324",
+                "readAt": "2026-11-02",
+                "status": "official-protocol-reference"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "执行优先级",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "priority"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 0,
+                "maximum": 9
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧图片 URL",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧图片 URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧图片 URL",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧图片 URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "参考图片 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考图片 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 9
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "参考视频 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考视频 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].video_url.url"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "参考音频 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考音频 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].audio_url.url"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "resolution": "resolution",
+            "seconds": "seconds",
+            "aspect_ratio": "aspect_ratio",
+            "seed": "seed",
+            "generate_audio": "generate_audio",
+            "watermark": "watermark",
+            "return_last_frame": "return_last_frame",
+            "draft": "draft",
+            "output_format": "output_format",
+            "priority": "priority",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            },
+            "video_ref": {
+              "required": []
+            },
+            "audio_ref": {
+              "required": []
+            },
+            "mixed_ref": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "firstFrame": true,
+            "lastFrame": true,
+            "multipleReferences": true
+          },
+          "pending": [
+            "Official protocol models are excluded from /open/v1/pricing; discovery also reads the live supplier video catalog without confirming account access or prices; interface confirmation remains required",
+            "Supplier documentation and public UI disagree on discount labels; no cost or selling price is imported",
+            "Supplier proxy requires nonempty text and explicit resolution; omitted duration and ratio retain documented supplier defaults without injecting channel defaults",
+            "Reference video/audio duration is estimated at five seconds per URL as documented; completion settles on positive safe-integer usage.total_tokens",
+            "Draft task continuation, callback and unlisted fields are not implemented; unknown parameters are not forwarded",
+            "The proxy documents positive duration and six fixed ratios, unlike Ark adaptive and automatic-duration workflows; edit and extend are not claimed as verified",
+            "Reference file dimensions, bytes and duration require supplier media inspection; no paid request has verified model permissions or outputs"
+          ]
+        },
         "doubao-seedance-2-0-fast-260128": {
           "id": "interface:50d8a4ba97672fd1",
           "title": "sd-官key · 官方协议",
@@ -5403,6 +5915,514 @@
             "Reference file dimensions, bytes and duration require supplier media inspection; no paid request has verified model permissions or outputs"
           ]
         },
+        "doubao-seedance-2-0-fast-260128-corp": {
+          "id": "interface:50d8a4ba97672fd1",
+          "title": "sd-官key · 官方协议",
+          "kind": "video",
+          "method": "POST",
+          "path": "/api/v3/contents/generations/tasks",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "file": "evidence/official-20261111-models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+            "readAt": "2026-11-11",
+            "status": "public-documentation"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "官方协议模型 ID",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "官方协议模型 ID",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].text"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "resolution": {
+              "type": "string",
+              "required": true,
+              "description": "输出分辨率",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出分辨率",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              },
+              "enum": [
+                "480p",
+                "720p"
+              ]
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "输出视频时长",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "输出视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 4,
+                "maximum": 15,
+                "default": 4
+              },
+              "minimum": 4,
+              "maximum": 15
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1",
+                  "21:9",
+                  "4:3",
+                  "3:4"
+                ],
+                "default": "16:9"
+              }
+            },
+            "seed": {
+              "type": "integer",
+              "required": false,
+              "description": "随机种子",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "随机种子",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seed"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "watermark": {
+              "type": "boolean",
+              "required": false,
+              "description": "添加水印",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "添加水印",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "watermark"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "return_last_frame": {
+              "type": "boolean",
+              "required": false,
+              "description": "返回尾帧",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "返回尾帧",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "return_last_frame"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "priority": {
+              "type": "integer",
+              "required": false,
+              "description": "执行优先级",
+              "source": {
+                "file": "evidence/ark-create-20261102.md.txt",
+                "url": "https://ark.volcengine.com/region:cn-beijing/docs/create-video-generation-task-api.md",
+                "sha256": "a779514c668fc18272275f07351034078e5aeec9da98cb1352b11a083751f324",
+                "readAt": "2026-11-02",
+                "status": "official-protocol-reference"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "执行优先级",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "priority"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 0,
+                "maximum": 9
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧图片 URL",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧图片 URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧图片 URL",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧图片 URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "参考图片 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考图片 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 9
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "参考视频 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考视频 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].video_url.url"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "参考音频 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考音频 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].audio_url.url"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "resolution": "resolution",
+            "seconds": "seconds",
+            "aspect_ratio": "aspect_ratio",
+            "seed": "seed",
+            "generate_audio": "generate_audio",
+            "watermark": "watermark",
+            "return_last_frame": "return_last_frame",
+            "draft": "draft",
+            "output_format": "output_format",
+            "priority": "priority",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            },
+            "video_ref": {
+              "required": []
+            },
+            "audio_ref": {
+              "required": []
+            },
+            "mixed_ref": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "firstFrame": true,
+            "lastFrame": true,
+            "multipleReferences": true
+          },
+          "pending": [
+            "Official protocol models are excluded from /open/v1/pricing; discovery also reads the live supplier video catalog without confirming account access or prices; interface confirmation remains required",
+            "Supplier documentation and public UI disagree on discount labels; no cost or selling price is imported",
+            "Supplier proxy requires nonempty text and explicit resolution; omitted duration and ratio retain documented supplier defaults without injecting channel defaults",
+            "Reference video/audio duration is estimated at five seconds per URL as documented; completion settles on positive safe-integer usage.total_tokens",
+            "Draft task continuation, callback and unlisted fields are not implemented; unknown parameters are not forwarded",
+            "The proxy documents positive duration and six fixed ratios, unlike Ark adaptive and automatic-duration workflows; edit and extend are not claimed as verified",
+            "Reference file dimensions, bytes and duration require supplier media inspection; no paid request has verified model permissions or outputs"
+          ]
+        },
         "doubao-seedance-2-0-mini-260615": {
           "id": "interface:50d8a4ba97672fd1",
           "title": "sd-官key · 官方协议",
@@ -6339,6 +7359,514 @@
                 "url": "https://fenglang.cloud/js/models.js",
                 "sha256": "86ec685eae3f54cf8e5fe08603178df4e6cec0d796cd3fb22ef8b67e01fe8491",
                 "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考音频 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].audio_url.url"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "resolution": "resolution",
+            "seconds": "seconds",
+            "aspect_ratio": "aspect_ratio",
+            "seed": "seed",
+            "generate_audio": "generate_audio",
+            "watermark": "watermark",
+            "return_last_frame": "return_last_frame",
+            "draft": "draft",
+            "output_format": "output_format",
+            "priority": "priority",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            },
+            "video_ref": {
+              "required": []
+            },
+            "audio_ref": {
+              "required": []
+            },
+            "mixed_ref": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "firstFrame": true,
+            "lastFrame": true,
+            "multipleReferences": true
+          },
+          "pending": [
+            "Official protocol models are excluded from /open/v1/pricing; discovery also reads the live supplier video catalog without confirming account access or prices; interface confirmation remains required",
+            "Supplier documentation and public UI disagree on discount labels; no cost or selling price is imported",
+            "Supplier proxy requires nonempty text and explicit resolution; omitted duration and ratio retain documented supplier defaults without injecting channel defaults",
+            "Reference video/audio duration is estimated at five seconds per URL as documented; completion settles on positive safe-integer usage.total_tokens",
+            "Draft task continuation, callback and unlisted fields are not implemented; unknown parameters are not forwarded",
+            "The proxy documents positive duration and six fixed ratios, unlike Ark adaptive and automatic-duration workflows; edit and extend are not claimed as verified",
+            "Reference file dimensions, bytes and duration require supplier media inspection; no paid request has verified model permissions or outputs"
+          ]
+        },
+        "doubao-seedance-2-0-mini-260615-corp": {
+          "id": "interface:50d8a4ba97672fd1",
+          "title": "sd-官key · 官方协议",
+          "kind": "video",
+          "method": "POST",
+          "path": "/api/v3/contents/generations/tasks",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "file": "evidence/official-20261111-models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+            "readAt": "2026-11-11",
+            "status": "public-documentation"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "官方协议模型 ID",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "官方协议模型 ID",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].text"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "resolution": {
+              "type": "string",
+              "required": true,
+              "description": "输出分辨率",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出分辨率",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "480p",
+                  "720p"
+                ]
+              },
+              "enum": [
+                "480p",
+                "720p"
+              ]
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "输出视频时长",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "输出视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 4,
+                "maximum": 15,
+                "default": 4
+              },
+              "minimum": 4,
+              "maximum": 15
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1",
+                  "21:9",
+                  "4:3",
+                  "3:4"
+                ],
+                "default": "16:9"
+              }
+            },
+            "seed": {
+              "type": "integer",
+              "required": false,
+              "description": "随机种子",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "随机种子",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seed"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "watermark": {
+              "type": "boolean",
+              "required": false,
+              "description": "添加水印",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "添加水印",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "watermark"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "return_last_frame": {
+              "type": "boolean",
+              "required": false,
+              "description": "返回尾帧",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "返回尾帧",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "return_last_frame"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "priority": {
+              "type": "integer",
+              "required": false,
+              "description": "执行优先级",
+              "source": {
+                "file": "evidence/ark-create-20261102.md.txt",
+                "url": "https://ark.volcengine.com/region:cn-beijing/docs/create-video-generation-task-api.md",
+                "sha256": "a779514c668fc18272275f07351034078e5aeec9da98cb1352b11a083751f324",
+                "readAt": "2026-11-02",
+                "status": "official-protocol-reference"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "执行优先级",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "priority"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 0,
+                "maximum": 9
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧图片 URL",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧图片 URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧图片 URL",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧图片 URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "参考图片 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考图片 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 9
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "参考视频 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考视频 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].video_url.url"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 3
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "参考音频 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
                 "status": "public-documentation"
               },
               "definition": {
@@ -7469,6 +8997,572 @@
                 "url": "https://fenglang.cloud/js/models.js",
                 "sha256": "86ec685eae3f54cf8e5fe08603178df4e6cec0d796cd3fb22ef8b67e01fe8491",
                 "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考音频 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].audio_url.url"
+                  ],
+                  "capabilities": [
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 10
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "resolution": "resolution",
+            "seconds": "seconds",
+            "aspect_ratio": "aspect_ratio",
+            "seed": "seed",
+            "generate_audio": "generate_audio",
+            "watermark": "watermark",
+            "return_last_frame": "return_last_frame",
+            "draft": "draft",
+            "output_format": "output_format",
+            "priority": "priority",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "images": "images",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": []
+            },
+            "image_video": {
+              "required": []
+            },
+            "frames": {
+              "required": []
+            },
+            "video_ref": {
+              "required": []
+            },
+            "audio_ref": {
+              "required": []
+            },
+            "mixed_ref": {
+              "required": []
+            }
+          },
+          "capabilities": {
+            "firstFrame": true,
+            "lastFrame": true,
+            "multipleReferences": true
+          },
+          "pending": [
+            "Official protocol models are excluded from /open/v1/pricing; discovery also reads the live supplier video catalog without confirming account access or prices; interface confirmation remains required",
+            "Supplier documentation and public UI disagree on discount labels; no cost or selling price is imported",
+            "Supplier proxy requires nonempty text and explicit resolution; omitted duration and ratio retain documented supplier defaults without injecting channel defaults",
+            "Reference video/audio duration is estimated at five seconds per URL as documented; completion settles on positive safe-integer usage.total_tokens",
+            "Draft task continuation, callback and unlisted fields are not implemented; unknown parameters are not forwarded",
+            "The proxy documents positive duration and six fixed ratios, unlike Ark adaptive and automatic-duration workflows; edit and extend are not claimed as verified",
+            "Reference file dimensions, bytes and duration require supplier media inspection; no paid request has verified model permissions or outputs"
+          ]
+        },
+        "doubao-seedance-2-5-260628-corp": {
+          "id": "interface:50d8a4ba97672fd1",
+          "title": "sd-官key · 官方协议",
+          "kind": "video",
+          "method": "POST",
+          "path": "/api/v3/contents/generations/tasks",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "file": "evidence/official-20261111-models.js.txt",
+            "url": "https://fenglang.cloud/js/models.js",
+            "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+            "readAt": "2026-11-11",
+            "status": "public-documentation"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "required": true,
+              "description": "官方协议模型 ID",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "官方协议模型 ID",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "required": true,
+              "description": "视频提示词",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].text"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minLength": 1
+              }
+            },
+            "resolution": {
+              "type": "string",
+              "required": true,
+              "description": "输出分辨率",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出分辨率",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "480p",
+                  "720p",
+                  "1080p"
+                ]
+              },
+              "enum": [
+                "480p",
+                "720p",
+                "1080p"
+              ]
+            },
+            "seconds": {
+              "type": "integer",
+              "required": false,
+              "description": "输出视频时长",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "输出视频时长",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 4,
+                "maximum": 30,
+                "default": 4
+              },
+              "minimum": 4,
+              "maximum": 30
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "required": false,
+              "description": "画面比例",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "画面比例",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "16:9",
+                  "9:16",
+                  "1:1",
+                  "21:9",
+                  "4:3",
+                  "3:4"
+                ],
+                "default": "16:9"
+              }
+            },
+            "seed": {
+              "type": "integer",
+              "required": false,
+              "description": "随机种子",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "随机种子",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "seed"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "watermark": {
+              "type": "boolean",
+              "required": false,
+              "description": "添加水印",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "添加水印",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "watermark"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "return_last_frame": {
+              "type": "boolean",
+              "required": false,
+              "description": "返回尾帧",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "返回尾帧",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "return_last_frame"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "draft": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成样片",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成样片",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "draft"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "output_format": {
+              "type": "string",
+              "required": false,
+              "description": "输出格式",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "输出格式",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_format"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "enum": [
+                  "mp4",
+                  "mov"
+                ]
+              }
+            },
+            "priority": {
+              "type": "integer",
+              "required": false,
+              "description": "执行优先级",
+              "source": {
+                "file": "evidence/ark-create-20261102.md.txt",
+                "url": "https://ark.volcengine.com/region:cn-beijing/docs/create-video-generation-task-api.md",
+                "sha256": "a779514c668fc18272275f07351034078e5aeec9da98cb1352b11a083751f324",
+                "readAt": "2026-11-02",
+                "status": "official-protocol-reference"
+              },
+              "definition": {
+                "type": "integer",
+                "description": "执行优先级",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "priority"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "minimum": 0,
+                "maximum": 9
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "首帧图片 URL",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "首帧图片 URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "required": false,
+              "description": "尾帧图片 URL",
+              "source": {
+                "file": "evidence/official-20261102-official.html.txt",
+                "url": "https://fenglang.cloud/docs/seedance-official.html",
+                "sha256": "bcd0db90e3e4396e8e9c5a362a1e857ef978ba2dce5426fa603543b280e8afda",
+                "readAt": "2026-11-02",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "string",
+                "description": "尾帧图片 URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "format": "uri"
+              }
+            },
+            "images": {
+              "type": "array",
+              "required": false,
+              "description": "参考图片 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考图片 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].image_url.url"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "mixed_ref",
+                    "video_ref",
+                    "audio_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 30
+              }
+            },
+            "videos": {
+              "type": "array",
+              "required": false,
+              "description": "参考视频 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
+                "status": "public-documentation"
+              },
+              "definition": {
+                "type": "array",
+                "description": "参考视频 URL 数组",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "content[].video_url.url"
+                  ],
+                  "capabilities": [
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                },
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 10
+              }
+            },
+            "audios": {
+              "type": "array",
+              "required": false,
+              "description": "参考音频 URL 数组",
+              "source": {
+                "file": "evidence/official-20261111-models.js.txt",
+                "url": "https://fenglang.cloud/js/models.js",
+                "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+                "readAt": "2026-11-11",
                 "status": "public-documentation"
               },
               "definition": {

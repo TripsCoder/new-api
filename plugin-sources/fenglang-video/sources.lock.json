@@ -45,6 +45,13 @@
       "status": "official-protocol-reference"
     },
     {
+      "file": "evidence/official-20261111-models.js.txt",
+      "url": "https://fenglang.cloud/js/models.js",
+      "sha256": "2ec5282aff96d12038db30a9f0f154e797fd1c9eb2ba547bfc8197c13c88fac9",
+      "readAt": "2026-11-11",
+      "status": "public-documentation"
+    },
+    {
       "file": "evidence/discovery-20261102-models.js.txt",
       "url": "https://fenglang.cloud/js/models.js",
       "sha256": "01182c2449da9a476ce86994f81deb8dc449b8046e14f5ab8298d6166a3aca90",
@@ -65,12 +72,16 @@
       "seedance-2.5",
       "doubao-seedance-2-0-260128",
       "doubao-seedance-2-0-260128-s",
+      "doubao-seedance-2-0-260128-corp",
       "doubao-seedance-2-0-fast-260128",
       "doubao-seedance-2-0-fast-260128-s",
+      "doubao-seedance-2-0-fast-260128-corp",
       "doubao-seedance-2-0-mini-260615",
       "doubao-seedance-2-0-mini-260615-s",
+      "doubao-seedance-2-0-mini-260615-corp",
       "doubao-seedance-2-5-260628",
-      "doubao-seedance-2-5-260628-s"
+      "doubao-seedance-2-5-260628-s",
+      "doubao-seedance-2-5-260628-corp"
     ],
     "exactPublicIDs": [
       "seedance-2.5",
@@ -80,12 +91,16 @@
       "minimax-video-h3",
       "doubao-seedance-2-0-260128",
       "doubao-seedance-2-0-260128-s",
+      "doubao-seedance-2-0-260128-corp",
       "doubao-seedance-2-0-fast-260128",
       "doubao-seedance-2-0-fast-260128-s",
+      "doubao-seedance-2-0-fast-260128-corp",
       "doubao-seedance-2-0-mini-260615",
       "doubao-seedance-2-0-mini-260615-s",
+      "doubao-seedance-2-0-mini-260615-corp",
       "doubao-seedance-2-5-260628",
-      "doubao-seedance-2-5-260628-s"
+      "doubao-seedance-2-5-260628-s",
+      "doubao-seedance-2-5-260628-corp"
     ]
   },
   "pending": [

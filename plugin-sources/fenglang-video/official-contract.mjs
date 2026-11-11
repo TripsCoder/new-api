@@ -1,5 +1,5 @@
 // Additive supplier contract. The existing /open/v1 interface stays immutable.
-export function officialContract(source, digest) {
+export function officialContract(source, digest, corporateSource) {
   const id = 'interface:' + digest('fenglang_video:POST:/api/v3/contents/generations/tasks').slice(0, 16);
   const parameter = (type, vendorFields, capabilities, description, definition = {}) => ({
     type, required: false, description, source,
@@ -57,6 +57,17 @@ export function officialContract(source, digest) {
       values.resolution.definition.enum = tiers;
       for (const [index, key] of ['images','videos','audios'].entries()) values[key].definition.maxItems = counts[index];
       contract.modelRules[model + suffix] = {...contract, parameters: values, modelRules: undefined};
+    }
+    // The 2026-11-11 supplier catalog explicitly lists these four exact IDs
+    // and states that their resolution, duration and media limits are equal
+    // to the corresponding base model. Do not infer any other suffix.
+    if (corporateSource) {
+      const rule = structuredClone(contract.modelRules[model]);
+      rule.source = corporateSource;
+      for (const field of ['resolution', 'seconds', 'images', 'videos', 'audios']) {
+        rule.parameters[field].source = corporateSource;
+      }
+      contract.modelRules[model + '-corp'] = rule;
     }
   }
   return contract;
