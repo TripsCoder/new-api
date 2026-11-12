@@ -1,0 +1,464 @@
+<h1 id="xdhBY">筷子科技 AI 开放平台：万相 3.0（wan3.0-video / wan3.0-video-prime）视频生成兼容接口文档</h1>
+> **版本**: v1.2  
+**更新日期**: 2026-08-24  
+**适用范围**: 已开通 OpenAPI 且已开通 wan3 邀测权限的客户
+>
+> 本接口对阿里云百炼 DashScope 万相 3.0 视频生成官方接口做**协议级兼容**：请求路径、请求体、响应体、错误码格式均与官方一致，客户把 `base_url` 与 `Authorization` 换成我方即可使用，业务代码无需修改。
+>
+> **v1.2 变更（2026-08-24）**：新增账号级并发上限——每模型进行中任务数达上限时创建接口返回 429 `Throttling`（官方同款限流码，见「差异」第 6 条与错误码表）。
+>
+> **v1.1 变更（2026-08-24）**：①新增高速版模型 `wan3.0-video-prime`；②计费口径与官方对齐，按「输入视频秒 + 输出视频秒」的总时长计费（此前仅按输出秒计费）。
+>
+
+---
+
+<h2 id="MIC1t">迁移说明（从官方 DashScope 切换到筷子代理）</h2>
+如果你当前直接调用阿里云百炼 DashScope 万相 3.0 视频生成接口，只需改两处：
+
+1. **Base URL**：把 `https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com` 替换为 `https://<我方域名>/ai-open-platform-api`。
+2. **鉴权**：把 `Authorization: Bearer <DASHSCOPE_API_KEY>` 替换为 `Authorization: Bearer <筷子 ApiKey>`（scheme 大小写不敏感；若历史代码使用 `ApiKey:` 头亦可兼容回退）。
+
+其余内容**全部保持不变**：
+
++ 请求路径逐字一致：
+    - 创建：`POST /api/v1/services/aigc/video-generation/video-synthesis`
+    - 查询：`GET /api/v1/tasks/{task_id}`
++ 请求头 `X-DashScope-Async: enable` 仍为必传（缺失报官方同款错误 `current user api does not support synchronous calls`）。
++ 请求体 `model` / `input` / `parameters` 字段与官方文档逐字一致。
++ 响应体外层结构（`output` / `usage` / `request_id`）与官方一致。
++ 错误码格式（HTTP 状态码 + body 内 `code` / `message` / `request_id`）与官方一致。
+
+---
+
+<h2 id="MRIpf">概述</h2>
+万相 3.0 是全能参考视频生成模型（All-in-One），统一支持：
+
++ **文生视频**：仅传 `prompt`。
++ **首帧 / 首尾帧生视频**：通过 `first_frame` / `last_frame` 严格指定视频首尾帧。
++ **参考生视频**：通过 `reference_image` / `reference_video` / `reference_audio` 传入多模态参考素材。
++ **参考文件 / 网页链接生视频**：通过 `file` / `link` 传入文档或公开网页。
+
+视频生成为**异步任务**：先 `POST` 创建任务拿到 `task_id`（初始状态 `PENDING`），再轮询 `GET /tasks/{task_id}` 查询结果；成功后返回 `video_url`。建议轮询间隔 **15 秒**，官方称典型耗时 1–5 分钟，最长可生成 30 秒视频。
+
+<h3 id="YcBj0">模型选择</h3>
+| 模型 | 说明 |
+| --- | --- |
+| `wan3.0-video` | 标准版，四模态全能参考 |
+| `wan3.0-video-prime` | 高速版，能力对齐标准版，生成速度更快，单价不同（见「与官方接口的差异」第 5 条） |
+
+
+两模型请求参数、响应结构完全一致，仅 `model` 取值与计费单价不同。
+
+---
+
+<h2 id="zAVAZ">鉴权方式</h2>
+| 方式 | Header | 格式 | 说明 |
+| --- | --- | --- | --- |
+| Bearer Token（推荐） | `Authorization` | `Authorization: Bearer <筷子 ApiKey>` | 与官方 DashScope 鉴权头形态一致，迁移只换 token |
+| ApiKey 头（兼容回退） | `ApiKey` | `ApiKey: <筷子 ApiKey>` | 与平台既有 OpenAPI 一致，历史代码可直接用 |
+
+
+如该 ApiKey 开启了**来源 IP 白名单**，请求来源 IP 需在白名单内，否则返回 `401 InvalidApiKey`。
+
+---
+
+<h2 id="MJlXi">公共说明</h2>
++ **Base URL**：`https://<我方域名>/ai-open-platform-api`
++ **Content-Type**：`application/json`
++ **必传请求头**：`X-DashScope-Async: enable`（HTTP 接口只支持异步）
++ 请求体大小上限 **4 MB**（含 base64 内联媒体时请注意；超限返回 `400 InvalidParameter`）。
+
+<h3 id="cj4QT">响应结构</h3>
+成功响应与官方一致：
+
+```json
+{
+  "output": {
+    "task_id": "kz-cgt-1tsk...",
+    "task_status": "PENDING"
+  },
+  "request_id": "..."
+}
+```
+
+错误响应（HTTP 非 2xx）：
+
+```json
+{
+  "code": "InvalidParameter",
+  "message": "current user api does not support synchronous calls",
+  "request_id": "..."
+}
+```
+
+> 注意：**查询失败任务**返回 HTTP 200，错误信息位于 `output.code` / `output.message` 中（与官方一致），详见「查询任务状态」节。
+>
+
+---
+
+<h2 id="AojTo">1. 创建视频生成任务</h2>
+**请求路径**：`POST {BASE_URL}/api/v1/services/aigc/video-generation/video-synthesis`
+
+<h3 id="LWBlV">请求头</h3>
+| Header | 必填 | 说明 |
+| --- | --- | --- |
+| `Authorization` | 是 | `Bearer <筷子 ApiKey>` |
+| `Content-Type` | 是 | `application/json` |
+| `X-DashScope-Async` | 是 | 固定值 `enable`，缺失返回官方同款错误 |
+
+
+<h3 id="dpRWy">请求体</h3>
+顶层结构与官方一致：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `model` | string | 是 | `wan3.0-video`（标准版）或 `wan3.0-video-prime`（高速版） |
+| `input` | object | 是 | `prompt` 与 `media` 必填其一 |
+| `parameters` | object | 否 | `resolution` / `ratio` / `duration` / `audio` / `seed` / `watermark` |
+
+
+`input` 字段：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `prompt` | string | 文本提示词，与 `media` 必填其一，最长 20000 字符；全能参考模式下可用「图1」「视频1」等指代 media 数组中对应顺序的素材 |
+| `media[]` | array | 媒体素材数组，每项含 `type` / `url` |
+
+
+`media[].type` 取值（与官方一致）：
+
++ `first_frame` 首帧图像（最多 1 张）
++ `last_frame` 尾帧图像（最多 1 张）
++ `reference_image` 参考图像（最多 10 张）
++ `reference_video` 参考视频（最多 5 段，总时长 ≤ 15s）
++ `reference_audio` 参考音频（最多 5 段，总时长 ≤ 15s）
++ `file` 文件（最多 1 个，不可与 `link` 同时输入）
++ `link` 网页链接（最多 1 个，不可与 `file` 同时输入）
+
+> `reference_xx` / `file` / `link` 类型与 `first_frame` / `last_frame` 互斥。  
+该互斥约束、各类型数量上限、分辨率/时长取值范围等**平台不做前置校验**，仍由阿里云异步返回 `task_status=FAILED` + `code/message`，详见下方「与官方的差异」。
+>
+
+`parameters` 字段：
+
+| 字段 | 类型 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `resolution` | string | `1080P` | `480P` / `720P` / `1080P` |
+| `ratio` | string | `adaptive` | `adaptive` / `16:9` / `4:3` / `1:1` / `3:4` / `9:16` |
+| `duration` | integer | `5` | 秒；无视频输入 [2,30]，有视频输入时输入+输出总时长 ≤30；传 `-1` 为智能时长 |
+| `audio` | boolean | `true` | 输出视频是否包含音频，开关声音价格相同 |
+| `seed` | integer | — | 随机种子 [0,2147483647] |
+| `watermark` | boolean | `false` | 是否加水印 |
+
+
+<h3 id="BoiYJ">curl 样例（仅替换 host 与鉴权即可）</h3>
+**文生视频**
+
+```bash
+curl --location 'https://<我方域名>/ai-open-platform-api/api/v1/services/aigc/video-generation/video-synthesis' \
+  -H 'X-DashScope-Async: enable' \
+  -H "Authorization: Bearer <筷子 ApiKey>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "wan3.0-video",
+    "input": {
+      "prompt": "一只小猫在月光下的屋顶上奔跑，城市的霓虹灯在远处闪烁，电影级画质，流畅运镜。"
+    },
+    "parameters": {
+      "resolution": "480P",
+      "ratio": "adaptive",
+      "duration": 5
+    }
+  }'
+```
+
+**首帧生视频**
+
+```bash
+curl --location 'https://<我方域名>/ai-open-platform-api/api/v1/services/aigc/video-generation/video-synthesis' \
+  -H 'X-DashScope-Async: enable' \
+  -H "Authorization: Bearer <筷子 ApiKey>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "wan3.0-video",
+    "input": {
+      "prompt": "一幅都市奇幻艺术的场景。一个充满动感的涂鸦艺术角色……",
+      "media": [
+        { "type": "first_frame", "url": "https://example.com/rap.png" }
+      ]
+    },
+    "parameters": {
+      "resolution": "480P",
+      "ratio": "adaptive",
+      "duration": 5
+    }
+  }'
+```
+
+**首尾帧生视频**
+
+```bash
+curl --location 'https://<我方域名>/ai-open-platform-api/api/v1/services/aigc/video-generation/video-synthesis' \
+  -H 'X-DashScope-Async: enable' \
+  -H "Authorization: Bearer <筷子 ApiKey>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "wan3.0-video",
+    "input": {
+      "prompt": "一个年轻女孩从微笑逐渐变为大笑，镜头缓缓推进，背景光线从冷色调渐变为暖色调。",
+      "media": [
+        { "type": "first_frame", "url": "https://example.com/first.png" },
+        { "type": "last_frame",  "url": "https://example.com/last.jpg" }
+      ]
+    },
+    "parameters": {
+      "resolution": "480P",
+      "ratio": "adaptive",
+      "duration": 5
+    }
+  }'
+```
+
+**参考生视频（多模态参考）**
+
+```bash
+curl --location 'https://<我方域名>/ai-open-platform-api/api/v1/services/aigc/video-generation/video-synthesis' \
+  -H 'X-DashScope-Async: enable' \
+  -H "Authorization: Bearer <筷子 ApiKey>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "wan3.0-video",
+    "input": {
+      "prompt": "视频1抱着图3，在图4的椅子上弹奏一支舒缓的乡村民谣……",
+      "media": [
+        { "type": "reference_image", "url": "https://example.com/girl.jpg" },
+        { "type": "reference_video", "url": "https://example.com/role2.mp4" },
+        { "type": "reference_image", "url": "https://example.com/object3.png" },
+        { "type": "reference_image", "url": "https://example.com/object4.png" },
+        { "type": "reference_image", "url": "https://example.com/background5.png" }
+      ]
+    },
+    "parameters": {
+      "resolution": "480P",
+      "ratio": "adaptive",
+      "duration": 5
+    }
+  }'
+```
+
+**参考文件生视频**
+
+```bash
+curl --location 'https://<我方域名>/ai-open-platform-api/api/v1/services/aigc/video-generation/video-synthesis' \
+  -H 'X-DashScope-Async: enable' \
+  -H "Authorization: Bearer <筷子 ApiKey>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "wan3.0-video",
+    "input": {
+      "prompt": "一支高端智能眼镜产品广告，整体风格极简、未来感……",
+      "media": [
+        { "type": "file", "url": "https://example.com/glass.pptx" }
+      ]
+    },
+    "parameters": {
+      "resolution": "480P",
+      "ratio": "adaptive",
+      "duration": 10
+    }
+  }'
+```
+
+<h3 id="M44ae">响应示例</h3>
+创建成功（HTTP 200）：
+
+```json
+{
+  "output": {
+    "task_status": "PENDING",
+    "task_id": "kz-cgt-1tsk1800657071180349525e4b1f36797a4f"
+  },
+  "request_id": "4909100c-7b5a-9f92-bfe5-xxxxxx"
+}
+```
+
+请保存 `output.task_id`，用于下一步查询。该 id 是**筷子任务 id**（形如 `kz-cgt-...`），非阿里云 DashScope uuid，但对客户而言语义等同——用它查询本接口即可，见下方差异说明。
+
+---
+
+<h2 id="kjscz">2. 查询任务状态</h2>
+**请求路径**：`GET {BASE_URL}/api/v1/tasks/{task_id}`
+
+<h3 id="C8xvc">请求头</h3>
+| Header | 必填 | 说明 |
+| --- | --- | --- |
+| `Authorization` | 是 | `Bearer <筷子 ApiKey>` |
+
+
+<h3 id="Camuc">路径参数</h3>
+| 参数 | 必填 | 说明 |
+| --- | --- | --- |
+| `task_id` | 是 | 创建接口返回的 `output.task_id`（`kz-cgt-...`） |
+
+
+<h3 id="T1ioJ">curl 样例</h3>
+```bash
+curl -X GET 'https://<我方域名>/ai-open-platform-api/api/v1/tasks/kz-cgt-1tsk...' \
+  -H "Authorization: Bearer <筷子 ApiKey>"
+```
+
+<h3 id="ZS9SN">响应示例</h3>
+**排队 / 处理中**（HTTP 200，`output.task_status` 为 `PENDING` / `RUNNING`）：
+
+```json
+{
+  "request_id": "...",
+  "output": {
+    "task_id": "kz-cgt-1tsk...",
+    "task_status": "RUNNING",
+    "submit_time": "2026-08-09 10:01:35.452",
+    "scheduled_time": "2026-08-09 10:01:35.507"
+  }
+}
+```
+
+**任务成功**（HTTP 200）：
+
+```json
+{
+  "request_id": "78c9b768-0285-996c-b682-xxxxxx",
+  "output": {
+    "task_id": "kz-cgt-1tsk...",
+    "task_status": "SUCCEEDED",
+    "submit_time": "2026-08-09 10:01:35.452",
+    "scheduled_time": "2026-08-09 10:01:35.507",
+    "end_time": "2026-08-09 10:13:33.838",
+    "orig_prompt": "一只小猫在月光下的屋顶上奔跑……",
+    "video_url": "https://<阿里云 OSS 临时直链地址>/1d/72/20261103/caee444c/931c1dgjx5ba-metadata_YP9OjLfB_cc2324er401c9.mp4?Expires=1793784935&OSSAccessKeyId=LTAIMdsfsdfsdfym1&Signature=bOVyedsfdsfdsfUFF79VE%3D",
+    "kz_video_url": "https://<我方永久 TOS 地址>/ai_openapi/.../output.mp4"
+  },
+  "usage": {
+    "video_count": 1,
+    "duration": 5.0,
+    "input_video_duration": 0.0,
+    "output_video_duration": 5.0,
+    "fps": 30,
+    "SR": 720,
+    "ratio": "16:9"
+  }
+}
+```
+
+`output.video_url` 说明：
+
++ 阿里云 OSS 临时直链（24 小时有效）。
+
+`output.kz_video_url` 说明：
+
++ 任务刚成功的短暂窗口内，可能是阿里云 OSS 临时直链（24 小时有效）。
++ 平台在任务终态后异步把产物转存到自有 TOS，**转存完成后 **`kz_video_url`** 自动回填为我方永久地址**，不再 24 小时过期。
++ 客户拿到永久地址后可自行长期保存；若恰好轮询到临时链，请稍后再查一次，或直接下载临时链（24 小时内有效）。
+
+**任务失败**（HTTP 200，失败信息在 `output` 内）：
+
+```json
+{
+  "request_id": "e5e57877-c0fc-47ed-8fad-xxxxxx",
+  "output": {
+    "task_id": "kz-cgt-1tsk...",
+    "task_status": "FAILED",
+    "code": "InvalidParameter",
+    "message": "The two modes are mutually exclusive. Do not pass reference_xx and first_frame/last_frame at the same time."
+  }
+}
+```
+
+`task_status` 取值与官方一致：`PENDING` / `RUNNING` / `SUCCEEDED` / `FAILED` / `CANCELED` / `UNKNOWN`。
+
+> 终态（`SUCCEEDED` / `FAILED` / `CANCELED`）一旦进入不再变化。本接口不支持取消任务。
+>
+
+---
+
+<h2 id="O2tLS">与官方接口的差异（请务必阅读）</h2>
+为最大化兼容性，本接口刻意保持与官方协议一致，但以下六点差异需要客户知晓：
+
+1. `task_id`** 是筷子任务 id，不是 DashScope uuid。**  
+创建接口返回的 `task_id` 形如 `kz-cgt-1tsk1800...`（内部雪花 id），不是阿里云原生 uuid。客户**只能用它查询本接口** `/tasks/{task_id}`，不能拿它去调用阿里云官方查询接口。语义与官方完全一致（保存→轮询→拿结果），无需修改业务逻辑。
+2. **以下校验平台不做前置拦截，仍由阿里云异步返回失败。**  
+为了避免出现「客户直连官方能过、走我方却被前置拦截」的兼容缺口，平台刻意把校验做薄，只校验 `model` 合法、`prompt` 与 `media` 至少提供其一。以下约束**不在请求入口校验**，由阿里云在处理后通过查询接口异步返回 `output.task_status=FAILED` + `output.code` / `output.message`：
+
+这意味着这些错误**不会在创建请求时同步返回 4xx**，而是要到查询时才在 `output.code` 里看到 `InvalidParameter` 等错误码（与官方异步行为一致）。
+
+> **注意 **`model`** 是例外，平台强制前置校验**：`model` 必填且必须严格等于 `wan3.0-video` 或 `wan3.0-video-prime`（大小写敏感），否则创建请求同步返回 `400 InvalidParameter`（`model must be "wan3.0-video" or "wan3.0-video-prime"`）。这是为了计费安全——若放行未知模型透传到阿里云，在平台单价表未更新时会按错误档位计费甚至漏计。接入新模型需平台先更新计费配置。
+>
+
+    - 媒体类型互斥（`reference_xx` / `file` / `link` 与 `first_frame` / `last_frame` 不能混用）；
+    - 各媒体类型数量上限（参考图最多 10 张、参考视频/音频最多 5 段等）；
+    - `resolution` / `duration` / `ratio` / `seed` 取值范围；
+    - 媒体素材本身的格式、分辨率、时长、文件大小限制。
+3. `X-DashScope-Async: enable`** 同样必传。**  
+平台只有异步链路，技术上可以宽容该头，但为了不造成「漏带头在我方成功、切回官方失败」的行为分叉，缺失时仍返回官方同款错误：HTTP 400，`code=InvalidParameter`，`message=current user api does not support synchronous calls`。
+4. `video_url`** 转存完成后变成我方永久地址。**  
+官方返回的 OSS 直链 24 小时过期；平台在任务终态后异步转存到自有 TOS，转存完成后**同一 **`task_id`** 的查询响应里 **`video_url`** 会自动替换为永久地址**，客户无需改业务逻辑即可享受不过期链接。转存完成前（通常数秒内）仍是阿里云临时链。入参媒体（公网 URL）也会在终态后异步留痕到我方存储，但这只用于内部审计，不影响已提交任务。
+5. **计费口径：按（输入视频秒 + 输出视频秒）总时长 × 分辨率档位单价。**  
+与官方一致，平台按成功任务的**总时长**计费：`usage.input_video_duration`（输入参考视频秒，无视频输入时为 0.0）+ `usage.output_video_duration`（输出视频秒，浮点），在任务成功后异步扣费：
+
+| 分辨率 | 标准版 `wan3.0-video`（元/秒） | 高速版 `wan3.0-video-prime`（元/秒） |
+| --- | --- | --- |
+| 480P | 0.3 | 0.45 |
+| 720P | 0.6 | 0.9 |
+| 1080P | 1.2 | 1.8 |
+
+
+    - 金额 = ceil((输入秒 + 输出秒) × 单价)，向上取整到「分」。
+    - 分辨率优先取 `usage.SR`（模型实际输出档位），缺失时回退请求参数 `parameters.resolution`。
+    - 时长按浮点值计算（非取整）。示例：输入 3.5 秒 + 输出 10.25 秒 = 13.75 秒，720P 高速版 → ceil(13.75 × 0.9 × 100) = 1238 分。
+    - 失败任务不计费。
+    - 创建任务前会校验钱包余额，余额不足返回 HTTP 429 `InsufficientBalance`。
+6. **平台对每个账号设有并发上限，超限创建返回 429 **`Throttling`**。**  
+每个模型（标准版 / 高速版）各自独立统计「进行中的任务数」（已创建但尚未成功/失败的任务）。达到该账号该模型的上限时，新的创建请求同步返回 HTTP 429 `Throttling`（错误码与阿里云官方限流码一致，客户端按限流处理即可），`message` 形如「模型 wan3.0-video 当前进行中任务数(100)已达上限(100)，请等待任务完成后再提交」。任务终态（成功/失败）后即释放名额。默认上限由平台配置，如需调整请联系平台方。
+
+---
+
+<h2 id="ixQTD">错误码表</h2>
+同步错误（创建接口 / 鉴权 / 路由层）直接以 HTTP 状态码返回，body 内含 `code` / `message` / `request_id`：
+
+| HTTP 状态码 | code | 触发场景 |
+| --- | --- | --- |
+| 400 | `InvalidParameter` | `X-DashScope-Async` 缺失、请求体为空 / 非法 JSON、请求体超 4MB、`prompt` 与 `media` 均为空等 |
+| 401 | `InvalidApiKey` | ApiKey 缺失 / 无效 / 过期；来源 IP 不在白名单 |
+| 403 | `AccessDenied` | 账号无权访问该接口 / 资源不属于该账号 |
+| 404 | `NotFound` | 路径不存在；查询的 `task_id` 不存在或不属于本账号 |
+| 429 | `InsufficientBalance` | 钱包余额不足（创建接口的余额门禁） |
+| 429 | `Throttling` | 该账号该模型进行中任务数达到并发上限（见「差异」第 6 条），等待在途任务终态后重试 |
+| 500 | `InternalError` | 平台内部错误，可凭 `request_id` 联系平台方排查 |
+
+
+异步业务错误（任务处理失败）通过查询接口 **HTTP 200** 返回，错误信息在 `output` 里：
+
+| output.code | 含义 |
+| --- | --- |
+| `InvalidParameter` | 请求参数被阿里云判定非法（媒体互斥、数量超限、分辨率/时长越界等，见「差异」第 2 条） |
+| `Throttling` | 阿里云侧限流，平台会自动重试 |
+| 其他阿里云错误码 | 透传阿里云原始 `code` / `message`，以官方错误码文档为准 |
+
+
+> 客户端建议：先看 HTTP 状态码，再看 body；同步阶段 4xx/5xx 按错误处理；查询阶段无论 `task_status` 是何值都返回 HTTP 200，需读取 `output.task_status` 判定成败，并把 `request_id` 一起上报排障。
+>
+
+---
+
+<h2 id="I7QYr">注意事项</h2>
+1. **异步轮询**：建议轮询间隔 ≥ 15 秒（与官方建议一致），避免触发限流。
+2. **任务 ID**：创建接口返回的 `task_id`（`kz-cgt-...`）是后续查询的唯一凭证，请妥善保存。
+3. **video_url 持久性**：转存完成后为我方永久地址；若轮询到阿里云临时链，请稍后再查，或在 24 小时内下载。
+4. **媒体 URL**：建议传入可公开访问的 HTTP(S) URL，不支持base64；`link` 类型仅支持无需登录的公开网页。
+5. **邀测权限**：万相 3.0 系列模型（标准版 / 高速版）当前处于邀测阶段，需平台侧已开通邀测权限后方可调用。
+6. **429 重试策略**：收到 429（`Throttling` 或 `InsufficientBalance`）时建议指数退避重试（如 15s → 30s → 60s），不要高频硬重试；`Throttling` 通常在在途任务终态释放名额后自愈。
+
+---
+
+<h2 id="frbbN">联系我们</h2>
+如有接入问题或需要技术支持，请联系平台方获取帮助。
+

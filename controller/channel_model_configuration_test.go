@@ -29,6 +29,106 @@ func TestReviewedFenglangCorpUIModelConfigurationSave(t *testing.T) {
 	testReviewedVideoUIModelConfigurationSave(t, true)
 }
 
+func TestReviewedKuaiziUIModelConfigurationSave(t *testing.T) {
+	previousDB, previousRegistry, previousCache := model.DB, jsplugin.DefaultRegistry, common.MemoryCacheEnabled
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	require.NoError(t, err)
+	model.DB, jsplugin.DefaultRegistry, common.MemoryCacheEnabled = db, jsplugin.NewRegistry(), false
+	t.Cleanup(func() {
+		model.DB, jsplugin.DefaultRegistry, common.MemoryCacheEnabled = previousDB, previousRegistry, previousCache
+	})
+	require.NoError(t, db.AutoMigrate(&model.Channel{}, &model.ChannelModelConfiguration{}, &model.TaskPlugin{}, &model.Ability{}))
+	const provider = "kuaizi_video"
+	source, err := os.ReadFile(filepath.Join("..", "plugin-sources", "kuaizi-video", "dist", provider+".plugin.js"))
+	require.NoError(t, err)
+	compiled, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{Key: provider})
+	require.NoError(t, err)
+	require.NoError(t, db.Create(&model.TaskPlugin{
+		Key: provider, Version: compiled.Meta.Version, APIVersion: 1, Enabled: true,
+		Active: true, Source: model.LongText(source), SourceHash: compiled.SourceSHA256,
+	}).Error)
+	for _, sample := range []struct{ model, fixture string }{
+		{"wan3.0-video", "kuaizi_standard_ui_save.json"},
+		{"wan3.0-video-prime", "kuaizi_prime_ui_save.json"},
+	} {
+		t.Run(sample.model, func(t *testing.T) {
+			payload, err := os.ReadFile(filepath.Join("testdata", sample.fixture))
+			require.NoError(t, err)
+			var ui channelConfigurationSave
+			require.NoError(t, common.Unmarshal(payload, &ui))
+			setting, baseURL := `{"task_plugin_key":"kuaizi_video"}`, compiled.Meta.BaseURL
+			channel := model.Channel{Type: 61, Name: sample.model, Setting: &setting, BaseURL: &baseURL, Key: "fixture-only", Group: "default", Status: 2}
+			require.NoError(t, db.Create(&channel).Error)
+			call := func(handler gin.HandlerFunc, data []byte) *httptest.ResponseRecorder {
+				recorder := httptest.NewRecorder()
+				c, _ := gin.CreateTestContext(recorder)
+				c.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+				c.Set("id", 1)
+				c.Request = httptest.NewRequest("PUT", "/api/channel/model-configuration", bytes.NewReader(data))
+				c.Request.Header.Set("Content-Type", "application/json")
+				handler(c)
+				assert.NotContains(t, recorder.Body.String(), channel.Key)
+				return recorder
+			}
+			saved := call(SaveChannelModelConfiguration, payload)
+			require.Contains(t, saved.Body.String(), `"success":true`)
+			readback, err := model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
+			require.NoError(t, err)
+			assert.Equal(t, int64(1), readback.Revision)
+			assert.Equal(t, ui.Configuration.Groups, readback.Groups)
+			mode := readback.Groups["dialog-0"].Modes["text_video"]
+			assert.Equal(t, "720P", mode.Input["resolution"])
+			assert.Equal(t, []any{"720P", "1080P"}, mode.Parameters["resolution"].Enum)
+			assert.Equal(t, "resolution", mode.Mapping["resolution"])
+			assert.False(t, *mode.Parameters["model"].Required)
+			assert.False(t, *mode.Parameters["prompt"].Required)
+			assert.Equal(t, `2 * u("seconds")`, readback.Bindings[sample.model]["text_video"].Billing.Expression)
+			require.NoError(t, db.First(&channel, channel.Id).Error)
+			assert.Equal(t, sample.model, channel.Models)
+			var routes []model.Ability
+			require.NoError(t, db.Where("channel_id = ?", channel.Id).Find(&routes).Error)
+			require.Len(t, routes, 1)
+			assert.Equal(t, sample.model, routes[0].Model)
+			assert.False(t, routes[0].Enabled)
+			reopened := call(GetChannelModelConfiguration, nil)
+			require.Contains(t, reopened.Body.String(), `"success":true`)
+			assert.Contains(t, reopened.Body.String(), `"revision":1`)
+			assert.Contains(t, reopened.Body.String(), "video-generation/video-synthesis")
+			check, err := common.Marshal(map[string]any{
+				"configuration": readback, "model": sample.model, "mode": "video_ref",
+				"input": map[string]any{
+					"videos":  []string{"https://media.example/reference.mp4"},
+					"seconds": -1, "generate_audio": false, "seed": 0,
+				},
+			})
+			require.NoError(t, err)
+			checked := call(CheckChannelModelConfiguration, check)
+			require.Contains(t, checked.Body.String(), `"actualCall":false`)
+			assert.Contains(t, checked.Body.String(), `"type":"reference_video"`)
+			assert.Contains(t, checked.Body.String(), `"duration":-1`)
+			assert.Contains(t, checked.Body.String(), `"resolution":"720P"`)
+			assert.Contains(t, checked.Body.String(), `"audio":false`)
+			assert.Contains(t, checked.Body.String(), `"seed":0`)
+			assert.NotContains(t, checked.Body.String(), `"Authorization"`)
+			// 4K cannot be saved even with a current revision and route snapshot.
+			ui.Configuration, ui.ExpectedRevision = readback, 1
+			ui.ExpectedModels, ui.AddModels = sample.model, []string{}
+			resolution := mode.Parameters["resolution"]
+			resolution.Enum = []any{"4K"}
+			mode.Parameters["resolution"] = resolution
+			delete(mode.Input, "resolution")
+			invalid, err := common.Marshal(ui)
+			require.NoError(t, err)
+			assert.Contains(t, call(SaveChannelModelConfiguration, invalid).Body.String(), `"success":false`)
+			current, err := model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
+			require.NoError(t, err)
+			assert.Equal(t, int64(1), current.Revision)
+			require.NoError(t, db.First(&channel, channel.Id).Error)
+			assert.Equal(t, sample.model, channel.Models)
+		})
+	}
+}
+
 func testReviewedVideoUIModelConfigurationSave(t *testing.T, corporate bool) {
 	t.Helper()
 	previousDB, previousRegistry, previousCache := model.DB, jsplugin.DefaultRegistry, common.MemoryCacheEnabled

@@ -1,0 +1,57 @@
+{
+  "format": "kuaizi-video-sources/v1",
+  "sources": [
+    {
+      "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
+      "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
+      "readAt": "2026-11-12",
+      "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
+      "status": "public-documentation",
+      "file": "evidence/yuque-video-v1.2.txt",
+      "retrievedFrom": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1/markdown?plain=true"
+    }
+  ],
+  "modelDeclarations": {
+    "status": "documented-interface-allowlist",
+    "models": [
+      "wan3.0-video",
+      "wan3.0-video-prime"
+    ]
+  },
+  "unauthenticatedProbes": {
+    "baseURL": "https://aiopenapi.kuaizi.cn/ai-open-platform-api",
+    "taskQuery": {
+      "status": 401,
+      "code": "InvalidApiKey"
+    },
+    "openAIModelList": {
+      "status": 404
+    },
+    "readAt": "2026-11-12"
+  },
+  "supplierCost": {
+    "currency": "CNY",
+    "unit": "second",
+    "resolution": [
+      "480P",
+      "720P",
+      "1080P"
+    ],
+    "wan3.0-video": [
+      0.3,
+      0.6,
+      1.2
+    ],
+    "wan3.0-video-prime": [
+      0.45,
+      0.9,
+      1.8
+    ]
+  },
+  "pending": [
+    "任务查询路由已验证可达。文档仅列出接口允许型号，账号邀测权限与模型列表接口仍待确认",
+    "媒体用公开 HTTP(S) URL。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
+    "上游按输入与输出视频总秒数及分辨率计费，文档人民币单价仅供采购参考",
+    "成功后筷子可能仍返回临时下载地址，及时保存产物"
+  ]
+}

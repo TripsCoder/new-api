@@ -138,13 +138,27 @@ function mount(models = 'old', preview = true) {
     </QueryClientProvider>
   )
 }
-async function advanceToParameters() {
+async function advanceToParameters(enableVideoInputs = false) {
   await screen.findByRole('button', {
     name: 'Next: output type and functions',
   })
   await userEvent.click(
     screen.getByRole('button', { name: 'Next: output type and functions' })
   )
+  if (enableVideoInputs) {
+    for (const name of [
+      /^Text to video/,
+      /^Use first and last frames/,
+      /^Use a reference image/,
+      /^Use reference video/,
+      /^Use reference audio/,
+    ]) {
+      const control = screen.getByRole('checkbox', { name })
+      if (control.getAttribute('aria-checked') !== 'true') {
+        await userEvent.click(control)
+      }
+    }
+  }
   await userEvent.click(
     screen.getByRole('button', { name: 'Next: documented parameters' })
   )
@@ -476,6 +490,8 @@ describe('actual channel workflow dialog', () => {
     ['fenglang_video', 'doubao-seedance-2-5-260628'],
     ['fenglang_video', 'doubao-seedance-2-5-260628-corp'],
     ['apipath_video', 'seedance-2.5-YZ'],
+    ['kuaizi_video', 'wan3.0-video'],
+    ['kuaizi_video', 'wan3.0-video-prime'],
   ])(
     'opens the complete %s/%s configuration workflow with its generated catalog',
     async (provider, model) => {
@@ -505,16 +521,37 @@ describe('actual channel workflow dialog', () => {
         screen.getByPlaceholderText('Enter an exact model ID and press Enter'),
         `${model}{Enter}`
       )
-      await advanceToParameters()
-      if (
+      const kuaizi = provider === 'kuaizi_video'
+      const captureSave =
+        kuaizi ||
         provider === 'apipath_video' ||
         model.startsWith('doubao-seedance-')
-      ) {
+      await advanceToParameters(kuaizi)
+      if (captureSave) {
         await userEvent.click(
           screen.getByRole('checkbox', {
             name: 'I checked this interface applies to this model',
           })
         )
+      }
+      if (kuaizi) {
+        const shared = within(
+          screen.getByTestId('selected-capability-parameters')
+        )
+        for (const choice of ['480P', '720P', '1080P']) {
+          expect(
+            shared.getByRole('checkbox', {
+              name: new RegExp(`^resolution: ${choice}`),
+            })
+          ).toBeChecked()
+        }
+        await userEvent.click(
+          shared.getByRole('checkbox', { name: /^resolution: 480P/ })
+        )
+        await userEvent.click(
+          shared.getByRole('combobox', { name: /^Resolution/ })
+        )
+        await userEvent.click(screen.getByRole('option', { name: '720P' }))
       }
       await userEvent.click(
         screen.getByText('Advanced: document sources and original records')
@@ -532,12 +569,14 @@ describe('actual channel workflow dialog', () => {
       await userEvent.click(
         screen.getByRole('button', { name: 'Next: model prices' })
       )
-      if (model.startsWith('doubao-seedance-')) {
+      if (kuaizi || model.startsWith('doubao-seedance-')) {
         await userEvent.click(
           screen.getByRole('combobox', { name: `${model}: Billing method` })
         )
         await userEvent.click(
-          screen.getByRole('option', { name: 'Per 1M tokens' })
+          screen.getByRole('option', {
+            name: kuaizi ? 'Per second' : 'Per 1M tokens',
+          })
         )
         await userEvent.type(
           screen.getByRole('spinbutton', {
@@ -555,10 +594,7 @@ describe('actual channel workflow dialog', () => {
       expect(mocks.save).not.toHaveBeenCalled()
       expect(mocks.tryCall).not.toHaveBeenCalled()
       expect(actual.models).toEqual({})
-      if (
-        provider === 'apipath_video' ||
-        model.startsWith('doubao-seedance-')
-      ) {
+      if (captureSave) {
         await userEvent.click(
           screen.getByRole('button', { name: 'Save and apply to this channel' })
         )
@@ -601,20 +637,24 @@ describe('actual channel workflow dialog', () => {
           const serialized = JSON.stringify(put.mock.calls[0][1])
           const payload = JSON.parse(serialized)
           let fixture = 'apipath_video'
+          let update = process.env.UPDATE_APIPATH_UI_SAVE_FIXTURE
           if (model.startsWith('doubao-seedance-')) {
             fixture = model.endsWith('-corp')
               ? 'fenglang_corp'
               : 'fenglang_official'
+            update = process.env.UPDATE_FENGLANG_UI_SAVE_FIXTURE
+          }
+          if (kuaizi) {
+            fixture = model.endsWith('-prime')
+              ? 'kuaizi_prime'
+              : 'kuaizi_standard'
+            update = process.env.UPDATE_KUAIZI_UI_SAVE_FIXTURE
           }
           const target = path.resolve(
             '..',
             `controller/testdata/${fixture}_ui_save.json`
           )
-          if (
-            (model.startsWith('doubao-seedance-')
-              ? process.env.UPDATE_FENGLANG_UI_SAVE_FIXTURE
-              : process.env.UPDATE_APIPATH_UI_SAVE_FIXTURE) === '1'
-          ) {
+          if (update === '1') {
             writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`)
           }
           expect(payload).toEqual(JSON.parse(readFileSync(target, 'utf8')))

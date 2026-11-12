@@ -429,6 +429,7 @@ function canEditConfiguration(type: number, key: string): boolean {
       'aotian_video',
       'fenglang_video',
       'apipath_video',
+      'kuaizi_video',
     ].includes(key)
   )
 }
