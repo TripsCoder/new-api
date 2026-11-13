@@ -1846,13 +1846,79 @@ describe('actual channel workflow dialog', () => {
       await userEvent.click(b)
       expect(first).toBeChecked()
       expect(pair).toBeChecked()
+      const supportCells = within(
+        screen.getByRole('row', { name: /^A / })
+      ).getAllByRole('cell')
+      expect(supportCells[2]).toHaveTextContent(/^Documented$/)
+      expect(supportCells[3]).toHaveTextContent(/^Documented$/)
       await userEvent.click(a)
       expect(a).not.toBeChecked()
       expect(b).toBeChecked()
       await userEvent.click(b)
       expect(b).not.toBeChecked()
+      // Documentation support is independent of the user's enabled choices.
+      expect(supportCells[2]).toHaveTextContent(/^Documented$/)
+      expect(supportCells[3]).toHaveTextContent(/^Documented$/)
     }
   )
+  it.each([
+    {
+      firstFrame: true,
+      lastFrame: false,
+      first: 'Documented',
+      pair: 'Not confirmed',
+    },
+    {
+      firstFrame: false,
+      lastFrame: false,
+      first: 'Not confirmed',
+      pair: 'Not confirmed',
+    },
+    {
+      firstFrame: undefined,
+      lastFrame: undefined,
+      first: 'Documented',
+      pair: 'Documented',
+    },
+  ])('shows the same frame support in the summary and table: %j', (support) => {
+    const frameCatalog = structuredClone(catalog)
+    frameCatalog.models.A.modes.frames = { required: [] }
+    if (support.firstFrame !== undefined && support.lastFrame !== undefined) {
+      frameCatalog.models.A.capabilities = {
+        firstFrame: support.firstFrame,
+        lastFrame: support.lastFrame,
+        multipleReferences: true,
+      }
+    }
+    const draft = createSharedGroup(baseline, frameCatalog, ['A'], 'frame')
+    render(
+      <FunctionChoice
+        draft={draft}
+        catalog={frameCatalog}
+        selected={['A']}
+        groupId='frame'
+        kind='video'
+        onKind={vi.fn()}
+        onChange={vi.fn()}
+      />
+    )
+    const cells = within(screen.getByRole('row', { name: /^A / })).getAllByRole(
+      'cell'
+    )
+    expect(cells[2]).toHaveTextContent(support.first)
+    expect(cells[3]).toHaveTextContent(support.pair)
+    for (const [label, status] of [
+      ['First-frame reference', support.first],
+      ['Use first and last frames', support.pair],
+    ]) {
+      const checkbox = screen.getByRole('checkbox', {
+        name: new RegExp(`^${label}`),
+      })
+      expect(checkbox.closest('label')).toHaveTextContent(
+        status === 'Documented' ? '1 / 1' : '0 / 1'
+      )
+    }
+  })
   it('opens individual settings in a separate dialog and cancels without changing the outer draft', async () => {
     mount('old')
     await advanceToParameters()

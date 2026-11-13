@@ -121,6 +121,24 @@ export function FunctionChoice(props: {
 }) {
   const { t } = useTranslation()
   const modes = props.kind === 'image' ? IMAGE_MODES : VIDEO_CAPABILITY_VIEWS
+  const supportedModelsByMode = Object.fromEntries(
+    modes.map((key) => [
+      key,
+      props.selected.filter((name) => {
+        const model = props.catalog.models[name]
+        if (key === 'first_frame' && model?.capabilities) {
+          return model.capabilities.firstFrame
+        }
+        if (key === 'frames' && model?.capabilities) {
+          return model.capabilities.firstFrame && model.capabilities.lastFrame
+        }
+        if (key === 'mixed_ref' && model?.capabilities) {
+          return model.capabilities.multipleReferences
+        }
+        return !!model?.modes[capabilityMode(key)]
+      }),
+    ])
+  )
   const referenceLabels: Record<string, string> = {
     images: 'Reference images',
     videos: 'Reference videos',
@@ -161,21 +179,7 @@ export function FunctionChoice(props: {
       <div className='divide-y'>
         {modes.map((key) => {
           const label = MODE_LABELS[key]
-          const supported = props.selected.filter((name) => {
-            const model = props.catalog.models[name]
-            if (key === 'first_frame' && model?.capabilities) {
-              return model.capabilities.firstFrame
-            }
-            if (key === 'frames' && model?.capabilities) {
-              return (
-                model.capabilities.firstFrame && model.capabilities.lastFrame
-              )
-            }
-            if (key === 'mixed_ref' && model?.capabilities) {
-              return model.capabilities.multipleReferences
-            }
-            return !!model?.modes[capabilityMode(key)]
-          })
+          const supported = supportedModelsByMode[key]
           return (
             <div key={key} className='space-y-2 py-3'>
               <label className='flex items-center gap-2 font-medium'>
@@ -288,7 +292,7 @@ export function FunctionChoice(props: {
                   {name}
                 </TableCell>
                 {modes.map((key) => {
-                  let status = props.catalog.models[name]?.modes[key]
+                  let status = supportedModelsByMode[key].includes(name)
                     ? 'Documented'
                     : 'Not confirmed'
                   if (
