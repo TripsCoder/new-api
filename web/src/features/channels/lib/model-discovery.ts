@@ -35,9 +35,10 @@ export function normalizeModelDiscoveryResponse(
   if (!requiresEvidence && response.data === undefined && !response.discovery) {
     return { ...response, data: [] }
   }
+  const source = response.discovery?.source
   if (
     !Array.isArray(response.data) ||
-    (requiresEvidence && response.discovery?.source !== 'upstream') ||
+    (requiresEvidence && source !== 'upstream' && source !== 'plugin') ||
     (response.discovery && !Array.isArray(response.discovery.models))
   ) {
     throw new Error(

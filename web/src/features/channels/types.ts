@@ -221,7 +221,7 @@ export interface FetchModelsResponse {
 }
 
 export interface UpstreamModelDiscovery {
-  source: 'upstream'
+  source: 'upstream' | 'plugin'
   discovery_method?: string
   checked_at: number
   plugin_key: string

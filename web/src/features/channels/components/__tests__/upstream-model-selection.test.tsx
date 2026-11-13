@@ -19,20 +19,79 @@ For commercial licensing, please contact support@quantumnous.com
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { afterEach, expect, test, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 
 import { fetchModels } from '../../api'
-import type { UpstreamModelDiscovery } from '../../types'
-import { ChannelsProvider } from '../channels-provider'
+import type { Channel, UpstreamModelDiscovery } from '../../types'
+import { ChannelsProvider, useChannels } from '../channels-provider'
 import { FetchModelsDialog } from '../dialogs/fetch-models-dialog'
 import { UpstreamModelSelection } from '../upstream-model-selection'
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+})
+
+test('the saved Kuaizi channel can select both built-in models', async () => {
+  const models = ['wan3.0-video', 'wan3.0-video-prime']
+  const discovery: UpstreamModelDiscovery = {
+    source: 'plugin',
+    discovery_method: 'plugin_model_declaration',
+    checked_at: 1,
+    plugin_key: 'kuaizi_video',
+    source_url: 'https://example.com/docs',
+    source_sha256: 'a'.repeat(64),
+    models: models.map((id) => ({
+      id,
+      adapted: true,
+      configured: false,
+      pricing_status: 'not_checked',
+    })),
+  }
+  const get = vi.spyOn(api, 'get').mockResolvedValue({
+    data: { success: true, data: models, discovery },
+  })
+  const put = vi.spyOn(api, 'put').mockResolvedValue({
+    data: { success: true },
+  })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  const user = userEvent.setup()
+  const close = vi.fn()
+  function SavedChannelDialog() {
+    const { currentRow, setCurrentRow } = useChannels()
+    useEffect(() => {
+      setCurrentRow({ id: 20, type: 61, models: '', name: 'Kuaizi' } as Channel)
+    }, [setCurrentRow])
+    return <FetchModelsDialog open={!!currentRow} onOpenChange={close} />
+  }
+  const view = render(
+    <QueryClientProvider client={client}>
+      <ChannelsProvider>
+        <SavedChannelDialog />
+      </ChannelsProvider>
+    </QueryClientProvider>
+  )
+  expect(
+    await screen.findByText(
+      'Built-in plugin models. Select models, then configure pricing before enabling the channel.'
+    )
+  ).toBeInTheDocument()
+  expect(get.mock.calls[0]?.[0]).toBe('/api/channel/fetch_models/20')
+  for (const model of models) {
+    await user.click(screen.getByRole('checkbox', { name: model }))
+  }
+  await user.click(screen.getByRole('button', { name: 'Save Models' }))
+  expect(put.mock.calls[0]?.slice(0, 2)).toEqual([
+    '/api/channel/',
+    { id: 20, models: models.join(',') },
+  ])
+  view.unmount()
+  client.clear()
 })
 
 test.each([undefined, 'authenticated_pricing_and_public_catalog'])(

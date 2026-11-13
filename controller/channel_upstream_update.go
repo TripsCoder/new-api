@@ -480,11 +480,20 @@ func fetchChannelUpstreamModelsWithDetails(channel *model.Channel) ([]string, an
 		return nil, nil, fmt.Errorf("task plugin %q is not registered", channel.GetSetting().TaskPluginKey)
 	}
 	meta := plugin.Meta
+	if usesFixedTaskPluginModels(meta) {
+		ids := normalizeModelNames(meta.Models)
+		return ids, taskPluginDiscoveryDetails(channel, plugin, ids), nil
+	}
 	ids, err := fetchTaskPluginUpstreamModels(channel, meta)
 	if err != nil {
 		return nil, nil, err
 	}
-	return ids, taskPluginDiscoveryDetails(channel, meta, ids), nil
+	return ids, taskPluginDiscoveryDetails(channel, plugin, ids), nil
+}
+
+func usesFixedTaskPluginModels(meta jsplugin.Meta) bool {
+	// Kuaizi's reviewed contract has two documented models and no discovery endpoint.
+	return meta.Key == "kuaizi_video" && meta.ModelDiscovery == nil
 }
 
 // Discovery never executes generation hooks or falls back to meta.models.
@@ -495,7 +504,7 @@ func fetchTaskPluginUpstreamModels(channel *model.Channel, meta jsplugin.Meta) (
 	discoveryPath := "/v1/models"
 	if meta.ModelDiscovery != nil {
 		discoveryPath = meta.ModelDiscovery.Path
-	} else if !modelconfig.SupportedProvider(meta.Key) {
+	} else if usesFixedTaskPluginModels(meta) || !modelconfig.SupportedProvider(meta.Key) {
 		return nil, errors.New("This plugin has no verified upstream model-list endpoint; configure models manually")
 	}
 	if err := jsplugin.ValidateV1Meta(meta); err != nil {
@@ -762,24 +771,27 @@ func checkAndPersistChannelUpstreamModelUpdates(
 	return modelsChanged, autoAdded, nil
 }
 
-func taskPluginDiscoveryDetails(channel *model.Channel, meta jsplugin.Meta, ids []string) any {
+func taskPluginDiscoveryDetails(channel *model.Channel, plugin *jsplugin.LoadedPlugin, ids []string) any {
+	meta := plugin.Meta
 	models := make([]gin.H, 0, len(ids))
 	for _, id := range ids {
 		models = append(models, gin.H{"id": id, "adapted": taskPluginAdaptsChannelModel(channel, meta, id), "configured": slices.Contains(channel.GetModels(), id), "pricing_status": "not_checked"})
 	}
-	sourceURL, sourceSHA, method := strings.TrimSuffix(strings.TrimRight(channel.GetBaseURL(), "/"), "/v1")+"/v1/models", "", "standard_openai_probe"
-	if meta.ModelDiscovery != nil {
+	source, sourceURL, sourceSHA, method := "upstream", strings.TrimSuffix(strings.TrimRight(channel.GetBaseURL(), "/"), "/v1")+"/v1/models", "", "standard_openai_probe"
+	if usesFixedTaskPluginModels(meta) {
+		source, sourceURL, sourceSHA, method = "plugin", meta.Website, plugin.SourceSHA256, "plugin_model_declaration"
+	} else if meta.ModelDiscovery != nil {
 		sourceURL = meta.ModelDiscovery.SourceURL
 		sourceSHA = meta.ModelDiscovery.SourceSHA256
 		method = "documented_endpoint"
 		if meta.ModelDiscovery.SourceStatus != "" {
 			method = meta.ModelDiscovery.SourceStatus
 		}
+		if meta.ModelDiscovery.Format == "fenglang_video_catalog" {
+			method = "authenticated_pricing_and_public_catalog"
+		}
 	}
-	if meta.ModelDiscovery != nil && meta.ModelDiscovery.Format == "fenglang_video_catalog" {
-		method = "authenticated_pricing_and_public_catalog"
-	}
-	return gin.H{"source": "upstream", "checked_at": common.GetTimestamp(), "plugin_key": meta.Key, "source_url": sourceURL, "source_sha256": sourceSHA, "discovery_method": method, "models": models}
+	return gin.H{"source": source, "checked_at": common.GetTimestamp(), "plugin_key": meta.Key, "source_url": sourceURL, "source_sha256": sourceSHA, "discovery_method": method, "models": models}
 }
 
 func taskPluginAdaptsChannelModel(channel *model.Channel, meta jsplugin.Meta, name string) bool {
@@ -996,6 +1008,12 @@ scanLoop:
 			settings := channel.GetOtherSettings()
 			if !settings.UpstreamModelUpdateCheckEnabled {
 				continue
+			}
+			if channel.Type == constant.ChannelTypeTaskPlugin {
+				plugin, ok := jsplugin.DefaultRegistry.Get(channel.GetSetting().TaskPluginKey)
+				if ok && usesFixedTaskPluginModels(plugin.Meta) {
+					continue
+				}
 			}
 
 			checkedChannels++

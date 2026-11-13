@@ -320,20 +320,27 @@ export function UpstreamModelSelection(props: UpstreamModelSelectionProps) {
   if (counts.existing) fallbackTab = 'existing'
   else if (counts.removed) fallbackTab = 'removed'
   const activeTab = counts[tabState.tab] > 0 ? tabState.tab : fallbackTab
+  let discoveryMessage = ''
+  if (props.discovery?.source === 'plugin') {
+    discoveryMessage = t(
+      'Built-in plugin models. Select models, then configure pricing before enabling the channel.'
+    )
+  } else if (
+    props.discovery?.discovery_method === 'authenticated_pricing_and_public_catalog'
+  ) {
+    discoveryMessage = t(
+      'Live supplier catalog and API results. Select models before configuring prices and parameters. Account access and pricing still need verification.'
+    )
+  } else if (props.discovery) {
+    discoveryMessage = t(
+      'Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.'
+    )
+  }
 
   return (
     <div className='space-y-3'>
-      {props.discovery && (
-        <p className='text-muted-foreground text-sm'>
-          {props.discovery.discovery_method ===
-          'authenticated_pricing_and_public_catalog'
-            ? t(
-                'Live supplier catalog and API results. Select models before configuring prices and parameters. Account access and pricing still need verification.'
-              )
-            : t(
-                'Live upstream results. New unadapted models cannot be selected; existing selections are preserved. Verify pricing before enabling models.'
-              )}
-        </p>
+      {discoveryMessage && (
+        <p className='text-muted-foreground text-sm'>{discoveryMessage}</p>
       )}
       {props.search === undefined && (
         <Input

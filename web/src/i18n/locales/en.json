@@ -1009,6 +1009,7 @@
     "Built-in": "Built-in",
     "Built-in Device": "Built-in Device",
     "Built-in is v{{factory}}; delete the custom version to return to it": "Built-in is v{{factory}}; delete the custom version to return to it",
+    "Built-in plugin models. Select models, then configure pricing before enabling the channel.": "Built-in plugin models. Select models, then configure pricing before enabling the channel.",
     "Built-in pricing may become effective again.": "Built-in pricing may become effective again.",
     "Built-in v{{factory}} / marketplace v{{market}}": "Built-in v{{factory}} / marketplace v{{market}}",
     "Built-in: phone fingerprint/face, or Windows Hello; External: USB security key": "Built-in: phone fingerprint/face, or Windows Hello; External: USB security key",

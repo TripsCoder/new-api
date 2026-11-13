@@ -2,12 +2,14 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -317,6 +319,99 @@ func TestTaskPluginDiscoveryHTTPUsesOneSnapshot(t *testing.T) {
 			assert.Equal(t, newHash, active.Meta.ModelDiscovery.SourceSHA256)
 		})
 	}
+}
+
+func TestKuaiziTaskPluginDiscoveryListsBuiltInModels(t *testing.T) {
+	db := setupTaskPluginDiscoveryTestDB(t)
+	const pluginKey = "kuaizi_video"
+	source, err := os.ReadFile(filepath.Join("..", "plugin-sources", "kuaizi-video", "dist", pluginKey+".plugin.js"))
+	require.NoError(t, err)
+	plugin, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{})
+	require.NoError(t, err)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("fixed plugin catalog contacted the upstream: %s", r.URL.Path)
+		http.NotFound(w, r)
+	}))
+	defer upstream.Close()
+	channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin, Key: "fixture", BaseURL: &upstream.URL, Group: "default", Status: common.ChannelStatusManuallyDisabled}
+	channel.SetSetting(dto.ChannelSettings{TaskPluginKey: pluginKey})
+	require.NoError(t, db.Create(channel).Error)
+	for _, saved := range []bool{false, true} {
+		t.Run(fmt.Sprintf("saved=%t", saved), func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(recorder)
+			if saved {
+				ctx.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+				ctx.Request = httptest.NewRequest(http.MethodGet, "/api/channel/fetch_models/"+fmt.Sprint(channel.Id), nil)
+				FetchUpstreamModels(ctx)
+			} else {
+				body, err := common.Marshal(gin.H{"type": channel.Type, "key": channel.Key, "base_url": upstream.URL, "task_plugin_key": pluginKey})
+				require.NoError(t, err)
+				ctx.Request = httptest.NewRequest(http.MethodPost, "/api/channel/fetch_models", bytes.NewReader(body))
+				ctx.Request.Header.Set("Content-Type", "application/json")
+				FetchModels(ctx)
+			}
+			var response struct {
+				Success   bool     `json:"success"`
+				Data      []string `json:"data"`
+				Discovery struct {
+					Source       string `json:"source"`
+					SourceSHA256 string `json:"source_sha256"`
+					Models       []struct {
+						ID         string `json:"id"`
+						Adapted    bool   `json:"adapted"`
+						Configured bool   `json:"configured"`
+					} `json:"models"`
+				} `json:"discovery"`
+			}
+			require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+			require.True(t, response.Success, recorder.Body.String())
+			assert.Equal(t, []string{"wan3.0-video", "wan3.0-video-prime"}, response.Data)
+			assert.Equal(t, "plugin", response.Discovery.Source)
+			assert.Equal(t, plugin.SourceSHA256, response.Discovery.SourceSHA256)
+			require.Len(t, response.Discovery.Models, 2)
+			for i, item := range response.Discovery.Models {
+				assert.Equal(t, response.Data[i], item.ID)
+				assert.True(t, item.Adapted)
+				assert.False(t, item.Configured)
+			}
+		})
+	}
+	_, err = fetchChannelUpstreamModelIDs(channel)
+	require.ErrorContains(t, err, "no verified upstream model-list endpoint")
+	var readback model.Channel
+	require.NoError(t, db.First(&readback, channel.Id).Error)
+	assert.Empty(t, readback.Models)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	models := "wan3.0-video,wan3.0-video-prime"
+	body, err := common.Marshal(gin.H{"id": channel.Id, "models": models})
+	require.NoError(t, err)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/api/channel/", bytes.NewReader(body))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	UpdateChannel(ctx)
+	require.Contains(t, recorder.Body.String(), `"success":true`)
+	require.NoError(t, db.First(&readback, channel.Id).Error)
+	assert.Equal(t, models, readback.Models)
+	assert.Equal(t, pluginKey, readback.GetSetting().TaskPluginKey)
+	assert.Equal(t, common.ChannelStatusManuallyDisabled, readback.Status)
+	var routes []model.Ability
+	require.NoError(t, db.Where("channel_id = ?", channel.Id).Find(&routes).Error)
+	require.Len(t, routes, 2)
+	for _, route := range routes {
+		assert.False(t, route.Enabled)
+	}
+
+	// A fixed directory is excluded even when an enabled channel has opted
+	// into scheduled upstream discovery.
+	active := &model.Channel{Type: channel.Type, Key: channel.Key, BaseURL: &upstream.URL, Status: common.ChannelStatusEnabled}
+	active.SetSetting(dto.ChannelSettings{TaskPluginKey: pluginKey})
+	active.SetOtherSettings(dto.ChannelOtherSettings{UpstreamModelUpdateCheckEnabled: true})
+	require.NoError(t, db.Create(active).Error)
+	summary := runChannelUpstreamModelUpdateTaskOnce(context.Background(), true, false, nil)
+	assert.Zero(t, summary.CheckedChannels)
+	assert.Zero(t, summary.FailedChannels)
 }
 
 func TestTaskPluginUpstreamApplyKeepsUnadaptedModelsPending(t *testing.T) {
