@@ -3,7 +3,7 @@ export const meta = {
   "apiVersion": 1,
   "key": "kuaizi_video",
   "name": "筷子科技万相视频",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "author": {
     "name": "TripsCoder"
   },
@@ -834,8 +834,16 @@ function taskID(value) {
 
 export function buildSubmitRequest(ctx) {
   const body = submitBody(ctx)
-  const json = JSON.stringify(body)
-  let bytes = json.length
+  let inlineBytes = 0
+  const sizedMedia = body.input.media?.map((item) => {
+    if (!imageDataPrefix.test(item.url)) return item
+    // The validated data URL consists entirely of JSON-safe ASCII.
+    inlineBytes += item.url.length
+    return { ...item, url: '' }
+  })
+  const sizedBody = sizedMedia ? { ...body, input: { ...body.input, media: sizedMedia } } : body
+  const json = JSON.stringify(sizedBody)
+  let bytes = inlineBytes + json.length
   if (bytes <= contract.maxRequestBytes) {
     // The host uses Go's JSON encoder. In addition to UTF-8, it writes
     // <, >, &, U+2028 and U+2029 as six-byte escapes on the wire.

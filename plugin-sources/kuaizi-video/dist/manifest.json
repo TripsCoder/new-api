@@ -1,13 +1,13 @@
 {
   "format": "kuaizi-video-build/v1",
   "key": "kuaizi_video",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "interface": "interface:c5acc020dfed5f09",
   "file": "kuaizi_video.plugin.js",
-  "sha256": "8dd2ea0f66b65022fc7f2721f4eedcc94f03aefb3dd4c5813ad1eea772fe0c53",
+  "sha256": "3aac43d8c45ec8774e431c6b952055eaf0cc071dd04b9bd4ce5256cc58820b45",
   "inputs": {
-    "build.mjs": "06ea4ea615039c574f6b56c3f9d7566e6a038e8301649238274c10174bdeffa7",
-    "plugin.js": "eb37cfb1bee29fe543ea3c06655e34c4c8dd6af7e503b24033e2014f065bc220",
+    "build.mjs": "dfbda66900aff8067dc02bb1124c5e97555abfed3f6c13c8d67f99b7cd87a5b9",
+    "plugin.js": "7719f23670e1da53ee2d2f31d4f86a7daa2c3972c990ce1fe886a41eefb4e1e5",
     "evidence/yuque-video-v1.2-20261115.txt": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0"
   }
 }

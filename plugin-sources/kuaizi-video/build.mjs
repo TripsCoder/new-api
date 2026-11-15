@@ -107,7 +107,7 @@ const meta = {
   apiVersion: 1,
   key,
   name: '筷子科技万相视频',
-  version: '2.1.1',
+  version: '2.1.2',
   author: { name: 'TripsCoder' },
   description: { en: 'Wan 3.0 video generation through Kuaizi', zh: '通过筷子科技接口生成万相 3.0 视频' },
   icon: 'text:KZ',

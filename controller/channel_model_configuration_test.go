@@ -135,33 +135,49 @@ func TestReviewedKuaiziUIModelConfigurationSave(t *testing.T) {
 				return call(CheckChannelModelConfiguration, body).Body.String()
 			}
 			frames := map[string]any{"start_image_url": imageData, "end_image_url": imageData}
-			assert.Contains(t, checkMedia(current, "frames", frames), `"success":false`, "saved legacy URL rules still apply")
+			require.Contains(t, checkMedia(current, "frames", frames), `"actualCall":false`, "fresh editor fixture accepts Base64")
 			binding := current.Bindings[sample.model]["frames"]
 			require.NotNil(t, binding.Protocol)
 			reference, err := modelconfig.InterfaceContract(provider, binding.Protocol.TemplateModel, sample.model)
 			require.NoError(t, err)
 			fields := reference["parameters"].(map[string]any)
-			for _, mode := range current.Groups[binding.GroupID].Modes {
-				for _, field := range []string{"start_image_url", "end_image_url", "images"} {
-					parameter, exists := mode.Parameters[field]
-					if !exists {
-						continue
-					}
-					definition := fields[field].(map[string]any)["definition"].(map[string]any)
-					if field == "images" {
-						parameter.Definition["items"].(map[string]any)["pattern"] = definition["items"].(map[string]any)["pattern"]
-					} else {
-						parameter.Definition["pattern"] = definition["pattern"]
+			setMediaPatterns := func(configuration modelconfig.Document, legacy bool) {
+				for _, mode := range configuration.Groups[binding.GroupID].Modes {
+					for _, field := range []string{"start_image_url", "end_image_url", "images"} {
+						parameter, exists := mode.Parameters[field]
+						if !exists {
+							continue
+						}
+						definition := fields[field].(map[string]any)["definition"].(map[string]any)
+						saved := parameter.Definition
+						if field == "images" {
+							definition = definition["items"].(map[string]any)
+							saved = saved["items"].(map[string]any)
+						}
+						saved["pattern"] = definition["pattern"]
+						if legacy {
+							saved["pattern"] = "^https?://"
+						}
 					}
 				}
 			}
+			setMediaPatterns(current, true)
 			ui.Configuration = current
+			legacy, err := common.Marshal(ui)
+			require.NoError(t, err)
+			require.Contains(t, call(SaveChannelModelConfiguration, legacy).Body.String(), `"success":true`)
+			current, err = model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
+			require.NoError(t, err)
+			require.Equal(t, int64(2), current.Revision)
+			assert.Contains(t, checkMedia(current, "frames", frames), `"success":false`, "saved legacy URL rules still apply")
+			setMediaPatterns(current, false)
+			ui.Configuration, ui.ExpectedRevision = current, current.Revision
 			updated, err := common.Marshal(ui)
 			require.NoError(t, err)
 			require.Contains(t, call(SaveChannelModelConfiguration, updated).Body.String(), `"success":true`)
 			refreshed, err := model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
 			require.NoError(t, err)
-			assert.Equal(t, int64(2), refreshed.Revision)
+			assert.Equal(t, int64(3), refreshed.Revision)
 			assert.Equal(t, current.Groups, refreshed.Groups)
 			assert.Equal(t, current.Bindings, refreshed.Bindings)
 			checkedFrames := checkMedia(refreshed, "frames", frames)

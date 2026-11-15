@@ -503,7 +503,7 @@ describe('actual channel workflow dialog', () => {
         )
       ) as Catalog
       mocks.get.mockResolvedValueOnce({
-        pluginVersion: kuaizi ? '2.1.1' : '2.1.0',
+        pluginVersion: kuaizi ? '2.1.2' : '2.1.0',
         configuration: {
           format: 'channel-model-configuration/v1',
           provider,
