@@ -125,6 +125,52 @@ func TestReviewedKuaiziUIModelConfigurationSave(t *testing.T) {
 			assert.Equal(t, int64(1), current.Revision)
 			require.NoError(t, db.First(&channel, channel.Id).Error)
 			assert.Equal(t, sample.model, channel.Models)
+
+			const imageData = "data:image/png;base64,AAAA"
+			checkMedia := func(configuration modelconfig.Document, mode string, input map[string]any) string {
+				body, err := common.Marshal(map[string]any{
+					"configuration": configuration, "model": sample.model, "mode": mode, "input": input,
+				})
+				require.NoError(t, err)
+				return call(CheckChannelModelConfiguration, body).Body.String()
+			}
+			frames := map[string]any{"start_image_url": imageData, "end_image_url": imageData}
+			assert.Contains(t, checkMedia(current, "frames", frames), `"success":false`, "saved legacy URL rules still apply")
+			binding := current.Bindings[sample.model]["frames"]
+			require.NotNil(t, binding.Protocol)
+			reference, err := modelconfig.InterfaceContract(provider, binding.Protocol.TemplateModel, sample.model)
+			require.NoError(t, err)
+			fields := reference["parameters"].(map[string]any)
+			for _, mode := range current.Groups[binding.GroupID].Modes {
+				for _, field := range []string{"start_image_url", "end_image_url", "images"} {
+					parameter, exists := mode.Parameters[field]
+					if !exists {
+						continue
+					}
+					definition := fields[field].(map[string]any)["definition"].(map[string]any)
+					if field == "images" {
+						parameter.Definition["items"].(map[string]any)["pattern"] = definition["items"].(map[string]any)["pattern"]
+					} else {
+						parameter.Definition["pattern"] = definition["pattern"]
+					}
+				}
+			}
+			ui.Configuration = current
+			updated, err := common.Marshal(ui)
+			require.NoError(t, err)
+			require.Contains(t, call(SaveChannelModelConfiguration, updated).Body.String(), `"success":true`)
+			refreshed, err := model.GetChannelModelConfiguration(context.Background(), channel.Id, 0)
+			require.NoError(t, err)
+			assert.Equal(t, int64(2), refreshed.Revision)
+			assert.Equal(t, current.Groups, refreshed.Groups)
+			assert.Equal(t, current.Bindings, refreshed.Bindings)
+			checkedFrames := checkMedia(refreshed, "frames", frames)
+			require.Contains(t, checkedFrames, `"actualCall":false`)
+			assert.Contains(t, checkedFrames, `"type":"first_frame","url":"`+imageData+`"`)
+			assert.Contains(t, checkedFrames, `"type":"last_frame","url":"`+imageData+`"`)
+			checkedImages := checkMedia(refreshed, "image_video", map[string]any{"images": []string{imageData}})
+			require.Contains(t, checkedImages, `"actualCall":false`)
+			assert.Contains(t, checkedImages, `"type":"reference_image","url":"`+imageData+`"`)
 		})
 	}
 }

@@ -63,6 +63,8 @@ This is an AI API gateway/proxy built with Go. It aggregates 40+ upstream AI pro
 
 Before analyzing supplier documents, generating protocol-plugin profiles/catalogs, initializing channel parameters, or changing public/batch and individual channel settings, follow the existing host [parameter source rules and complete workflow](../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#imported-parameter-policy), finalized by the user on 2026-10-17. It supersedes conflicting older parameter-preset instructions. Keep one definition there; skills, generator READMEs and historical delivery records must reference it rather than maintain alternative rules. Documented requirements and current implementation/deployment status must be reported separately.
 
+Record the integration mode before implementation. For providers with a reviewed fixed catalog and plugin-owned parameters, use the [standalone plugin workflow and provider inventory](../juhefuwu/docs/operations/upstream-channel-troubleshooting.md#standalone-plugin-workflow), including channel model retrieval, save and reopen verification.
+
 ### Backend Rules
 
 **Modern Go conventions:** Apply these conventions to new or modified Go code, including tests and `relaykit/`, when they preserve behavior and improve readability. Use the Go version declared in the relevant module's `go.mod` as the compatibility baseline.

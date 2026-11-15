@@ -3,11 +3,11 @@
   "sources": [
     {
       "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-      "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-      "readAt": "2026-11-12",
+      "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+      "readAt": "2026-11-15",
       "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
       "status": "public-documentation",
-      "file": "evidence/yuque-video-v1.2.txt",
+      "file": "evidence/yuque-video-v1.2-20261115.txt",
       "retrievedFrom": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1/markdown?plain=true"
     }
   ],
@@ -50,7 +50,8 @@
   },
   "pending": [
     "任务查询路由已验证可达。文档仅列出接口允许型号，账号邀测权限与模型列表接口仍待确认",
-    "媒体用公开 HTTP(S) URL。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
+    "首帧、尾帧和参考图可使用公开 HTTP(S) URL 或 Base64 图片 Data URL，其他素材使用公开 HTTP(S) URL",
+    "提交上游的完整 JSON 最大 50 MB（50,000,000 字节）。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
     "上游按输入与输出视频总秒数及分辨率计费，文档人民币单价仅供采购参考",
     "成功后筷子可能仍返回临时下载地址，及时保存产物"
   ]

@@ -3,7 +3,7 @@ export const meta = {
   "apiVersion": 1,
   "key": "kuaizi_video",
   "name": "筷子科技万相视频",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": {
     "name": "TripsCoder"
   },
@@ -36,8 +36,8 @@ export const meta = {
       "status": "documented-interface-not-account-verification",
       "source": {
         "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-        "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-        "readAt": "2026-11-12",
+        "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+        "readAt": "2026-11-15",
         "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
         "status": "public-documentation"
       },
@@ -48,8 +48,8 @@ export const meta = {
           "description": "接口接受的上游型号，由网关带入",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -82,8 +82,8 @@ export const meta = {
           "description": "提示词与素材至少提供一项",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -110,8 +110,8 @@ export const meta = {
           "description": "分辨率",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -147,8 +147,8 @@ export const meta = {
           "description": "画面比例",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -190,8 +190,8 @@ export const meta = {
           "description": "输出视频时长，-1 为智能时长，有参考视频时输入与输出总时长最多 30 秒",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -230,8 +230,8 @@ export const meta = {
           "description": "生成音频",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -257,8 +257,8 @@ export const meta = {
           "description": "随机种子",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -287,8 +287,8 @@ export const meta = {
           "description": "添加水印",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -314,15 +314,15 @@ export const meta = {
           "description": "首帧图片",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
           "definition": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://",
+            "pattern": "^(https?://|data:image/[a-z0-9][a-z0-9.+-]*;base64,)",
             "description": "首帧图片",
             "x-channel-parameter": {
               "vendorFields": [
@@ -343,15 +343,15 @@ export const meta = {
           "description": "尾帧图片",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
           "definition": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://",
+            "pattern": "^(https?://|data:image/[a-z0-9][a-z0-9.+-]*;base64,)",
             "description": "尾帧图片",
             "x-channel-parameter": {
               "vendorFields": [
@@ -371,8 +371,8 @@ export const meta = {
           "description": "参考图片",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -381,7 +381,7 @@ export const meta = {
             "items": {
               "type": "string",
               "format": "uri",
-              "pattern": "^https?://"
+              "pattern": "^(https?://|data:image/[a-z0-9][a-z0-9.+-]*;base64,)"
             },
             "maxItems": 10,
             "description": "参考图片",
@@ -406,8 +406,8 @@ export const meta = {
           "description": "参考视频，总时长最多 15 秒",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -439,8 +439,8 @@ export const meta = {
           "description": "参考音频，总时长最多 15 秒",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -472,8 +472,8 @@ export const meta = {
           "description": "参考文件 URL，与网页链接互斥",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -500,8 +500,8 @@ export const meta = {
           "description": "无需登录的公开网页 URL，与文件互斥",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -567,7 +567,8 @@ export const meta = {
       },
       "pending": [
         "任务查询路由已验证可达。文档仅列出接口允许型号，账号邀测权限与模型列表接口仍待确认",
-        "媒体用公开 HTTP(S) URL。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
+        "首帧、尾帧和参考图可使用公开 HTTP(S) URL 或 Base64 图片 Data URL，其他素材使用公开 HTTP(S) URL",
+        "提交上游的完整 JSON 最大 50 MB（50,000,000 字节）。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
         "上游按输入与输出视频总秒数及分辨率计费，文档人民币单价仅供采购参考",
         "成功后筷子可能仍返回临时下载地址，及时保存产物"
       ]
@@ -599,6 +600,8 @@ const contract = {
   "createPath": "/api/v1/services/aigc/video-generation/video-synthesis",
   "queryPath": "/api/v1/tasks/",
   "interfaceId": "interface:c5acc020dfed5f09",
+  "maxRequestBytes": 50000000,
+  "imageDataPrefix": "^data:image/[a-z0-9][a-z0-9.+-]*;base64,",
   "settings": {
     "resolution": "resolution",
     "aspect_ratio": "ratio",
@@ -611,37 +614,44 @@ const contract = {
     "start_image_url": {
       "type": "first_frame",
       "max": 1,
-      "array": false
+      "array": false,
+      "acceptsImageData": true
     },
     "end_image_url": {
       "type": "last_frame",
       "max": 1,
-      "array": false
+      "array": false,
+      "acceptsImageData": true
     },
     "images": {
       "type": "reference_image",
       "max": 10,
-      "array": true
+      "array": true,
+      "acceptsImageData": true
     },
     "videos": {
       "type": "reference_video",
       "max": 5,
-      "array": true
+      "array": true,
+      "acceptsImageData": false
     },
     "audios": {
       "type": "reference_audio",
       "max": 5,
-      "array": true
+      "array": true,
+      "acceptsImageData": false
     },
     "file_url": {
       "type": "file",
       "max": 1,
-      "array": false
+      "array": false,
+      "acceptsImageData": false
     },
     "link_url": {
       "type": "link",
       "max": 1,
-      "array": false
+      "array": false,
+      "acceptsImageData": false
     }
   }
 };
@@ -651,14 +661,25 @@ const maxReferenceVideoSeconds = 15
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key)
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
 const rules = meta.parameterInterfaces[contract.interfaceId].parameters
+const imageDataPrefix = new RegExp(contract.imageDataPrefix)
 const mediaByType = Object.fromEntries(
   Object.entries(contract.mediaFields).map(([field, entry]) => [entry.type, field])
 )
 
 function mediaURL(value) {
   return typeof value === 'string' &&
-    !/[\u0000-\u0020\u007f\\]/.test(value) &&
-    /^https?:\/\/[^/@?#]+(?:[/?][^#]*)?$/i.test(value)
+    /^https?:\/\/[^/@?#]+(?:[/?][^#]*)?$/i.test(value) &&
+    !/[\u0000-\u0020\u007f\\]/.test(value)
+}
+
+function imageDataURL(value) {
+  if (typeof value !== 'string') return false
+  const prefix = imageDataPrefix.exec(value)
+  if (!prefix) return false
+  const length = value.length - prefix[0].length
+  if (length < 4 || length % 4 !== 0) return false
+  const end = value.length - (value.endsWith('==') ? 2 : value.endsWith('=') ? 1 : 0)
+  return !/[^A-Za-z0-9+/]/.test(value.slice(prefix[0].length, end))
 }
 
 function decodeInput(value) {
@@ -741,8 +762,10 @@ function submitBody(ctx) {
   for (const [name, entry] of Object.entries(contract.mediaFields)) {
     if (!own(input, name)) continue
     const items = entry.array ? input[name] : [input[name]]
-    if (!Array.isArray(items) || items.length > entry.max || items.some((item) => !mediaURL(item))) {
-      throw new Error(name + ' 必须为符合数量限制的公开 HTTP(S) URL')
+    if (!Array.isArray(items) || items.length > entry.max ||
+      items.some((item) => !mediaURL(item) && !(entry.acceptsImageData && imageDataURL(item)))) {
+      const allowed = entry.acceptsImageData ? '公开 HTTP(S) URL 或 Base64 图片 Data URL' : '公开 HTTP(S) URL'
+      throw new Error(name + ' 必须为符合数量限制的' + allowed)
     }
     if (items.length) fields[name] = items.map((url) => ({ type: entry.type, url }))
   }
@@ -811,10 +834,21 @@ function taskID(value) {
 
 export function buildSubmitRequest(ctx) {
   const body = submitBody(ctx)
-  // encodeURIComponent counts UTF-8 bytes after collapsing each percent escape.
-  if (encodeURIComponent(JSON.stringify(body)).replace(/%[0-9A-F]{2}/g, 'x').length > 4 * 1024 * 1024) {
-    throw new Error('视频请求超过 4 MB')
+  const json = JSON.stringify(body)
+  let bytes = json.length
+  if (bytes <= contract.maxRequestBytes) {
+    // The host uses Go's JSON encoder. In addition to UTF-8, it writes
+    // <, >, &, U+2028 and U+2029 as six-byte escapes on the wire.
+    const runs = json.match(/[^\x00-\x7f]+|[<>&]+/g) || []
+    for (const run of runs) {
+      for (const character of run) {
+        const unit = character.charCodeAt(0)
+        if (unit < 0x80 || unit === 0x2028 || unit === 0x2029) bytes += 5
+        else bytes += unit < 0x800 ? 1 : 2
+      }
+    }
   }
+  if (bytes > contract.maxRequestBytes) throw new Error('视频请求 JSON 超过 50 MB（50,000,000 字节）')
   const request = apiRequest(ctx, contract.createPath)
   request.method = 'POST'
   request.headers['Content-Type'] = 'application/json'
@@ -919,7 +953,7 @@ export const protocols = {
   openai_video: {
     decodeRequest(ctx) {
       if (ctx.body?.kind !== 'json' || !object(ctx.body.value)) {
-        throw new Error('筷子视频仅支持 JSON 和公开 HTTP(S) 素材 URL')
+        throw new Error('筷子视频请求必须使用 JSON')
       }
       const { input, order } = decodeInput(ctx.body.value)
       return {

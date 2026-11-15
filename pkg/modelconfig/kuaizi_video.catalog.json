@@ -14,8 +14,8 @@
       "status": "documented-interface-not-account-verification",
       "source": {
         "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-        "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-        "readAt": "2026-11-12",
+        "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+        "readAt": "2026-11-15",
         "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
         "status": "public-documentation"
       },
@@ -26,8 +26,8 @@
           "description": "接口接受的上游型号，由网关带入",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -60,8 +60,8 @@
           "description": "提示词与素材至少提供一项",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -88,8 +88,8 @@
           "description": "分辨率",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -125,8 +125,8 @@
           "description": "画面比例",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -168,8 +168,8 @@
           "description": "输出视频时长，-1 为智能时长，有参考视频时输入与输出总时长最多 30 秒",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -208,8 +208,8 @@
           "description": "生成音频",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -235,8 +235,8 @@
           "description": "随机种子",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -265,8 +265,8 @@
           "description": "添加水印",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -292,15 +292,15 @@
           "description": "首帧图片",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
           "definition": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://",
+            "pattern": "^(https?://|data:image/[a-z0-9][a-z0-9.+-]*;base64,)",
             "description": "首帧图片",
             "x-channel-parameter": {
               "vendorFields": [
@@ -321,15 +321,15 @@
           "description": "尾帧图片",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
           "definition": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://",
+            "pattern": "^(https?://|data:image/[a-z0-9][a-z0-9.+-]*;base64,)",
             "description": "尾帧图片",
             "x-channel-parameter": {
               "vendorFields": [
@@ -349,8 +349,8 @@
           "description": "参考图片",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -359,7 +359,7 @@
             "items": {
               "type": "string",
               "format": "uri",
-              "pattern": "^https?://"
+              "pattern": "^(https?://|data:image/[a-z0-9][a-z0-9.+-]*;base64,)"
             },
             "maxItems": 10,
             "description": "参考图片",
@@ -384,8 +384,8 @@
           "description": "参考视频，总时长最多 15 秒",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -417,8 +417,8 @@
           "description": "参考音频，总时长最多 15 秒",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -450,8 +450,8 @@
           "description": "参考文件 URL，与网页链接互斥",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -478,8 +478,8 @@
           "description": "无需登录的公开网页 URL，与文件互斥",
           "source": {
             "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-            "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-            "readAt": "2026-11-12",
+            "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+            "readAt": "2026-11-15",
             "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
             "status": "public-documentation"
           },
@@ -545,7 +545,8 @@
       },
       "pending": [
         "任务查询路由已验证可达。文档仅列出接口允许型号，账号邀测权限与模型列表接口仍待确认",
-        "媒体用公开 HTTP(S) URL。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
+        "首帧、尾帧和参考图可使用公开 HTTP(S) URL 或 Base64 图片 Data URL，其他素材使用公开 HTTP(S) URL",
+        "提交上游的完整 JSON 最大 50 MB（50,000,000 字节）。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
         "上游按输入与输出视频总秒数及分辨率计费，文档人民币单价仅供采购参考",
         "成功后筷子可能仍返回临时下载地址，及时保存产物"
       ]
@@ -560,8 +561,8 @@
       "description": "提示词或素材至少一项。首尾帧与其他参考素材互斥，文件与网页链接互斥",
       "source": {
         "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-        "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-        "readAt": "2026-11-12",
+        "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+        "readAt": "2026-11-15",
         "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
         "status": "public-documentation"
       },
@@ -623,9 +624,44 @@
                     "url": {
                       "type": "string",
                       "format": "uri",
-                      "pattern": "^https?://"
+                      "pattern": "^(https?://|data:image/[a-z0-9][a-z0-9.+-]*;base64,)"
                     }
-                  }
+                  },
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "first_frame",
+                            "last_frame",
+                            "reference_image"
+                          ]
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "pattern": "^(https?://|data:image/[a-z0-9][a-z0-9.+-]*;base64,)"
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "reference_video",
+                            "reference_audio",
+                            "file",
+                            "link"
+                          ]
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "pattern": "^https?://"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -695,8 +731,8 @@
       "description": "使用创建返回的筷子任务 ID 轮询，读取 output.task_status、视频地址和 usage",
       "source": {
         "url": "https://www.yuque.com/huicundeyouhuo-dtb95/tci6ux/tuf5p28rq63mi6q1?singleDoc",
-        "sha256": "03a0731c1404e6650bf18292abc610398142b25d167dfbef05499ea0a3392c95",
-        "readAt": "2026-11-12",
+        "sha256": "952a005a692e573a1746b156e6dbeac18ddb8b4f30085a537d68ef92a76a1ce0",
+        "readAt": "2026-11-15",
         "scope": "筷子科技万相 3.0 视频生成兼容接口 v1.2",
         "status": "public-documentation"
       },
@@ -715,7 +751,8 @@
   ],
   "warnings": [
     "任务查询路由已验证可达。文档仅列出接口允许型号，账号邀测权限与模型列表接口仍待确认",
-    "媒体用公开 HTTP(S) URL。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
+    "首帧、尾帧和参考图可使用公开 HTTP(S) URL 或 Base64 图片 Data URL，其他素材使用公开 HTTP(S) URL",
+    "提交上游的完整 JSON 最大 50 MB（50,000,000 字节）。参考视频及音频时长、媒体格式和仅尾帧的适用性由上游验证",
     "上游按输入与输出视频总秒数及分辨率计费，文档人民币单价仅供采购参考",
     "成功后筷子可能仍返回临时下载地址，及时保存产物"
   ]

@@ -6,12 +6,12 @@ const baseUrl = 'https://supplier.example/ai-open-platform-api'
 const taskId = 'kz-cgt-fixture'
 const temporary = 'https://oss.example/result.mp4?Expires=123&Signature=fixture'
 const archived = 'https://tos.example/ai_openapi/result.mp4'
+const imageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 const completed = {
   output: { task_id: taskId, task_status: 'SUCCEEDED', video_url: temporary, kz_video_url: archived },
   usage: { input_video_duration: 3.5, output_video_duration: 10.25, SR: 720 },
 }
-function context(value) {
-  const model = 'wan3.0-video-prime'
+function context(value, model = 'wan3.0-video-prime') {
   const intent = plugin.protocols.openai_video.decodeRequest({ model, body: { kind: 'json', value } })
   return { model, baseUrl, apiKey: 'fixture-only', requestBody: intent.requestBody }
 }
@@ -57,8 +57,33 @@ test('preserves ordered media-only requests and enforces the documented combinat
   assert.throws(() => plugin.buildSubmitRequest(context({})), /至少提供一项/)
   assert.throws(() => plugin.buildSubmitRequest(context({ start_image_url: media[0].url, videos: [media[1].url] })), /不能与参考/)
   assert.throws(() => plugin.buildSubmitRequest(context({ file_url: media[3].url, link_url: 'https://media.example/public' })), /不能同时/)
-  assert.throws(() => plugin.buildSubmitRequest(context({ images: ['data:image/png;base64,AAAA'] })), /HTTP/)
   assert.throws(() => plugin.buildSubmitRequest(context({ images: Array(11).fill(media[0].url) })), /数量限制/)
+})
+
+test('accepts image data URLs for both WAN3 models and only in image fields', () => {
+  for (const model of plugin.meta.models) {
+    const frames = [{ type: 'first_frame', url: imageData }, { type: 'last_frame', url: imageData }]
+    const references = [
+      { type: 'reference_image', url: imageData },
+      { type: 'reference_video', url: 'https://media.example/reference.mp4' },
+      { type: 'reference_image', url: 'https://media.example/reference.png' },
+    ]
+    for (const media of [frames.slice(0, 1), frames, references]) {
+      const request = plugin.buildSubmitRequest(context({ input: { media } }, model))
+      assert.deepEqual(request.body, { model, input: { media } })
+    }
+    const aliases = plugin.buildSubmitRequest(context({ first_frame: imageData, last_frame: imageData }, model))
+    assert.deepEqual(aliases.body.input.media, frames)
+    const flat = plugin.buildSubmitRequest(context({ images: [imageData] }, model))
+    assert.deepEqual(flat.body.input.media, references.slice(0, 1))
+  }
+  for (const type of ['reference_video', 'reference_audio', 'file', 'link']) {
+    assert.throws(() => plugin.buildSubmitRequest(context({ input: { media: [{ type, url: imageData }] } })), /公开 HTTP/)
+  }
+  for (const url of ['data:video/mp4;base64,AAAA', 'data:image/png,AAAA', 'data:image/png;base64,',
+    'data:image/png;base64,AAA', 'data:image/png;base64,AA=A', 'data:image/png;base64,AAAA\n']) {
+    assert.throws(() => plugin.buildSubmitRequest(context({ images: [url] })), /Base64 图片/)
+  }
 })
 
 test('estimates using documented defaults and settles using bounded actual decimal seconds', () => {

@@ -4,14 +4,25 @@ const maxReferenceVideoSeconds = 15
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key)
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
 const rules = meta.parameterInterfaces[contract.interfaceId].parameters
+const imageDataPrefix = new RegExp(contract.imageDataPrefix)
 const mediaByType = Object.fromEntries(
   Object.entries(contract.mediaFields).map(([field, entry]) => [entry.type, field])
 )
 
 function mediaURL(value) {
   return typeof value === 'string' &&
-    !/[\u0000-\u0020\u007f\\]/.test(value) &&
-    /^https?:\/\/[^/@?#]+(?:[/?][^#]*)?$/i.test(value)
+    /^https?:\/\/[^/@?#]+(?:[/?][^#]*)?$/i.test(value) &&
+    !/[\u0000-\u0020\u007f\\]/.test(value)
+}
+
+function imageDataURL(value) {
+  if (typeof value !== 'string') return false
+  const prefix = imageDataPrefix.exec(value)
+  if (!prefix) return false
+  const length = value.length - prefix[0].length
+  if (length < 4 || length % 4 !== 0) return false
+  const end = value.length - (value.endsWith('==') ? 2 : value.endsWith('=') ? 1 : 0)
+  return !/[^A-Za-z0-9+/]/.test(value.slice(prefix[0].length, end))
 }
 
 function decodeInput(value) {
@@ -94,8 +105,10 @@ function submitBody(ctx) {
   for (const [name, entry] of Object.entries(contract.mediaFields)) {
     if (!own(input, name)) continue
     const items = entry.array ? input[name] : [input[name]]
-    if (!Array.isArray(items) || items.length > entry.max || items.some((item) => !mediaURL(item))) {
-      throw new Error(name + ' 必须为符合数量限制的公开 HTTP(S) URL')
+    if (!Array.isArray(items) || items.length > entry.max ||
+      items.some((item) => !mediaURL(item) && !(entry.acceptsImageData && imageDataURL(item)))) {
+      const allowed = entry.acceptsImageData ? '公开 HTTP(S) URL 或 Base64 图片 Data URL' : '公开 HTTP(S) URL'
+      throw new Error(name + ' 必须为符合数量限制的' + allowed)
     }
     if (items.length) fields[name] = items.map((url) => ({ type: entry.type, url }))
   }
@@ -164,10 +177,21 @@ function taskID(value) {
 
 export function buildSubmitRequest(ctx) {
   const body = submitBody(ctx)
-  // encodeURIComponent counts UTF-8 bytes after collapsing each percent escape.
-  if (encodeURIComponent(JSON.stringify(body)).replace(/%[0-9A-F]{2}/g, 'x').length > 4 * 1024 * 1024) {
-    throw new Error('视频请求超过 4 MB')
+  const json = JSON.stringify(body)
+  let bytes = json.length
+  if (bytes <= contract.maxRequestBytes) {
+    // The host uses Go's JSON encoder. In addition to UTF-8, it writes
+    // <, >, &, U+2028 and U+2029 as six-byte escapes on the wire.
+    const runs = json.match(/[^\x00-\x7f]+|[<>&]+/g) || []
+    for (const run of runs) {
+      for (const character of run) {
+        const unit = character.charCodeAt(0)
+        if (unit < 0x80 || unit === 0x2028 || unit === 0x2029) bytes += 5
+        else bytes += unit < 0x800 ? 1 : 2
+      }
+    }
   }
+  if (bytes > contract.maxRequestBytes) throw new Error('视频请求 JSON 超过 50 MB（50,000,000 字节）')
   const request = apiRequest(ctx, contract.createPath)
   request.method = 'POST'
   request.headers['Content-Type'] = 'application/json'
@@ -272,7 +296,7 @@ export const protocols = {
   openai_video: {
     decodeRequest(ctx) {
       if (ctx.body?.kind !== 'json' || !object(ctx.body.value)) {
-        throw new Error('筷子视频仅支持 JSON 和公开 HTTP(S) 素材 URL')
+        throw new Error('筷子视频请求必须使用 JSON')
       }
       const { input, order } = decodeInput(ctx.body.value)
       return {
