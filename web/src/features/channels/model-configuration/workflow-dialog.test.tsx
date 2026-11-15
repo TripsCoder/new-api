@@ -495,6 +495,7 @@ describe('actual channel workflow dialog', () => {
   ])(
     'opens the complete %s/%s configuration workflow with its generated catalog',
     async (provider, model) => {
+      const kuaizi = provider === 'kuaizi_video'
       const actual = JSON.parse(
         readFileSync(
           path.resolve('..', 'pkg/modelconfig', `${provider}.catalog.json`),
@@ -502,7 +503,7 @@ describe('actual channel workflow dialog', () => {
         )
       ) as Catalog
       mocks.get.mockResolvedValueOnce({
-        pluginVersion: '2.1.0',
+        pluginVersion: kuaizi ? '2.1.1' : '2.1.0',
         configuration: {
           format: 'channel-model-configuration/v1',
           provider,
@@ -521,7 +522,6 @@ describe('actual channel workflow dialog', () => {
         screen.getByPlaceholderText('Enter an exact model ID and press Enter'),
         `${model}{Enter}`
       )
-      const kuaizi = provider === 'kuaizi_video'
       const captureSave =
         kuaizi ||
         provider === 'apipath_video' ||

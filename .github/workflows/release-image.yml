@@ -65,6 +65,9 @@ jobs:
           node plugin-sources/aotian-video/build.mjs --check
           node plugin-sources/aotian-video/plugin.test.mjs
           git diff --exit-code -- plugin-sources/aotian-video
+          node plugin-sources/kuaizi-video/build.mjs --check
+          node plugin-sources/kuaizi-video/plugin.test.mjs
+          git diff --exit-code -- plugin-sources/kuaizi-video
       - name: Verify affected backend packages
         run: |
           go vet ./pkg/modelconfig ./pkg/jsplugin ./plugins ./middleware ./controller ./relay/channel/task/jsplugin
