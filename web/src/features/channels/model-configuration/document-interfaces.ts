@@ -115,6 +115,7 @@ export function applyDocumentInterface(
       const mode = modeFromDocument(reference, key)
       mode.enabled =
         old?.enabled ??
+        reference.modes[key].initiallyEnabled ??
         (key === base ||
           (!reference.modes[base] && key === Object.keys(reference.modes)[0]))
       const allowed = (field: string) =>
@@ -145,7 +146,7 @@ export function applyDocumentInterface(
         protocol: mode.protocol
           ? { ...mode.protocol, supplement: previousProtocol?.supplement }
           : undefined,
-        capabilities: clone(old?.capabilities),
+        capabilities: clone(old?.capabilities ?? mode.capabilities),
         cost: clone(old?.cost ?? mode.cost),
         billing: clone(old?.billing),
         pricing: clone(document.bindings[name]?.[key]?.pricing),

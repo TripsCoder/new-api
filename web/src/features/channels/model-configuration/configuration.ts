@@ -260,12 +260,40 @@ export function modeFromDocument(model: CatalogModel, mode: string): Mode {
     )
   )
   for (const name of Object.keys(parameters)) mapping[name] ??= name
+  const modeRule = model.modes[mode]
+  const optionalReferences = modeRule?.optionalReferences ?? []
+  let capabilities: Mode['capabilities']
+  if (modeRule?.initiallyEnabled || optionalReferences.length) {
+    const framesEnabled =
+      model.modes.frames?.initiallyEnabled === true ||
+      !!optionalReferences.length
+    const enabledReferences = modeRule?.initiallyEnabled
+      ? optionalReferences
+      : []
+    capabilities = {
+      images:
+        model.modes.image_video?.initiallyEnabled === true ||
+        enabledReferences.includes('images'),
+      videos:
+        model.modes.video_ref?.initiallyEnabled === true ||
+        enabledReferences.includes('videos'),
+      audios:
+        model.modes.audio_ref?.initiallyEnabled === true ||
+        enabledReferences.includes('audios'),
+      firstFrame: framesEnabled,
+      lastFrame: framesEnabled,
+      ...(mode === 'frames' && modeRule?.initiallyEnabled
+        ? { firstFrameReference: true }
+        : {}),
+    }
+  }
   return {
     strictMapping: true,
+    capabilities,
     ...(model.interfaceId
       ? { protocol: { templateModel: model.interfaceId, confirmed: false } }
       : {}),
-    enabled: false,
+    enabled: modeRule?.initiallyEnabled ?? false,
     input,
     parameters,
     mapping,
@@ -280,6 +308,7 @@ export function restoreDocumentRules(
 ): Mode {
   return {
     ...modeFromDocument(model, mode),
+    capabilities: clone(current.capabilities),
     protocol: clone(current.protocol),
     enabled: current.enabled,
     input: clone(current.input),
@@ -360,7 +389,10 @@ export function createSharedGroup(
         value.cost = clone(binding.cost ?? value.cost)
         value.billing = clone(binding.billing ?? value.billing)
         value.enabled = value.enabled && binding.enabled !== false
-      } else value.enabled = key === modeKeys[0]
+      } else {
+        value.enabled =
+          reference?.modes[key]?.initiallyEnabled ?? key === modeKeys[0]
+      }
       return [
         {
           model,

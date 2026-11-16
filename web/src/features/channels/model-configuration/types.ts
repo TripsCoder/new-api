@@ -56,6 +56,7 @@ export type InputCapabilities = {
   lastFrame?: boolean
   firstFrameReference?: boolean
 }
+export type ReferenceInput = 'images' | 'videos' | 'audios'
 export type Mode = {
   strictMapping?: boolean
   capabilities?: InputCapabilities
@@ -122,13 +123,21 @@ export type CatalogModel = {
     firstFrame: boolean
     lastFrame: boolean
     multipleReferences: boolean
+    requiresFrame?: boolean
   }
   id: string
   kind: string
   status: string
   parameters: Record<string, Record<string, unknown>>
   mapping?: Record<string, string>
-  modes: Record<string, { required: string[] }>
+  modes: Record<
+    string,
+    {
+      required: string[]
+      optionalReferences?: ReferenceInput[]
+      initiallyEnabled?: boolean
+    }
+  >
   source: Source
   warnings?: string[]
   liveStatus?: string

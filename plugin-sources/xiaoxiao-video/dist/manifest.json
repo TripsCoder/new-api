@@ -1,0 +1,12 @@
+{
+  "key": "xiaoxiao_video",
+  "version": "2.1.3",
+  "interface": "interface:0aa08309f06dab25",
+  "file": "xiaoxiao_video.plugin.js",
+  "sha256": "344b74e8e98fa3b9394623c54e35ecac943fe76875eed65705c912568f6a4c15",
+  "inputs": {
+    "build.mjs": "0d39296a1b8d8dd2d309188c3dac725a24f70ef77bc0102203ef17921a8a957e",
+    "plugin.js": "8178fbde2db5f241d27472d63427db72b002cd32a004f76ad5a4cf54748f3e7f",
+    "evidence/about-20261116.json": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9"
+  }
+}

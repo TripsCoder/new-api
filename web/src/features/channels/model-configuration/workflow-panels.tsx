@@ -48,7 +48,9 @@ import {
   capabilityMode,
   capabilityEnabled,
   isCapabilitySubsetLocked,
+  documentedCapabilitySupport,
   documentedReferenceSupport,
+  requiresFrameForCapability,
   effectiveMode,
   IMAGE_MODES,
 } from './workflow'
@@ -124,19 +126,9 @@ export function FunctionChoice(props: {
   const supportedModelsByMode = Object.fromEntries(
     modes.map((key) => [
       key,
-      props.selected.filter((name) => {
-        const model = props.catalog.models[name]
-        if (key === 'first_frame' && model?.capabilities) {
-          return model.capabilities.firstFrame
-        }
-        if (key === 'frames' && model?.capabilities) {
-          return model.capabilities.firstFrame && model.capabilities.lastFrame
-        }
-        if (key === 'mixed_ref' && model?.capabilities) {
-          return model.capabilities.multipleReferences
-        }
-        return !!model?.modes[capabilityMode(key)]
-      }),
+      props.selected.filter((name) =>
+        documentedCapabilitySupport(props.catalog, name, key)
+      ),
     ])
   )
   const referenceLabels: Record<string, string> = {
@@ -180,6 +172,11 @@ export function FunctionChoice(props: {
         {modes.map((key) => {
           const label = MODE_LABELS[key]
           const supported = supportedModelsByMode[key]
+          const allRequireFrames =
+            props.selected.length > 0 &&
+            props.selected.every((name) =>
+              requiresFrameForCapability(props.catalog, name, key)
+            )
           return (
             <div key={key} className='space-y-2 py-3'>
               <label className='flex items-center gap-2 font-medium'>
@@ -189,7 +186,8 @@ export function FunctionChoice(props: {
                     props.draft,
                     props.selected,
                     props.groupId,
-                    key
+                    key,
+                    props.catalog
                   )}
                   disabled={
                     props.selected.length === 0 ||
@@ -219,16 +217,24 @@ export function FunctionChoice(props: {
                 </Badge>
               </label>
               <p className='text-muted-foreground text-sm'>
-                {t('Documented for')}:{' '}
-                {supported
-                  .filter(
-                    (name) =>
-                      !Object.values(props.draft.bindings[name] ?? {}).some(
-                        (binding) =>
-                          binding.protocol?.supplement?.[capabilityMode(key)]
+                {allRequireFrames ? (
+                  t('First or last frame required')
+                ) : (
+                  <>
+                    {t('Documented for')}:{' '}
+                    {supported
+                      .filter(
+                        (name) =>
+                          !Object.values(props.draft.bindings[name] ?? {}).some(
+                            (binding) =>
+                              binding.protocol?.supplement?.[
+                                capabilityMode(key)
+                              ]
+                          )
                       )
-                  )
-                  .join(', ') || t('Interface settings needed')}
+                      .join(', ') || t('Interface settings needed')}
+                  </>
+                )}
               </p>
               {supported.some((name) =>
                 Object.values(props.draft.bindings[name] ?? {}).some(
@@ -292,6 +298,13 @@ export function FunctionChoice(props: {
                   {name}
                 </TableCell>
                 {modes.map((key) => {
+                  if (requiresFrameForCapability(props.catalog, name, key)) {
+                    return (
+                      <TableCell key={key}>
+                        {t('First or last frame required')}
+                      </TableCell>
+                    )
+                  }
                   let status = supportedModelsByMode[key].includes(name)
                     ? 'Documented'
                     : 'Not confirmed'

@@ -1,0 +1,2617 @@
+{
+  "key": "xiaoxiao_video",
+  "name": "笑笑中转视频",
+  "baseURL": "http://8.148.77.247:5555",
+  "docsURL": "http://8.148.77.247:5555/about",
+  "models": {},
+  "interfaces": {
+    "interface:0aa08309f06dab25": {
+      "id": "interface:0aa08309f06dab25",
+      "title": "笑笑中转创建视频任务",
+      "kind": "video",
+      "method": "POST",
+      "path": "/v1/videos",
+      "status": "documented-interface-not-account-verification",
+      "source": {
+        "url": "http://8.148.77.247:5555/about",
+        "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+        "readAt": "2026-11-16",
+        "scope": "笑笑中转视频生成接口",
+        "status": "reviewed-document-extract"
+      },
+      "parameters": {
+        "model": {
+          "type": "string",
+          "enum": [
+            "h3-video",
+            "h3-video-flex",
+            "h3-video-prism",
+            "h3-video-frames"
+          ],
+          "required": true,
+          "description": "接口型号，由网关填写",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "string",
+            "enum": [
+              "h3-video",
+              "h3-video-flex",
+              "h3-video-prism",
+              "h3-video-frames"
+            ],
+            "description": "接口型号，由网关填写",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "model"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "required": false,
+          "description": "视频提示词",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "string",
+            "minLength": 1,
+            "description": "视频提示词",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "prompt"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "seconds": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 30,
+          "required": false,
+          "description": "视频时长（秒）",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 30,
+            "description": "视频时长（秒）",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "duration"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "resolution": {
+          "type": "string",
+          "enum": [
+            "480p",
+            "720p",
+            "768p",
+            "960p",
+            "1080p"
+          ],
+          "required": false,
+          "description": "视频分辨率，缺省时上游按 768p 计费",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "string",
+            "enum": [
+              "480p",
+              "720p",
+              "768p",
+              "960p",
+              "1080p"
+            ],
+            "description": "视频分辨率，缺省时上游按 768p 计费",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "resolution"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "size": {
+          "type": "string",
+          "enum": [
+            "1280x720"
+          ],
+          "required": false,
+          "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "string",
+            "enum": [
+              "1280x720"
+            ],
+            "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "size"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "output_count": {
+          "type": "integer",
+          "enum": [
+            1
+          ],
+          "minimum": 1,
+          "maximum": 1,
+          "required": false,
+          "description": "视频输出条数，首版仅支持 1",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "minimum": 1,
+            "maximum": 1,
+            "description": "视频输出条数，首版仅支持 1",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "output_count"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "aspect_ratio": {
+          "type": "string",
+          "minLength": 1,
+          "required": false,
+          "description": "画面比例，文档未列候选值",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "string",
+            "minLength": 1,
+            "description": "画面比例，文档未列候选值",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "aspect_ratio"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "generate_audio": {
+          "type": "boolean",
+          "required": false,
+          "description": "生成音频",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "boolean",
+            "description": "生成音频",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "generate_audio"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+          },
+          "required": false,
+          "description": "参考图片 URL 或图片 Base64 Data URL",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+            },
+            "description": "参考图片 URL 或图片 Base64 Data URL",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "input_reference"
+              ],
+              "capabilities": [
+                "image_video",
+                "frames",
+                "video_ref",
+                "audio_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "start_image_url": {
+          "type": "string",
+          "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+          "required": false,
+          "description": "首帧图片",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "string",
+            "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+            "description": "首帧图片",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "first_frame"
+              ],
+              "capabilities": [
+                "frames"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "end_image_url": {
+          "type": "string",
+          "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+          "required": false,
+          "description": "尾帧图片",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "string",
+            "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+            "description": "尾帧图片",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "last_frame"
+              ],
+              "capabilities": [
+                "frames"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "videos": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https?://"
+          },
+          "maxItems": 1,
+          "required": false,
+          "description": "参考视频 URL，首版至多一个",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^https?://"
+            },
+            "maxItems": 1,
+            "description": "参考视频 URL，首版至多一个",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_video"
+              ],
+              "capabilities": [
+                "frames",
+                "video_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "audios": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https?://"
+          },
+          "maxItems": 1,
+          "required": false,
+          "description": "参考音频 URL，首版至多一个",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "definition": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^https?://"
+            },
+            "maxItems": 1,
+            "description": "参考音频 URL，首版至多一个",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "reference_audio"
+              ],
+              "capabilities": [
+                "frames",
+                "audio_ref",
+                "mixed_ref"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        }
+      },
+      "mapping": {
+        "model": "model",
+        "prompt": "prompt",
+        "seconds": "seconds",
+        "resolution": "resolution",
+        "size": "size",
+        "output_count": "output_count",
+        "aspect_ratio": "aspect_ratio",
+        "generate_audio": "generate_audio",
+        "images": "images",
+        "start_image_url": "start_image_url",
+        "end_image_url": "end_image_url",
+        "videos": "videos",
+        "audios": "audios"
+      },
+      "modes": {
+        "text_video": {
+          "required": []
+        },
+        "image_video": {
+          "required": []
+        },
+        "frames": {
+          "required": []
+        },
+        "video_ref": {
+          "required": []
+        },
+        "audio_ref": {
+          "required": []
+        },
+        "mixed_ref": {
+          "required": []
+        }
+      },
+      "capabilities": {
+        "firstFrame": true,
+        "lastFrame": true,
+        "multipleReferences": true
+      },
+      "pending": [
+        "型号以带渠道密钥的 /v1/models 结果为准。公开价格目录只用来核对文档型号",
+        "首版单条输出，音视频参考各至多一个。尺寸只支持文档示例 1280x720，其余请使用明确的 resolution",
+        "未取得实际完成计费用量样本。按已校验请求的时长和计费分辨率提供用量，公开采购报价不写入渠道售价",
+        "当前供应商只验证了 HTTP 地址。实际密钥联调应使用供应商提供的 HTTPS 地址"
+      ],
+      "modelRules": {
+        "h3-video": {
+          "id": "interface:0aa08309f06dab25",
+          "title": "笑笑中转创建视频任务",
+          "kind": "video",
+          "method": "POST",
+          "path": "/v1/videos",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "enum": [
+                "h3-video",
+                "h3-video-flex",
+                "h3-video-prism",
+                "h3-video-frames"
+              ],
+              "required": true,
+              "description": "接口型号，由网关填写",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "h3-video",
+                  "h3-video-flex",
+                  "h3-video-prism",
+                  "h3-video-frames"
+                ],
+                "description": "接口型号，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "required": false,
+              "description": "视频提示词",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 30,
+              "required": false,
+              "description": "视频时长（秒）",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 30,
+                "description": "视频时长（秒）",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "resolution": {
+              "type": "string",
+              "enum": [
+                "480p",
+                "720p",
+                "768p",
+                "960p",
+                "1080p"
+              ],
+              "required": false,
+              "description": "视频分辨率，缺省时上游按 768p 计费",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "480p",
+                  "720p",
+                  "768p",
+                  "960p",
+                  "1080p"
+                ],
+                "description": "视频分辨率，缺省时上游按 768p 计费",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "enum": [
+                "1280x720"
+              ],
+              "required": false,
+              "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "1280x720"
+                ],
+                "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "output_count": {
+              "type": "integer",
+              "enum": [
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "required": false,
+              "description": "视频输出条数，首版仅支持 1",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "integer",
+                "enum": [
+                  1
+                ],
+                "minimum": 1,
+                "maximum": 1,
+                "description": "视频输出条数，首版仅支持 1",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_count"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "minLength": 1,
+              "required": false,
+              "description": "画面比例，文档未列候选值",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "description": "画面比例，文档未列候选值",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+              },
+              "required": false,
+              "description": "参考图片 URL 或图片 Base64 Data URL",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+                },
+                "description": "参考图片 URL 或图片 Base64 Data URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames",
+                    "video_ref",
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+              "required": false,
+              "description": "首帧图片",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+                "description": "首帧图片",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "first_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+              "required": false,
+              "description": "尾帧图片",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+                "description": "尾帧图片",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "videos": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "maxItems": 1,
+              "required": false,
+              "description": "参考视频 URL，首版至多一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                },
+                "maxItems": 1,
+                "description": "参考视频 URL，首版至多一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video"
+                  ],
+                  "capabilities": [
+                    "frames",
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "audios": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "maxItems": 1,
+              "required": false,
+              "description": "参考音频 URL，首版至多一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                },
+                "maxItems": 1,
+                "description": "参考音频 URL，首版至多一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio"
+                  ],
+                  "capabilities": [
+                    "frames",
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "size": "size",
+            "output_count": "output_count",
+            "aspect_ratio": "aspect_ratio",
+            "generate_audio": "generate_audio",
+            "images": "images",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "image_video": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "frames": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "video_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "audio_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "mixed_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            }
+          },
+          "capabilities": {
+            "firstFrame": true,
+            "lastFrame": true,
+            "multipleReferences": true
+          },
+          "pending": [
+            "型号以带渠道密钥的 /v1/models 结果为准。公开价格目录只用来核对文档型号",
+            "首版单条输出，音视频参考各至多一个。尺寸只支持文档示例 1280x720，其余请使用明确的 resolution",
+            "未取得实际完成计费用量样本。按已校验请求的时长和计费分辨率提供用量，公开采购报价不写入渠道售价",
+            "当前供应商只验证了 HTTP 地址。实际密钥联调应使用供应商提供的 HTTPS 地址"
+          ]
+        },
+        "h3-video-flex": {
+          "id": "interface:0aa08309f06dab25",
+          "title": "笑笑中转创建视频任务",
+          "kind": "video",
+          "method": "POST",
+          "path": "/v1/videos",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "enum": [
+                "h3-video",
+                "h3-video-flex",
+                "h3-video-prism",
+                "h3-video-frames"
+              ],
+              "required": true,
+              "description": "接口型号，由网关填写",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "h3-video",
+                  "h3-video-flex",
+                  "h3-video-prism",
+                  "h3-video-frames"
+                ],
+                "description": "接口型号，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "required": false,
+              "description": "视频提示词",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 30,
+              "required": false,
+              "description": "视频时长（秒）",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 30,
+                "description": "视频时长（秒）",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "resolution": {
+              "type": "string",
+              "enum": [
+                "480p",
+                "720p",
+                "768p",
+                "960p",
+                "1080p"
+              ],
+              "required": false,
+              "description": "视频分辨率，缺省时上游按 768p 计费",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "480p",
+                  "720p",
+                  "768p",
+                  "960p",
+                  "1080p"
+                ],
+                "description": "视频分辨率，缺省时上游按 768p 计费",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "enum": [
+                "1280x720"
+              ],
+              "required": false,
+              "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "1280x720"
+                ],
+                "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "output_count": {
+              "type": "integer",
+              "enum": [
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "required": false,
+              "description": "视频输出条数，首版仅支持 1",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "integer",
+                "enum": [
+                  1
+                ],
+                "minimum": 1,
+                "maximum": 1,
+                "description": "视频输出条数，首版仅支持 1",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_count"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "minLength": 1,
+              "required": false,
+              "description": "画面比例，文档未列候选值",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "description": "画面比例，文档未列候选值",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+              },
+              "required": false,
+              "description": "参考图片 URL 或图片 Base64 Data URL",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+                },
+                "description": "参考图片 URL 或图片 Base64 Data URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames",
+                    "video_ref",
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+              "required": false,
+              "description": "首帧图片",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+                "description": "首帧图片",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "first_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+              "required": false,
+              "description": "尾帧图片",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+                "description": "尾帧图片",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "videos": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "maxItems": 1,
+              "required": false,
+              "description": "参考视频 URL，首版至多一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                },
+                "maxItems": 1,
+                "description": "参考视频 URL，首版至多一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video"
+                  ],
+                  "capabilities": [
+                    "frames",
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "audios": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "maxItems": 1,
+              "required": false,
+              "description": "参考音频 URL，首版至多一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                },
+                "maxItems": 1,
+                "description": "参考音频 URL，首版至多一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio"
+                  ],
+                  "capabilities": [
+                    "frames",
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "size": "size",
+            "output_count": "output_count",
+            "aspect_ratio": "aspect_ratio",
+            "generate_audio": "generate_audio",
+            "images": "images",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "image_video": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "frames": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "video_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "audio_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "mixed_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            }
+          },
+          "capabilities": {
+            "firstFrame": true,
+            "lastFrame": true,
+            "multipleReferences": true
+          },
+          "pending": [
+            "型号以带渠道密钥的 /v1/models 结果为准。公开价格目录只用来核对文档型号",
+            "首版单条输出，音视频参考各至多一个。尺寸只支持文档示例 1280x720，其余请使用明确的 resolution",
+            "未取得实际完成计费用量样本。按已校验请求的时长和计费分辨率提供用量，公开采购报价不写入渠道售价",
+            "当前供应商只验证了 HTTP 地址。实际密钥联调应使用供应商提供的 HTTPS 地址"
+          ]
+        },
+        "h3-video-prism": {
+          "id": "interface:0aa08309f06dab25",
+          "title": "笑笑中转创建视频任务",
+          "kind": "video",
+          "method": "POST",
+          "path": "/v1/videos",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "enum": [
+                "h3-video",
+                "h3-video-flex",
+                "h3-video-prism",
+                "h3-video-frames"
+              ],
+              "required": true,
+              "description": "接口型号，由网关填写",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "h3-video",
+                  "h3-video-flex",
+                  "h3-video-prism",
+                  "h3-video-frames"
+                ],
+                "description": "接口型号，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "required": false,
+              "description": "视频提示词",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 30,
+              "required": false,
+              "description": "视频时长（秒）",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 30,
+                "description": "视频时长（秒）",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "resolution": {
+              "type": "string",
+              "enum": [
+                "480p",
+                "720p",
+                "768p",
+                "960p",
+                "1080p"
+              ],
+              "required": false,
+              "description": "视频分辨率，缺省时上游按 768p 计费",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "480p",
+                  "720p",
+                  "768p",
+                  "960p",
+                  "1080p"
+                ],
+                "description": "视频分辨率，缺省时上游按 768p 计费",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "enum": [
+                "1280x720"
+              ],
+              "required": false,
+              "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "1280x720"
+                ],
+                "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "output_count": {
+              "type": "integer",
+              "enum": [
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "required": false,
+              "description": "视频输出条数，首版仅支持 1",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "integer",
+                "enum": [
+                  1
+                ],
+                "minimum": 1,
+                "maximum": 1,
+                "description": "视频输出条数，首版仅支持 1",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_count"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "minLength": 1,
+              "required": false,
+              "description": "画面比例，文档未列候选值",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "description": "画面比例，文档未列候选值",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+              },
+              "required": false,
+              "description": "参考图片 URL 或图片 Base64 Data URL",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+                },
+                "description": "参考图片 URL 或图片 Base64 Data URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "image_video",
+                    "frames",
+                    "video_ref",
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+              "required": false,
+              "description": "首帧图片",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+                "description": "首帧图片",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "first_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+              "required": false,
+              "description": "尾帧图片",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+                "description": "尾帧图片",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "videos": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "maxItems": 1,
+              "required": false,
+              "description": "参考视频 URL，首版至多一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                },
+                "maxItems": 1,
+                "description": "参考视频 URL，首版至多一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video"
+                  ],
+                  "capabilities": [
+                    "frames",
+                    "video_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "audios": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "maxItems": 1,
+              "required": false,
+              "description": "参考音频 URL，首版至多一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                },
+                "maxItems": 1,
+                "description": "参考音频 URL，首版至多一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio"
+                  ],
+                  "capabilities": [
+                    "frames",
+                    "audio_ref",
+                    "mixed_ref"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "size": "size",
+            "output_count": "output_count",
+            "aspect_ratio": "aspect_ratio",
+            "generate_audio": "generate_audio",
+            "images": "images",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "text_video": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "image_video": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "frames": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "video_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "audio_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            },
+            "mixed_ref": {
+              "required": [],
+              "initiallyEnabled": true
+            }
+          },
+          "capabilities": {
+            "firstFrame": true,
+            "lastFrame": true,
+            "multipleReferences": true
+          },
+          "pending": [
+            "型号以带渠道密钥的 /v1/models 结果为准。公开价格目录只用来核对文档型号",
+            "首版单条输出，音视频参考各至多一个。尺寸只支持文档示例 1280x720，其余请使用明确的 resolution",
+            "未取得实际完成计费用量样本。按已校验请求的时长和计费分辨率提供用量，公开采购报价不写入渠道售价",
+            "当前供应商只验证了 HTTP 地址。实际密钥联调应使用供应商提供的 HTTPS 地址"
+          ]
+        },
+        "h3-video-frames": {
+          "id": "interface:0aa08309f06dab25",
+          "title": "笑笑中转创建视频任务",
+          "kind": "video",
+          "method": "POST",
+          "path": "/v1/videos",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "http://8.148.77.247:5555/about",
+            "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+            "readAt": "2026-11-16",
+            "scope": "笑笑中转视频生成接口",
+            "status": "reviewed-document-extract"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "enum": [
+                "h3-video",
+                "h3-video-flex",
+                "h3-video-prism",
+                "h3-video-frames"
+              ],
+              "required": true,
+              "description": "接口型号，由网关填写",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "h3-video",
+                  "h3-video-flex",
+                  "h3-video-prism",
+                  "h3-video-frames"
+                ],
+                "description": "接口型号，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "required": false,
+              "description": "视频提示词",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "description": "视频提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 15,
+              "required": false,
+              "description": "视频时长（秒）",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 15,
+                "description": "视频时长（秒）",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "duration"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "resolution": {
+              "type": "string",
+              "enum": [
+                "480p",
+                "720p",
+                "768p",
+                "960p",
+                "1080p"
+              ],
+              "required": false,
+              "description": "视频分辨率，缺省时上游按 768p 计费",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "480p",
+                  "720p",
+                  "768p",
+                  "960p",
+                  "1080p"
+                ],
+                "description": "视频分辨率，缺省时上游按 768p 计费",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "resolution"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "enum": [
+                "1280x720"
+              ],
+              "required": false,
+              "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "1280x720"
+                ],
+                "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "output_count": {
+              "type": "integer",
+              "enum": [
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "required": false,
+              "description": "视频输出条数，首版仅支持 1",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "integer",
+                "enum": [
+                  1
+                ],
+                "minimum": 1,
+                "maximum": 1,
+                "description": "视频输出条数，首版仅支持 1",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "output_count"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "minLength": 1,
+              "required": false,
+              "description": "画面比例，文档未列候选值",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "description": "画面比例，文档未列候选值",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "aspect_ratio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "generate_audio": {
+              "type": "boolean",
+              "required": false,
+              "description": "生成音频",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "boolean",
+                "description": "生成音频",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "generate_audio"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+              },
+              "required": false,
+              "description": "参考图片 URL 或图片 Base64 Data URL",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+                },
+                "description": "参考图片 URL 或图片 Base64 Data URL",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "input_reference"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "start_image_url": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+              "required": false,
+              "description": "首帧图片，首帧和尾帧至少提供一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+                "description": "首帧图片，首帧和尾帧至少提供一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "first_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "end_image_url": {
+              "type": "string",
+              "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+              "required": false,
+              "description": "尾帧图片，首帧和尾帧至少提供一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+                "description": "尾帧图片，首帧和尾帧至少提供一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "last_frame"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "videos": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "maxItems": 1,
+              "required": false,
+              "description": "参考视频 URL，首版至多一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                },
+                "maxItems": 1,
+                "description": "参考视频 URL，首版至多一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_video"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "audios": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "maxItems": 1,
+              "required": false,
+              "description": "参考音频 URL，首版至多一个",
+              "source": {
+                "url": "http://8.148.77.247:5555/about",
+                "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+                "readAt": "2026-11-16",
+                "scope": "笑笑中转视频生成接口",
+                "status": "reviewed-document-extract"
+              },
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                },
+                "maxItems": 1,
+                "description": "参考音频 URL，首版至多一个",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "reference_audio"
+                  ],
+                  "capabilities": [
+                    "frames"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "seconds": "seconds",
+            "resolution": "resolution",
+            "size": "size",
+            "output_count": "output_count",
+            "aspect_ratio": "aspect_ratio",
+            "generate_audio": "generate_audio",
+            "images": "images",
+            "start_image_url": "start_image_url",
+            "end_image_url": "end_image_url",
+            "videos": "videos",
+            "audios": "audios"
+          },
+          "modes": {
+            "frames": {
+              "required": [],
+              "initiallyEnabled": true,
+              "optionalReferences": [
+                "images",
+                "videos",
+                "audios"
+              ]
+            }
+          },
+          "capabilities": {
+            "firstFrame": true,
+            "lastFrame": true,
+            "multipleReferences": true,
+            "requiresFrame": true
+          },
+          "pending": [
+            "型号以带渠道密钥的 /v1/models 结果为准。公开价格目录只用来核对文档型号",
+            "首版单条输出，音视频参考各至多一个。尺寸只支持文档示例 1280x720，其余请使用明确的 resolution",
+            "未取得实际完成计费用量样本。按已校验请求的时长和计费分辨率提供用量，公开采购报价不写入渠道售价",
+            "当前供应商只验证了 HTTP 地址。实际密钥联调应使用供应商提供的 HTTPS 地址"
+          ]
+        }
+      }
+    }
+  },
+  "documents": [
+    {
+      "id": "interface:0aa08309f06dab25",
+      "title": "笑笑中转创建视频任务",
+      "method": "POST",
+      "path": "/v1/videos",
+      "source": {
+        "url": "http://8.148.77.247:5555/about",
+        "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+        "readAt": "2026-11-16",
+        "scope": "笑笑中转视频生成接口",
+        "status": "reviewed-document-extract"
+      },
+      "description": "JSON 视频请求。首尾帧型号至少提供首帧或尾帧，首版仅支持单条输出",
+      "schema": {
+        "type": "object",
+        "required": [
+          "model"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "h3-video",
+              "h3-video-flex",
+              "h3-video-prism",
+              "h3-video-frames"
+            ],
+            "description": "接口型号，由网关填写"
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "视频提示词"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 30,
+            "description": "视频时长（秒）"
+          },
+          "resolution": {
+            "type": "string",
+            "enum": [
+              "480p",
+              "720p",
+              "768p",
+              "960p",
+              "1080p"
+            ],
+            "description": "视频分辨率，缺省时上游按 768p 计费"
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "1280x720"
+            ],
+            "description": "兼容尺寸，首版支持文档示例 1280x720，与 resolution 二选一"
+          },
+          "output_count": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "minimum": 1,
+            "maximum": 1,
+            "description": "视频输出条数，首版仅支持 1"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "minLength": 1,
+            "description": "画面比例，文档未列候选值"
+          },
+          "generate_audio": {
+            "type": "boolean",
+            "description": "生成音频"
+          },
+          "input_reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)"
+                }
+              }
+            ]
+          },
+          "first_frame": {
+            "type": "string",
+            "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+            "description": "首帧图片"
+          },
+          "last_frame": {
+            "type": "string",
+            "pattern": "^(https?://|data:image/[a-z0-9.+-]+;base64,)",
+            "description": "尾帧图片"
+          },
+          "reference_video": {
+            "type": "string",
+            "pattern": "^https?://"
+          },
+          "reference_audio": {
+            "type": "string",
+            "pattern": "^https?://"
+          }
+        }
+      }
+    },
+    {
+      "id": "xiaoxiao-video-task-query",
+      "title": "笑笑中转查询视频任务",
+      "method": "GET",
+      "path": "/v1/videos/{id}",
+      "source": {
+        "url": "http://8.148.77.247:5555/about",
+        "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+        "readAt": "2026-11-16",
+        "scope": "笑笑中转视频生成接口",
+        "status": "reviewed-document-extract"
+      },
+      "description": "以提交响应的 id 轮询，成功时下载顶层 url",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "pattern": "^https?://"
+          }
+        }
+      }
+    }
+  ],
+  "warnings": [
+    "型号以带渠道密钥的 /v1/models 结果为准。公开价格目录只用来核对文档型号",
+    "首版单条输出，音视频参考各至多一个。尺寸只支持文档示例 1280x720，其余请使用明确的 resolution",
+    "未取得实际完成计费用量样本。按已校验请求的时长和计费分辨率提供用量，公开采购报价不写入渠道售价",
+    "当前供应商只验证了 HTTP 地址。实际密钥联调应使用供应商提供的 HTTPS 地址"
+  ]
+}

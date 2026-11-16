@@ -1,0 +1,27 @@
+{
+  "source": "http://8.148.77.247:5555/api/about",
+  "readAt": "2026-11-16",
+  "title": "笑笑中转 · 视频与图像生成 API 接入文档",
+  "discovery": { "method": "GET", "path": "/v1/models", "auth": "Bearer", "unauthenticatedStatus": 401 },
+  "submit": {
+    "method": "POST",
+    "path": "/v1/videos",
+    "auth": "Bearer",
+    "requestExample": { "model": "h3-video", "prompt": "城市夜景延时摄影", "duration": 6, "resolution": "768p", "output_count": 1 },
+    "responseExample": { "id": "task_xxx", "status": "queued" },
+    "resolution": ["480p", "720p", "768p", "960p", "1080p"],
+    "missingOrInvalidResolutionBillingTier": "768p",
+    "sizeExample": { "1280x720": "720p" },
+    "optionalFields": ["generate_audio", "aspect_ratio"],
+    "referenceFields": { "input_reference": "图片，可传数组", "first_frame": "首帧", "last_frame": "尾帧", "reference_audio": "参考音频", "reference_video": "参考视频" },
+    "referenceTransport": ["URL", "图片 Base64 Data URL", "multipart 文件"]
+  },
+  "models": {
+    "h3-video": { "seconds": [4, 30], "capabilities": ["文生", "图生", "可选音频"], "catalogAdditionalCapabilities": ["参考图", "参考音频", "参考视频"] },
+    "h3-video-flex": { "seconds": [4, 30], "capabilities": ["速度与画质可调"], "catalogAdditionalCapabilities": ["可选音频"] },
+    "h3-video-prism": { "seconds": [4, 30], "capabilities": ["多图", "音频和视频混合参考"] },
+    "h3-video-frames": { "seconds": [4, 15], "capabilities": ["首尾帧"], "requiresAny": ["first_frame", "last_frame"] }
+  },
+  "query": { "method": "GET", "path": "/v1/videos/{id}", "pending": ["queued", "in_progress"], "success": ["completed", "succeeded"], "failure": ["failed", "cancelled"], "resultURL": "url" },
+  "pricing": { "currency": "CNY", "unit": "second", "minimumPerVideo": 0.072, "quantityBasis": ["duration", "output_count"], "failureRefund": true }
+}

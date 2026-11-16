@@ -51,6 +51,7 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn(),
   check: vi.fn(),
   fetch: vi.fn(),
+  discovered: vi.fn<() => string[]>(),
   tryCall: vi.fn(),
 }))
 vi.mock('react-i18next', () => ({
@@ -69,7 +70,7 @@ vi.mock('./api', () => ({
 vi.mock('../hooks/use-channel-model-discovery', () => ({
   useChannelModelDiscovery: () => ({
     status: 'success',
-    models: ['A', 'B', 'C', 'new'],
+    models: mocks.discovered() ?? ['A', 'B', 'C', 'new'],
     fetch: mocks.fetch,
   }),
 }))
@@ -138,7 +139,11 @@ function mount(models = 'old', preview = true) {
     </QueryClientProvider>
   )
 }
-async function advanceToParameters(enableVideoInputs = false) {
+async function advanceToParameters(
+  enableVideoInputs = false,
+  framesOnly = false,
+  expectFullDefaults = false
+) {
   await screen.findByRole('button', {
     name: 'Next: output type and functions',
   })
@@ -146,15 +151,37 @@ async function advanceToParameters(enableVideoInputs = false) {
     screen.getByRole('button', { name: 'Next: output type and functions' })
   )
   if (enableVideoInputs) {
-    for (const name of [
-      /^Text to video/,
+    if (framesOnly && expectFullDefaults) {
+      expect(
+        screen.getByRole('checkbox', { name: /^Text to video/ })
+      ).toHaveAttribute('aria-disabled', 'true')
+      expect(
+        screen.getAllByText('First or last frame required').length
+      ).toBeGreaterThan(0)
+    }
+    const inputs = [
       /^Use first and last frames/,
       /^Use a reference image/,
       /^Use reference video/,
       /^Use reference audio/,
-    ]) {
+    ]
+    if (!framesOnly) inputs.unshift(/^Text to video/)
+    if (expectFullDefaults) {
+      inputs.push(/^First-frame reference/)
+    }
+    for (const name of inputs) {
       const control = screen.getByRole('checkbox', { name })
+      if (expectFullDefaults) expect(control).toBeChecked()
+      if (framesOnly && name !== inputs[0]) {
+        expect(control).toHaveAccessibleName(/1 \/ 1/)
+      }
       if (control.getAttribute('aria-checked') !== 'true') {
+        await userEvent.click(control)
+      }
+      if (framesOnly && name !== inputs[0]) {
+        expect(control).toBeChecked()
+        await userEvent.click(control)
+        expect(control).not.toBeChecked()
         await userEvent.click(control)
       }
     }
@@ -414,6 +441,7 @@ describe('actual channel workflow dialog', () => {
     })
   })
   beforeEach(() => {
+    mocks.discovered.mockReset()
     baseline = createSharedGroup(
       {
         format: 'channel-model-configuration/v1',
@@ -492,18 +520,36 @@ describe('actual channel workflow dialog', () => {
     ['apipath_video', 'seedance-2.5-YZ'],
     ['kuaizi_video', 'wan3.0-video'],
     ['kuaizi_video', 'wan3.0-video-prime'],
+    ['xiaoxiao_video', 'h3-video'],
+    ['xiaoxiao_video', 'h3-video-flex'],
+    ['xiaoxiao_video', 'h3-video-prism'],
+    ['xiaoxiao_video', 'h3-video-frames'],
   ])(
     'opens the complete %s/%s configuration workflow with its generated catalog',
     async (provider, model) => {
       const kuaizi = provider === 'kuaizi_video'
+      const xiaoxiao = provider === 'xiaoxiao_video'
+      const framesOnly = model === 'h3-video-frames'
+      if (xiaoxiao) {
+        mocks.discovered.mockReturnValue([
+          'h3-video',
+          'h3-video-flex',
+          'h3-video-prism',
+          'h3-video-frames',
+        ])
+      }
       const actual = JSON.parse(
         readFileSync(
           path.resolve('..', 'pkg/modelconfig', `${provider}.catalog.json`),
           'utf8'
         )
       ) as Catalog
+      const versions: Record<string, string> = {
+        kuaizi_video: '2.1.2',
+        xiaoxiao_video: '2.1.3',
+      }
       mocks.get.mockResolvedValueOnce({
-        pluginVersion: kuaizi ? '2.1.2' : '2.1.0',
+        pluginVersion: versions[provider] ?? '2.1.0',
         configuration: {
           format: 'channel-model-configuration/v1',
           provider,
@@ -514,19 +560,40 @@ describe('actual channel workflow dialog', () => {
         catalog: actual,
         versions: [],
       })
-      mount('', false)
-      await userEvent.click(
-        await screen.findByText('View documented models or enter a model ID')
-      )
-      await userEvent.type(
-        screen.getByPlaceholderText('Enter an exact model ID and press Enter'),
-        `${model}{Enter}`
-      )
+      const view = mount('', false)
+      if (xiaoxiao) {
+        await userEvent.click(
+          await screen.findByRole('checkbox', { name: model })
+        )
+      } else {
+        await userEvent.click(
+          await screen.findByText('View documented models or enter a model ID')
+        )
+        await userEvent.type(
+          screen.getByPlaceholderText(
+            'Enter an exact model ID and press Enter'
+          ),
+          `${model}{Enter}`
+        )
+      }
       const captureSave =
         kuaizi ||
+        xiaoxiao ||
         provider === 'apipath_video' ||
         model.startsWith('doubao-seedance-')
-      await advanceToParameters(kuaizi)
+      await advanceToParameters(kuaizi || xiaoxiao, framesOnly, xiaoxiao)
+      if (xiaoxiao) {
+        const parameters = within(
+          screen.getByTestId('selected-capability-parameters')
+        )
+        expect(
+          parameters.getByRole('checkbox', { name: /^resolution: 768p/ })
+        ).toBeChecked()
+        await userEvent.click(
+          parameters.getByRole('combobox', { name: /^Resolution/ })
+        )
+        await userEvent.click(screen.getByRole('option', { name: '720p' }))
+      }
       if (captureSave) {
         await userEvent.click(
           screen.getByRole('checkbox', {
@@ -569,13 +636,13 @@ describe('actual channel workflow dialog', () => {
       await userEvent.click(
         screen.getByRole('button', { name: 'Next: model prices' })
       )
-      if (kuaizi || model.startsWith('doubao-seedance-')) {
+      if (kuaizi || xiaoxiao || model.startsWith('doubao-seedance-')) {
         await userEvent.click(
           screen.getByRole('combobox', { name: `${model}: Billing method` })
         )
         await userEvent.click(
           screen.getByRole('option', {
-            name: kuaizi ? 'Per second' : 'Per 1M tokens',
+            name: kuaizi || xiaoxiao ? 'Per second' : 'Per 1M tokens',
           })
         )
         await userEvent.type(
@@ -650,17 +717,71 @@ describe('actual channel workflow dialog', () => {
               : 'kuaizi_standard'
             update = process.env.UPDATE_KUAIZI_UI_SAVE_FIXTURE
           }
+          if (xiaoxiao) {
+            fixture = framesOnly ? 'xiaoxiao_video_frames' : 'xiaoxiao_video'
+            update = process.env.UPDATE_XIAOXIAO_UI_SAVE_FIXTURE
+          }
           const target = path.resolve(
             '..',
             `controller/testdata/${fixture}_ui_save.json`
           )
-          if (update === '1') {
+          const sameXiaoxiaoContract =
+            xiaoxiao && model !== 'h3-video' && !framesOnly
+          if (update === '1' && !sameXiaoxiaoContract) {
             writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`)
           }
-          expect(payload).toEqual(JSON.parse(readFileSync(target, 'utf8')))
+          const expected = JSON.parse(readFileSync(target, 'utf8'))
+          if (sameXiaoxiaoContract) {
+            expected.addModels = [model]
+            expected.configuration.bindings = {
+              [model]: expected.configuration.bindings['h3-video'],
+            }
+          }
+          expect(payload).toEqual(expected)
           expect(payload.addModels).toEqual([model])
+          if (framesOnly) {
+            expect(Object.keys(document.bindings[model])).toEqual(['frames'])
+            expect(document.bindings[model].frames.capabilities).toMatchObject({
+              firstFrame: true,
+              lastFrame: true,
+              images: true,
+              videos: true,
+              audios: true,
+            })
+          }
         } finally {
           put.mockRestore()
+        }
+        if (xiaoxiao) {
+          view.unmount()
+          mocks.get.mockResolvedValueOnce({
+            pluginVersion: '2.1.3',
+            configuration: { ...document, revision: 1 },
+            catalog: actual,
+            versions: [],
+          })
+          mount(model, false)
+          await userEvent.click(
+            await screen.findByRole('tab', { name: 'Edit configured models' })
+          )
+          const existing = screen.getByRole('tabpanel', {
+            name: 'Edit configured models',
+          })
+          await userEvent.click(
+            within(existing).getByRole('checkbox', { name: model })
+          )
+          await userEvent.click(
+            screen.getByRole('button', {
+              name: 'Next: output type and functions',
+            })
+          )
+          for (const name of [
+            /^Use a reference image/,
+            /^Use reference video/,
+            /^Use reference audio/,
+          ]) {
+            expect(screen.getByRole('checkbox', { name })).toBeChecked()
+          }
         }
       }
     }

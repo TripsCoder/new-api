@@ -2938,6 +2938,7 @@
     "Finished requests": "已结束请求",
     "First API request": "首个 API 请求",
     "First frame": "首帧图片",
+    "First or last frame required": "须提供首帧或尾帧",
     "First token": "首字",
     "First-frame reference": "首帧参考",
     "First/Last Frame to Video": "首尾生视频",

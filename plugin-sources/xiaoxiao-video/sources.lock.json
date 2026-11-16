@@ -1,0 +1,80 @@
+{
+  "configuration": "common",
+  "parameterApplicability": {
+    "scope": "four H3 models",
+    "evidence": "operator-confirmed shared video fields",
+    "confirmedOn": "2026-11-16"
+  },
+  "sources": [
+    {
+      "url": "http://8.148.77.247:5555/about",
+      "sha256": "9d63e74ca43c806bf224c5bf633e4e857b4f4560f63d72c854fdee6b244c30a9",
+      "readAt": "2026-11-16",
+      "scope": "笑笑中转视频生成接口",
+      "status": "reviewed-document-extract",
+      "file": "evidence/about-20261116.json",
+      "reviewedFrom": "http://8.148.77.247:5555/api/about"
+    }
+  ],
+  "catalogCheck": {
+    "url": "http://8.148.77.247:5555/api/pricing",
+    "videoModels": [
+      "h3-video",
+      "h3-video-flex",
+      "h3-video-prism",
+      "h3-video-frames"
+    ],
+    "readAt": "2026-11-16"
+  },
+  "discovery": {
+    "path": "/v1/models",
+    "unauthenticatedStatus": 401,
+    "authenticated": false
+  },
+  "supplierCost": {
+    "currency": "CNY",
+    "unit": "second",
+    "resolution": [
+      "480p",
+      "720p",
+      "768p",
+      "960p",
+      "1080p"
+    ],
+    "minimumPerVideo": 0.072,
+    "h3-video": [
+      0.018,
+      0.042,
+      0.042,
+      0.09,
+      0.102
+    ],
+    "h3-video-flex": [
+      0.03,
+      0.048,
+      0.054,
+      0.09,
+      0.102
+    ],
+    "h3-video-prism": [
+      0.03,
+      0.042,
+      0.042,
+      0.09,
+      0.102
+    ],
+    "h3-video-frames": [
+      0.018,
+      0.042,
+      0.042,
+      0.09,
+      0.102
+    ]
+  },
+  "pending": [
+    "型号以带渠道密钥的 /v1/models 结果为准。公开价格目录只用来核对文档型号",
+    "首版单条输出，音视频参考各至多一个。尺寸只支持文档示例 1280x720，其余请使用明确的 resolution",
+    "未取得实际完成计费用量样本。按已校验请求的时长和计费分辨率提供用量，公开采购报价不写入渠道售价",
+    "当前供应商只验证了 HTTP 地址。实际密钥联调应使用供应商提供的 HTTPS 地址"
+  ]
+}

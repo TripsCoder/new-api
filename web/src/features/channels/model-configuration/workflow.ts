@@ -22,7 +22,7 @@ import {
   modeFromDocument,
   retainRequiredParameters,
 } from './configuration'
-import type { Catalog, Configuration, Mode } from './types'
+import type { Catalog, Configuration, Mode, ReferenceInput } from './types'
 
 export { relevantParameter } from './configuration'
 
@@ -217,6 +217,19 @@ export function isCapabilitySubsetLocked(
   models: string[],
   key: string
 ): boolean {
+  if (key === 'text_video' && models.length) {
+    return models.every((name) =>
+      requiresFrameForCapability(catalog, name, key)
+    )
+  }
+  const reference = REFERENCE_INPUT_BY_MODE[key]
+  if (reference && models.length) {
+    return models.every(
+      (name) =>
+        optionalFrameReference(catalog, name, reference) &&
+        !effectiveMode(document, name, 'frames')?.enabled
+    )
+  }
   if (key !== 'text_image') return false
   return models.some((name) => {
     if (!catalog.models[name]?.modes[key] && !document.bindings[name]?.[key]) {
@@ -225,6 +238,57 @@ export function isCapabilitySubsetLocked(
     return !!effectiveMode(document, name, 'edit_image')?.enabled
   })
 }
+const REFERENCE_INPUT_BY_MODE: Partial<Record<string, ReferenceInput>> = {
+  image_video: 'images',
+  video_ref: 'videos',
+  audio_ref: 'audios',
+}
+
+export function requiresFrameForCapability(
+  catalog: Catalog,
+  model: string,
+  key: string
+): boolean {
+  return (
+    key === 'text_video' &&
+    catalog.models[model]?.capabilities?.requiresFrame === true
+  )
+}
+
+function optionalFrameReference(
+  catalog: Catalog,
+  name: string,
+  field: ReferenceInput
+): boolean {
+  return (
+    catalog.models[name]?.modes.frames?.optionalReferences?.includes(field) ===
+    true
+  )
+}
+
+export function documentedCapabilitySupport(
+  catalog: Catalog,
+  name: string,
+  key: string
+): boolean {
+  if (requiresFrameForCapability(catalog, name, key)) return false
+  const model = catalog.models[name]
+  if (key === 'first_frame' && model?.capabilities) {
+    return model.capabilities.firstFrame
+  }
+  if (key === 'frames' && model?.capabilities) {
+    return model.capabilities.firstFrame && model.capabilities.lastFrame
+  }
+  if (key === 'mixed_ref' && model?.capabilities) {
+    return model.capabilities.multipleReferences
+  }
+  const reference = REFERENCE_INPUT_BY_MODE[key]
+  return (
+    !!model?.modes[capabilityMode(key)] ||
+    (!!reference && optionalFrameReference(catalog, name, reference))
+  )
+}
+
 export function documentedReferenceSupport(
   catalog: Catalog,
   name: string,
@@ -281,6 +345,15 @@ export function applyIndependentCapability(
   enabled: boolean
 ): Configuration {
   const actual = capabilityMode(key)
+  const optionalReference = REFERENCE_INPUT_BY_MODE[actual]
+  const standalone = models.filter(
+    (name) =>
+      !requiresFrameForCapability(catalog, name, actual) &&
+      !(
+        optionalReference &&
+        optionalFrameReference(catalog, name, optionalReference)
+      )
+  )
   const frames =
     actual === 'frames'
       ? new Map(
@@ -294,18 +367,21 @@ export function applyIndependentCapability(
           })
         )
       : undefined
-  const next = applyModeChoice(
-    document,
-    catalog,
-    models,
-    groupId,
-    actual,
-    frames
-      ? [...frames.values()].some(
-          (choice) => choice.firstFrameReference || choice.lastFrame
-        )
-      : enabled
-  )
+  const enableMode = frames
+    ? [...frames.values()].some(
+        (choice) => choice.firstFrameReference || choice.lastFrame
+      )
+    : enabled
+  const next = standalone.length
+    ? applyModeChoice(
+        document,
+        catalog,
+        standalone,
+        groupId,
+        actual,
+        enableMode
+      )
+    : clone(document)
   for (const [name, choice] of frames ?? []) {
     const binding = next.bindings[name].frames
     binding.enabled = choice.firstFrameReference || choice.lastFrame
@@ -377,6 +453,13 @@ export function applyIndependentCapability(
       firstFrame: first,
       lastFrame: choice.lastFrame,
     }
+    for (const field of catalog.models[name]?.modes.frames
+      ?.optionalReferences ?? []) {
+      allowed[field] =
+        optionalReference === field && frame?.enabled
+          ? enabled
+          : frame?.capabilities?.[field] === true
+    }
     for (const [mode, binding] of Object.entries(next.bindings[name] ?? {})) {
       if (mode.endsWith('image')) continue
       binding.capabilities = { ...allowed }
@@ -395,8 +478,21 @@ export function capabilityEnabled(
   document: Configuration,
   models: string[],
   groupId: string,
-  key: string
+  key: string,
+  catalog?: Catalog
 ): boolean {
+  const reference = REFERENCE_INPUT_BY_MODE[key]
+  if (
+    catalog &&
+    reference &&
+    models.some((name) => {
+      if (!optionalFrameReference(catalog, name, reference)) return false
+      const frame = effectiveMode(document, name, 'frames')
+      return frame?.enabled && frame.capabilities?.[reference]
+    })
+  ) {
+    return true
+  }
   const mode = document.groups[groupId]?.modes[capabilityMode(key)]
   if (!mode?.enabled) return false
   if (key === 'first_frame' || key === 'frames') {

@@ -4,22 +4,283 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"maps"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	"github.com/QuantumNous/new-api/pkg/modelconfig"
+	taskplugin "github.com/QuantumNous/new-api/relay/channel/task/jsplugin"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/relaykit/dto"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"strings"
-	"testing"
 )
+
+func TestXiaoxiaoVideoChannelWorkflow(t *testing.T) {
+	for _, test := range []struct{ model, fixture, primaryMode string }{
+		{"h3-video", "xiaoxiao_video_ui_save.json", "text_video"},
+		{"h3-video-flex", "xiaoxiao_video_ui_save.json", "text_video"},
+		{"h3-video-prism", "xiaoxiao_video_ui_save.json", "text_video"},
+		{"h3-video-frames", "xiaoxiao_video_frames_ui_save.json", "frames"},
+	} {
+		t.Run(test.model, func(t *testing.T) {
+			testXiaoxiaoVideoChannelWorkflow(t, test.model, test.fixture, test.primaryMode)
+		})
+	}
+}
+
+func testXiaoxiaoVideoChannelWorkflow(t *testing.T, modelName, fixture, primaryMode string) {
+	db := setupTaskPluginDiscoveryTestDB(t)
+	allowPrivateTaskMediaTest(t)
+	require.NoError(t, db.AutoMigrate(&model.Task{}, &model.TaskPlugin{}, &model.ChannelModelConfiguration{}, &model.Option{}))
+	const provider, fixtureKey, upstreamID = "xiaoxiao_video", "fixture-key", "task_xiaoxiao_upstream"
+	const firstFrame, lastFrame = "https://media.example/first.png", "https://media.example/last.png"
+	const imageRef, videoRef, audioRef = "https://media.example/ref.png", "https://media.example/ref.mp4", "https://media.example/ref.mp3"
+	source, err := os.ReadFile(filepath.Join("..", "plugin-sources", "xiaoxiao-video", "dist", provider+".plugin.js"))
+	require.NoError(t, err)
+	plugin, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{Key: provider})
+	require.NoError(t, err)
+	require.NoError(t, db.Create(&model.TaskPlugin{Key: provider, Version: plugin.Meta.Version, APIVersion: 1,
+		Enabled: true, Active: true, Source: model.LongText(source), SourceHash: plugin.SourceSHA256}).Error)
+	clip, err := os.ReadFile(filepath.Join("testdata", "xiaoxiao_video_sample.mp4"))
+	require.NoError(t, err)
+	cdn := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/result.mp4", r.URL.Path)
+		assert.Empty(t, r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "video/mp4")
+		_, _ = w.Write(clip)
+	}))
+	defer cdn.Close()
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "Bearer "+fixtureKey, r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method + " " + r.URL.Path {
+		case "GET /v1/models":
+			fmt.Fprint(w, `{"data":[{"id":"h3-video"},{"id":"h3-video-flex"},{"id":"h3-video-prism"},{"id":"h3-video-frames"},{"id":"gpt-image-2c"}]}`)
+		case "POST /v1/videos":
+			var body map[string]any
+			if assert.NoError(t, common.DecodeJson(r.Body, &body)) {
+				assert.Equal(t, map[string]any{
+					"model": modelName, "prompt": "Test clip", "duration": float64(6), "resolution": "720p", "output_count": float64(1),
+					"aspect_ratio": "16:9", "generate_audio": false, "input_reference": []any{imageRef}, "reference_video": videoRef,
+					"reference_audio": audioRef, "first_frame": firstFrame, "last_frame": lastFrame,
+				}, body)
+			}
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprintf(w, `{"id":%q,"status":"queued"}`, upstreamID)
+		case "GET /v1/videos/" + upstreamID:
+			fmt.Fprintf(w, `{"id":%q,"status":"completed","url":%q}`, upstreamID, cdn.URL+"/result.mp4")
+		default:
+			t.Errorf("unexpected upstream request: %s %s", r.Method, r.URL.Path)
+			http.NotFound(w, r)
+		}
+	}))
+	defer upstream.Close()
+	channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin, Name: "Fixture", Key: fixtureKey, BaseURL: &upstream.URL,
+		Group: "default", Status: common.ChannelStatusManuallyDisabled}
+	channel.SetSetting(dto.ChannelSettings{TaskPluginKey: provider})
+	require.NoError(t, db.Create(channel).Error)
+	call := func(handler gin.HandlerFunc, method, path string, data []byte) *httptest.ResponseRecorder {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(recorder)
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+		c.Set("id", 1)
+		c.Request = httptest.NewRequest(method, path, bytes.NewReader(data))
+		c.Request.Header.Set("Content-Type", "application/json")
+		handler(c)
+		assert.NotContains(t, recorder.Body.String(), fixtureKey)
+		return recorder
+	}
+	listed := call(FetchUpstreamModels, http.MethodGet, "/api/channel/fetch_models/1", nil)
+	var discovered struct {
+		Success   bool `json:"success"`
+		Discovery struct {
+			Source string `json:"source"`
+			Models []struct {
+				ID      string `json:"id"`
+				Adapted bool   `json:"adapted"`
+			} `json:"models"`
+		} `json:"discovery"`
+	}
+	require.NoError(t, common.Unmarshal(listed.Body.Bytes(), &discovered))
+	require.True(t, discovered.Success, listed.Body.String())
+	assert.Equal(t, "upstream", discovered.Discovery.Source)
+	var adapted []string
+	for _, item := range discovered.Discovery.Models {
+		if item.Adapted {
+			adapted = append(adapted, item.ID)
+		}
+	}
+	assert.ElementsMatch(t, []string{"h3-video", "h3-video-flex", "h3-video-prism", "h3-video-frames"}, adapted)
+
+	const configPath = "/api/channel/1/model-configuration"
+	payload, err := os.ReadFile(filepath.Join("testdata", fixture))
+	require.NoError(t, err)
+	if modelName == "h3-video-flex" || modelName == "h3-video-prism" {
+		// The UI test checks that all three non-Frames models emit the same
+		// save payload apart from their exact model ID.
+		var envelope channelConfigurationSave
+		require.NoError(t, common.Unmarshal(payload, &envelope))
+		envelope.AddModels = []string{modelName}
+		envelope.Configuration.Bindings[modelName] = envelope.Configuration.Bindings["h3-video"]
+		delete(envelope.Configuration.Bindings, "h3-video")
+		payload, err = common.Marshal(envelope)
+		require.NoError(t, err)
+	}
+	saved := call(SaveChannelModelConfiguration, http.MethodPut, configPath, payload)
+	require.Contains(t, saved.Body.String(), `"success":true`)
+	reopened := call(GetChannelModelConfiguration, http.MethodGet, configPath, nil)
+	var response struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Configuration modelconfig.Document `json:"configuration"`
+			ChannelModels string               `json:"channelModels"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(reopened.Body.Bytes(), &response))
+	require.True(t, response.Success, reopened.Body.String())
+	readback := response.Data.Configuration
+	assert.Equal(t, int64(1), readback.Revision)
+	assert.Equal(t, modelName, response.Data.ChannelModels)
+	assert.Equal(t, "720p", readback.Groups["dialog-0"].Modes[primaryMode].Input["resolution"])
+	assert.Equal(t, `2 * u("seconds")`, readback.Bindings[modelName][primaryMode].Billing.Expression)
+	var route model.Ability
+	require.NoError(t, db.Where("channel_id = ?", channel.Id).First(&route).Error)
+	assert.Equal(t, modelName, route.Model)
+	assert.False(t, route.Enabled)
+	input := map[string]any{
+		"prompt": "Test clip", "duration": 6, "aspect_ratio": "16:9", "generate_audio": false,
+		"images": []string{imageRef}, "videos": []string{videoRef}, "audios": []string{audioRef},
+		"start_image_url": firstFrame, "end_image_url": lastFrame,
+	}
+	check, err := common.Marshal(gin.H{"configuration": readback, "model": modelName, "mode": "frames", "input": input})
+	require.NoError(t, err)
+	checked := call(CheckChannelModelConfiguration, http.MethodPost, configPath+"/check", check)
+	require.Contains(t, checked.Body.String(), `"actualCall":false`)
+	assert.Contains(t, checked.Body.String(), `"duration":6`)
+	assert.Contains(t, checked.Body.String(), `"generate_audio":false`)
+	for _, reference := range []string{firstFrame, lastFrame, imageRef, videoRef, audioRef} {
+		assert.Contains(t, checked.Body.String(), reference)
+	}
+	if modelName == "h3-video-frames" {
+		require.Len(t, readback.Bindings[modelName], 1)
+		capabilities := readback.Bindings[modelName]["frames"].Capabilities
+		require.NotNil(t, capabilities)
+		assert.True(t, capabilities.Images && capabilities.Videos && capabilities.Audios)
+		withoutAudio := readback
+		withoutAudio.Bindings = maps.Clone(readback.Bindings)
+		withoutAudio.Bindings[modelName] = maps.Clone(readback.Bindings[modelName])
+		binding := withoutAudio.Bindings[modelName]["frames"]
+		limits := *binding.Capabilities
+		limits.Audios = false
+		binding.Capabilities = &limits
+		withoutAudio.Bindings[modelName]["frames"] = binding
+		check, err := common.Marshal(gin.H{"configuration": withoutAudio, "model": modelName, "mode": "frames", "input": input})
+		require.NoError(t, err)
+		filtered := call(CheckChannelModelConfiguration, http.MethodPost, configPath+"/check", check)
+		require.Contains(t, filtered.Body.String(), `"actualCall":false`)
+		assert.NotContains(t, filtered.Body.String(), audioRef)
+		assert.Contains(t, filtered.Body.String(), videoRef)
+		for _, sample := range []struct {
+			seconds int
+			tail    string
+			want    string
+		}{
+			{seconds: 15, tail: lastFrame, want: `"actualCall":false`},
+			{seconds: 16, tail: lastFrame, want: "seconds"},
+			{seconds: 3, tail: lastFrame, want: "seconds"},
+			{seconds: 15, want: "h3-video-frames 至少需要 first_frame 或 last_frame"},
+		} {
+			referenceInput := maps.Clone(input)
+			referenceInput["duration"] = sample.seconds
+			delete(referenceInput, "start_image_url")
+			delete(referenceInput, "end_image_url")
+			if sample.tail != "" {
+				referenceInput["end_image_url"] = sample.tail
+			}
+			check, err := common.Marshal(gin.H{"configuration": readback, "model": modelName, "mode": "frames", "input": referenceInput})
+			require.NoError(t, err)
+			checked := call(CheckChannelModelConfiguration, http.MethodPost, configPath+"/check", check)
+			if sample.want != `"actualCall":false` {
+				assert.Contains(t, checked.Body.String(), `"success":false`)
+			}
+			assert.Contains(t, checked.Body.String(), sample.want)
+		}
+	}
+
+	// Use the runtime adaptor against the same saved channel, then the actual artifact handler.
+	adaptor := taskplugin.New(plugin)
+	info := &relaycommon.RelayInfo{OriginModelName: modelName, ChannelMeta: &relaycommon.ChannelMeta{
+		ChannelType: channel.Type, ChannelId: channel.Id, ChannelBaseUrl: upstream.URL, ApiKey: fixtureKey,
+		UpstreamModelName: modelName, ChannelSetting: channel.GetSetting(),
+	}, TaskRelayInfo: &relaycommon.TaskRelayInfo{Action: "video_generate"}}
+	adaptor.Init(info)
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/videos", nil)
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	var intent struct {
+		RequestBody map[string]any `json:"requestBody"`
+	}
+	require.NoError(t, plugin.Engine.CallPathInto(t.Context(), &intent, "protocols", []string{"openai_video", "decodeRequest"}, gin.H{
+		"model": modelName, "body": gin.H{"kind": "json", "value": input},
+	}))
+	ctx.Set("task_request", intent.RequestBody)
+	require.Nil(t, adaptor.ValidateRequestAndSetAction(ctx, info))
+	requestBody, err := adaptor.BuildRequestBody(ctx, info)
+	require.NoError(t, err)
+	upstreamResponse, err := adaptor.DoRequest(ctx, info, requestBody)
+	require.NoError(t, err)
+	defer upstreamResponse.Body.Close()
+	submitted, relayError := adaptor.ParseResponse(ctx, upstreamResponse, info)
+	require.Nil(t, relayError)
+	require.Equal(t, upstreamID, submitted.UpstreamTaskID)
+
+	owner := model.User{Id: 11, Username: "xiaoxiao-fixture", Status: common.UserStatusEnabled, Group: "default"}
+	require.NoError(t, db.Create(&owner).Error)
+	task := &model.Task{TaskID: "task_xiaoxiao_fixture", UserId: owner.Id, ChannelId: channel.Id, Platform: constant.TaskPlatform(provider),
+		Action: "video_generate", Status: model.TaskStatusQueued, Data: submitted.TaskData, SubmitTime: common.GetTimestamp(),
+		Properties: model.Properties{OriginModelName: modelName, UpstreamModelName: modelName},
+		PrivateData: model.TaskPrivateData{UpstreamTaskID: upstreamID, Key: fixtureKey, Execution: &model.TaskExecutionSnapshot{
+			TaskPlugin: &model.TaskPluginSnapshot{Key: provider, Version: plugin.Meta.Version, APIVersion: 1, SourceSHA256: plugin.SourceSHA256},
+		}},
+	}
+	require.NoError(t, db.Create(task).Error)
+	oldGetter := service.GetTaskAdaptorFunc
+	service.GetTaskAdaptorFunc = func(constant.TaskPlatform) service.TaskPollingAdaptor { return taskplugin.New(plugin) }
+	t.Cleanup(func() { service.GetTaskAdaptorFunc = oldGetter })
+	require.NoError(t, service.UpdateVideoTasks(t.Context(), task.Platform,
+		map[int][]string{channel.Id: {upstreamID}}, map[string]*model.Task{upstreamID: task}))
+	require.NoError(t, db.First(task, task.ID).Error)
+	require.Equal(t, model.TaskStatus(model.TaskStatusSuccess), task.Status)
+	content := httptest.NewRecorder()
+	artifactCtx, _ := gin.CreateTestContext(content)
+	artifactCtx.Set(middleware.TaskArtifactAccessContextKey, true)
+	artifactCtx.Params = gin.Params{{Key: "key", Value: task.TaskID}, {Key: "artifact_key", Value: "video"}}
+	artifactCtx.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID+"/artifacts/video/content", nil)
+	TaskArtifactContent(artifactCtx)
+	require.Equal(t, http.StatusOK, content.Code, content.Body.String())
+	assert.Equal(t, "video/mp4", content.Header().Get("Content-Type"))
+	download := filepath.Join(t.TempDir(), "result.mp4")
+	require.NoError(t, os.WriteFile(download, content.Body.Bytes(), 0600))
+	stored, err := os.ReadFile(download)
+	require.NoError(t, err)
+	assert.Equal(t, clip, stored)
+}
 
 func TestReviewedVideoUIModelConfigurationSave(t *testing.T) {
 	testReviewedVideoUIModelConfigurationSave(t, false)

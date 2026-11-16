@@ -11,7 +11,7 @@ import {
   projectDocumentInterfaces,
 } from './document-interfaces'
 import type { Catalog, Configuration } from './types'
-import { effectiveMode } from './workflow'
+import { applyIndependentCapability, effectiveMode } from './workflow'
 
 const root = path.resolve('..')
 const catalogs = JSON.parse(
@@ -26,6 +26,52 @@ const empty = (provider: string): Configuration => ({
 })
 
 describe('document interfaces and actual model IDs', () => {
+  it('initializes a mixed H3 selection per model and preserves an explicit reference choice when reapplying the interface', () => {
+    const raw = JSON.parse(
+      readFileSync(
+        path.join(root, 'pkg/modelconfig/xiaoxiao_video.catalog.json'),
+        'utf8'
+      )
+    ) as Catalog
+    const frames = 'h3-video-frames'
+    const standard = 'h3-video'
+    const models = [standard, frames]
+    const catalog = projectDocumentInterfaces(raw, models, 'video')
+    const interfaceId = catalog?.models[frames].interfaceId
+    if (!catalog || !interfaceId) throw new Error('Missing H3 Frames interface')
+    const initial = createSharedGroup(empty(raw.key), catalog, models, 'g')
+    expect(Object.keys(initial.bindings[frames])).toEqual(['frames'])
+    expect(effectiveMode(initial, standard, 'text_video')?.enabled).toBe(true)
+    expect(effectiveMode(initial, frames, 'frames')?.enabled).toBe(true)
+    expect(effectiveMode(initial, frames, 'frames')?.capabilities?.audios).toBe(
+      true
+    )
+
+    const draft = applyIndependentCapability(
+      initial,
+      catalog,
+      models,
+      'g',
+      'audio_ref',
+      false
+    )
+    const reapplied = applyDocumentInterface(
+      draft,
+      raw,
+      models,
+      'g',
+      interfaceId
+    )
+    expect(effectiveMode(reapplied, standard, 'audio_ref')?.enabled).toBe(false)
+    expect(
+      effectiveMode(reapplied, frames, 'frames')?.capabilities
+    ).toMatchObject({
+      images: true,
+      videos: true,
+      audios: false,
+    })
+  })
+
   it('selects the Fenglang official table for exact IDs and preserves existing saved interface choices', () => {
     const catalog = JSON.parse(
       readFileSync(
