@@ -431,6 +431,7 @@ function canEditConfiguration(type: number, key: string): boolean {
       'apipath_video',
       'kuaizi_video',
       'xiaoxiao_video',
+      'monkeyapi_image',
     ].includes(key)
   )
 }

@@ -694,13 +694,9 @@ func executeTaskSubmissionWith(
 			}
 		}
 	}
-	if pinnedValue, exists := c.Get(pluginruntime.ContextKeyPinnedEndpoint); exists && immediateTerminal {
-		if _, realConfigurationTest := c.Get(modelconfig.ContextKeyTestBudget); !realConfigurationTest {
-			if pinned, ok := pinnedValue.(pluginruntime.PinnedEndpoint); ok && pinned.Protocol == pluginruntime.ProtocolOpenAIImage {
-				task.PrivateData.ResultDiscarded = true
-				insertOmits = append(insertOmits, "data")
-			}
-		}
+	if immediateTerminal && service.TaskPluginReturnsInlineImages(c) {
+		task.PrivateData.ResultDiscarded = true
+		insertOmits = append(insertOmits, "data")
 	}
 	if result.Immediate != nil {
 		service.PrepareTaskUpstreamCostSettlement(task, result.Immediate)

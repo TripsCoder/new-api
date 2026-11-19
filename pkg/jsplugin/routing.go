@@ -985,6 +985,12 @@ func buildRoutingGenerationFromPlugins(effective map[string]*LoadedPlugin, numbe
 		plugin := effective[key]
 		generation.byKey[key] = plugin
 		generation.plugins = append(generation.plugins, plugin)
+		// Saved channel interfaces can still resolve this plugin by key.
+		// Its declared models are available for discovery without claiming
+		// global model metadata, pricing or endpoints.
+		if plugin.Meta.ChannelConfigurationOnly {
+			continue
+		}
 		for _, model := range plugin.Meta.Models {
 			generation.modelPlugins[model] = append(generation.modelPlugins[model], plugin)
 			if _, exists := generation.byModel[model]; !exists {

@@ -3,10 +3,16 @@ package controller
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
+	"image"
+	"image/png"
+	"io"
 	"maps"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/textproto"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +20,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
+	hostdto "github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/jsplugin"
@@ -29,6 +36,354 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+func TestMonkeyapiImageChannelWorkflow(t *testing.T) {
+	db := setupTaskPluginDiscoveryTestDB(t)
+	allowPrivateTaskMediaTest(t)
+	require.NoError(t, db.AutoMigrate(&model.TaskPlugin{}, &model.ChannelModelConfiguration{}, &model.Option{}))
+	const provider, modelName, key = "monkeyapi_image", "gpt-image-1", "monkeyapi-fixture-key"
+	source, err := os.ReadFile(filepath.Join("..", "plugin-sources", "monkeyapi-image", "dist", provider+".plugin.js"))
+	require.NoError(t, err)
+	plugin, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{Key: provider})
+	require.NoError(t, err)
+	require.NoError(t, db.Create(&model.TaskPlugin{Key: provider, Version: plugin.Meta.Version, APIVersion: 1,
+		Enabled: true, Active: true, Source: model.LongText(source), SourceHash: plugin.SourceSHA256}).Error)
+	var largePNG, tinyPNG bytes.Buffer
+	encoder := png.Encoder{CompressionLevel: png.NoCompression}
+	require.NoError(t, encoder.Encode(&largePNG, image.NewNRGBA(image.Rect(0, 0, 640, 640))))
+	require.NoError(t, png.Encode(&tinyPNG, image.NewNRGBA(image.Rect(0, 0, 1, 1))))
+	encoded := base64.StdEncoding.EncodeToString(largePNG.Bytes())
+	require.Greater(t, len(encoded), 1<<20)
+	const imageURL = "https://cdn.example/monkeyapi.png"
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "Bearer "+key, r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method + " " + r.URL.Path {
+		case "GET /v1/models":
+			fmt.Fprint(w, `{"data":[{"id":"gpt-image-2"},{"id":"gpt-image-1.5"},{"id":"gpt-image-1"},{"id":"gpt-image-1-mini"},{"id":"dall-e-2"},{"id":"dall-e-3"},{"id":"unreviewed-model"}]}`)
+		case "POST /v1/images/generations":
+			assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+			var body map[string]any
+			if assert.NoError(t, common.DecodeJson(r.Body, &body)) {
+				assert.Equal(t, map[string]any{"model": modelName, "prompt": "生成图片", "n": float64(2),
+					"size": "1024x1024", "quality": "high", "output_format": "png"}, body)
+			}
+			fmt.Fprintf(w, `{"created":1710000000,"data":[{"b64_json":%q,"revised_prompt":"A revised prompt"}]}`, encoded)
+		case "POST /v1/images/edits":
+			if !assert.NoError(t, r.ParseMultipartForm(2<<20)) {
+				http.Error(w, "invalid multipart", http.StatusBadRequest)
+				return
+			}
+			defer r.MultipartForm.RemoveAll()
+			assert.Equal(t, map[string][]string{"model": {modelName}, "prompt": {"Edit these"}, "n": {"1"},
+				"size": {"1024x1024"}, "quality": {"high"}, "output_format": {"png"}}, r.MultipartForm.Value)
+			assert.Len(t, r.MultipartForm.File["image[]"], 2)
+			assert.Len(t, r.MultipartForm.File["mask"], 1)
+			for _, files := range r.MultipartForm.File {
+				for _, header := range files {
+					assert.Equal(t, "image/png", header.Header.Get("Content-Type"))
+					file, openErr := header.Open()
+					if assert.NoError(t, openErr) {
+						data, readErr := io.ReadAll(file)
+						file.Close()
+						assert.NoError(t, readErr)
+						assert.Equal(t, tinyPNG.Bytes(), data)
+					}
+				}
+			}
+			fmt.Fprintf(w, `{"data":[{"url":%q}]}`, imageURL)
+		default:
+			t.Errorf("unexpected mock upstream request: %s %s", r.Method, r.URL.Path)
+			http.NotFound(w, r)
+		}
+	}))
+	defer upstream.Close()
+	baseURL := upstream.URL + "/v1"
+	channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin, Name: "Monkeyapi fixture", Key: key,
+		BaseURL: &baseURL, Group: "default", Status: common.ChannelStatusManuallyDisabled}
+	channel.SetSetting(dto.ChannelSettings{TaskPluginKey: provider})
+	require.NoError(t, db.Create(channel).Error)
+	call := func(handler gin.HandlerFunc, method, path string, payload []byte) *httptest.ResponseRecorder {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(recorder)
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+		c.Set("id", 1)
+		c.Request = httptest.NewRequest(method, path, bytes.NewReader(payload))
+		c.Request.Header.Set("Content-Type", "application/json")
+		handler(c)
+		assert.NotContains(t, recorder.Body.String(), key)
+		return recorder
+	}
+	listed := call(FetchUpstreamModels, http.MethodGet, "/api/channel/fetch_models/1", nil)
+	var discovered struct {
+		Success   bool
+		Discovery struct {
+			Source string
+			Models []struct {
+				ID      string
+				Adapted bool
+			}
+		}
+	}
+	require.NoError(t, common.Unmarshal(listed.Body.Bytes(), &discovered))
+	require.True(t, discovered.Success, listed.Body.String())
+	assert.Equal(t, "upstream", discovered.Discovery.Source)
+	var adapted []string
+	for _, item := range discovered.Discovery.Models {
+		if item.Adapted {
+			adapted = append(adapted, item.ID)
+		}
+	}
+	assert.ElementsMatch(t, []string{"gpt-image-2", "gpt-image-1.5", modelName, "gpt-image-1-mini", "dall-e-2", "dall-e-3"}, adapted)
+
+	const configPath = "/api/channel/1/model-configuration"
+	payload, err := os.ReadFile(filepath.Join("testdata", "monkeyapi_image_ui_save.json"))
+	require.NoError(t, err)
+	saved := call(SaveChannelModelConfiguration, http.MethodPut, configPath, payload)
+	require.Contains(t, saved.Body.String(), `"success":true`)
+	reopened := call(GetChannelModelConfiguration, http.MethodGet, configPath, nil)
+	var readback struct {
+		Success bool
+		Data    struct {
+			Configuration modelconfig.Document
+			ChannelModels string
+		}
+	}
+	require.NoError(t, common.Unmarshal(reopened.Body.Bytes(), &readback))
+	require.True(t, readback.Success)
+	assert.Equal(t, modelName, readback.Data.ChannelModels)
+	assert.Equal(t, int64(1), readback.Data.Configuration.Revision)
+	bindings := readback.Data.Configuration.Bindings[modelName]
+	require.Len(t, bindings, 2)
+	for _, binding := range bindings {
+		require.NotNil(t, binding.Protocol)
+		assert.True(t, binding.Protocol.Confirmed)
+		require.NotNil(t, binding.Parameters["prompt"].Required)
+		assert.True(t, *binding.Parameters["prompt"].Required)
+		assert.Equal(t, true, binding.Parameters["model"].Definition["serverGenerated"])
+		assert.Equal(t, "high", binding.Input["quality"])
+		assert.Nil(t, binding.Billing)
+		assert.Nil(t, binding.Pricing)
+		require.NotNil(t, binding.Cost)
+		assert.Nil(t, binding.Cost.Amount)
+		for _, field := range []string{"n", "size", "quality"} {
+			assert.Equal(t, field, binding.Mapping[field])
+		}
+	}
+	assert.Contains(t, bindings["edit_image"].Parameters, "images")
+	assert.Contains(t, bindings["edit_image"].Parameters, "mask")
+	assert.NotContains(t, bindings["text_image"].Parameters, "images")
+	var rejected channelConfigurationSave
+	require.NoError(t, common.Unmarshal(payload, &rejected))
+	rejected.ExpectedRevision, rejected.ExpectedModels, rejected.AddModels = 1, modelName, nil
+	delete(rejected.Configuration.Bindings[modelName]["text_image"].Parameters, "prompt")
+	rejectedBody, err := common.Marshal(rejected)
+	require.NoError(t, err)
+	failed := call(SaveChannelModelConfiguration, http.MethodPut, configPath, rejectedBody)
+	assert.Contains(t, failed.Body.String(), `"success":false`)
+	assert.Contains(t, failed.Body.String(), "prompt")
+	rechecked := call(GetChannelModelConfiguration, http.MethodGet, configPath, nil)
+	assert.JSONEq(t, reopened.Body.String(), rechecked.Body.String())
+	var ability model.Ability
+	require.NoError(t, db.Where("channel_id = ?", channel.Id).First(&ability).Error)
+	assert.Equal(t, modelName, ability.Model)
+	assert.False(t, ability.Enabled)
+
+	generation := jsplugin.DefaultRegistry.Generation()
+	for _, name := range []string{modelName, "gpt-image-2"} {
+		_, registeredGlobally := generation.GetByModel(name)
+		assert.False(t, registeredGlobally, name)
+		_, claimed := generation.LookupEndpoint(http.MethodPost, "/v1/images/generations", name)
+		assert.False(t, claimed, name)
+	}
+	disabledRouter := gin.New()
+	disabledRouter.POST("/v1/images/generations", middleware.PinTaskPluginEndpoint(), func(c *gin.Context) {
+		_, pinned := c.Get(jsplugin.ContextKeyPinnedEndpoint)
+		assert.False(t, pinned, "disabled Monkeyapi channel must leave ordinary image routing available")
+		c.Status(http.StatusNoContent)
+	})
+	disabledRequest := httptest.NewRequest(http.MethodPost, "/v1/images/generations", strings.NewReader(`{"model":"gpt-image-1","prompt":"probe"}`))
+	disabledRequest.Header.Set("Content-Type", "application/json")
+	disabledResponse := httptest.NewRecorder()
+	disabledRouter.ServeHTTP(disabledResponse, disabledRequest)
+	require.Equal(t, http.StatusNoContent, disabledResponse.Code, disabledResponse.Body.String())
+	// Enable only the isolated fixture to exercise routing through its saved interfaces.
+	require.NoError(t, db.Model(channel).Update("status", common.ChannelStatusEnabled).Error)
+
+	formBytes := &bytes.Buffer{}
+	form := multipart.NewWriter(formBytes)
+	for field, value := range map[string]string{"model": modelName, "prompt": "Edit these", "n": "1", "size": "1024x1024"} {
+		require.NoError(t, form.WriteField(field, value))
+	}
+	for _, field := range []string{"image[]", "image[]", "mask"} {
+		part, err := form.CreatePart(textproto.MIMEHeader{
+			"Content-Disposition": {fmt.Sprintf(`form-data; name=%q; filename="source.png"`, field)},
+			"Content-Type":        {"image/png"},
+		})
+		require.NoError(t, err)
+		_, err = part.Write(tinyPNG.Bytes())
+		require.NoError(t, err)
+	}
+	require.NoError(t, form.Close())
+	for _, test := range []struct {
+		path, contentType string
+		body              []byte
+		want              map[string]any
+		wantN             int
+	}{
+		{"/v1/images/generations", "application/json", []byte(`{"model":"gpt-image-1","prompt":"生成图片","n":2,"size":"1024x1024"}`),
+			map[string]any{"b64_json": encoded, "revised_prompt": "A revised prompt"}, 2},
+		{"/v1/images/edits", form.FormDataContentType(), formBytes.Bytes(), map[string]any{"url": imageURL}, 1},
+	} {
+		t.Run(test.path, func(t *testing.T) {
+			router := gin.New()
+			router.POST(test.path, middleware.PinTaskPluginEndpoint(), middleware.PrepareTaskPluginEndpoint(), func(c *gin.Context) {
+				pinned, ok := c.MustGet(jsplugin.ContextKeyPinnedEndpoint).(jsplugin.PinnedEndpoint)
+				require.True(t, ok)
+				require.Same(t, plugin, pinned.Plugin)
+				require.True(t, pinned.Candidates[0].ConfigurationBound)
+				deps := pluginProtocolTestDeps()
+				deps.downloadImage = func(string) (string, string, error) {
+					t.Error("unexpected image download")
+					return "", "", fmt.Errorf("network calls are disabled in this fixture")
+				}
+				// The fixture has no price. Exercise the actual
+				// decoder, submit adaptor and response presenter without charging.
+				deps.submit = func(c *gin.Context, info *relaycommon.RelayInfo) (*taskSubmissionOutcome, *hostdto.TaskError) {
+					info.ChannelMeta = &relaycommon.ChannelMeta{ChannelType: channel.Type, ChannelId: channel.Id,
+						ChannelBaseUrl: baseURL, ApiKey: key, UpstreamModelName: modelName, ChannelSetting: channel.GetSetting()}
+					adaptor := taskplugin.New(plugin)
+					adaptor.Init(info)
+					require.Nil(t, adaptor.ValidateRequestAndSetAction(c, info))
+					facts, err := adaptor.ExtractUsageFactsValidated(c, info)
+					require.NoError(t, err)
+					assert.EqualValues(t, test.wantN, facts["image_count"])
+					body, err := adaptor.BuildRequestBody(c, info)
+					require.NoError(t, err)
+					response, err := adaptor.DoRequest(c, info, body)
+					require.NoError(t, err)
+					defer response.Body.Close()
+					result, taskErr := adaptor.ParseResponse(c, response, info)
+					if taskErr != nil {
+						return nil, taskErr
+					}
+					require.NotNil(t, result.Immediate)
+					assert.Equal(t, model.TaskStatusSuccess, result.Immediate.Status)
+					assert.EqualValues(t, 1, result.Immediate.UsageFacts["image_count"])
+					return &taskSubmissionOutcome{Task: &model.Task{TaskID: "task_monkeyapi_fixture", Platform: constant.TaskPlatform(provider),
+						Status: model.TaskStatusSuccess, Data: result.TaskData, SubmitTime: 1710000000}}, nil
+				}
+				serveTaskPluginImageProtocol(c, pinned, deps)
+			})
+			request := httptest.NewRequest(http.MethodPost, test.path, bytes.NewReader(test.body))
+			request.Header.Set("Content-Type", test.contentType)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			require.Equal(t, http.StatusOK, response.Code, response.Body.String())
+			var imageResponse struct {
+				Created int64
+				Data    []map[string]any
+			}
+			require.NoError(t, common.Unmarshal(response.Body.Bytes(), &imageResponse))
+			assert.Equal(t, int64(1710000000), imageResponse.Created)
+			assert.Equal(t, []map[string]any{test.want}, imageResponse.Data)
+		})
+	}
+}
+
+func TestMonkeyapiUpscaleConfiguration(t *testing.T) {
+	db := setupTaskPluginDiscoveryTestDB(t)
+	require.NoError(t, db.AutoMigrate(&model.TaskPlugin{}, &model.ChannelModelConfiguration{}, &model.Option{}))
+	const provider = "monkeyapi_image"
+	const sample = "gpt-image-2.6-flare-超分"
+	models := []string{"gpt-image-2-超分", "gpt-image-2.5-超分", "gpt-image-2.5-flare-超分", "gpt-image-2.5-sunburst-超分",
+		"gpt-image-2.6-超分", sample, "gpt-image-2.6-sunburst-超分"}
+	source, err := os.ReadFile(filepath.Join("..", "plugin-sources", "monkeyapi-image", "dist", provider+".plugin.js"))
+	require.NoError(t, err)
+	plugin, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{Key: provider})
+	require.NoError(t, err)
+	require.NoError(t, db.Create(&model.TaskPlugin{Key: provider, Version: plugin.Meta.Version, APIVersion: 1,
+		Enabled: true, Active: true, Source: model.LongText(source), SourceHash: plugin.SourceSHA256}).Error)
+	baseURL := "https://image-provider.invalid"
+	channel := &model.Channel{Type: constant.ChannelTypeTaskPlugin, Name: "Monkeyapi discovery fixture", Key: "fixture-key",
+		BaseURL: &baseURL, Group: "default", Status: common.ChannelStatusManuallyDisabled}
+	channel.SetSetting(dto.ChannelSettings{TaskPluginKey: provider})
+	require.NoError(t, db.Create(channel).Error)
+	for _, name := range models {
+		assert.True(t, taskPluginAdaptsChannelModel(channel, plugin.Meta, name), name)
+	}
+	assert.False(t, taskPluginAdaptsChannelModel(channel, plugin.Meta, "gpt-image-2.7-超分"))
+
+	const configPath = "/api/channel/1/model-configuration"
+	call := func(handler gin.HandlerFunc, method, path string, payload any) []byte {
+		t.Helper()
+		raw, err := common.Marshal(payload)
+		require.NoError(t, err)
+		recorder := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(recorder)
+		c.Params = gin.Params{{Key: "id", Value: fmt.Sprint(channel.Id)}}
+		c.Set("id", 1)
+		c.Request = httptest.NewRequest(method, path, bytes.NewReader(raw))
+		c.Request.Header.Set("Content-Type", "application/json")
+		handler(c)
+		return recorder.Body.Bytes()
+	}
+
+	payload, err := os.ReadFile(filepath.Join("testdata", "monkeyapi_upscale_ui_save.json"))
+	require.NoError(t, err)
+	var request channelConfigurationSave
+	require.NoError(t, common.Unmarshal(payload, &request))
+	binding := request.Configuration.Bindings[sample]
+	require.Len(t, binding, 1)
+	request.AddModels = models
+	for _, name := range models {
+		request.Configuration.Bindings[name] = binding
+	}
+	saved := call(SaveChannelModelConfiguration, http.MethodPut, configPath, request)
+	require.Contains(t, string(saved), `"success":true`)
+	var response struct {
+		Success bool
+		Data    struct {
+			Configuration modelconfig.Document
+			ChannelModels string
+		}
+	}
+	reopened := call(GetChannelModelConfiguration, http.MethodGet, configPath, nil)
+	require.NoError(t, common.Unmarshal(reopened, &response))
+	require.True(t, response.Success, string(reopened))
+	assert.Equal(t, int64(1), response.Data.Configuration.Revision)
+	assert.ElementsMatch(t, models, strings.Split(response.Data.ChannelModels, ","))
+	var routes []model.Ability
+	require.NoError(t, db.Where("channel_id = ?", channel.Id).Find(&routes).Error)
+	require.Len(t, routes, len(models))
+	for _, route := range routes {
+		assert.False(t, route.Enabled)
+	}
+	for _, name := range models {
+		config := response.Data.Configuration
+		require.Len(t, config.Bindings[name], 1)
+		saved := config.Bindings[name]["text_image"]
+		require.NotNil(t, saved.Protocol)
+		require.True(t, saved.Protocol.Confirmed)
+		assert.Nil(t, saved.Billing)
+		assert.Nil(t, saved.Pricing)
+		check := gin.H{"configuration": config, "model": name, "mode": "text_image", "input": gin.H{"prompt": "图片测试"}}
+		raw := call(CheckChannelModelConfiguration, http.MethodPost, configPath+"/check", check)
+		require.Contains(t, string(raw), `"actualCall":false`, name)
+		var checked struct {
+			Data struct {
+				Request struct {
+					URL  string
+					Body map[string]any
+				}
+			}
+		}
+		require.NoError(t, common.Unmarshal(raw, &checked))
+		assert.Equal(t, baseURL+"/v1/images/generations", checked.Data.Request.URL)
+		assert.Equal(t, map[string]any{"model": name, "prompt": "图片测试"}, checked.Data.Request.Body)
+	}
+}
 
 func TestXiaoxiaoVideoChannelWorkflow(t *testing.T) {
 	for _, test := range []struct{ model, fixture, primaryMode string }{

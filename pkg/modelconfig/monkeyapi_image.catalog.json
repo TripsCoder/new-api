@@ -1,0 +1,2937 @@
+{
+  "key": "monkeyapi_image",
+  "name": "Monkeyapi 图片",
+  "baseURL": "https://stable.monkeyapi.net",
+  "docsURL": "https://stable.monkeyapi.net",
+  "models": {},
+  "interfaces": {
+    "interface:5b55c5991bc01ed2": {
+      "id": "interface:5b55c5991bc01ed2",
+      "title": "Monkeyapi 图片生成与编辑",
+      "kind": "image",
+      "method": "POST",
+      "path": "/v1/images/generations",
+      "status": "documented-interface-not-account-verification",
+      "source": {
+        "url": "https://stable.monkeyapi.net",
+        "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+        "readAt": "2026-11-19",
+        "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+        "status": "supplied-client-review"
+      },
+      "parameters": {
+        "model": {
+          "type": "string",
+          "description": "模型，由网关填写",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "required": true,
+          "definition": {
+            "type": "string",
+            "description": "模型，由网关填写",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "model"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536,
+          "description": "图片提示词",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "required": true,
+          "definition": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536,
+            "description": "图片提示词",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "prompt"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "n": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "生成张数，缺省按一张处理",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "required": false,
+          "definition": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "生成张数，缺省按一张处理",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "n"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "size": {
+          "type": "string",
+          "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+          "description": "图片尺寸，具体候选值以型号实际支持为准",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "required": false,
+          "definition": {
+            "type": "string",
+            "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+            "description": "图片尺寸，具体候选值以型号实际支持为准",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "size"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "low",
+            "medium",
+            "high",
+            "standard",
+            "hd"
+          ],
+          "description": "生成质量",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "required": false,
+          "definition": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "low",
+              "medium",
+              "high",
+              "standard",
+              "hd"
+            ],
+            "description": "生成质量",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "quality"
+              ],
+              "capabilities": [
+                "base"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^request_file:"
+          },
+          "minItems": 1,
+          "maxItems": 16,
+          "description": "参考图文件，改图至少上传一张",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "required": false,
+          "definition": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^request_file:"
+            },
+            "minItems": 1,
+            "maxItems": 16,
+            "description": "参考图文件，改图至少上传一张",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "image",
+                "image[]"
+              ],
+              "capabilities": [
+                "edit_image"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        },
+        "mask": {
+          "type": "string",
+          "pattern": "^request_file:",
+          "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "required": false,
+          "definition": {
+            "type": "string",
+            "pattern": "^request_file:",
+            "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+            "x-channel-parameter": {
+              "vendorFields": [
+                "mask"
+              ],
+              "capabilities": [
+                "edit_image"
+              ],
+              "requiredIn": [],
+              "status": "documented"
+            }
+          }
+        }
+      },
+      "mapping": {
+        "model": "model",
+        "prompt": "prompt",
+        "n": "n",
+        "size": "size",
+        "quality": "quality",
+        "images": "images",
+        "mask": "mask"
+      },
+      "modes": {
+        "text_image": {
+          "required": [
+            "prompt"
+          ],
+          "initiallyEnabled": true
+        },
+        "edit_image": {
+          "required": [
+            "prompt"
+          ],
+          "initiallyEnabled": true
+        }
+      },
+      "pending": [
+        "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+        "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+        "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实"
+      ],
+      "modelRules": {
+        "gpt-image-2": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成与编辑",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "生成张数，缺省按一张处理",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10,
+                "description": "生成张数，缺省按一张处理",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "quality": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "low",
+                "medium",
+                "high"
+              ],
+              "description": "生成质量",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "description": "生成质量",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "quality"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^request_file:"
+              },
+              "minItems": 1,
+              "maxItems": 16,
+              "description": "参考图文件，改图至少上传一张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^request_file:"
+                },
+                "minItems": 1,
+                "maxItems": 16,
+                "description": "参考图文件，改图至少上传一张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "image",
+                    "image[]"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "mask": {
+              "type": "string",
+              "pattern": "^request_file:",
+              "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^request_file:",
+                "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mask"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size",
+            "quality": "quality",
+            "images": "images",
+            "mask": "mask"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            },
+            "edit_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实"
+          ]
+        },
+        "gpt-image-1.5": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成与编辑",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "生成张数，缺省按一张处理",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10,
+                "description": "生成张数，缺省按一张处理",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "quality": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "low",
+                "medium",
+                "high"
+              ],
+              "description": "生成质量",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "description": "生成质量",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "quality"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^request_file:"
+              },
+              "minItems": 1,
+              "maxItems": 16,
+              "description": "参考图文件，改图至少上传一张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^request_file:"
+                },
+                "minItems": 1,
+                "maxItems": 16,
+                "description": "参考图文件，改图至少上传一张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "image",
+                    "image[]"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "mask": {
+              "type": "string",
+              "pattern": "^request_file:",
+              "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^request_file:",
+                "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mask"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size",
+            "quality": "quality",
+            "images": "images",
+            "mask": "mask"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            },
+            "edit_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实"
+          ]
+        },
+        "gpt-image-1": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成与编辑",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "生成张数，缺省按一张处理",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10,
+                "description": "生成张数，缺省按一张处理",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "quality": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "low",
+                "medium",
+                "high"
+              ],
+              "description": "生成质量",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "description": "生成质量",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "quality"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^request_file:"
+              },
+              "minItems": 1,
+              "maxItems": 16,
+              "description": "参考图文件，改图至少上传一张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^request_file:"
+                },
+                "minItems": 1,
+                "maxItems": 16,
+                "description": "参考图文件，改图至少上传一张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "image",
+                    "image[]"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "mask": {
+              "type": "string",
+              "pattern": "^request_file:",
+              "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^request_file:",
+                "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mask"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size",
+            "quality": "quality",
+            "images": "images",
+            "mask": "mask"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            },
+            "edit_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实"
+          ]
+        },
+        "gpt-image-1-mini": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成与编辑",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "生成张数，缺省按一张处理",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10,
+                "description": "生成张数，缺省按一张处理",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "quality": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "low",
+                "medium",
+                "high"
+              ],
+              "description": "生成质量",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "description": "生成质量",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "quality"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^request_file:"
+              },
+              "minItems": 1,
+              "maxItems": 16,
+              "description": "参考图文件，改图至少上传一张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^request_file:"
+                },
+                "minItems": 1,
+                "maxItems": 16,
+                "description": "参考图文件，改图至少上传一张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "image",
+                    "image[]"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "mask": {
+              "type": "string",
+              "pattern": "^request_file:",
+              "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^request_file:",
+                "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mask"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size",
+            "quality": "quality",
+            "images": "images",
+            "mask": "mask"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            },
+            "edit_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实"
+          ]
+        },
+        "dall-e-3": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成与编辑",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "生成张数，缺省按一张处理",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1,
+                "description": "生成张数，缺省按一张处理",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "quality": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "standard",
+                "hd",
+                "high"
+              ],
+              "description": "生成质量",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "standard",
+                  "hd",
+                  "high"
+                ],
+                "description": "生成质量",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "quality"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size",
+            "quality": "quality"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实"
+          ]
+        },
+        "dall-e-2": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成与编辑",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "生成张数，缺省按一张处理",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10,
+                "description": "生成张数，缺省按一张处理",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^request_file:"
+              },
+              "minItems": 1,
+              "maxItems": 1,
+              "description": "参考图文件，改图至少上传一张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^request_file:"
+                },
+                "minItems": 1,
+                "maxItems": 1,
+                "description": "参考图文件，改图至少上传一张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "image",
+                    "image[]"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "mask": {
+              "type": "string",
+              "pattern": "^request_file:",
+              "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^request_file:",
+                "description": "可选透明 PNG 蒙版，与首张参考图同尺寸",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "mask"
+                  ],
+                  "capabilities": [
+                    "edit_image"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size",
+            "images": "images",
+            "mask": "mask"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            },
+            "edit_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实"
+          ]
+        },
+        "gpt-image-2-超分": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "生成张数，当前适配限制为单张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1,
+                "description": "生成张数，当前适配限制为单张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实",
+            "超分型号来自渠道实际目录。插件暂按单张同步生图配置，专属尺寸、质量和改图能力待验证"
+          ]
+        },
+        "gpt-image-2.5-超分": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "生成张数，当前适配限制为单张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1,
+                "description": "生成张数，当前适配限制为单张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实",
+            "超分型号来自渠道实际目录。插件暂按单张同步生图配置，专属尺寸、质量和改图能力待验证"
+          ]
+        },
+        "gpt-image-2.5-flare-超分": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "生成张数，当前适配限制为单张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1,
+                "description": "生成张数，当前适配限制为单张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实",
+            "超分型号来自渠道实际目录。插件暂按单张同步生图配置，专属尺寸、质量和改图能力待验证"
+          ]
+        },
+        "gpt-image-2.5-sunburst-超分": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "生成张数，当前适配限制为单张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1,
+                "description": "生成张数，当前适配限制为单张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实",
+            "超分型号来自渠道实际目录。插件暂按单张同步生图配置，专属尺寸、质量和改图能力待验证"
+          ]
+        },
+        "gpt-image-2.6-超分": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "生成张数，当前适配限制为单张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1,
+                "description": "生成张数，当前适配限制为单张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实",
+            "超分型号来自渠道实际目录。插件暂按单张同步生图配置，专属尺寸、质量和改图能力待验证"
+          ]
+        },
+        "gpt-image-2.6-flare-超分": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "生成张数，当前适配限制为单张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1,
+                "description": "生成张数，当前适配限制为单张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实",
+            "超分型号来自渠道实际目录。插件暂按单张同步生图配置，专属尺寸、质量和改图能力待验证"
+          ]
+        },
+        "gpt-image-2.6-sunburst-超分": {
+          "id": "interface:5b55c5991bc01ed2",
+          "title": "Monkeyapi 图片生成",
+          "kind": "image",
+          "method": "POST",
+          "path": "/v1/images/generations",
+          "status": "documented-interface-not-account-verification",
+          "source": {
+            "url": "https://stable.monkeyapi.net",
+            "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+            "readAt": "2026-11-19",
+            "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+            "status": "supplied-client-review"
+          },
+          "parameters": {
+            "model": {
+              "type": "string",
+              "description": "模型，由网关填写",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "description": "模型，由网关填写",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "model"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 65536,
+              "description": "图片提示词",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": true,
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536,
+                "description": "图片提示词",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "prompt"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "生成张数，当前适配限制为单张",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1,
+                "description": "生成张数，当前适配限制为单张",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "n"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            },
+            "size": {
+              "type": "string",
+              "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+              "description": "图片尺寸，具体候选值以型号实际支持为准",
+              "source": {
+                "url": "https://stable.monkeyapi.net",
+                "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+                "readAt": "2026-11-19",
+                "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+                "status": "supplied-client-review"
+              },
+              "required": false,
+              "definition": {
+                "type": "string",
+                "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$",
+                "description": "图片尺寸，具体候选值以型号实际支持为准",
+                "x-channel-parameter": {
+                  "vendorFields": [
+                    "size"
+                  ],
+                  "capabilities": [
+                    "base"
+                  ],
+                  "requiredIn": [],
+                  "status": "documented"
+                }
+              }
+            }
+          },
+          "mapping": {
+            "model": "model",
+            "prompt": "prompt",
+            "n": "n",
+            "size": "size"
+          },
+          "modes": {
+            "text_image": {
+              "required": [
+                "prompt"
+              ],
+              "initiallyEnabled": true
+            }
+          },
+          "pending": [
+            "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+            "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+            "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实",
+            "超分型号来自渠道实际目录。插件暂按单张同步生图配置，专属尺寸、质量和改图能力待验证"
+          ]
+        }
+      }
+    }
+  },
+  "warnings": [
+    "字段及候选型号来自用户提供的 Python 客户端。真实目录、账号能力和逐型号限制仍待上游验证",
+    "改图仅接受 multipart 上传。蒙版尺寸与透明信息及 DALL-E 2 正方形要求由上游校验",
+    "首版解析同步 JSON 结果。SSE、异步任务和采购价尚未核实",
+    "超分型号来自渠道实际目录。插件暂按单张同步生图配置，专属尺寸、质量和改图能力待验证"
+  ],
+  "documents": [
+    {
+      "id": "interface:5b55c5991bc01ed2",
+      "title": "Monkeyapi 图片生成",
+      "method": "POST",
+      "path": "/v1/images/generations",
+      "source": {
+        "url": "https://stable.monkeyapi.net",
+        "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+        "readAt": "2026-11-19",
+        "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+        "status": "supplied-client-review"
+      },
+      "description": "JSON 请求，返回图片 URL 或 Base64，候选规则摘自随附客户端",
+      "schema": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt"
+        ],
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "size": {
+            "type": "string",
+            "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$"
+          },
+          "quality": {
+            "type": "string"
+          },
+          "output_format": {
+            "type": "string"
+          },
+          "response_format": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "monkeyapi-images-edit",
+      "title": "Monkeyapi 图片编辑",
+      "method": "POST",
+      "path": "/v1/images/edits",
+      "source": {
+        "url": "https://stable.monkeyapi.net",
+        "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+        "readAt": "2026-11-19",
+        "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+        "status": "supplied-client-review"
+      },
+      "description": "multipart 请求，单图 image 或多图 image[]，可选 mask",
+      "schema": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "image"
+            ]
+          },
+          {
+            "required": [
+              "image[]"
+            ]
+          }
+        ],
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "size": {
+            "type": "string",
+            "pattern": "^(auto|[1-9][0-9]{1,4}x[1-9][0-9]{1,4})$"
+          },
+          "quality": {
+            "type": "string"
+          },
+          "output_format": {
+            "type": "string"
+          },
+          "response_format": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string",
+            "format": "binary"
+          },
+          "image[]": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "items": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "mask": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      }
+    }
+  ]
+}

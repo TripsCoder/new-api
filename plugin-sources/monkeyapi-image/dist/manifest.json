@@ -1,0 +1,19 @@
+{
+  "key": "monkeyapi_image",
+  "version": "2.0.1",
+  "file": "monkeyapi_image.plugin.js",
+  "interface": "interface:5b55c5991bc01ed2",
+  "sha256": "169b453c7e25cc17169b0827d855fc7b33c2659b355fb88e77a4ce737dc02490",
+  "configuration": "common",
+  "source": {
+    "url": "https://stable.monkeyapi.net",
+    "sha256": "a802e78b49c0695277f2f13091f05264aa8e896b99599d020090ae2e2e9b94f0",
+    "readAt": "2026-11-19",
+    "scope": "用户提供的 monkeyapi-image-v1.0.0.zip 中的客户端源码及参数说明，链接指向服务入口",
+    "status": "supplied-client-review"
+  },
+  "inputs": {
+    "build.mjs": "27c57a7c908f24c617ef6b1068634a20980d81080d817cd6b6e187e566324c4a",
+    "plugin.js": "683b068d4a2663df50120d5e5f72cfcb3ab186930eda87f446564727f2e92373"
+  }
+}

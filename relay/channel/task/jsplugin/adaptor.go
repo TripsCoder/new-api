@@ -600,8 +600,12 @@ func (a *TaskAdaptor) ParseResponse(c *gin.Context, resp *http.Response, info *r
 	}
 	var taskData []byte
 	if parsed.TaskData != nil {
+		limit := maxTaskPluginPersistedJSONBytes
+		if largeSubmitJSON && parsed.Immediate != nil && parsed.Immediate.Status == model.TaskStatusSuccess && service.TaskPluginReturnsInlineImages(c) {
+			limit = maxTaskPluginLargeSubmitJSONBytes
+		}
 		taskData, err = common.Marshal(parsed.TaskData)
-		if err != nil || len(taskData) > maxTaskPluginPersistedJSONBytes {
+		if err != nil || len(taskData) > limit {
 			if err == nil {
 				err = fmt.Errorf("task data exceeds size limit")
 			}

@@ -4,7 +4,21 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/jsplugin"
+	"github.com/QuantumNous/new-api/pkg/modelconfig"
+	"github.com/gin-gonic/gin"
 )
+
+// TaskPluginReturnsInlineImages identifies requests whose immediate result
+// is rendered once without storing the upstream snapshot.
+func TaskPluginReturnsInlineImages(c *gin.Context) bool {
+	if _, realConfigurationTest := c.Get(modelconfig.ContextKeyTestBudget); realConfigurationTest {
+		return false
+	}
+	value, _ := c.Get(jsplugin.ContextKeyPinnedEndpoint)
+	pinned, ok := value.(jsplugin.PinnedEndpoint)
+	return ok && pinned.Protocol == jsplugin.ProtocolOpenAIImage
+}
 
 // BuildTaskPluginView converts a persisted task into the deliberately narrow
 // public shape permitted at JavaScript plugin boundaries.

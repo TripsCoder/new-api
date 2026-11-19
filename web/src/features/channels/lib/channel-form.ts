@@ -296,7 +296,7 @@ export const channelFormSchema = z
     upstream_model_update_ignored_models: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    const isReviewedVideoDraft =
+    const isReviewedPluginDraft =
       data.type === CHANNEL_TYPE_TASK_PLUGIN &&
       [
         'aotian_video',
@@ -304,9 +304,10 @@ export const channelFormSchema = z
         'apipath_video',
         'kuaizi_video',
         'xiaoxiao_video',
+        'monkeyapi_image',
       ].includes(data.task_plugin_key ?? '') &&
       data.status !== 1
-    if (data.models.length === 0 && !isReviewedVideoDraft) {
+    if (data.models.length === 0 && !isReviewedPluginDraft) {
       addRequiredIssue(ctx, 'models', ERROR_MESSAGES.REQUIRED_MODELS)
     }
     if (

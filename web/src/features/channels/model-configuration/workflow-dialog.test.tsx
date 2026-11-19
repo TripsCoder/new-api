@@ -524,11 +524,15 @@ describe('actual channel workflow dialog', () => {
     ['xiaoxiao_video', 'h3-video-flex'],
     ['xiaoxiao_video', 'h3-video-prism'],
     ['xiaoxiao_video', 'h3-video-frames'],
+    ['monkeyapi_image', 'gpt-image-1'],
+    ['monkeyapi_image', 'gpt-image-2.6-flare-超分'],
   ])(
     'opens the complete %s/%s configuration workflow with its generated catalog',
     async (provider, model) => {
       const kuaizi = provider === 'kuaizi_video'
       const xiaoxiao = provider === 'xiaoxiao_video'
+      const monkeyapi = provider === 'monkeyapi_image'
+      const monkeyapiUpscale = monkeyapi && model.endsWith('-超分')
       const framesOnly = model === 'h3-video-frames'
       if (xiaoxiao) {
         mocks.discovered.mockReturnValue([
@@ -537,6 +541,9 @@ describe('actual channel workflow dialog', () => {
           'h3-video-prism',
           'h3-video-frames',
         ])
+      }
+      if (monkeyapi) {
+        mocks.discovered.mockReturnValue([model, 'dall-e-3'])
       }
       const actual = JSON.parse(
         readFileSync(
@@ -547,6 +554,7 @@ describe('actual channel workflow dialog', () => {
       const versions: Record<string, string> = {
         kuaizi_video: '2.1.2',
         xiaoxiao_video: '2.1.3',
+        monkeyapi_image: '2.0.1',
       }
       mocks.get.mockResolvedValueOnce({
         pluginVersion: versions[provider] ?? '2.1.0',
@@ -561,7 +569,7 @@ describe('actual channel workflow dialog', () => {
         versions: [],
       })
       const view = mount('', false)
-      if (xiaoxiao) {
+      if (xiaoxiao || monkeyapi) {
         await userEvent.click(
           await screen.findByRole('checkbox', { name: model })
         )
@@ -579,9 +587,38 @@ describe('actual channel workflow dialog', () => {
       const captureSave =
         kuaizi ||
         xiaoxiao ||
+        monkeyapi ||
         provider === 'apipath_video' ||
         model.startsWith('doubao-seedance-')
-      await advanceToParameters(kuaizi || xiaoxiao, framesOnly, xiaoxiao)
+      if (monkeyapi) {
+        await userEvent.click(
+          screen.getByRole('button', {
+            name: 'Next: output type and functions',
+          })
+        )
+        await userEvent.click(screen.getByRole('button', { name: 'Image' }))
+        const imageCapabilities = monkeyapiUpscale
+          ? [/^Text to image/]
+          : [/^Text to image/, /^Image to image/]
+        for (const name of imageCapabilities) {
+          const capability = screen.getByRole('checkbox', { name })
+          if (capability.getAttribute('aria-checked') !== 'true') {
+            await userEvent.click(capability)
+          }
+          expect(capability).toBeChecked()
+        }
+        if (monkeyapiUpscale) {
+          expect(
+            screen.getByRole('checkbox', { name: /^Image to image/ })
+          ).not.toBeChecked()
+        }
+        await userEvent.click(
+          screen.getByRole('button', { name: 'Next: documented parameters' })
+        )
+        await screen.findByText('Parameters for this function')
+      } else {
+        await advanceToParameters(kuaizi || xiaoxiao, framesOnly, xiaoxiao)
+      }
       if (xiaoxiao) {
         const parameters = within(
           screen.getByTestId('selected-capability-parameters')
@@ -593,6 +630,15 @@ describe('actual channel workflow dialog', () => {
           parameters.getByRole('combobox', { name: /^Resolution/ })
         )
         await userEvent.click(screen.getByRole('option', { name: '720p' }))
+      }
+      if (monkeyapi && !monkeyapiUpscale) {
+        const parameters = within(
+          screen.getByTestId('selected-capability-parameters')
+        )
+        await userEvent.click(
+          parameters.getByRole('combobox', { name: /quality$/i })
+        )
+        await userEvent.click(screen.getByRole('option', { name: 'high' }))
       }
       if (captureSave) {
         await userEvent.click(
@@ -721,6 +767,10 @@ describe('actual channel workflow dialog', () => {
             fixture = framesOnly ? 'xiaoxiao_video_frames' : 'xiaoxiao_video'
             update = process.env.UPDATE_XIAOXIAO_UI_SAVE_FIXTURE
           }
+          if (monkeyapi) {
+            fixture = monkeyapiUpscale ? 'monkeyapi_upscale' : 'monkeyapi_image'
+            update = process.env.UPDATE_MONKEYAPI_UI_SAVE_FIXTURE
+          }
           const target = path.resolve(
             '..',
             `controller/testdata/${fixture}_ui_save.json`
@@ -739,6 +789,14 @@ describe('actual channel workflow dialog', () => {
           }
           expect(payload).toEqual(expected)
           expect(payload.addModels).toEqual([model])
+          if (monkeyapi) {
+            expect(Object.keys(document.bindings[model]).sort()).toEqual(
+              monkeyapiUpscale ? ['text_image'] : ['edit_image', 'text_image']
+            )
+            for (const binding of Object.values(document.bindings[model])) {
+              expect(binding.billing).toBeUndefined()
+            }
+          }
           if (framesOnly) {
             expect(Object.keys(document.bindings[model])).toEqual(['frames'])
             expect(document.bindings[model].frames.capabilities).toMatchObject({
@@ -752,10 +810,10 @@ describe('actual channel workflow dialog', () => {
         } finally {
           put.mockRestore()
         }
-        if (xiaoxiao) {
+        if (xiaoxiao || monkeyapi) {
           view.unmount()
           mocks.get.mockResolvedValueOnce({
-            pluginVersion: '2.1.3',
+            pluginVersion: versions[provider],
             configuration: { ...document, revision: 1 },
             catalog: actual,
             versions: [],
@@ -775,11 +833,20 @@ describe('actual channel workflow dialog', () => {
               name: 'Next: output type and functions',
             })
           )
-          for (const name of [
-            /^Use a reference image/,
-            /^Use reference video/,
-            /^Use reference audio/,
-          ]) {
+          if (monkeyapi) {
+            await userEvent.click(screen.getByRole('button', { name: 'Image' }))
+          }
+          let capabilities = [/^Text to image/]
+          if (xiaoxiao) {
+            capabilities = [
+              /^Use a reference image/,
+              /^Use reference video/,
+              /^Use reference audio/,
+            ]
+          } else if (!monkeyapiUpscale) {
+            capabilities.push(/^Image to image/)
+          }
+          for (const name of capabilities) {
             expect(screen.getByRole('checkbox', { name })).toBeChecked()
           }
         }

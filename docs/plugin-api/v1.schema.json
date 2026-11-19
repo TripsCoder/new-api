@@ -14,6 +14,11 @@
     "fetchMode"
   ],
   "properties": {
+    "channelConfigurationOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "Participate in image and video routing through confirmed saved channel interfaces only."
+    },
     "sortPriority": {
       "type": "integer",
       "minimum": -2147483648,

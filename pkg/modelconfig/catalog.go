@@ -29,6 +29,9 @@ var kuaiziCatalogJSON []byte
 //go:embed xiaoxiao_video.catalog.json
 var xiaoxiaoCatalogJSON []byte
 
+//go:embed monkeyapi_image.catalog.json
+var monkeyapiCatalogJSON []byte
+
 var catalogOnce sync.Once
 var catalogs map[string]any
 var catalogError error
@@ -81,6 +84,14 @@ func ProviderCatalog(key string) (any, error) {
 		catalogError = common.Unmarshal(xiaoxiaoCatalogJSON, &xiaoxiao)
 		if catalogError == nil {
 			catalogs["xiaoxiao_video"] = xiaoxiao
+		}
+		if catalogError != nil {
+			return
+		}
+		var monkeyapi map[string]any
+		catalogError = common.Unmarshal(monkeyapiCatalogJSON, &monkeyapi)
+		if catalogError == nil {
+			catalogs["monkeyapi_image"] = monkeyapi
 		}
 	})
 	if catalogError != nil {

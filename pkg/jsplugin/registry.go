@@ -86,21 +86,22 @@ func (t *LocalizedText) UnmarshalJSON(data []byte) error {
 }
 
 type Meta struct {
-	RequiredCapabilities []string        `json:"requiredCapabilities,omitempty"`
-	SubmitResponseTypes  []string        `json:"submitResponseTypes,omitempty"`
-	SortPriority         int             `json:"sortPriority,omitempty"`
-	Website              string          `json:"website,omitempty"`
-	APIVersion           int             `json:"apiVersion"`
-	Key                  string          `json:"key"`
-	Name                 string          `json:"name"`
-	Icon                 string          `json:"icon,omitempty"`
-	Description          LocalizedText   `json:"description,omitempty"`
-	Version              string          `json:"version"`
-	Author               AuthorMeta      `json:"author"`
-	BaseURL              string          `json:"baseUrl,omitempty"`
-	ChannelTypes         []int           `json:"channelTypes,omitempty"`
-	Models               []string        `json:"models"`
-	ModelDiscovery       *ModelDiscovery `json:"modelDiscovery,omitempty"`
+	RequiredCapabilities     []string        `json:"requiredCapabilities,omitempty"`
+	SubmitResponseTypes      []string        `json:"submitResponseTypes,omitempty"`
+	SortPriority             int             `json:"sortPriority,omitempty"`
+	Website                  string          `json:"website,omitempty"`
+	APIVersion               int             `json:"apiVersion"`
+	Key                      string          `json:"key"`
+	Name                     string          `json:"name"`
+	Icon                     string          `json:"icon,omitempty"`
+	Description              LocalizedText   `json:"description,omitempty"`
+	Version                  string          `json:"version"`
+	Author                   AuthorMeta      `json:"author"`
+	BaseURL                  string          `json:"baseUrl,omitempty"`
+	ChannelTypes             []int           `json:"channelTypes,omitempty"`
+	ChannelConfigurationOnly bool            `json:"channelConfigurationOnly,omitempty"`
+	Models                   []string        `json:"models"`
+	ModelDiscovery           *ModelDiscovery `json:"modelDiscovery,omitempty"`
 	// ParameterInterfaces are documentation contracts keyed by stable interface
 	// ID. They are neither an account model list nor automatic route claims.
 	ParameterInterfaces map[string]any              `json:"parameterInterfaces,omitempty"`
@@ -1058,7 +1059,7 @@ func decodeMeta(value any) (Meta, error) {
 	}
 	for field := range object {
 		switch field {
-		case "requiredCapabilities", "submitResponseTypes", "sortPriority", "website", "apiVersion", "key", "name", "icon", "description", "version", "author", "baseUrl", "channelTypes", "channelType", "compatibleChannelTypes", "models", "modelDiscovery", "parameterInterfaces", "fetchMode", "allowedHosts", "upstreams", "routes", "protocols", "usageSchema", "usageExamples", "usageProfiles", "auth", "endpoints", "submitPaths", "actions":
+		case "requiredCapabilities", "submitResponseTypes", "sortPriority", "website", "apiVersion", "key", "name", "icon", "description", "version", "author", "baseUrl", "channelTypes", "channelConfigurationOnly", "channelType", "compatibleChannelTypes", "models", "modelDiscovery", "parameterInterfaces", "fetchMode", "allowedHosts", "upstreams", "routes", "protocols", "usageSchema", "usageExamples", "usageProfiles", "auth", "endpoints", "submitPaths", "actions":
 		default:
 			return Meta{}, &UnknownMetaFieldError{Field: field}
 		}
@@ -1121,6 +1122,11 @@ func decodeMeta(value any) (Meta, error) {
 	meta.ChannelTypes, err = integerSliceMetaField(object, "channelTypes")
 	if err != nil {
 		return Meta{}, err
+	}
+	if value, exists := object["channelConfigurationOnly"]; exists {
+		if meta.ChannelConfigurationOnly, ok = value.(bool); !ok {
+			return Meta{}, fmt.Errorf("plugin meta channelConfigurationOnly must be a boolean")
+		}
 	}
 	if meta.FetchMode, err = stringMetaField(object, "fetchMode"); err != nil {
 		return Meta{}, err
@@ -1411,6 +1417,16 @@ func normalizeV1Meta(meta *Meta) error {
 	}
 	if len(meta.Models) == 0 {
 		return fmt.Errorf("plugin meta models must contain at least one model")
+	}
+	if meta.ChannelConfigurationOnly {
+		if len(meta.ParameterInterfaces) == 0 || len(meta.Protocols) == 0 || len(meta.Routes) > 0 || len(meta.ChannelTypes) > 0 {
+			return fmt.Errorf("plugin meta channelConfigurationOnly requires parameter interfaces and host protocols without native routes or legacy channel types")
+		}
+		for _, claim := range meta.Protocols {
+			if claim.Name != ProtocolOpenAIImage && claim.Name != "openai_video" {
+				return fmt.Errorf("plugin meta channelConfigurationOnly does not support protocol %q", claim.Name)
+			}
+		}
 	}
 	seenChannelTypes := make(map[int]struct{}, len(meta.ChannelTypes))
 	for _, channelType := range meta.ChannelTypes {

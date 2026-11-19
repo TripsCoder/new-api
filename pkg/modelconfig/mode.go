@@ -4,7 +4,7 @@ import "errors"
 
 func SupportedProvider(key string) bool {
 	switch key {
-	case "paisio_media", "yuxibox_media", "xcmapi_media", "artbox_media", "lxmone_media", "zhangyuge_media", "aotian_video", "fenglang_video", "apipath_video", "kuaizi_video", "xiaoxiao_video":
+	case "paisio_media", "yuxibox_media", "xcmapi_media", "artbox_media", "lxmone_media", "zhangyuge_media", "aotian_video", "fenglang_video", "apipath_video", "kuaizi_video", "xiaoxiao_video", "monkeyapi_image":
 		return true
 	}
 	return false
