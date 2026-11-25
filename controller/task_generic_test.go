@@ -94,6 +94,41 @@ func TestGetTaskDoesNotProjectArtifacts(t *testing.T) {
 	assert.NotContains(t, recorder.Body.String(), "upstream.invalid")
 }
 
+func TestGetTaskReturnsKuaiziWanVideoSource(t *testing.T) {
+	task := setupGenericTaskTest(t)
+	registry, memoryCache := jsplugin.DefaultRegistry, common.MemoryCacheEnabled
+	t.Cleanup(func() { jsplugin.DefaultRegistry, common.MemoryCacheEnabled = registry, memoryCache })
+	jsplugin.DefaultRegistry = jsplugin.NewRegistry()
+	common.MemoryCacheEnabled = false
+	source, err := os.ReadFile("../plugin-sources/kuaizi-video/dist/kuaizi_video.plugin.js")
+	require.NoError(t, err)
+	plugin, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{})
+	require.NoError(t, err)
+	task.Platform = constant.TaskPlatform(plugin.Meta.Key)
+	task.Action = "video_generate"
+	task.Properties.UpstreamModelName = "wan3.0-video"
+	task.PrivateData.Execution = &model.TaskExecutionSnapshot{
+		TaskPlugin: &model.TaskPluginSnapshot{Key: plugin.Meta.Key, Version: plugin.Meta.Version, SourceSHA256: plugin.SourceSHA256},
+	}
+	const videoURL = "https://dashscope.example/wan.mp4?signature=fixture%2Fsignature"
+	task.SetData(map[string]any{"output": map[string]string{"video_url": videoURL}})
+	require.NoError(t, model.DB.Save(task).Error)
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Set("id", task.UserId)
+	c.Set("token_id", 42)
+	c.Params = gin.Params{{Key: "key", Value: task.TaskID}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID, nil)
+	GetTask(c)
+	require.Equal(t, http.StatusOK, recorder.Code)
+	var response struct {
+		VideoSources map[string]string `json:"video_sources"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	assert.Equal(t, map[string]string{"video": videoURL}, response.VideoSources)
+}
+
 func TestGetTaskArtifactsReturnsEmptyForLegacyTask(t *testing.T) {
 	task := setupGenericTaskTest(t)
 	recorder := httptest.NewRecorder()
@@ -272,6 +307,49 @@ export function buildContentRequest(ctx) {
 		} else {
 			require.Equal(t, sources[item.Key], *item.FetchSource)
 		}
+	}
+
+	// The same stored result now supplies the video URL from the normal status
+	// query using the existing task-owner check, independent of artifact options.
+	t.Setenv("TASK_ARTIFACT_FETCH_SOURCE_TOKEN_IDS", "")
+	for _, tc := range []struct {
+		name      string
+		user      int
+		status    model.TaskStatus
+		discarded bool
+		code      int
+	}{
+		{"owner", task.UserId, model.TaskStatusSuccess, false, http.StatusOK},
+		{"foreign user", task.UserId + 1, model.TaskStatusSuccess, false, http.StatusNotFound},
+		{"unfinished", task.UserId, model.TaskStatusInProgress, false, http.StatusOK},
+		{"discarded", task.UserId, model.TaskStatusSuccess, true, http.StatusOK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			task.Status = tc.status
+			task.PrivateData.ResultDiscarded = tc.discarded
+			require.NoError(t, model.DB.Save(task).Error)
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Params = gin.Params{{Key: "key", Value: task.TaskID}}
+			c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID, nil)
+			c.Set("id", tc.user)
+			c.Set("token_id", 42) // An authenticated token of the same account also uses ordinary status permissions.
+			GetTask(c)
+			require.Equal(t, tc.code, recorder.Code, recorder.Body.String())
+			if tc.name == "owner" {
+				var status struct {
+					VideoSources map[string]string `json:"video_sources"`
+				}
+				require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &status))
+				assert.Equal(t, map[string]string{"video": sources["video"]}, status.VideoSources)
+				assert.Equal(t, "private, no-store", recorder.Header().Get("Cache-Control"))
+				assert.NotContains(t, recorder.Body.String(), sources["image"])
+				assert.NotContains(t, recorder.Body.String(), sources["file"])
+			} else {
+				assert.NotContains(t, recorder.Body.String(), "video_sources")
+				assert.NotContains(t, recorder.Body.String(), sources["video"])
+			}
+		})
 	}
 }
 

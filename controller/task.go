@@ -64,7 +64,7 @@ func GetTask(c *gin.Context) {
 	if task.Status == model.TaskStatusSuccess && taskFailReasonIsLegacyResultURL(task.FailReason) {
 		failReason = ""
 	}
-	c.JSON(http.StatusOK, gin.H{
+	response := gin.H{
 		"task_id":     task.TaskID,
 		"platform":    task.Platform,
 		"status":      task.Status,
@@ -72,7 +72,58 @@ func GetTask(c *gin.Context) {
 		"fail_reason": failReason,
 		"created_at":  createdAt,
 		"finished_at": task.FinishTime,
-	})
+	}
+	if sources := taskVideoFetchSources(c.Request.Context(), task); len(sources) != 0 {
+		c.Header("Cache-Control", "private, no-store")
+		response["video_sources"] = sources
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+// Return only stored, credentialless video sources to the authenticated task
+// owner. An unavailable source must not break the ordinary status response.
+func taskVideoFetchSources(ctx context.Context, task *model.Task) map[string]string {
+	if task.Status != model.TaskStatusSuccess || !task.ResultRetrievable() {
+		return nil
+	}
+	if legacyVideoAvailable(task) {
+		source := credentiallessArtifactFetchSource(&relaychannel.TaskContentRequest{
+			URL: task.GetResultURL(), Method: http.MethodGet, Credentialless: true,
+		})
+		if source == "" {
+			return nil
+		}
+		return map[string]string{"video": source}
+	}
+	artifacts, err := projectTaskArtifacts(task)
+	if err != nil || len(artifacts) == 0 {
+		return nil
+	}
+	var provider relaychannel.TaskContentRequestProvider
+	var sources map[string]string
+	for _, artifact := range artifacts {
+		if artifact.Type != "video" {
+			continue
+		}
+		if provider == nil {
+			adaptor, err := initTaskArtifactAdaptor(task)
+			if err != nil {
+				return nil
+			}
+			provider, _ = adaptor.(relaychannel.TaskContentRequestProvider)
+			if provider == nil {
+				return nil
+			}
+		}
+		_, source := resolveTaskArtifactSources(ctx, provider, task, artifact.Key)
+		if source != "" {
+			if sources == nil {
+				sources = make(map[string]string)
+			}
+			sources[artifact.Key] = source
+		}
+	}
+	return sources
 }
 
 func GetTaskArtifacts(c *gin.Context) {
