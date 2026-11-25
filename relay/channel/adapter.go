@@ -100,6 +100,8 @@ type TaskArtifact = hosttypes.TaskArtifact
 type TaskArtifactClientRequest struct {
 	Method  string            `json:"method"`
 	Headers map[string]string `json:"headers,omitempty"`
+	// SourceOnly resolves URLs from stored task data without credentials or network access.
+	SourceOnly bool `json:"-"`
 }
 
 type TaskArtifactProvider interface {
@@ -112,6 +114,8 @@ type TaskContentRequest struct {
 	Headers        map[string]string
 	Body           []byte
 	Credentialless bool
+	// StoredSource identifies a URL selected by the artifact hook from the persisted result.
+	StoredSource bool
 }
 
 type TaskContentRequestProvider interface {

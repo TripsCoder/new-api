@@ -1,10 +1,13 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,6 +20,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/relay"
 	relaychannel "github.com/QuantumNous/new-api/relay/channel"
+	"github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/types"
@@ -24,10 +28,12 @@ import (
 )
 
 type taskArtifactResponse struct {
-	Key        string `json:"key"`
-	Type       string `json:"type"`
-	MimeType   string `json:"mime_type,omitempty"`
-	ContentURL string `json:"content_url"`
+	Key         string  `json:"key"`
+	Type        string  `json:"type"`
+	MimeType    string  `json:"mime_type,omitempty"`
+	ContentURL  string  `json:"content_url"`
+	UpstreamURL *string `json:"upstream_url,omitempty"`
+	FetchSource *string `json:"fetch_source,omitempty"`
 }
 
 var (
@@ -107,18 +113,31 @@ func writeTaskArtifacts(c *gin.Context, task *model.Task, dashboard bool) {
 		return
 	}
 	items := make([]taskArtifactResponse, 0, len(artifacts))
+	includeFetchSource := !dashboard && canReadTaskArtifactFetchSource(c, task)
+	var sourceProvider relaychannel.TaskContentRequestProvider
+	if includeFetchSource && len(artifacts) > 0 {
+		if adaptor, err := initTaskArtifactAdaptor(task); err == nil {
+			sourceProvider, _ = adaptor.(relaychannel.TaskContentRequestProvider)
+		}
+	}
 	for _, artifact := range artifacts {
 		contentURL, buildErr := service.BuildTaskArtifactContentURL(task.TaskID, artifact.Key)
 		if buildErr != nil {
 			writeTaskArtifactError(c, http.StatusInternalServerError, "artifact_url_error", "Failed to build artifact content URL")
 			return
 		}
-		items = append(items, taskArtifactResponse{
+		item := taskArtifactResponse{
 			Key:        artifact.Key,
 			Type:       artifact.Type,
 			MimeType:   artifact.MimeType,
 			ContentURL: contentURL,
-		})
+		}
+		if includeFetchSource {
+			upstreamURL, fetchSource := resolveTaskArtifactSources(c.Request.Context(), sourceProvider, task, artifact.Key)
+			item.UpstreamURL = &upstreamURL
+			item.FetchSource = &fetchSource
+		}
+		items = append(items, item)
 	}
 	response := gin.H{"task_id": task.TaskID, "artifacts": items}
 	if dashboard && task.Status == model.TaskStatusSuccess && task.Platform == constant.TaskPlatformSuno {
@@ -131,12 +150,80 @@ func writeTaskArtifacts(c *gin.Context, task *model.Task, dashboard bool) {
 			return
 		}
 		response["legacy_content_url"] = legacyContentURL
+		if includeFetchSource {
+			source := task.GetResultURL()
+			if source == taskcommon.BuildProxyURL(task.TaskID) || !validArtifactUpstreamURL(source) {
+				source = ""
+			}
+			response["legacy_upstream_url"] = source
+			response["legacy_fetch_source"] = credentiallessArtifactFetchSource(&relaychannel.TaskContentRequest{
+				URL: source, Method: http.MethodGet, Credentialless: true,
+			})
+		}
 	}
 	if dashboard {
 		common.ApiSuccess(c, response)
 		return
 	}
 	c.JSON(http.StatusOK, response)
+}
+
+func canReadTaskArtifactFetchSource(c *gin.Context, task *model.Task) bool {
+	if c.Query("include") != "fetch_source" || task.Status != model.TaskStatusSuccess || !task.ResultRetrievable() {
+		return false
+	}
+	tokenID := c.GetInt("token_id")
+	if tokenID <= 0 || tokenID != task.PrivateData.TokenId || c.GetInt("id") != task.UserId {
+		return false
+	}
+	if tokenID == common.GetEnvOrDefault("TASK_ARTIFACT_FETCH_SOURCE_TOKEN_ID", 0) {
+		return true
+	}
+	for _, value := range strings.Split(os.Getenv("TASK_ARTIFACT_FETCH_SOURCE_TOKEN_IDS"), ",") {
+		if id, err := strconv.Atoi(strings.TrimSpace(value)); err == nil && id == tokenID {
+			return true
+		}
+	}
+	return false
+}
+
+func resolveTaskArtifactSources(ctx context.Context, provider relaychannel.TaskContentRequestProvider, task *model.Task, artifactKey string) (upstreamURL, fetchSource string) {
+	if provider == nil {
+		return "", ""
+	}
+	descriptor, err := provider.BuildContentRequest(ctx, task, artifactKey, relaychannel.TaskArtifactClientRequest{Method: http.MethodGet, SourceOnly: true})
+	if err != nil || descriptor == nil {
+		return "", ""
+	}
+	if source := credentiallessArtifactFetchSource(descriptor); source != "" {
+		return source, source
+	}
+	if (descriptor.StoredSource || descriptor.Credentialless) && descriptor.Method == http.MethodGet && validArtifactUpstreamURL(descriptor.URL) {
+		return descriptor.URL, ""
+	}
+	return "", ""
+}
+
+func credentiallessArtifactFetchSource(descriptor *relaychannel.TaskContentRequest) string {
+	if descriptor == nil || !descriptor.Credentialless || descriptor.Method != http.MethodGet ||
+		len(descriptor.Headers) != 0 || len(descriptor.Body) != 0 || !validArtifactUpstreamURL(descriptor.URL) ||
+		!strings.HasPrefix(descriptor.URL, "https://") || strings.Contains(descriptor.URL, ";") {
+		return ""
+	}
+	return descriptor.URL
+}
+
+func validArtifactUpstreamURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Hostname() == "" || u.User != nil || u.Fragment != "" ||
+		(u.Path == "" && u.RawQuery == "") || strings.ContainsAny(raw, "\\\r\n\t") {
+		return false
+	}
+	// ResultURL can contain a synthesized gateway route from a different deployment.
+	if strings.HasSuffix(u.Path, "/content") && (strings.Contains(u.Path, "/v1/tasks/") || strings.Contains(u.Path, "/v1/videos/")) {
+		return false
+	}
+	return true
 }
 
 // legacySunoAudioClips projects a pre-plugin Suno task's persisted snapshot

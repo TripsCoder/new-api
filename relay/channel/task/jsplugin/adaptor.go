@@ -1055,11 +1055,19 @@ func (a *TaskAdaptor) BuildContentRequest(ctx context.Context, task *model.Task,
 	hookContext["artifactKey"] = artifactKey
 	hookContext["baseUrl"] = a.info.ChannelBaseUrl
 	hookContext["clientRequest"] = jsonValue(clientRequest)
-	if err = a.applyUpstreamCredentials(hookContext, a.info.ChannelType, a.info.ApiKey, a.info.ChannelSetting.Proxy); err != nil {
-		return nil, err
+	if clientRequest.SourceOnly {
+		if a.info.ChannelType == constant.ChannelTypeNewAPI {
+			return nil, nil
+		}
+		hookContext["upstream"] = map[string]any{"kind": pluginruntime.UpstreamKindVendor}
+		ctx = pluginruntime.WithFetcher(ctx, nil)
+	} else {
+		if err = a.applyUpstreamCredentials(hookContext, a.info.ChannelType, a.info.ApiKey, a.info.ChannelSetting.Proxy); err != nil {
+			return nil, err
+		}
+		ctx = pluginruntime.WithFetcher(ctx, a.hookFetcher(a.info.ChannelBaseUrl, a.info.ChannelSetting.Proxy))
 	}
-	fetchContext := pluginruntime.WithFetcher(ctx, a.hookFetcher(a.info.ChannelBaseUrl, a.info.ChannelSetting.Proxy))
-	descriptor, err := a.requestDescriptor(fetchContext, "buildContentRequest", hookContext)
+	descriptor, err := a.requestDescriptor(ctx, "buildContentRequest", hookContext)
 	if err != nil {
 		return nil, err
 	}
@@ -1106,7 +1114,31 @@ func (a *TaskAdaptor) BuildContentRequest(ctx context.Context, task *model.Task,
 		Headers:        descriptor.Headers,
 		Body:           body,
 		Credentialless: descriptor.Credentialless,
+		StoredSource:   clientRequest.SourceOnly && !descriptor.Credentialless && storedArtifactURL(hookContext["data"], descriptor.URL),
 	}, nil
+}
+
+func storedArtifactURL(value any, source string) bool {
+	if source == "" {
+		return false
+	}
+	switch value := value.(type) {
+	case string:
+		return value == source
+	case map[string]any:
+		for _, child := range value {
+			if storedArtifactURL(child, source) {
+				return true
+			}
+		}
+	case []any:
+		for _, child := range value {
+			if storedArtifactURL(child, source) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func taskArtifactContext(task *model.Task) (map[string]any, error) {

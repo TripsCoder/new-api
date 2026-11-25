@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -17,6 +18,7 @@ import (
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/jsplugin"
 	relaychannel "github.com/QuantumNous/new-api/relay/channel"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/system_setting"
@@ -111,6 +113,166 @@ func TestGetTaskArtifactsReturnsEmptyForLegacyTask(t *testing.T) {
 	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
 	assert.Equal(t, task.TaskID, response.TaskID)
 	assert.Empty(t, response.Artifacts)
+}
+
+func TestTaskArtifactFetchSourceRequiresOptInAndOriginalAuthorizedToken(t *testing.T) {
+	task := setupGenericTaskTest(t)
+	t.Setenv("TASK_ARTIFACT_FETCH_SOURCE_TOKEN_IDS", "")
+	registry, secret, publicAddress, memoryCache := jsplugin.DefaultRegistry, common.CryptoSecret, system_setting.TaskPublicAddress, common.MemoryCacheEnabled
+	t.Cleanup(func() {
+		jsplugin.DefaultRegistry, common.CryptoSecret, system_setting.TaskPublicAddress, common.MemoryCacheEnabled = registry, secret, publicAddress, memoryCache
+	})
+	jsplugin.DefaultRegistry = jsplugin.NewRegistry()
+	common.CryptoSecret = "artifact-fetch-source-test"
+	system_setting.TaskPublicAddress = "http://new-api:3000"
+	common.MemoryCacheEnabled = false
+	source, err := os.ReadFile("../plugin-sources/installed/minimax-meta/plugin.js")
+	require.NoError(t, err)
+	plugin, err := jsplugin.DefaultRegistry.Register(string(source), jsplugin.Options{})
+	require.NoError(t, err)
+	task.Platform = "minimax-meta"
+	task.Properties.UpstreamModelName = "MiniMax-H3"
+	task.PrivateData = model.TaskPrivateData{TokenId: 31, Execution: &model.TaskExecutionSnapshot{
+		TaskPlugin: &model.TaskPluginSnapshot{Key: plugin.Meta.Key, Version: plugin.Meta.Version, SourceSHA256: plugin.SourceSHA256},
+	}}
+	const fetchURL = "https://files.metaso.cn/video.mp4?signature=example"
+	task.SetData(map[string]any{"content": map[string]string{"url": fetchURL}})
+	require.NoError(t, model.DB.Save(task).Error)
+	cases := []struct {
+		name, tokenSetting, include string
+		user, token                 int
+		want                        bool
+	}{
+		{"opted in", "31", "fetch_source", 7, 31, true},
+		{"default off", "", "fetch_source", 7, 31, false},
+		{"without query", "31", "", 7, 31, false},
+		{"different owner", "31", "fetch_source", 8, 31, false},
+		{"different token of owner", "32", "fetch_source", 7, 32, false},
+		{"token outside configured scope", "32", "fetch_source", 7, 31, false},
+		{"without relay authentication", "31", "fetch_source", 7, 0, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("TASK_ARTIFACT_FETCH_SOURCE_TOKEN_ID", tc.tokenSetting)
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Params = gin.Params{{Key: "key", Value: task.TaskID}}
+			c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID+"/artifacts?include="+tc.include, nil)
+			c.Set("id", tc.user)
+			c.Set("token_id", tc.token)
+			GetTaskArtifacts(c)
+			if tc.user != task.UserId {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+				require.NotContains(t, recorder.Body.String(), "fetch_source")
+				return
+			}
+			require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+			require.Equal(t, "private, no-store", recorder.Header().Get("Cache-Control"))
+			var response struct{ Artifacts []taskArtifactResponse }
+			require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+			require.Len(t, response.Artifacts, 1)
+			require.Contains(t, response.Artifacts[0].ContentURL, "http://new-api:3000/")
+			if tc.want {
+				require.NotNil(t, response.Artifacts[0].FetchSource)
+				require.Equal(t, fetchURL, *response.Artifacts[0].FetchSource)
+				require.NotNil(t, response.Artifacts[0].UpstreamURL)
+				require.Equal(t, fetchURL, *response.Artifacts[0].UpstreamURL)
+			} else {
+				require.NotContains(t, recorder.Body.String(), "fetch_source")
+				require.NotContains(t, recorder.Body.String(), "upstream_url")
+			}
+		})
+	}
+}
+
+func TestCredentiallessArtifactFetchSource(t *testing.T) {
+	const raw = "https://files.metaso.cn/video.mp4?signature=example"
+	valid := relaychannel.TaskContentRequest{URL: raw, Method: http.MethodGet, Credentialless: true}
+	require.Equal(t, raw, credentiallessArtifactFetchSource(&valid))
+	valid.URL = "https://supplier.example/path/cover.png?signature=example"
+	require.Equal(t, valid.URL, credentiallessArtifactFetchSource(&valid))
+	for _, descriptor := range []relaychannel.TaskContentRequest{
+		{URL: raw, Method: http.MethodGet},
+		{URL: raw, Method: http.MethodPost, Credentialless: true},
+		{URL: raw, Method: http.MethodGet, Credentialless: true, Headers: map[string]string{"Authorization": "secret"}},
+		{URL: raw, Method: http.MethodGet, Credentialless: true, Body: []byte("request")},
+		{URL: "https://gateway.example/v1/tasks/other/artifacts/video/content?access=example", Method: http.MethodGet, Credentialless: true},
+		{URL: "https://user@files.metaso.cn/video.mp4", Method: http.MethodGet, Credentialless: true},
+		{URL: "http://files.metaso.cn/video.mp4", Method: http.MethodGet, Credentialless: true},
+	} {
+		require.Empty(t, credentiallessArtifactFetchSource(&descriptor))
+	}
+}
+
+func TestTaskArtifactFetchSourceProjectsEachFileFromStoredTask(t *testing.T) {
+	task := setupGenericTaskTest(t)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		t.Error("reading stored artifact metadata contacted the supplier")
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(upstream.Close)
+	require.NoError(t, model.DB.Model(&model.Channel{}).Where("id = ?", task.ChannelId).Update("base_url", upstream.URL).Error)
+	registry, secret, publicAddress, memoryCache := jsplugin.DefaultRegistry, common.CryptoSecret, system_setting.TaskPublicAddress, common.MemoryCacheEnabled
+	t.Cleanup(func() {
+		jsplugin.DefaultRegistry, common.CryptoSecret, system_setting.TaskPublicAddress, common.MemoryCacheEnabled = registry, secret, publicAddress, memoryCache
+	})
+	jsplugin.DefaultRegistry = jsplugin.NewRegistry()
+	common.CryptoSecret = "artifact-source-test"
+	system_setting.TaskPublicAddress = "http://new-api:3000"
+	common.MemoryCacheEnabled = false
+	t.Setenv("TASK_ARTIFACT_FETCH_SOURCE_TOKEN_ID", "")
+	t.Setenv("TASK_ARTIFACT_FETCH_SOURCE_TOKEN_IDS", "30, 31")
+	const pluginSource = `
+export const meta = {key: "source-fixture", name: "Source fixture", version: "1.0.0", apiVersion: 1, author: {name: "Test"}, models: ["fixture"], fetchMode: "per_task", allowedHosts: ["files.supplier.example"]};
+export function buildSubmitRequest(ctx) { return {url: ctx.baseUrl + "/submit"}; }
+export function parseSubmitResponse() { return {taskId: "fixture"}; }
+export function buildQueryRequest(ctx) { return {url: ctx.baseUrl + "/query"}; }
+export function parseTaskResult() { return {status: "SUCCESS"}; }
+export function listArtifacts(task) {
+  return ["image", "video", "audio", "file", "other"].map(key => ({ key, type: key === "other" ? "file" : key }));
+}
+export function buildContentRequest(ctx) {
+  if (ctx.apiKey || ctx.authHeader) throw new Error("unexpected credentials");
+  if (ctx.artifactKey === "other") utils.fetch({url: ctx.baseUrl + "/never", method: "GET"});
+  if (ctx.artifactKey === "file") return {url: ctx.data.file, method: "GET", headers: {"x-vendor-auth": "required"}};
+  return {url: ctx.data[ctx.artifactKey], method: "GET", credentialless: true};
+}`
+	plugin, err := jsplugin.DefaultRegistry.Register(pluginSource, jsplugin.Options{})
+	require.NoError(t, err)
+	task.Platform = "source-fixture"
+	task.PrivateData = model.TaskPrivateData{TokenId: 31, Execution: &model.TaskExecutionSnapshot{
+		TaskPlugin: &model.TaskPluginSnapshot{Key: plugin.Meta.Key, Version: plugin.Meta.Version, SourceSHA256: plugin.SourceSHA256},
+	}}
+	sources := map[string]string{
+		"image": "https://images.supplier.example/photo.png",
+		"video": "https://video.supplier.example/video.mp4?signature=a%2Fb",
+		"audio": "https://audio.supplier.example/track.mp3",
+		"file":  "https://files.supplier.example/captions.vtt",
+	}
+	task.SetData(sources)
+	require.NoError(t, model.DB.Save(task).Error)
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Params = gin.Params{{Key: "key", Value: task.TaskID}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/tasks/"+task.TaskID+"/artifacts?include=fetch_source", nil)
+	c.Set("id", task.UserId)
+	c.Set("token_id", 31)
+	GetTaskArtifacts(c)
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+	var response struct{ Artifacts []taskArtifactResponse }
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	require.Len(t, response.Artifacts, 5)
+	for _, item := range response.Artifacts {
+		require.Contains(t, item.ContentURL, "/artifacts/"+item.Key+"/content?")
+		require.NotNil(t, item.UpstreamURL)
+		require.Equal(t, sources[item.Key], *item.UpstreamURL)
+		require.NotNil(t, item.FetchSource)
+		if item.Key == "file" {
+			require.Empty(t, *item.FetchSource)
+		} else {
+			require.Equal(t, sources[item.Key], *item.FetchSource)
+		}
+	}
 }
 
 func TestTaskArtifactAuthorizationKeepsForeignTasksHidden(t *testing.T) {
