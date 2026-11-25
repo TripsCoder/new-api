@@ -76,6 +76,7 @@ jobs:
           test -n "$TEST_PATTERN"
           go test -count=1 -timeout=5m ./controller -run "^(${TEST_PATTERN})$"
           go test -count=1 -timeout=5m ./service -run '^(TestRefundTaskQuota|TestSettle_|TestTaskBillingOther|TestLogTaskConsumption)'
+          go test -count=1 -timeout=5m ./service -run '^Test(AsyncTaskPoll|SystemTask|RunTaskPollingOnce)'
       - name: Verify configuration save and reopen on all supported databases
         env:
           CHANNEL_CONFIG_TEST_REQUIRE_THREE: '1'

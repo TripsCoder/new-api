@@ -142,7 +142,7 @@ func (asyncTaskPollHandler) Enabled() bool {
 	return constant.UpdateTask && model.HasUnfinishedSyncTasks()
 }
 
-func (asyncTaskPollHandler) Interval() time.Duration { return 15 * time.Second }
+func (asyncTaskPollHandler) Interval() time.Duration { return 10 * time.Second }
 
 func (asyncTaskPollHandler) NewPayload() any { return nil }
 

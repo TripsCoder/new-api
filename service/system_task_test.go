@@ -107,6 +107,55 @@ func TestSystemTaskSchedulerSkipsDisabled(t *testing.T) {
 	assert.Equal(t, int64(0), countSystemTasks(t, handler.taskType))
 }
 
+func TestAsyncTaskPollSchedulesAtDueTime(t *testing.T) {
+	truncate(t)
+
+	handler := &stubScheduledHandler{taskType: model.SystemTaskTypeAsyncTaskPoll, interval: 10 * time.Second}
+	withSystemTaskRegistry(t, handler)
+
+	start := time.Unix(1_800_000_000, 0)
+	next, pending := scheduleAsyncTaskPoll(start)
+	assert.Equal(t, start.Add(10*time.Second), next)
+	assert.False(t, pending)
+	require.Zero(t, countSystemTasks(t, handler.taskType))
+
+	handler.enabled = true
+	runSystemTaskScheduler()
+	require.Zero(t, countSystemTasks(t, handler.taskType))
+
+	_, pending = scheduleAsyncTaskPoll(start)
+	require.True(t, pending)
+	_, pending = scheduleAsyncTaskPoll(start)
+	assert.True(t, pending)
+	require.EqualValues(t, 1, countSystemTasks(t, handler.taskType))
+
+	batch, err := model.GetLatestSystemTask(handler.taskType)
+	require.NoError(t, err)
+	require.NotNil(t, batch)
+	_, claimed, err := model.ClaimSystemTask(batch.ID, handler.taskType, "runner-a", common.GetTimestamp()+60)
+	require.NoError(t, err)
+	require.True(t, claimed)
+
+	next, pending = scheduleAsyncTaskPoll(start.Add(30 * time.Second))
+	assert.Equal(t, start.Add(40*time.Second), next)
+	assert.False(t, pending)
+	require.EqualValues(t, 1, countSystemTasks(t, handler.taskType))
+
+	require.NoError(t, model.FinishSystemTask(batch.TaskID, "runner-a", model.SystemTaskStatusSucceeded, nil, ""))
+	finishedAt := start.Add(35 * time.Second)
+	require.NoError(t, model.DB.Model(batch).UpdateColumn("updated_at", finishedAt.Unix()).Error)
+
+	due := finishedAt.Add(11 * time.Second)
+	next, pending = scheduleAsyncTaskPoll(due.Add(-time.Millisecond))
+	assert.Equal(t, due, next)
+	assert.False(t, pending)
+	require.EqualValues(t, 1, countSystemTasks(t, handler.taskType))
+
+	_, pending = scheduleAsyncTaskPoll(due)
+	assert.True(t, pending)
+	assert.EqualValues(t, 2, countSystemTasks(t, handler.taskType))
+}
+
 func TestSystemTaskClaimPassDispatchesByType(t *testing.T) {
 	truncate(t)
 

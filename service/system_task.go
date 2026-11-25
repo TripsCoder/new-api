@@ -132,6 +132,8 @@ func StartSystemTaskRunner() {
 
 			ticker := time.NewTicker(systemTaskRunnerIdleInterval)
 			defer ticker.Stop()
+			asyncPollTimer := time.NewTimer(0)
+			defer asyncPollTimer.Stop()
 
 			var lastScheduler time.Time
 			var lastStaleLockCleanup time.Time
@@ -158,6 +160,13 @@ func StartSystemTaskRunner() {
 				select {
 				case <-ticker.C:
 				case <-systemTaskWakeup:
+				case <-asyncPollTimer.C:
+					next, pending := scheduleAsyncTaskPoll(time.Now())
+					asyncPollTimer.Reset(time.Until(next))
+					if pending {
+						runSystemTaskClaimPass(runnerID)
+					}
+					continue
 				}
 				runPass()
 			}
@@ -267,7 +276,7 @@ func runSystemTaskScheduler() {
 	taskTypes := make([]string, 0, len(handlers))
 	for _, handler := range handlers {
 		scheduled, ok := handler.(ScheduledSystemTaskHandler)
-		if !ok || !scheduled.Enabled() {
+		if !ok || scheduled.Type() == model.SystemTaskTypeAsyncTaskPoll || !scheduled.Enabled() {
 			continue
 		}
 		scheduledHandlers = append(scheduledHandlers, scheduled)
@@ -288,18 +297,59 @@ func runSystemTaskScheduler() {
 				continue // not due yet
 			}
 		}
-		if _, err := model.CreateSystemTask(scheduled.Type(), scheduled.NewPayload(), nil); err != nil {
-			activeTask, activeErr := model.GetActiveSystemTask(scheduled.Type())
-			if activeErr == nil && activeTask != nil {
-				continue
-			}
-			if activeErr != nil {
-				logger.LogWarn(context.Background(), common.LogText("system task scheduler active lookup failed: type=%s err=%v", scheduled.Type(), activeErr))
-			}
-			logger.LogWarn(context.Background(), common.LogText("system task scheduler create failed: type=%s err=%v", scheduled.Type(), err))
-			continue
+		createScheduledSystemTask(scheduled)
+	}
+}
+
+// scheduleAsyncTaskPoll returns the next wakeup and whether a poll is pending.
+// Use the due time instead of waiting for another shared scheduler tick.
+func scheduleAsyncTaskPoll(now time.Time) (time.Time, bool) {
+	systemTaskHandlersMu.RLock()
+	handler, ok := systemTaskHandlers[model.SystemTaskTypeAsyncTaskPoll].(ScheduledSystemTaskHandler)
+	systemTaskHandlersMu.RUnlock()
+	if !ok {
+		return now.Add(systemTaskRunnerIdleInterval), false
+	}
+
+	nextCheck := now.Add(handler.Interval())
+	if !handler.Enabled() {
+		return nextCheck, false
+	}
+	latest, err := model.GetLatestSystemTask(handler.Type())
+	if err != nil {
+		logger.LogWarn(context.Background(), common.LogText("system task scheduler query failed: %v", err))
+		return nextCheck, false
+	}
+	if latest != nil {
+		switch latest.Status {
+		case model.SystemTaskStatusPending:
+			return nextCheck, true
+		case model.SystemTaskStatusRunning:
+			return nextCheck, false
+		}
+		// updated_at records whole seconds. Round up to keep the full cooldown.
+		due := time.Unix(latest.UpdatedAt+1, 0).Add(handler.Interval())
+		if now.Before(due) {
+			return due, false
 		}
 	}
+	return nextCheck, createScheduledSystemTask(handler)
+}
+
+func createScheduledSystemTask(handler ScheduledSystemTaskHandler) bool {
+	taskType := handler.Type()
+	if _, err := model.CreateSystemTask(taskType, handler.NewPayload(), nil); err != nil {
+		activeTask, activeErr := model.GetActiveSystemTask(taskType)
+		if activeErr == nil && activeTask != nil {
+			return activeTask.Status == model.SystemTaskStatusPending
+		}
+		if activeErr != nil {
+			logger.LogWarn(context.Background(), common.LogText("system task scheduler active lookup failed: type=%s err=%v", taskType, activeErr))
+		}
+		logger.LogWarn(context.Background(), common.LogText("system task scheduler create failed: type=%s err=%v", taskType, err))
+		return false
+	}
+	return true
 }
 
 // runWithLeaseHeartbeat renews the per-type lock on a background ticker while
